@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  092526 MF,CC  First version (issue #449).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Percentb</c> consumes before it can
@@ -72,7 +73,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
@@ -116,7 +117,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
@@ -715,7 +716,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outReal">Position of the input between the lower band (0) and the upper band (1)
@@ -814,7 +815,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outReal">Position of the input between the lower band (0) and the upper band (1)
@@ -1146,6 +1147,9 @@ public partial class Core
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       int lagNb0 = 0;
       lookbackTotal = PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal ) {
          firstIdx = lookbackTotal;

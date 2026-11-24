@@ -1244,18 +1244,18 @@ static ErrorNumber test_pctb_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",            616, &g_pctbGoldenCmp   },
-      { "composition",        66050911, &g_pctbDiffCmp     },
-      { "zero width",          9764926, &g_pctbDiffZero    },
-      { "NaN and Inf input",     84620, &g_pctbNanCmp      },
-      { "float tier",            29752, &g_pctbFloatCmp    },
-      { "author's identity",    1070742, &g_pctbIdentCmp    },
+      { "composition",        69838253, &g_pctbDiffCmp     },
+      { "zero width",         10344898, &g_pctbDiffZero    },
+      { "NaN and Inf input",     90620, &g_pctbNanCmp      },
+      { "float tier",            31672, &g_pctbFloatCmp    },
+      { "author's identity",    1138026, &g_pctbIdentCmp    },
       { "band crossing",           502, &g_pctbCrossCmp    },
-      { "lookback",               2890, &g_pctbLookbackCmp },
-      { "in-place",             1135924, &g_pctbAliasCmp    },
-      { "anchor",               754052, &g_pctbAnchorCmp   },
+      { "lookback",               3070, &g_pctbLookbackCmp },
+      { "in-place",             1205686, &g_pctbAliasCmp    },
+      { "anchor",               802360, &g_pctbAnchorCmp   },
       { "parameters",             1194, &g_pctbParamCmp    },
-      { "degenerate",            90638, &g_pctbDegenCmp    },
-      { "sub-ulp width",           570, &g_pctbSubUlpCmp   },
+      { "degenerate",            96764, &g_pctbDegenCmp    },
+      { "sub-ulp width",           610, &g_pctbSubUlpCmp   },
       { "stream",                47696, &g_pctbStreamCmp   },
       { "stream near 1e15",         50, &g_pctbStreamHuge  },
    };
@@ -2003,7 +2003,8 @@ static ErrorNumber test_pctb_lookback( void )
             lb  = TA_PERCENTB_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             lbB = TA_BBANDS_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             g_pctbLookbackCmp++;
-            if( lb != lbB || lb < 0 )
+            /* SSF refuses a period past its own cap, through MA. */
+            if( lb != lbB || (lb < 0) != (mt == TA_MAType_SSF && ns[p] > 10000) )
             {
                printf( "PERCENTB lookback Fail [n=%d matype=%d unstable id %d = %u]: %d, "
                        "TA_BBANDS_Lookback %d\n", ns[p], mt, (int)ids[d], us[j], lb, lbB );

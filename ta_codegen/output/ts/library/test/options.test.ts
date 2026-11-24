@@ -52,6 +52,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import vm from 'node:vm';
 
 import { type Arr, N, series } from './corpus.ts';
 import { bytes, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, sentinels, untouched } from './contract.ts';
@@ -62,6 +63,8 @@ const data = series(61);
 
 type Result = Record<string, unknown>;
 type Stream = { outRange(): OutRange; value(...a: unknown[]): unknown };
+
+const keysOf = (s: Named): string[] => [...optsOf(s).map((p) => p.key), 'startIdx', 'endIdx', 'core', ...outputsOf(s).map((p) => p.key)];
 
 const insOf = (s: Named, n = N): Float64Array[] => s.params.filter((p) => p.kind === 'input').map((p) => data[p.name].subarray(0, n));
 const outsIn = (s: Named, r: Result): Arr[] => outputsOf(s).map((p) => r[p.result as string] as Arr);
@@ -290,7 +293,9 @@ test('options that are not an object are TA_BAD_PARAM at every entry point, and 
     const every = { ...s.options(sent, outputsOf(s).map((p) => filled(p, N))), startIdx: 7, endIdx: N - 2, core: Core.DEFAULT };
     assert.equal(s.api.lookback(every), lb, `${s.fn}: lookback over the batch object`);
     assert.equal(s.api.shift(0, every), s.api.shift(0, s.options(sent)), `${s.fn}: display shift over the batch object`);
+    assert.deepEqual(Object.keys(every).sort(), keysOf(s).sort(), `${s.fn}: the batch object holds every key`);
     assert.deepEqual(state(s.api.open(...args, every) as Stream), state(s.api.open(...args) as Stream), `${s.fn}: open over the batch object`);
+    assert.deepEqual(state((s.api.fill(...args, every) as { stream: Stream }).stream), state(s.api.open(...args) as Stream), `${s.fn}: openAndFill over the batch object`);
     const r = s.api.batch(...args, every) as Result;
     assert.equal(r.begIdx, Math.max(7, lb), `${s.fn}: the batch object's range`);
     assert.equal(outsIn(s, r)[0].length, N - 2 - Math.max(7, lb) + 1, `${s.fn}: the batch object's count`);
@@ -322,4 +327,107 @@ test('a core that is not a Core is TA_BAD_PARAM at every entry point, and an und
     assert.deepEqual(outsIn(s, s.api.batch(...args, { core: undefined }) as Result), outsIn(s, s.api.batch(...args, { core: Core.DEFAULT }) as Result), `${s.fn}: undefined core at batch`);
   }
   assert.equal(probes, 15 * SPECS.length);
+});
+
+type Entry = readonly [string, (o: unknown) => unknown];
+
+/** The five calls that take an options object, each with the verb its messages carry. */
+function entries(s: Named, args: unknown[]): Entry[] {
+  return [
+    ['', (o) => s.api.batch(...args, o)],
+    [' lookback', (o) => s.api.lookback(o)],
+    [' displayShift', (o) => s.api.shift(0, o)],
+    [' open', (o) => s.api.open(...args, o)],
+    [' openAndFill', (o) => s.api.fill(...args, o)],
+  ];
+}
+
+test('a key that is not one of the function\'s option keys is TA_BAD_PARAM at every entry point, its value unread, naming the key it resembles', () => {
+  const perEntry = new Map<string, number>();
+  let cSpelled = 0;
+  const wrongBuffer: string[] = [];
+  for (const s of SPECS) {
+    const args = s.args(insOf(s));
+    const keys = keysOf(s);
+    const first = keys[0];
+    const bads: [Record<string, unknown>, string][] = [
+      [{ [first.toUpperCase()]: 1 }, `unknown option "${first.toUpperCase()}"; did you mean "${first}"?`],
+      [{ ...s.options(sentinels(s)), bogus: undefined }, 'unknown option "bogus"'],
+    ];
+    optsOf(s).forEach((p) => {
+      bads.push([{ [p.name]: p.dflt }, `unknown option "${p.name}"; did you mean "${p.key}"?`]);
+      cSpelled++;
+    });
+    if (!keys.includes('outReal')) {
+      bads.push([{ outReal: new Float64Array(N) }, 'unknown option "outReal"']);
+      wrongBuffer.push(s.fn);
+    }
+    for (const [bad, message] of bads) {
+      for (const [verb, fn] of entries(s, args)) {
+        rejects(() => fn(bad), 'TA_BAD_PARAM', `${s.fn}${verb} ${Object.keys(bad).join(',')}`, `${s.fn}${verb}: ${message}`);
+        perEntry.set(verb, (perEntry.get(verb) ?? 0) + 1);
+      }
+    }
+  }
+  assert.deepEqual([...perEntry.keys()], ['', ' lookback', ' displayShift', ' open', ' openAndFill']);
+  for (const [verb, n] of perEntry) assert.ok(n > 2 * SPECS.length, `${verb || ' batch'}: only ${n} rejections`);
+  assert.ok(cSpelled > 0, 'no C spelling probed');
+  assert.ok(wrongBuffer.includes('MACD'), 'MACD was not probed with outReal');
+});
+
+test('options that are not a plain object are TA_BAD_PARAM at every entry point; a null-prototype object and one of another realm are plain', () => {
+  class Options {
+    timePeriod = 9;
+  }
+  const perEntry = new Map<string, number>();
+  let plain = 0;
+  for (const s of SPECS) {
+    const args = s.args(insOf(s));
+    const bads: [unknown, string][] = [[Core.DEFAULT, 'Core'], [new Map(), 'Map'], [new Date(0), 'Date'], [new Options(), 'Options']];
+    for (const [bad, shown] of bads) {
+      for (const [verb, fn] of entries(s, args)) {
+        rejects(() => fn(bad), 'TA_BAD_PARAM', `${s.fn}${verb} options ${shown}`, `${s.fn}${verb}: options must be a plain object, got an instance of ${shown}`);
+        perEntry.set(verb, (perEntry.get(verb) ?? 0) + 1);
+      }
+    }
+    const ref = s.options(sentinels(s));
+    const want = entries(s, args).map(([, fn]) => outcomeOf(fn(ref)));
+    for (const o of [Object.assign(Object.create(null) as object, ref), Object.assign(vm.runInNewContext('({})') as object, ref)]) {
+      assert.deepEqual(entries(s, args).map(([, fn]) => outcomeOf(fn(o))), want, `${s.fn}: a plain object with another prototype`);
+      plain++;
+    }
+  }
+  for (const [verb, n] of perEntry) assert.equal(n, 4 * SPECS.length, verb || ' batch');
+  assert.equal(perEntry.size, 5);
+  assert.equal(plain, 2 * SPECS.length);
+});
+
+/** What a call answered, comparable with deepEqual: a stream as its state, outputs as bytes. */
+function outcomeOf(r: unknown): unknown {
+  if (typeof r === 'number') return r;
+  const o = r as Result & { stream?: Stream };
+  if (typeof (r as Stream).outRange === 'function') return state(r as Stream);
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, k === 'stream' ? state(v as Stream) : ArrayBuffer.isView(v) ? [...bytes(v as Arr)] : v]));
+}
+
+test('an enumerable key inherited from Object.prototype is not one of the call\'s keys', () => {
+  const proto = Object.prototype as Record<string, unknown>;
+  const wants = SPECS.map((s) => {
+    const args = s.args(insOf(s));
+    return entries(s, args).map(([, fn]) => [outcomeOf(fn(undefined)), outcomeOf(fn({}))]);
+  });
+  let probes = 0;
+  proto.timeperiod = 5;
+  try {
+    assert.ok('timeperiod' in {} && Object.keys(Object.prototype).includes('timeperiod'));
+    SPECS.forEach((s, k) => {
+      const args = s.args(insOf(s));
+      const got = entries(s, args).map(([, fn]) => [outcomeOf(fn(undefined)), outcomeOf(fn({}))]);
+      assert.deepEqual(got, wants[k], `${s.fn}: with an inherited key`);
+      probes += 10;
+    });
+  } finally {
+    delete proto.timeperiod;
+  }
+  assert.equal(probes, 10 * SPECS.length);
 });

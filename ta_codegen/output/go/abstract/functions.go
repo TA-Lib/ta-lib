@@ -224,7 +224,7 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastPeriod", "Fast Period", "Period of the fast MA", 0x00000000, 12.0, IntegerRange{2, 100000, 12, 4, 200, 1}},
 			{OptIntegerRange, "optInSlowPeriod", "Slow Period", "Period of the slow MA", 0x00000000, 26.0, IntegerRange{2, 100000, 26, 4, 200, 1}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 1}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 1}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000701},
@@ -321,7 +321,7 @@ var registry = [...]FuncInfo{
 			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 20.0, IntegerRange{2, 100000, 20, 4, 200, 1}},
 			{OptRealRange, "optInNbDevUp", "Deviations up", "Deviation multiplier for upper band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
 			{OptRealRange, "optInNbDevDn", "Deviations down", "Deviation multiplier for lower band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outRealUpperBand", 0x00000800},
@@ -337,7 +337,7 @@ var registry = [...]FuncInfo{
 			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 20.0, IntegerRange{2, 100000, 20, 4, 200, 1}},
 			{OptRealRange, "optInNbDevUp", "Deviations up", "Deviation multiplier for upper band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
 			{OptRealRange, "optInNbDevDn", "Deviations down", "Deviation multiplier for lower band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000701},
@@ -1485,9 +1485,9 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", 0x00000000, 9.0, IntegerRange{1, 100000, 9, 1, 200, 1}},
 			{OptIntegerRange, "optInSlowK_Period", "Slow-K Period", "Smoothing for making the Slow-K line. Usually set to 3", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInSlowK_MAType", "Slow-K MA", "Type of Moving Average for Slow-K", 0x00000000, 13.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 13}},
+			{OptIntegerList, "optInSlowK_MAType", "Slow-K MA", "Type of Moving Average for Slow-K", 0x00000000, 13.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 13}},
 			{OptIntegerRange, "optInSlowD_Period", "Slow-D Period", "Smoothing for making the Slow-D line", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInSlowD_MAType", "Slow-D MA", "Type of Moving Average for Slow-D", 0x00000000, 13.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 13}},
+			{OptIntegerList, "optInSlowD_MAType", "Slow-D MA", "Type of Moving Average for Slow-D", 0x00000000, 13.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 13}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outK", 0x00000701},
@@ -1529,8 +1529,8 @@ var registry = [...]FuncInfo{
 			{OptIntegerRange, "optInMA3Period", "MA-3 Period", "Smoothing period of leg 3", 0x00000000, 10.0, IntegerRange{1, 100000, 10, 1, 200, 1}},
 			{OptIntegerRange, "optInMA4Period", "MA-4 Period", "Smoothing period of leg 4", 0x00000000, 15.0, IntegerRange{1, 100000, 15, 1, 200, 1}},
 			{OptIntegerRange, "optInSignalPeriod", "Signal Period", "Smoothing period of the signal line", 0x00000000, 9.0, IntegerRange{1, 100000, 9, 1, 200, 1}},
-			{OptIntegerList, "optInROCMAType", "ROC MA", "Type of Moving Average smoothing the four legs", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
-			{OptIntegerList, "optInSignalMAType", "Signal MA", "Type of Moving Average for signal line", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInROCMAType", "ROC MA", "Type of Moving Average smoothing the four legs", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
+			{OptIntegerList, "optInSignalMAType", "Signal MA", "Type of Moving Average for signal line", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outKST", 0x00000701},
@@ -1630,7 +1630,7 @@ var registry = [...]FuncInfo{
 		},
 		[]OptInputInfo{
 			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 30.0, IntegerRange{1, 100000, 30, 1, 200, 1}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000001},
@@ -1657,11 +1657,11 @@ var registry = [...]FuncInfo{
 		},
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastPeriod", "Fast Period", "Period of the fast MA", 0x00000000, 12.0, IntegerRange{2, 100000, 12, 4, 200, 1}},
-			{OptIntegerList, "optInFastMAType", "Fast MA", "Type of Moving Average for fast MA", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInFastMAType", "Fast MA", "Type of Moving Average for fast MA", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 			{OptIntegerRange, "optInSlowPeriod", "Slow Period", "Period of the slow MA", 0x00000000, 26.0, IntegerRange{2, 100000, 26, 4, 200, 1}},
-			{OptIntegerList, "optInSlowMAType", "Slow MA", "Type of Moving Average for slow MA", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInSlowMAType", "Slow MA", "Type of Moving Average for slow MA", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 			{OptIntegerRange, "optInSignalPeriod", "Signal Period", "Smoothing for the signal line (period length)", 0x00000000, 9.0, IntegerRange{1, 100000, 9, 1, 200, 1}},
-			{OptIntegerList, "optInSignalMAType", "Signal MA", "Type of Moving Average for signal line", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInSignalMAType", "Signal MA", "Type of Moving Average for signal line", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outMACD", 0x00000701},
@@ -1697,6 +1697,22 @@ var registry = [...]FuncInfo{
 			{OutputReal, "outMACDVHist", 0x00000710},
 		},
 		"{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}", lookbackMACDV, displayShiftMACDV, callMACDV},
+	{"MAENV", GroupOverlapStudies, "Moving Average Envelope", 0x03000008, -1,
+		[]InputInfo{
+			{InputReal, "inReal", 0x00000000, nil},
+		},
+		[]OptInputInfo{
+			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 20.0, IntegerRange{1, 100000, 20, 1, 200, 1}},
+			{OptRealRange, "optInPercentUp", "Percent up", "Percent of the moving average added to form the upper band", 0x00100000, 10.0, RealRange{-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5}},
+			{OptRealRange, "optInPercentDn", "Percent down", "Percent of the moving average subtracted to form the lower band", 0x00100000, 10.0, RealRange{-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
+		},
+		[]OutputInfo{
+			{OutputReal, "outRealUpperBand", 0x00000800},
+			{OutputReal, "outRealMiddleBand", 0x00000001},
+			{OutputReal, "outRealLowerBand", 0x00001000},
+		},
+		"{}", lookbackMAENV, displayShiftMAENV, callMAENV},
 	{"MAMA", GroupOverlapStudies, "MESA Adaptive Moving Average", 0x0B000004, talib.FuncUnstIdMAMA,
 		[]InputInfo{
 			{InputReal, "inReal", 0x00000000, nil},
@@ -1739,7 +1755,7 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInMinPeriod", "Minimum Period", "Value less than minimum will be changed to Minimum period", 0x00000000, 2.0, IntegerRange{1, 10000, 2, 1, 200, 1}},
 			{OptIntegerRange, "optInMaxPeriod", "Maximum Period", "Value higher than maximum will be changed to Maximum period", 0x00000000, 30.0, IntegerRange{1, 10000, 30, 1, 200, 1}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000001},
@@ -1958,7 +1974,7 @@ var registry = [...]FuncInfo{
 			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 20.0, IntegerRange{2, 100000, 20, 4, 200, 1}},
 			{OptRealRange, "optInNbDevUp", "Deviations up", "Deviation multiplier for upper band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
 			{OptRealRange, "optInNbDevDn", "Deviations down", "Deviation multiplier for lower band", 0x00000000, 2.0, RealRange{-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000701},
@@ -2016,7 +2032,7 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastPeriod", "Fast Period", "Period of the fast MA", 0x00000000, 12.0, IntegerRange{2, 100000, 12, 4, 200, 1}},
 			{OptIntegerRange, "optInSlowPeriod", "Slow Period", "Period of the slow MA", 0x00000000, 26.0, IntegerRange{2, 100000, 26, 4, 200, 1}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 1}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 1}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000701},
@@ -2050,7 +2066,7 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastPeriod", "Fast Period", "Period of the fast MA", 0x00000000, 12.0, IntegerRange{2, 100000, 12, 4, 200, 1}},
 			{OptIntegerRange, "optInSlowPeriod", "Slow Period", "Period of the slow MA", 0x00000000, 26.0, IntegerRange{2, 100000, 26, 4, 200, 1}},
-			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 1}},
+			{OptIntegerList, "optInMAType", "MA Type", "Type of Moving Average", 0x00000000, 1.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 1}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outReal", 0x00000701},
@@ -2337,6 +2353,17 @@ var registry = [...]FuncInfo{
 			{OutputInteger, "outSqueeze", 0x00000001},
 		},
 		"{}", lookbackSQZMOM, displayShiftSQZMOM, callSQZMOM},
+	{"SSF", GroupOverlapStudies, "Ehlers SuperSmoother Filter", 0x0B000005, talib.FuncUnstIdSSF,
+		[]InputInfo{
+			{InputReal, "inReal", 0x00000000, nil},
+		},
+		[]OptInputInfo{
+			{OptIntegerRange, "optInTimePeriod", "Time Period", "Critical period", 0x00000000, 10.0, IntegerRange{1, 10000, 10, 5, 200, 1}},
+		},
+		[]OutputInfo{
+			{OutputReal, "outReal", 0x00000001},
+		},
+		"{}", lookbackSSF, displayShiftSSF, callSSF},
 	{"STC", GroupMomentumIndicators, "Schaff Trend Cycle", 0x0A000000, talib.FuncUnstIdSTC,
 		[]InputInfo{
 			{InputReal, "inReal", 0x00000000, nil},
@@ -2369,9 +2396,9 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", 0x00000000, 5.0, IntegerRange{1, 100000, 5, 1, 200, 1}},
 			{OptIntegerRange, "optInSlowK_Period", "Slow-K Period", "Smoothing for making the Slow-K line. Usually set to 3", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInSlowK_MAType", "Slow-K MA", "Type of Moving Average for Slow-K", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInSlowK_MAType", "Slow-K MA", "Type of Moving Average for Slow-K", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 			{OptIntegerRange, "optInSlowD_Period", "Slow-D Period", "Smoothing for making the Slow-D line", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInSlowD_MAType", "Slow-D MA", "Type of Moving Average for Slow-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInSlowD_MAType", "Slow-D MA", "Type of Moving Average for Slow-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outSlowK", 0x00000701},
@@ -2385,7 +2412,7 @@ var registry = [...]FuncInfo{
 		[]OptInputInfo{
 			{OptIntegerRange, "optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", 0x00000000, 5.0, IntegerRange{1, 100000, 5, 1, 200, 1}},
 			{OptIntegerRange, "optInFastD_Period", "Fast-D Period", "Smoothing for making the Fast-D line. Usually set to 3", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInFastD_MAType", "Fast-D MA", "Type of Moving Average for Fast-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInFastD_MAType", "Fast-D MA", "Type of Moving Average for Fast-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outFastK", 0x00000501},
@@ -2400,7 +2427,7 @@ var registry = [...]FuncInfo{
 			{OptIntegerRange, "optInTimePeriod", "Time Period", "Time period", 0x00000000, 14.0, IntegerRange{2, 100000, 14, 4, 200, 1}},
 			{OptIntegerRange, "optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", 0x00000000, 5.0, IntegerRange{1, 100000, 5, 1, 200, 1}},
 			{OptIntegerRange, "optInFastD_Period", "Fast-D Period", "Smoothing for making the Fast-D line. Usually set to 3", 0x00000000, 3.0, IntegerRange{1, 100000, 3, 1, 200, 1}},
-			{OptIntegerList, "optInFastD_MAType", "Fast-D MA", "Type of Moving Average for Fast-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}}, 0}},
+			{OptIntegerList, "optInFastD_MAType", "Fast-D MA", "Type of Moving Average for Fast-D", 0x00000000, 0.0, IntegerList{[]NamedValue{{0, "SMA"}, {1, "EMA"}, {2, "WMA"}, {3, "DEMA"}, {4, "TEMA"}, {5, "TRIMA"}, {6, "KAMA"}, {7, "MAMA"}, {8, "T3"}, {9, "HMA"}, {10, "DISABLED"}, {11, "DEFAULT"}, {12, "ZLEMA"}, {13, "RMA"}, {14, "VIDYA"}, {15, "ALMA"}, {16, "SSF"}}, 0}},
 		},
 		[]OutputInfo{
 			{OutputReal, "outFastK", 0x00000501},
@@ -4575,6 +4602,18 @@ func callMACDV(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRa
 	return c.MACDV(startIdx, endIdx, h.prices[0][1], h.prices[0][2], h.prices[0][3], h.intOpts[0], h.intOpts[1], h.intOpts[2], h.realOuts[0], h.realOuts[1], h.realOuts[2])
 }
 
+func lookbackMAENV(c *talib.Core, h *ParamHolder) (int, error) {
+	return c.MAENVLookback(h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]))
+}
+
+func displayShiftMAENV(c *talib.Core, h *ParamHolder, outputIdx int) (int, error) {
+	return c.MAENVDisplayShift(h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]), outputIdx)
+}
+
+func callMAENV(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRange, error) {
+	return c.MAENV(startIdx, endIdx, h.reals[0], h.intOpts[0], h.realOpts[1], h.realOpts[2], talib.MAType(h.intOpts[3]), h.realOuts[0], h.realOuts[1], h.realOuts[2])
+}
+
 func lookbackMAMA(c *talib.Core, h *ParamHolder) (int, error) {
 	return c.MAMALookback(h.realOpts[0], h.realOpts[1])
 }
@@ -5245,6 +5284,18 @@ func displayShiftSQZMOM(c *talib.Core, h *ParamHolder, outputIdx int) (int, erro
 
 func callSQZMOM(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRange, error) {
 	return c.SQZMOM(startIdx, endIdx, h.prices[0][1], h.prices[0][2], h.prices[0][3], h.intOpts[0], h.realOpts[1], h.intOpts[2], h.realOpts[3], h.realOpts[4], h.realOpts[5], h.realOuts[0], h.intOuts[1])
+}
+
+func lookbackSSF(c *talib.Core, h *ParamHolder) (int, error) {
+	return c.SSFLookback(h.intOpts[0])
+}
+
+func displayShiftSSF(c *talib.Core, h *ParamHolder, outputIdx int) (int, error) {
+	return c.SSFDisplayShift(h.intOpts[0], outputIdx)
+}
+
+func callSSF(c *talib.Core, h *ParamHolder, startIdx, endIdx int) (talib.OutRange, error) {
+	return c.SSF(startIdx, endIdx, h.reals[0], h.intOpts[0], h.realOuts[0])
 }
 
 func lookbackSTC(c *talib.Core, h *ParamHolder) (int, error) {

@@ -13629,6 +13629,114 @@ TA_LIB_API TA_RetCode TA_MACDV_Advance( TA_MACDV_Stream *stream );
 TA_LIB_API TA_RetCode TA_MACDV_Clone( const TA_MACDV_Stream *stream, TA_MACDV_Stream **clone );
 
 /*
+ * TA_MAENV - Moving Average Envelope
+ * 
+ * Input  = double
+ * Output = double, double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period
+ * 
+ * optInPercentUp:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Percent of the moving average added to form the upper band
+ * 
+ * optInPercentDn:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Percent of the moving average subtracted to form the lower band
+ * 
+ * optInMAType:
+ *    Type of Moving Average
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_MAENV( int    startIdx,
+                                int    endIdx,
+                                           const double inReal[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           double        optInPercentUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           double        optInPercentDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           TA_MAType     optInMAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outRealUpperBand[],
+                                           double        outRealMiddleBand[],
+                                           double        outRealLowerBand[] );
+
+TA_LIB_API TA_RetCode TA_S_MAENV( int    startIdx,
+                                  int    endIdx,
+                                             const float  inReal[],
+                                             int           optInTimePeriod, /* From 1 to 100000 */
+                                             double        optInPercentUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                             double        optInPercentDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                             TA_MAType     optInMAType,
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outRealUpperBand[],
+                                             double        outRealMiddleBand[],
+                                             double        outRealLowerBand[] );
+
+TA_LIB_API int TA_MAENV_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                           double        optInPercentUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           double        optInPercentDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           TA_MAType     optInMAType );
+TA_LIB_API int TA_MAENV_DisplayShift( int optInTimePeriod, double optInPercentUp, double optInPercentDn, TA_MAType optInMAType, int outputIdx );
+
+
+/*
+ * Streaming API for TA_MAENV: incremental per-bar evaluation.
+ */
+typedef struct TA_MAENV_Stream TA_MAENV_Stream;
+
+TA_LIB_API TA_RetCode TA_MAENV_Open( TA_MAENV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInPercentUp, double optInPercentDn, TA_MAType optInMAType, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_MAENV_Update( TA_MAENV_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_MAENV_Peek( const TA_MAENV_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_MAENV_Close( TA_MAENV_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_MAENV( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_MAENV_OpenAndFill( TA_MAENV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInPercentUp, double optInPercentDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_MAENV_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_MAENV_Value( const TA_MAENV_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_MAENV reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_MAENV_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_MAENV_OutRange( const TA_MAENV_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_MAENV_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_MAENV_Advance( TA_MAENV_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_MAENV_Clone( const TA_MAENV_Stream *stream, TA_MAENV_Stream **clone );
+
+/*
  * TA_MAMA - MESA Adaptive Moving Average
  * 
  * Input  = double
@@ -18717,6 +18825,93 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Advance( TA_SQZMOM_Stream *stream );
  * The fork carries the value and the range verbatim.
  */
 TA_LIB_API TA_RetCode TA_SQZMOM_Clone( const TA_SQZMOM_Stream *stream, TA_SQZMOM_Stream **clone );
+
+/*
+ * TA_SSF - Ehlers SuperSmoother Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 10000)
+ *    Critical period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SSF( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 1 to 10000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SSF( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 1 to 10000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_SSF_Lookback( int           optInTimePeriod );  /* From 1 to 10000 */
+TA_LIB_API int TA_SSF_DisplayShift( int optInTimePeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SSF: incremental per-bar evaluation.
+ */
+typedef struct TA_SSF_Stream TA_SSF_Stream;
+
+TA_LIB_API TA_RetCode TA_SSF_Open( TA_SSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SSF_Update( TA_SSF_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SSF_Peek( const TA_SSF_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SSF_Close( TA_SSF_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SSF( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SSF_OpenAndFill( TA_SSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SSF_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SSF_Value( const TA_SSF_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SSF reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SSF_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SSF_OutRange( const TA_SSF_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SSF_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SSF_Advance( TA_SSF_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SSF_Clone( const TA_SSF_Stream *stream, TA_SSF_Stream **clone );
 
 /*
  * TA_STC - Schaff Trend Cycle

@@ -418,6 +418,27 @@ test('a number[], a Float32Array, a Float64Array subclass and views over a Share
   ranInWasm(check('a SharedArrayBuffer output', () => ema(close, { outReal: out }), () => js.ema(close, { outReal: new Float64Array(N) })), 'a SharedArrayBuffer output');
 });
 
+test('a ranged call over a Float64Array whose buffer or byteOffset is overridden copies the bars ta-lib/js indexes; one whose length overstates its bars falls through', () => {
+  const range = { startIdx: N - 20 };
+  const other = Float64Array.from(close, (v) => -v);
+  const offset = Float64Array.from(close);
+  Object.defineProperty(offset, 'byteOffset', { value: 16 });
+  class Elsewhere extends Float64Array {
+    override get buffer(): ArrayBuffer {
+      return other.buffer;
+    }
+  }
+  for (const [where, input] of [['an own byteOffset', offset], ['a buffer getter', Elsewhere.from(close)]] as const) {
+    ranInWasm(check(where, () => ema(input, range), () => js.ema(input, range)), where);
+  }
+  const memory = new Float64Array(N + 8).fill(7);
+  memory.set(close);
+  const short = new Float64Array(memory.buffer, 0, N - 5);
+  Object.defineProperty(short, 'length', { value: N });
+  const r = check('an own length past its bars', () => ema(short, range), () => js.ema(short, range));
+  assert.deepEqual([r.ran, r.fellThrough, hooks.lastFallThrough()], [0, 1, 'threw']);
+});
+
 test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js rejects it', () => {
   assert.equal(MAType.MAMA, 7);
   const mama = check('maType 7', () => ma(close, { maType: MAType.MAMA }), () => js.ma(close, { maType: MAType.MAMA }));
@@ -621,23 +642,77 @@ test('the routed path accepts exactly the options objects ta-lib/js accepts', ()
     ['null-prototype object', Object.assign(Object.create(null) as object, { timePeriod: 9 })],
     ['class instance', new Options()],
     ['frozen object', Object.freeze({ timePeriod: 9 })],
+    ['object of another realm', Object.assign(vm.runInNewContext('({})') as object, { timePeriod: 9 })],
     ['array', [9]],
     ['typed array', new Float64Array(3)],
     ['null', null],
     ['function', () => 9],
     ['Proxy', new Proxy({ timePeriod: 9 }, {})],
+    ['Core', Core.DEFAULT],
+    ['Map', new Map([['timePeriod', 9]])],
+    ['Date', new Date(0)],
   ];
   let accepted = 0;
   for (const [where, options] of shapes) {
     const opts = options as Parameters<typeof ema>[1];
     const r = check(where, () => ema(close, opts), () => js.ema(close, opts));
     const jsAccepts = r.got.error === undefined;
-    assert.equal(hooks.routedOptions(opts) !== null, jsAccepts, `${where}: the routed predicate disagrees with ta-lib/js`);
     if (jsAccepts) ranInWasm(r, where);
     else assert.equal(r.fellThrough, 1, where);
     if (jsAccepts) accepted++;
   }
   assert.equal(accepted, 5);
+});
+
+test('an option key the function does not have falls through as options before the module and throws the ta-lib/js error at all five calls; an inherited one is ignored', () => {
+  const bad: [string, () => unknown, () => unknown][] = [
+    ['misspelt', () => ema(close, { timeperiod: 9 } as never), () => js.ema(close, { timeperiod: 9 } as never)],
+    ['C spelling', () => ema(close, { optInTimePeriod: 9 } as never), () => js.ema(close, { optInTimePeriod: 9 } as never)],
+    ['undefined value', () => ema(close, { timePeriod: 9, period: undefined } as never), () => js.ema(close, { timePeriod: 9, period: undefined } as never)],
+    ['a buffer key of another function', () => macd(close, { outReal: new Float64Array(N) } as never), () => js.macd(close, { outReal: new Float64Array(N) } as never)],
+    ['a null-prototype object', () => ema(close, Object.assign(Object.create(null) as object, { timeperiod: 9 }) as never), () => js.ema(close, Object.assign(Object.create(null) as object, { timeperiod: 9 }) as never)],
+  ];
+  for (const [where, viaDefault, viaJs] of bad) {
+    const r = check(where, viaDefault, viaJs);
+    assert.ok(r.got.error instanceof TALibError && r.got.error.code === 'TA_BAD_PARAM', `${where}: ${String(r.got.error)}`);
+    assert.match(r.got.error.message, /unknown option/, where);
+    assert.equal(r.fellThrough, 1, where);
+    assert.equal(hooks.lastFallThrough(), 'options', where);
+    assert.equal(r.ran, 0, `${where}: entered the module`);
+  }
+  const typo = { timeperiod: 9 } as never;
+  let rejected = 0;
+  for (const [verb, call] of [
+    ['', () => routed.ema(close, typo)],
+    [' lookback', () => routed.emaLookback(typo)],
+    [' displayShift', () => routed.emaDisplayShift(0, typo)],
+    [' open', () => routed.emaOpen(close, typo)],
+    [' openAndFill', () => routed.emaOpenAndFill(close, typo)],
+  ] as const) {
+    hooks.setEngineMode('force');
+    try {
+      assert.throws(call, (e: unknown) => e instanceof TALibError && e.message === `EMA${verb}: unknown option "timeperiod"; did you mean "timePeriod"?`, `EMA${verb}`);
+    } finally {
+      hooks.setEngineMode('table');
+    }
+    rejected++;
+  }
+  assert.equal(rejected, 5);
+  const proto = Object.prototype as Record<string, unknown>;
+  proto.timeperiod = 5;
+  try {
+    for (const [where, options] of [['inherited key', { timePeriod: 9 }], ['inherited key, no options', undefined]] as const) {
+      ranInWasm(check(where, () => ema(close, options), () => js.ema(close, options)), where);
+    }
+  } finally {
+    delete proto.timeperiod;
+  }
+  const every = { timePeriod: 9, startIdx: 3, endIdx: N - 2, core: Core.DEFAULT, outReal: new Float64Array(N) };
+  ranInWasm(check('every key', () => ema(close, every), () => js.ema(close, { ...every, outReal: new Float64Array(N) })), 'every key');
+  assert.equal(routed.emaLookback(every), js.emaLookback({ timePeriod: 9 }));
+  assert.equal(routed.emaDisplayShift(0, every), 0);
+  assert.equal(routed.emaOpen(close, every).value(), js.emaOpen(close, { timePeriod: 9 }).value());
+  assert.equal(routed.emaOpenAndFill(close, every).stream.value(), js.emaOpen(close, { timePeriod: 9 }).value());
 });
 
 test('an instance past the high-water mark is dropped after its call, and the next call still answers in WASM', () => {

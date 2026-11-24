@@ -7837,6 +7837,103 @@ const functionDescriptionXML = `<?xml version="1.0" encoding="utf-8" ?>
 	</FinancialFunction>
 
 
+	<!-- MAENV -->
+	<FinancialFunction>
+		<Abbreviation>MAENV</Abbreviation>
+		<ShortDescription>Moving Average Envelope</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Percent up</Name>
+				<ShortDescription>Percent of the moving average added to form the upper band</ShortDescription>
+				<Flags>
+					<Flag>Percent</Flag>
+				</Flags>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>-3.000000e+37</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>5.000000e-1</SuggestedStart>
+					<SuggestedEnd>2.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1.000000e+1</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Percent down</Name>
+				<ShortDescription>Percent of the moving average subtracted to form the lower band</ShortDescription>
+				<Flags>
+					<Flag>Percent</Flag>
+				</Flags>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>-3.000000e+37</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>5.000000e-1</SuggestedStart>
+					<SuggestedEnd>2.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1.000000e+1</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>MA Type</Name>
+				<ShortDescription>Type of Moving Average</ShortDescription>
+				<Type>MA Type</Type>
+				<DefaultValue>0</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealUpperBand</Name>
+				<Flags>
+					<Flag>Upper Limit</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealMiddleBand</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealLowerBand</Name>
+				<Flags>
+					<Flag>Lower Limit</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- MAMA -->
 	<FinancialFunction>
 		<Abbreviation>MAMA</Abbreviation>
@@ -10792,6 +10889,51 @@ const functionDescriptionXML = `<?xml version="1.0" encoding="utf-8" ?>
 			<OutputArgument>
 				<Type>Integer Array</Type>
 				<Name>outSqueeze</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- SSF -->
+	<FinancialFunction>
+		<Abbreviation>SSF</Abbreviation>
+		<ShortDescription>Ehlers SuperSmoother Filter</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
+			<Flag>Uses Transcendental</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Critical period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>10000</Maximum>
+					<SuggestedStart>5</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
 				</Flags>

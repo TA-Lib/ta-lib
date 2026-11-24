@@ -50,7 +50,7 @@
  *  111126 MF,CC  Test the shadow gaps and colors first, as an else-if chain of pre-checks
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -289,7 +289,7 @@ export function cdlabandonedbabyPositional(
  * {@link cdlabandonedbabyDisplayShift}, {@link cdlabandonedbabyOpen} and
  * {@link cdlabandonedbabyOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CdlabandonedbabyOptions {
   /**
@@ -298,8 +298,8 @@ export interface CdlabandonedbabyOptions {
    */
   penetration?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -319,6 +319,22 @@ export interface CdlabandonedbabyOptions {
    * buffer or with an input.
    */
   outInteger?: Int32Array<ArrayBuffer> | undefined;
+}
+
+/** @internal */
+export function cdlabandonedbabyOptionsOf(funcName: string, options: CdlabandonedbabyOptions | undefined): CdlabandonedbabyOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'penetration' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'penetration startIdx endIdx core outInteger');
+    }
+  }
+  return options;
 }
 
 /**
@@ -341,15 +357,16 @@ export interface CdlabandonedbabyResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlabandonedbabyOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlabandonedbabyOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlabandonedbabyLookback(options?: CdlabandonedbabyOptions): number {
-  const o = optionsOf('CDLABANDONEDBABY lookback', options);
+  const o = cdlabandonedbabyOptionsOf('CDLABANDONEDBABY lookback', options);
   return cdlabandonedbabyLookbackPositional(orDefault(o.penetration, Core.REAL_DEFAULT), coreOf('CDLABANDONEDBABY lookback', o.core));
 }
 
@@ -360,15 +377,16 @@ export function cdlabandonedbabyLookback(options?: CdlabandonedbabyOptions): num
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlabandonedbabyOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlabandonedbabyOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlabandonedbabyDisplayShift(outputIdx: number, options?: CdlabandonedbabyOptions): number {
-  const o = optionsOf('CDLABANDONEDBABY displayShift', options);
+  const o = cdlabandonedbabyOptionsOf('CDLABANDONEDBABY displayShift', options);
   return cdlabandonedbabyDisplayShiftPositional(orDefault(o.penetration, Core.REAL_DEFAULT), outputIdx, coreOf('CDLABANDONEDBABY displayShift', o.core));
 }
 
@@ -405,12 +423,12 @@ export function cdlabandonedbabyDisplayShift(outputIdx: number, options?: Cdlaba
  *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, a real parameter that is not a number, a parameter outside its range, an
- *   input too short for the range, a buffer that is empty, too short or of the wrong
- *   type or a buffer sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, a real parameter that is not
+ *   a number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -433,7 +451,7 @@ export function cdlabandonedbabyDisplayShift(outputIdx: number, options?: Cdlaba
  */
 export function cdlabandonedbaby(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlabandonedbabyOptions): CdlabandonedbabyResult {
   requireArgument('CDLABANDONEDBABY', 'prices', prices);
-  const o = optionsOf('CDLABANDONEDBABY', options);
+  const o = cdlabandonedbabyOptionsOf('CDLABANDONEDBABY', options);
   if (o.endIdx === undefined) {
     requireSeries('CDLABANDONEDBABY', 'prices.open', prices.open);
     requireSeries('CDLABANDONEDBABY', 'prices.high', prices.high);
@@ -1363,14 +1381,15 @@ export function cdlabandonedbabyOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlabandonedbabyOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlabandonedbabyOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlabandonedbabyLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, a real parameter that is not a number, a parameter
- *   outside its range or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, a real
+ *   parameter that is not a number, a parameter outside its range or histories of
+ *   different lengths.
  *
  * @example
  * ```ts
@@ -1393,7 +1412,7 @@ export function cdlabandonedbabyOpenAndFillPositional(
  */
 export function cdlabandonedbabyOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlabandonedbabyOptions): CdlabandonedbabyStream {
   requireArgument('CDLABANDONEDBABY open', 'prices', prices);
-  const o = optionsOf('CDLABANDONEDBABY open', options);
+  const o = cdlabandonedbabyOptionsOf('CDLABANDONEDBABY open', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
   const core = coreOf('CDLABANDONEDBABY open', o.core);
   return cdlabandonedbabyOpenPositional(prices.open, prices.high, prices.low, prices.close, optInPenetration, core);
@@ -1407,19 +1426,19 @@ export function cdlabandonedbabyOpen(prices: { open: ArrayLike<number>; high: Ar
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CdlabandonedbabyOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CdlabandonedbabyOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdlabandonedbaby} returns them; the range is
  *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlabandonedbabyLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, a real parameter that is not a number, a parameter
- *   outside its range, histories of different lengths or a buffer too short, of the
- *   wrong type or starting where another buffer or a `Float64Array` input starts,
- *   or, on a history long enough to open, one sharing memory with another buffer or
- *   a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, a real
+ *   parameter that is not a number, a parameter outside its range, histories of
+ *   different lengths or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1441,7 +1460,7 @@ export function cdlabandonedbabyOpen(prices: { open: ArrayLike<number>; high: Ar
  */
 export function cdlabandonedbabyOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlabandonedbabyOptions): CdlabandonedbabyResult & { stream: CdlabandonedbabyStream } {
   requireArgument('CDLABANDONEDBABY openAndFill', 'prices', prices);
-  const o = optionsOf('CDLABANDONEDBABY openAndFill', options);
+  const o = cdlabandonedbabyOptionsOf('CDLABANDONEDBABY openAndFill', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
   const core = coreOf('CDLABANDONEDBABY openAndFill', o.core);
   const capacity = fillCapacity(cdlabandonedbabyLookbackPositional(optInPenetration, core), prices.open, prices.high, prices.low, prices.close);

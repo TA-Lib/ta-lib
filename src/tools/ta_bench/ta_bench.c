@@ -230,6 +230,12 @@ static void thermal_wait(char *respBuf, int respSz) {
 static double g_spread_sum[NUM_LANGUAGES], g_spread_worst[NUM_LANGUAGES];
 static int    g_spread_n[NUM_LANGUAGES];
 
+/* A server that reports "jit_in_timing" (C#) says whether code was compiled
+ * while it timed, and "warm_capped" whether its warm-up stopped at the cap
+ * before the tiers settled. A row is unsettled when the pass it keeps says so;
+ * a server that sends neither field is taken as settled. */
+static int g_reports_settle[NUM_LANGUAGES], g_unsettled[NUM_LANGUAGES];
+
 /* ---- Per-indicator benchmark callback ---- */
 
 typedef struct {
@@ -286,7 +292,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     long long timings[16] = {0};
     long long t_max[16] = {0};
     int has_timing[16] = {0};
-
+    int unsettled[16] = {0};
 
     #define BENCH_PASSES 3
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
@@ -303,8 +309,13 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
                 /* Error responses carry timing_ns 0, and a call the library
                  * rejected times the rejection: neither is a measurement. */
                 if( ns > 0 ) {
-                    if( !has_timing[li] || ns < timings[li] )
+                    const char *jit = json_find_field(ctx->respBuf, "jit_in_timing", &len);
+                    const char *cap = json_find_field(ctx->respBuf, "warm_capped", &len);
+                    if( jit ) g_reports_settle[li] = 1;
+                    if( !has_timing[li] || ns < timings[li] ) {
                         timings[li] = ns;
+                        unsettled[li] = (jit && atoll(jit) > 0) || (cap && atoi(cap) != 0);
+                    }
                     /* Widest and narrowest too: min alone cannot say whether
                        the box was quiet enough for the row to mean anything. */
                     if( !has_timing[li] || ns > t_max[li] ) t_max[li] = ns;
@@ -322,6 +333,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
         g_spread_sum[li] += sp;
         g_spread_n[li]++;
         if( sp > g_spread_worst[li] ) g_spread_worst[li] = sp;
+        g_unsettled[li] += unsettled[li];
     }
 
     /* Print row */
@@ -338,6 +350,14 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
             const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
             const char *rst = (*clr) ? "\033[0m" : "";
             printf(" %s%10lld%s", clr, timings[li], rst);
+        }
+    }
+    {
+        const char *sep = "  unsettled: ";
+        for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
+            if( !has_timing[li] || !unsettled[li] ) continue;
+            printf("%s%s", sep, LANGUAGES[li].display);
+            sep = ", ";
         }
     }
     printf("\n");
@@ -553,13 +573,22 @@ int main(int argc, char *argv[]) {
            ctx.count, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
+    int any_unsettled = 0;
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( g_spread_n[li] <= 0 ) continue;
-        printf("%s spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
+        printf("%s spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows)",
                LANGUAGES[li].display, BENCH_PASSES,
                g_spread_sum[li] / (double)g_spread_n[li] * 100.0,
                g_spread_worst[li] * 100.0, g_spread_n[li]);
+        if( g_reports_settle[li] ) printf(", %d unsettled", g_unsettled[li]);
+        printf(".\n");
+        any_unsettled |= g_unsettled[li] > 0;
     }
+    /* Advisory, unlike --max-spread: the count also catches the server's own
+       helpers compiling during a kept pass, so failing on it would fail clean runs. */
+    if( any_unsettled )
+        printf("unsettled: the kept pass compiled code while timed, or its warm-up stopped at"
+               " the cap; re-run those rows.\n");
 
     /* Only cref gates --max-spread: the Java arm exceeds it at any --iters a
        local regtest.py perftest can afford. */

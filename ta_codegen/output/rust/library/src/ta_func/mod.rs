@@ -48,6 +48,8 @@ pub enum MAType {
     VIDYA = 14,
     /// The `TA_MAType_ALMA` moving average.
     ALMA = 15,
+    /// The `TA_MAType_SSF` moving average.
+    SSF = 16,
 }
 
 impl TryFrom<i32> for MAType {
@@ -83,6 +85,7 @@ impl TryFrom<i32> for MAType {
             13 => Self::RMA,
             14 => Self::VIDYA,
             15 => Self::ALMA,
+            16 => Self::SSF,
             i32::MIN => Self::DEFAULT,
             _ => return Err(RetCode::BadParam),
         })
@@ -255,6 +258,7 @@ mod macd;
 mod macdext;
 mod macdfix;
 mod macdv;
+mod maenv;
 mod mama;
 mod marketfi;
 mod massi;
@@ -311,6 +315,7 @@ mod smi;
 mod sortino;
 mod sqrt;
 mod sqzmom;
+mod ssf;
 mod stc;
 mod stddev;
 mod stoch;
@@ -501,6 +506,7 @@ pub use macd::MacdStream;
 pub use macdext::MacdextStream;
 pub use macdfix::MacdfixStream;
 pub use macdv::MacdvStream;
+pub use maenv::MaenvStream;
 pub use mama::MamaStream;
 pub use marketfi::MarketfiStream;
 pub use massi::MassiStream;
@@ -557,6 +563,7 @@ pub use smi::SmiStream;
 pub use sortino::SortinoStream;
 pub use sqrt::SqrtStream;
 pub use sqzmom::SqzmomStream;
+pub use ssf::SsfStream;
 pub use stc::StcStream;
 pub use stddev::StddevStream;
 pub use stoch::StochStream;

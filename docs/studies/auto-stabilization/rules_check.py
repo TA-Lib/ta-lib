@@ -192,6 +192,49 @@ for K in Ks:
             if v>0: bad.append((K,P,delta,v))
 print('BP: real-pole cases',realpoles,' violations',len(bad),bad[:3],' tightest slack',worst)
 
+# SSF: a complex pair at radius r = exp(-1.414*3.14159/P), angle th = 1.414*pi/P. Two output
+# slots carry the seed and the forcing is the same for both starts, so from age 0 the difference
+# is d_k = R*r^k*cos(k*th + phi), R and phi free. Past m it is at most R*r^m; S is R*s(phi),
+# s(phi) = max_k r^k*|cos(k*th + phi)|, so the need is at most (K + c(P)) bars per e-fold with
+# c(P) = -ln(min over phi of s(phi)). Rule m = ceil(7*(K+2)*P/31): 7/31 >= 1/4.44221.
+# Exact c(P) to P = 300; above it the angle step is under 0.0148 and s moves at most that from
+# its continuous limit, so c(P) <= -ln(e^-c_inf - 0.0148).
+def ssf_c(P,nphi=720):
+    r=math.exp(-1.414*3.14159/P); th=1.414*math.pi/P
+    kmax=int(math.pi/th)+3
+    env=[r**k for k in range(kmax+1)]
+    return -math.log(min(max(env[k]*abs(math.cos(k*th+j*math.pi/nphi)) for k in range(kmax+1)) for j in range(nphi)))
+def ssf_rule(K,P,c=2): return ceil_div(7*(K+c)*P,31)
+ssf_cinf=-math.log(min(max(math.exp(-3.14159/math.pi*t/200.0)*abs(math.cos(t/200.0+j*math.pi/720)) for t in range(0,700)) for j in range(720)))
+ssf_cs={P:ssf_c(P) for P in range(2,301)}
+ssf_ctail=-math.log(math.exp(-ssf_cinf)-0.0148)
+# Where the bound is over the rule, the exact need over phases (max over k >= m against S) decides.
+def ssf_need(K,P,nphi=720):
+    r=math.exp(-1.414*3.14159/P); th=1.414*math.pi/P
+    n=int((K+4)*P/(1.414*3.14159))+int(2*math.pi/th)+4
+    worst=[0.0]*n
+    for j in range(nphi):
+        d=[r**k*abs(math.cos(k*th+j*math.pi/nphi)) for k in range(n)]
+        S=max(d); t=0.0
+        for k in range(n-1,-1,-1):
+            t=max(t,d[k]); worst[k]=max(worst[k],t/S)
+    return next(k for k in range(n) if worst[k]<=math.exp(-K))
+ssf_bad=[]; ssf_exact=[]; ssf_worst=-1e9
+for K in Ks:
+    for P in range(2,10001):
+        c=ssf_cs.get(P,ssf_ctail); bpe=P/(1.414*3.14159)
+        v=(K+c)*bpe-ssf_rule(K,P)
+        if v>0:
+            ssf_exact.append((K,P))
+            if ssf_need(K,P,2000)>ssf_rule(K,P): ssf_bad.append((K,P))
+        else: ssf_worst=max(ssf_worst,v/bpe)
+print('SSF: c(P) at most %.4f (P=%d), %.4f past P=300, %.4f in the limit; bound over the rule at %s, exact need over it at %d %s; tightest slack elsewhere (K-units, <=0 ok) %.4f'%(
+      max(ssf_cs.values()),max(ssf_cs,key=ssf_cs.get),ssf_ctail,ssf_cinf,ssf_exact,len(ssf_bad),ssf_bad[:3],ssf_worst))
+print('  rule ceil(7*(K+1)*P/31): exact need over it at (K,P) %s'%[(K,P) for K in (10,19) for P in (2,3,4,5,6,7,8,10) if ssf_need(K,P)>ssf_rule(K,P,1)])
+for P in (2,3,5,10,20,100):
+    print('  P=%4d  c=%.3f  need at K=10,19: %4d %4d  bound: %4d %4d  rule: %4d %4d'%(P,ssf_cs[P],ssf_need(10,P),ssf_need(19,P),
+          math.ceil((10+ssf_cs[P])*P/(1.414*3.14159)),math.ceil((19+ssf_cs[P])*P/(1.414*3.14159)),ssf_rule(10,P),ssf_rule(19,P)))
+
 # T3: six EMA stages of one pole p = (n-1)/(n+1), stepped together; the output is a weighted
 # sum of stages 3 to 6. The state difference of two starts moves as p times a unipotent
 # matrix on any input, so the output difference at age j is p^j * q(j), q a polynomial of

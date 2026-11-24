@@ -1502,7 +1502,8 @@ fn peek_frame_arm_named(
         let _ = writeln!(out, "{pad}double {s}_factor = sp.cs_{s}_factor;");
     }
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let peek_fma = stream_fma.for_peek();
+    let ctx = stream_ctx(&empty, counter, &peek_fma);
     for s in &body_ir {
         out.push_str(&render_statement_ctx(s, indent, &ctx, enums, registry, helpers));
     }

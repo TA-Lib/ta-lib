@@ -24,6 +24,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -41,15 +42,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -82,12 +83,22 @@
          optInSlowD_MAType = MAType.SMA;
       }
       int retValue;
+      int maLookback;
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
-      /* Add the smoothing being done for %K slow */
-      retValue += maLookback(optInSlowK_Period, optInSlowK_MAType);
-      /* Add the smoothing being done for %D slow. */
-      retValue += maLookback(optInSlowD_Period, optInSlowD_MAType);
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
+      maLookback = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
       return retValue ;
 
    }
@@ -105,15 +116,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -223,7 +234,13 @@
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.
@@ -433,7 +450,13 @@
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -545,15 +568,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -642,15 +665,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -1136,7 +1159,13 @@
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = maLookback(optInSlowK_Period, optInSlowK_MAType);
+      if( lookbackKSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackDSlow = maLookback(optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackDSlow < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.

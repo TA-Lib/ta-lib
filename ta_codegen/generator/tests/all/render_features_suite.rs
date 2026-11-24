@@ -1211,10 +1211,12 @@ TA_RetCode max( int    startIdx,
 }
 
 /// OBV adds or subtracts the volume on whether the close rose, a coin flip: C
-/// and Rust select the step in batch (C's two precisions), open, step and peek.
+/// and Rust select the step in batch (C's two precisions), open, step and peek;
+/// Java and C# in both precisions, open and step, TypeScript in batch, open and
+/// step, their peek keeping the branch.
 /// No other function's accumulation qualifies.
 #[test]
-fn c_and_rust_pick_an_ordered_step_without_a_branch() {
+fn an_ordered_step_is_picked_without_a_branch() {
     let (registry, helpers) = (make_registry(), make_helpers());
     let mut fired = Vec::new();
     for name in common::all_indicators() {
@@ -1232,6 +1234,14 @@ fn c_and_rust_pick_an_ordered_step_without_a_branch() {
     for (lang, src, pick, tiers) in [("C", &c, "TA_ORDER_STEP(", 5), ("Rust", &rust, "std::hint::select_unpredictable(", 8)] {
         assert_eq!(src.matches(pick).count(), tiers, "{lang}:\n{src}");
         assert!(!src.contains("tempReal > "), "{lang} keeps a branch:\n{src}");
+    }
+    let java = backends::java::generate(&func, &enums, registry, helpers);
+    let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
+    let ts = backends::ts::generate(&func, &enums, registry, helpers);
+    for (lang, src, pick, tiers) in [("Java", &java, "? -1L : 0L)", 4), ("C#", &csharp, "Pick(MaskLt(", 4), ("TS", &ts, "= orderStepPick[+(", 3)] {
+        let picked = src.lines().filter(|l| l.contains(pick) && l.contains("prevOBV")).count();
+        let branched = src.lines().filter(|l| l.trim_start().starts_with("if") && l.contains("tempReal > ")).count();
+        assert_eq!((picked, branched), (tiers, 1), "{lang}: {tiers} tiers pick, the peek alone branches:\n{src}");
     }
 }
 
@@ -1395,7 +1405,7 @@ TA_RetCode max( int    startIdx,
         "if( j - pos >= 16 ) { ShiftUp(sorted, j, pos); j = pos; } else { while( j > pos ) {",
         "double _ld1 = inReal[today]; double _ld2 = sorted[0]; double _ld3 = sorted[1];",
         "x = Math.FusedMultiplyAdd(Math.Floor(_ld2), Math.Ceiling(_ld3), Math.Sqrt(_ld1));",
-        "double _ld4 = outReal[i]; outReal[i] = Math.Sqrt(_ld4) + 1.0;",
+        "double _ld4 = _w0[_wk]; _w0[_wk] = Math.Sqrt(_ld4) + 1.0;",
         // Near misses. A reduction loop's select paces the loop.
         "if( tmp < low ) { lowIdx = i; low = tmp; }",
         "if( b < a ) { swap = a; a = b; }",
@@ -1452,12 +1462,169 @@ TA_RetCode max( int    startIdx,
     for needle in [
         "i = startIdx; outIdx = 0; int _sq0 = SqrtRun(inReal, i, endIdx + 1, outReal, outIdx); i += _sq0; outIdx += _sq0;",
         "i = 0; int _sq1 = SqrtRun(outReal, i, outIdx, outReal, i, k); i += _sq1;",
-        "for( i = 0; i < outIdx; i += 1 ) { double _ld2 = outReal[i]; outReal[i] = Math.Sqrt(_ld2) + k; }",
+        "var _w0 = outReal.Slice(i, _wn); int _wk = 0; for( ; _wk <= _w0.Length - 4; _wk += 4 ) { double _ld2 = _w0[_wk]; _w0[_wk] = Math.Sqrt(_ld2) + k; double _ld3 = _w0[_wk + 1];",
         "for( i = 0, j = 0; i < j + outIdx; i += 1, j += 1 ) {",
-        "for( i = 0; i < outIdx; i += 1 ) { double _ld4 = inReal[i + 1];",
+        "var _w0 = inReal.Slice(i + 1, _w1.Length); int _wk = 0; for( ; _wk <= _w1.Length - 4; _wk += 4 ) { double _ld8 = _w0[_wk];",
     ] {
         assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
     }
+}
+
+/// A C# loop over windows: its body, the slices cut for it (name, array,
+/// start, length), the slice its test reads the length of, and its passes per
+/// trip: one for a rolled loop and for an unrolled loop's tail, which follows
+/// its group and runs over the group's slices.
+struct CsWindowed {
+    pass: Vec<String>,
+    cuts: Vec<(String, String, String, String)>,
+    tested: String,
+    width: usize,
+    tail: bool,
+}
+
+/// A pass's code lines, comments dropped and each hoisted load's number
+/// erased, since every copy of a pass numbers its own.
+fn cs_pass_code(pass: &[String]) -> Vec<String> {
+    let load = regex::Regex::new(r"_ld\d+").unwrap();
+    let mut in_comment = false;
+    let mut out = Vec::new();
+    for line in pass {
+        let s = line.trim();
+        if in_comment || s.starts_with("/*") {
+            in_comment = !s.contains("*/");
+        } else if !s.starts_with("//") {
+            out.push(load.replace_all(line, "_ldN").into_owned());
+        }
+    }
+    out
+}
+
+fn cs_windowed_loops(batch: &str) -> Vec<CsWindowed> {
+    let rolled = regex::Regex::new(r"^(\s*)for\( int _wk = 0; _wk < (_w\w+)\.Length; _wk\+\+ \) \{$").unwrap();
+    let group = regex::Regex::new(r"^(\s*)for\( ; _wk <= (_w\w+)\.Length - (\d+); _wk \+= (\d+) \) \{$").unwrap();
+    let tail = regex::Regex::new(r"^(\s*)for\( ; _wk < (_w\w+)\.Length; _wk\+\+ \) \{$").unwrap();
+    let cut = regex::Regex::new(r"^\s*var (_w\w+) = (\w+)\.Slice\((.+), (\S+)\);$").unwrap();
+    let lines: Vec<&str> = batch.lines().collect();
+    let cuts_above = |h: usize| {
+        let mut cuts: Vec<(String, String, String, String)> =
+            lines[..h].iter().rev().map_while(|l| cut.captures(l)).map(|r| (r[1].to_string(), r[2].to_string(), r[3].to_string(), r[4].to_string())).collect();
+        cuts.reverse();
+        cuts
+    };
+    let mut out: Vec<CsWindowed> = Vec::new();
+    for (h, line) in lines.iter().enumerate() {
+        let (c, width, is_tail, cuts) = if let Some(c) = rolled.captures(line) {
+            (c, 1, false, cuts_above(h))
+        } else if let Some(c) = group.captures(line) {
+            assert_eq!(c[3], c[4], "a group loop must test for room for the passes it runs:\n{line}");
+            assert_eq!(lines[h - 1], format!("{}int _wk = 0;", &c[1]), "a group loop must start its counter at zero:\n{batch}");
+            let w = c[3].parse().unwrap();
+            (c, w, false, cuts_above(h - 1))
+        } else if let Some(c) = tail.captures(line) {
+            let g = out.last().filter(|g| g.width > 1 && !g.tail).unwrap_or_else(|| panic!("a tail loop without its group:\n{batch}"));
+            assert_eq!(lines[h - 1], format!("{}}}", &c[1]), "the tail must follow its group at once:\n{batch}");
+            let cuts = g.cuts.clone();
+            (c, 1, true, cuts)
+        } else {
+            continue;
+        };
+        let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
+        out.push(CsWindowed { pass: lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), cuts, tested: c[2].to_string(), width, tail: is_tail });
+    }
+    out
+}
+
+/// A C# lockstep loop runs `_wk` over slices all cut as long as the first and
+/// tested against that one's length: RyuJIT then drops every check, and with
+/// any other length it silently keeps them. An unrolled group reaches at most
+/// `_wk + width - 1` from `_wk <= len - width` and touches nothing but those
+/// slices; its tail runs the rest over the same ones. Each copy, and the tail,
+/// must be copy 0 moved by its offset: a dropped statement or an unfused FMA
+/// in one copy changes values only there, and only nightly runs C#. ADD's comma update,
+/// MOM's three steps in one statement and TRANGE's scalar selects reach that
+/// shape with no index read or stepped inside. A loop that carries a scalar
+/// from one pass to the next stays as written: EMA windows its copy loops, not
+/// its recurrence.
+#[test]
+fn csharp_lockstep_loops_run_over_equal_slices() {
+    let step = regex::Regex::new(r"^\s*\w+(\+\+|--| \+= 1| -= 1)").unwrap();
+    let access = regex::Regex::new(r"(\w+)\[([^\]]*)\]").unwrap();
+    let batch = |name: &str| {
+        let (func, enums) = common::load_indicator(name);
+        let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+        cs[..cs.find("/**** Streaming API").expect("a streaming section")].to_string()
+    };
+    if !common::sweep_filtered() {
+        for (name, arrays) in [("add", &["inReal0", "inReal1", "outReal"][..]), ("mom", &["inReal", "outReal"]), ("trange", &["inHigh", "inLow", "inClose", "outReal"])] {
+            let body = batch(name);
+            let loops = cs_windowed_loops(&body);
+            assert_eq!(loops.iter().filter(|l| l.width > 1).count(), 2, "{name}: one unrolled loop over windows per overload:\n{body}");
+            assert_eq!(loops.len(), 4, "{name}: each unrolled loop and its tail, per overload:\n{body}");
+            for l in &loops {
+                for a in arrays {
+                    assert!(l.cuts.iter().any(|(_, x, _, _)| x == a), "{name}: `{a}` is not sliced:\n{body}");
+                    assert!(!l.pass.iter().any(|x| x.contains(&format!("{a}["))), "{name}: `{a}` is indexed in the loop:\n{body}");
+                }
+                assert!(!l.pass.iter().any(|x| step.is_match(x)), "{name}: an index steps inside the loop:\n{body}");
+            }
+        }
+        let body = batch("ema");
+        let loops = cs_windowed_loops(&body);
+        assert_eq!(loops.len(), 4, "ema: one copy loop over windows per overload, unrolled with its tail:\n{body}");
+        assert!(loops.iter().all(|l| !l.pass.iter().any(|x| x.contains("prevMA"))), "ema: its recurrence runs over windows:\n{body}");
+    }
+    let (mut functions, mut unrolled) = (0usize, 0usize);
+    for name in common::discover_indicators() {
+        let body = batch(&name);
+        let loops = cs_windowed_loops(&body);
+        for (i, l) in loops.iter().enumerate() {
+            let (first, rest) = l.cuts.split_first().unwrap_or_else(|| panic!("{name}: a loop over no slice:\n{body}"));
+            assert!(first.3 == "_wn" && l.tested == first.0, "{name}: the loop must test the first slice, cut `_wn` long:\n{body}");
+            for c in rest {
+                assert_eq!(c.3, format!("{}.Length", first.0), "{name}: `{}` is not as long as `{}`:\n{body}", c.0, first.0);
+            }
+            if l.width == 1 && !l.tail {
+                continue;
+            }
+            let mut reached = vec![false; l.width];
+            for x in &l.pass {
+                for a in access.captures_iter(x) {
+                    assert!(l.cuts.iter().any(|c| c.0 == a[1]), "{name}: `{}` in an unrolled loop is not one of its slices:\n{body}", &a[0]);
+                    let e = match &a[2] {
+                        "_wk" => 0,
+                        i => i.strip_prefix("_wk + ").and_then(|e| e.parse().ok()).unwrap_or_else(|| panic!("{name}: `{}` is not at the counter:\n{body}", &a[0])),
+                    };
+                    assert!(e < l.width, "{name}: `{}` reaches past the {} passes the test leaves room for:\n{body}", &a[0], l.width);
+                    reached[e] = true;
+                }
+            }
+            assert!(reached.iter().all(|r| *r), "{name}: an unrolled loop that does not run each of its passes:\n{body}");
+            if l.tail {
+                continue;
+            }
+            let code = cs_pass_code(&l.pass);
+            assert_eq!(code.len() % l.width, 0, "{name}: an unrolled loop whose copies differ in length:\n{body}");
+            let copies: Vec<&[String]> = code.chunks(code.len() / l.width).collect();
+            for (e, copy) in copies.iter().enumerate() {
+                let at = if e == 0 { "_wk".to_string() } else { format!("_wk + {e}") };
+                for x in copy.iter() {
+                    for a in access.captures_iter(x) {
+                        assert_eq!(&a[2], at, "{name}: `{}` in copy {e} of an unrolled pass:\n{body}", &a[0]);
+                    }
+                }
+                let rebased: Vec<String> = copy.iter().map(|x| x.replace(&format!("[{at}]"), "[_wk]")).collect();
+                assert_eq!(rebased, copies[0], "{name}: copy {e} of an unrolled pass is not copy 0:\n{body}");
+            }
+            let tail = loops.get(i + 1).filter(|t| t.tail).unwrap_or_else(|| panic!("{name}: an unrolled loop without its tail:\n{body}"));
+            assert_eq!(cs_pass_code(&tail.pass), copies[0], "{name}: the tail of an unrolled loop is not its copy 0:\n{body}");
+        }
+        let groups = loops.iter().filter(|l| l.width > 1).count();
+        assert_eq!(groups, loops.iter().filter(|l| l.tail).count(), "{name}: an unrolled loop without its tail:\n{body}");
+        unrolled += groups;
+        functions += usize::from(!loops.is_empty());
+    }
+    assert!(common::sweep_filtered() || functions >= 41, "only {functions} C# batch bodies run a loop over windows");
+    assert!(common::sweep_filtered() || unrolled >= 60, "only {unrolled} C# loops over windows are unrolled");
 }
 
 /// A C# batch body rents its `malloc` scratch from the shared pool and returns
@@ -2688,4 +2855,132 @@ fn c_percentrank_counts_by_adding_in_step_and_peek_only() {
     for needle in ["TA_RetCode TA_PERCENTRANK(", "TA_RetCode TA_S_PERCENTRANK(", "TA_PERCENTRANK_OpenBody("] {
         assert_eq!(count_sites(&body(needle)), (0, 1), "{needle} must keep the `if`:\n{}", body(needle));
     }
+}
+
+/// A TypeScript loop over windows: its body, the window starts declared for
+/// it, and its passes per trip: one for a rolled loop and for an unrolled
+/// loop's tail, which follows its group and reads the group's starts.
+struct TsWindowed {
+    pass: Vec<String>,
+    starts: Vec<String>,
+    width: usize,
+    tail: bool,
+}
+
+fn ts_windowed_loops(ts: &str) -> Vec<TsWindowed> {
+    let rolled = regex::Regex::new(r"^(\s*)for \(let _wk = 0; _wk < _wn; _wk\+\+\) \{$").unwrap();
+    let group = regex::Regex::new(r"^(\s*)for \(let _wk = 0; _wk < \(_wn & ~(\d+)\); _wk = \(_wk \+ (\d+)\) \| 0\) \{$").unwrap();
+    let tail = regex::Regex::new(r"^(\s*)for \(let _wk = _wn & ~(\d+); _wk < _wn; _wk = \(_wk \+ 1\) \| 0\) \{$").unwrap();
+    let start = regex::Regex::new(r"^\s*const (_w\w+) = .+;$").unwrap();
+    let lines: Vec<&str> = ts.lines().collect();
+    let starts_above = |h: usize| -> Vec<String> {
+        let starts: Vec<String> = lines[..h].iter().rev().map_while(|l| start.captures(l)).map(|c| c[1].to_string()).filter(|w| w != "_wn").collect();
+        assert!(lines[h - 1 - starts.len()].trim_start().starts_with("const _wn = "), "a loop over windows must take its trip first:\n{ts}");
+        starts
+    };
+    let mut out: Vec<TsWindowed> = Vec::new();
+    for (h, line) in lines.iter().enumerate() {
+        let (c, width, is_tail, starts) = if let Some(c) = rolled.captures(line) {
+            (c, 1, false, starts_above(h))
+        } else if let Some(c) = group.captures(line) {
+            let w: usize = c[3].parse().unwrap();
+            assert_eq!(c[2].parse::<usize>().unwrap() + 1, w, "a group loop must stop where its passes no longer fit:\n{line}");
+            (c, w, false, starts_above(h))
+        } else if let Some(c) = tail.captures(line) {
+            let g = out.last().filter(|g| g.width > 1 && !g.tail).unwrap_or_else(|| panic!("a tail loop without its group:\n{ts}"));
+            assert_eq!(c[2].parse::<usize>().unwrap() + 1, g.width, "the tail must start where its group stopped:\n{line}");
+            assert_eq!(lines[h - 1], format!("{}}}", &c[1]), "the tail must follow its group at once:\n{ts}");
+            let starts = g.starts.clone();
+            (c, 1, true, starts)
+        } else {
+            continue;
+        };
+        let end = h + lines[h..].iter().position(|l| *l == format!("{}}}", &c[1])).expect("the loop closes");
+        out.push(TsWindowed { pass: lines[h + 1..end].iter().map(|l| (*l).to_string()).collect(), starts, width, tail: is_tail });
+    }
+    out
+}
+
+/// `line` with each window access's offset past `_wk` mapped through `f`,
+/// written `+ c` even where `c` is 0.
+fn ts_lane_offsets(line: &str, f: impl Fn(usize) -> usize) -> String {
+    let lane = regex::Regex::new(r"\((_w\w+) \+ _wk(?: \+ (\d+))?\) \| 0").unwrap();
+    lane.replace_all(line, |m: &regex::Captures| format!("({} + _wk + {}) | 0", &m[1], f(m.get(2).map_or(0, |c| c.as_str().parse().unwrap())))).into_owned()
+}
+
+/// TypeScript runs a lockstep batch loop of plain assignments on one counter,
+/// each cursor's start held in a constant (ADD, MOM); a loop with a branch
+/// (TRANGE) or a single cursor (STDDEV's root pass) keeps its form. A pass
+/// with no call V8 keeps a call runs four times per trip, each access
+/// `(start + _wk + c) | 0`, then a tail runs the rest. Each copy, and the
+/// tail, must be copy 0 moved by its offset: a dropped statement in one copy
+/// changes values only on the bars that copy runs.
+#[test]
+fn typescript_lockstep_loops_run_one_counter() {
+    let (registry, helpers) = (make_registry(), make_helpers());
+    let step = regex::Regex::new(r"^\s*\w+(\+\+|--| \+= \d+| -= \d+);$").unwrap();
+    let access = regex::Regex::new(r"(\w+)\[([^\]]*)\]").unwrap();
+    let lane = regex::Regex::new(r"^\((_w\w+) \+ _wk(?: \+ (\d+))?\) \| 0$").unwrap();
+    let module = |name: &str| {
+        let (func, enums) = load_indicator(name);
+        backends::ts::generate(&func, &enums, registry, helpers)
+    };
+    if !common::sweep_filtered() {
+        for (name, unrolled) in [("add", 1), ("mom", 1), ("trange", 0), ("stddev", 0)] {
+            let ts = module(name);
+            let loops = ts_windowed_loops(&ts);
+            assert_eq!(loops.iter().filter(|l| !l.tail).count(), unrolled, "{name}:\n{ts}");
+            assert!(loops.iter().all(|l| l.width == 4 || l.tail), "{name}: four passes per trip:\n{ts}");
+        }
+    }
+    let mut unrolled = 0usize;
+    for name in discover_indicators() {
+        let ts = module(&name);
+        let loops = ts_windowed_loops(&ts);
+        for (i, l) in loops.iter().enumerate() {
+            if l.width == 1 && !l.tail {
+                continue;
+            }
+            assert!(!l.pass.iter().any(|x| step.is_match(x)), "{name}: an index steps inside an unrolled loop:\n{ts}");
+            let lanes = |copy: &[String]| -> Vec<(String, usize)> {
+                let mut found = Vec::new();
+                for x in copy {
+                    for a in access.captures_iter(x) {
+                        let m = lane.captures(&a[2]).unwrap_or_else(|| panic!("{name}: `{}` in an unrolled loop is not its window plus the counter:\n{ts}", &a[0]));
+                        assert!(l.starts.iter().any(|w| *w == m[1]), "{name}: `{}` reads a window the loop does not start:\n{ts}", &a[0]);
+                        let c = m.get(2).map_or(0, |c| c.as_str().parse().unwrap());
+                        assert!(c < l.width, "{name}: `{}` reaches past the {} passes the test leaves room for:\n{ts}", &a[0], l.width);
+                        found.push((m[1].to_string(), c));
+                    }
+                }
+                found
+            };
+            if l.tail {
+                lanes(&l.pass);
+                continue;
+            }
+            let code = cs_pass_code(&l.pass);
+            assert_eq!(code.len() % l.width, 0, "{name}: an unrolled loop whose copies differ in length:\n{ts}");
+            let copies: Vec<&[String]> = code.chunks(code.len() / l.width).collect();
+            let first = lanes(copies[0]);
+            assert!(!first.is_empty() && first.iter().all(|(_, c)| *c == 0), "{name}: copy 0 of an unrolled pass is not at the counter:\n{ts}");
+            let base: Vec<String> = copies[0].iter().map(|x| ts_lane_offsets(x, |c| c)).collect();
+            for (e, copy) in copies.iter().enumerate() {
+                let got = lanes(copy);
+                assert_eq!(got.len(), first.len(), "{name}: copy {e} makes another number of accesses than copy 0:\n{ts}");
+                for ((w, c), (w0, c0)) in got.iter().zip(&first) {
+                    assert!(w == w0 && *c == c0 + e, "{name}: copy {e} reads `{w}` at {c}, where copy 0 reads `{w0}` at {c0}:\n{ts}");
+                }
+                let rebased: Vec<String> = copy.iter().map(|x| ts_lane_offsets(x, |c| c - e)).collect();
+                assert_eq!(rebased, base, "{name}: copy {e} of an unrolled pass is not copy 0:\n{ts}");
+            }
+            let tail = loops.get(i + 1).filter(|t| t.tail).unwrap_or_else(|| panic!("{name}: an unrolled loop without its tail:\n{ts}"));
+            let tail_code: Vec<String> = cs_pass_code(&tail.pass).iter().map(|x| ts_lane_offsets(x, |c| c)).collect();
+            assert_eq!(tail_code, base, "{name}: the tail of an unrolled loop is not its copy 0:\n{ts}");
+        }
+        let groups = loops.iter().filter(|l| l.width > 1).count();
+        assert_eq!(groups, loops.iter().filter(|l| l.tail).count(), "{name}: an unrolled loop without its tail:\n{ts}");
+        unrolled += groups;
+    }
+    assert!(common::sweep_filtered() || unrolled >= 25, "only {unrolled} TypeScript loops over windows are unrolled");
 }

@@ -114,8 +114,25 @@ public partial class Core
       }
       /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
       outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (Math.FusedMultiplyAdd(inClose[i], 2.0, inHigh[i] + inLow[i])) / 4.0;
+      i = startIdx;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w3 = outReal.Slice(outIdx, _wn);
+         var _w1 = inHigh.Slice(i, _w3.Length);
+         var _w2 = inLow.Slice(i, _w3.Length);
+         var _w0 = inClose.Slice(i, _w3.Length);
+         int _wk = 0;
+         for( ; _wk <= _w3.Length - 4; _wk += 4 ) {
+            _w3[_wk] = (Math.FusedMultiplyAdd(_w0[_wk], 2.0, _w1[_wk] + _w2[_wk])) / 4.0;
+            _w3[_wk + 1] = (Math.FusedMultiplyAdd(_w0[_wk + 1], 2.0, _w1[_wk + 1] + _w2[_wk + 1])) / 4.0;
+            _w3[_wk + 2] = (Math.FusedMultiplyAdd(_w0[_wk + 2], 2.0, _w1[_wk + 2] + _w2[_wk + 2])) / 4.0;
+            _w3[_wk + 3] = (Math.FusedMultiplyAdd(_w0[_wk + 3], 2.0, _w1[_wk + 3] + _w2[_wk + 3])) / 4.0;
+         }
+         for( ; _wk < _w3.Length; _wk++ ) {
+            _w3[_wk] = (Math.FusedMultiplyAdd(_w0[_wk], 2.0, _w1[_wk] + _w2[_wk])) / 4.0;
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -144,8 +161,25 @@ public partial class Core
          return RetCode.BadParam ;
       }
       outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (Math.FusedMultiplyAdd((double)inClose[i], 2.0, (double)inHigh[i] + (double)inLow[i])) / 4.0;
+      i = startIdx;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w3 = outReal.Slice(outIdx, _wn);
+         var _w1 = inHigh.Slice(i, _w3.Length);
+         var _w2 = inLow.Slice(i, _w3.Length);
+         var _w0 = inClose.Slice(i, _w3.Length);
+         int _wk = 0;
+         for( ; _wk <= _w3.Length - 4; _wk += 4 ) {
+            _w3[_wk] = (Math.FusedMultiplyAdd((double)_w0[_wk], 2.0, (double)_w1[_wk] + (double)_w2[_wk])) / 4.0;
+            _w3[_wk + 1] = (Math.FusedMultiplyAdd((double)_w0[_wk + 1], 2.0, (double)_w1[_wk + 1] + (double)_w2[_wk + 1])) / 4.0;
+            _w3[_wk + 2] = (Math.FusedMultiplyAdd((double)_w0[_wk + 2], 2.0, (double)_w1[_wk + 2] + (double)_w2[_wk + 2])) / 4.0;
+            _w3[_wk + 3] = (Math.FusedMultiplyAdd((double)_w0[_wk + 3], 2.0, (double)_w1[_wk + 3] + (double)_w2[_wk + 3])) / 4.0;
+         }
+         for( ; _wk < _w3.Length; _wk++ ) {
+            _w3[_wk] = (Math.FusedMultiplyAdd((double)_w0[_wk], 2.0, (double)_w1[_wk] + (double)_w2[_wk])) / 4.0;
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

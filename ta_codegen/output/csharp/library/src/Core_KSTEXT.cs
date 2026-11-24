@@ -55,6 +55,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  100126 MF,CC  First version (#491).
     *  101126 MF,CC  Each lookback is asked once per call (#522).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Kstext</c> consumes before it can produce
@@ -85,12 +86,14 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInROCMAType">MA type smoothing the four legs (default 0 = SMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int KstextLookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
    {
@@ -151,20 +154,44 @@ public partial class Core
       }
       int legMax = 0;
       int leg = 0;
-      legMax = optInROC1Period + MaLookback(optInMA1Period, optInROCMAType);
-      leg = optInROC2Period + MaLookback(optInMA2Period, optInROCMAType);
+      int maLookback = 0;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = MaLookback(optInMA1Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      legMax = optInROC1Period + maLookback;
+      maLookback = MaLookback(optInMA2Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC2Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC3Period + MaLookback(optInMA3Period, optInROCMAType);
+      maLookback = MaLookback(optInMA3Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC3Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC4Period + MaLookback(optInMA4Period, optInROCMAType);
+      maLookback = MaLookback(optInMA4Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC4Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      return legMax + MaLookback(optInSignalPeriod, optInSignalMAType) ;
+      maLookback = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      return legMax + maLookback ;
 
    }
    /// <summary>
@@ -194,12 +221,14 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInROCMAType">MA type smoothing the four legs (default 0 = SMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -325,14 +354,29 @@ public partial class Core
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -388,8 +432,22 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(2.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
@@ -399,8 +457,22 @@ public partial class Core
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(3.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
@@ -410,8 +482,22 @@ public partial class Core
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(4.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       /* Every read of inReal is done: an output may alias it. */
       kstBuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outKST.Slice(0));
@@ -533,13 +619,28 @@ public partial class Core
       }
       double[]? _rent_kstBuffer = null;
       double[]? _rent_tempBuffer = null;
+      lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
-      lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
-      lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
-      lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -592,8 +693,22 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(2.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(2.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(2.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
@@ -603,8 +718,22 @@ public partial class Core
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(3.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(3.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(3.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
@@ -614,8 +743,22 @@ public partial class Core
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < kstNb; i += 1 ) {
-         kstBuffer[i] = Math.FusedMultiplyAdd(4.0, tempBuffer[i], kstBuffer[i]);
+      i = 0;
+      if( i < kstNb ) {
+         int _wn = kstNb - i;
+         var _w0 = kstBuffer.Slice(i, _wn);
+         var _w1 = tempBuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+            _w0[_wk + 1] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 1], _w0[_wk + 1]);
+            _w0[_wk + 2] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 2], _w0[_wk + 2]);
+            _w0[_wk + 3] = Math.FusedMultiplyAdd(4.0, _w1[_wk + 3], _w0[_wk + 3]);
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = Math.FusedMultiplyAdd(4.0, _w1[_wk], _w0[_wk]);
+         }
+         i += _wn;
       }
       kstBuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outKST.Slice(0));
       OutRange _xr8 = Ma(0, kstNb - 1, kstBuffer, optInSignalPeriod, optInSignalMAType, outKSTSignal);
@@ -688,12 +831,14 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInROCMAType">MA type smoothing the four legs (default 0 = SMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outKST">Know Sure Thing line. Must hold at least <c>endIdx - max(startIdx,
    /// KstextLookback(...)) + 1</c> values, and never be empty: an empty span is
    /// an absent output.</param>
@@ -824,12 +969,14 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInROCMAType">MA type smoothing the four legs (default 0 = SMA; values: 0=SMA, 1=EMA,
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outKST">Know Sure Thing line. Must hold at least <c>endIdx - max(startIdx,
    /// KstextLookback(...)) + 1</c> values, and never be empty: an empty span is
    /// an absent output.</param>
@@ -1230,14 +1377,29 @@ public partial class Core
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {

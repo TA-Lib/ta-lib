@@ -1,0 +1,48 @@
+name: MAENV
+group: Overlap Studies
+hint: Moving Average Envelope
+flags: [overlap, stream, positive_input]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period
+    range: [1, 100000]
+    default: 20
+    suggested: [1, 200, 1]
+  - name: optInPercentUp
+    type: real
+    display_name: Percent up
+    hint: Percent of the moving average added to form the upper band
+    range: [TA_REAL_MIN, TA_REAL_MAX]
+    default: 10
+    precision: 2
+    flags: [percent]
+    suggested: [0.5, 20, 0.5]
+  - name: optInPercentDn
+    type: real
+    display_name: Percent down
+    hint: Percent of the moving average subtracted to form the lower band
+    range: [TA_REAL_MIN, TA_REAL_MAX]
+    default: 10
+    precision: 2
+    flags: [percent]
+    suggested: [0.5, 20, 0.5]
+  - name: optInMAType
+    type: enum:MAType
+    display_name: MA Type
+    hint: Type of Moving Average
+    default: 0
+outputs:
+  - name: outRealUpperBand
+    type: real
+    flags: [upper_limit]
+  - name: outRealMiddleBand
+    type: real
+    flags: [line]
+  - name: outRealLowerBand
+    type: real
+    flags: [lower_limit]

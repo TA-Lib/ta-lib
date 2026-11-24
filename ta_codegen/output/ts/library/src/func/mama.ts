@@ -49,7 +49,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -716,7 +716,7 @@ export function mamaPositional(
  * Options of {@link mama}, {@link mamaLookback}, {@link mamaDisplayShift},
  * {@link mamaOpen} and {@link mamaOpenAndFill}. Every key is optional: an omitted
  * or `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface MamaOptions {
   /**
@@ -730,8 +730,8 @@ export interface MamaOptions {
    */
   slowLimit?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -762,6 +762,22 @@ export interface MamaOptions {
   outFama?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function mamaOptionsOf(funcName: string, options: MamaOptions | undefined): MamaOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastLimit' && k !== 'slowLimit' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outMama' && k !== 'outFama') {
+      unknownOption(funcName, options, k, 'fastLimit slowLimit startIdx endIdx core outMama outFama');
+    }
+  }
+  return options;
+}
+
 /** What {@link mama} returns, and {@link mamaOpenAndFill} with its stream. */
 export interface MamaResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -784,15 +800,16 @@ export interface MamaResult {
  *
  * It includes `core`'s unstable period for this function.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MamaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MamaOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function mamaLookback(options?: MamaOptions): number {
-  const o = optionsOf('MAMA lookback', options);
+  const o = mamaOptionsOf('MAMA lookback', options);
   return mamaLookbackPositional(orDefault(o.fastLimit, Core.REAL_DEFAULT), orDefault(o.slowLimit, Core.REAL_DEFAULT), coreOf('MAMA lookback', o.core));
 }
 
@@ -803,15 +820,16 @@ export function mamaLookback(options?: MamaOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MamaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MamaOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function mamaDisplayShift(outputIdx: number, options?: MamaOptions): number {
-  const o = optionsOf('MAMA displayShift', options);
+  const o = mamaOptionsOf('MAMA displayShift', options);
   return mamaDisplayShiftPositional(orDefault(o.fastLimit, Core.REAL_DEFAULT), orDefault(o.slowLimit, Core.REAL_DEFAULT), outputIdx, coreOf('MAMA displayShift', o.core));
 }
 
@@ -835,12 +853,13 @@ export function mamaDisplayShift(outputIdx: number, options?: MamaOptions): numb
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, a real parameter that is not a number, a parameter outside its range, an
- *   input too short for the range, a buffer that is empty, too short or of the wrong
- *   type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, a real parameter that is not
+ *   a number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -861,7 +880,7 @@ export function mamaDisplayShift(outputIdx: number, options?: MamaOptions): numb
  * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
  */
 export function mama(real: ArrayLike<number>, options?: MamaOptions): MamaResult {
-  const o = optionsOf('MAMA', options);
+  const o = mamaOptionsOf('MAMA', options);
   if (o.endIdx === undefined) {
     requireSeries('MAMA', 'real', real);
   }
@@ -1348,8 +1367,9 @@ export class MamaStream {
 
 /**
  * The outputs of one MAMA bar, as `update`, `peek` and `value` return them. Passed
- * back to one of them, it is filled and returned again, with no allocation; it
- * holds its values until the next call that writes it. A new one holds `NaN`.
+ * back to one of them, it is filled and returned again, so no result object is
+ * created; it holds its values until the next call that writes it. A new one holds
+ * `NaN`.
  */
 export class MamaOut {
   /** Adaptive moving average (fast line) */
@@ -2431,13 +2451,14 @@ export function mamaOpenAndFillPositional(
  * history bar, bit-identical to {@link mama} there.
  *
  * @param real - Warm-up history. Price series to smooth.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MamaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MamaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   a real parameter that is not a number or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, a real parameter that is not a
+ *   number or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -2451,7 +2472,7 @@ export function mamaOpenAndFillPositional(
  * ```
  */
 export function mamaOpen(real: ArrayLike<number>, options?: MamaOptions): MamaStream {
-  const o = optionsOf('MAMA open', options);
+  const o = mamaOptionsOf('MAMA open', options);
   const optInFastLimit = orDefault(o.fastLimit, Core.REAL_DEFAULT);
   const optInSlowLimit = orDefault(o.slowLimit, Core.REAL_DEFAULT);
   const core = coreOf('MAMA open', o.core);
@@ -2463,18 +2484,19 @@ export function mamaOpen(real: ArrayLike<number>, options?: MamaOptions): MamaSt
  * same pass, bit-identically to {@link mama}.
  *
  * @param real - Warm-up history. Price series to smooth.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link MamaOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link MamaOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link mama} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   a real parameter that is not a number, a parameter outside its range or a buffer
- *   too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, a real parameter that is not a
+ *   number, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2490,7 +2512,7 @@ export function mamaOpen(real: ArrayLike<number>, options?: MamaOptions): MamaSt
  * ```
  */
 export function mamaOpenAndFill(real: ArrayLike<number>, options?: MamaOptions): MamaResult & { stream: MamaStream } {
-  const o = optionsOf('MAMA openAndFill', options);
+  const o = mamaOptionsOf('MAMA openAndFill', options);
   const optInFastLimit = orDefault(o.fastLimit, Core.REAL_DEFAULT);
   const optInSlowLimit = orDefault(o.slowLimit, Core.REAL_DEFAULT);
   const core = coreOf('MAMA openAndFill', o.core);

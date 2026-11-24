@@ -58,7 +58,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -527,7 +527,7 @@ export function ppoPositional(
  * Options of {@link ppo}, {@link ppoLookback}, {@link ppoDisplayShift},
  * {@link ppoOpen} and {@link ppoOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface PpoOptions {
   /**
@@ -543,13 +543,13 @@ export interface PpoOptions {
   /**
    * Moving average type used for both MAs (default `MAType.EMA`; values: 0=SMA,
    * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
-   * `MAType.DEFAULT` selects the default).
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF; `Core.INTEGER_DEFAULT`
+   * or `MAType.DEFAULT` selects the default).
    */
   maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -572,6 +572,22 @@ export interface PpoOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function ppoOptionsOf(funcName: string, options: PpoOptions | undefined): PpoOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastPeriod' && k !== 'slowPeriod' && k !== 'maType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'fastPeriod slowPeriod maType startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link ppo} returns, and {@link ppoOpenAndFill} with its stream. */
 export interface PpoResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -584,15 +600,16 @@ export interface PpoResult {
  * Number of leading input bars {@link ppo} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PpoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PpoOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ppoLookback(options?: PpoOptions): number {
-  const o = optionsOf('PPO lookback', options);
+  const o = ppoOptionsOf('PPO lookback', options);
   return ppoLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('PPO lookback', o.core));
 }
 
@@ -603,15 +620,16 @@ export function ppoLookback(options?: PpoOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PpoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PpoOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ppoDisplayShift(outputIdx: number, options?: PpoOptions): number {
-  const o = optionsOf('PPO displayShift', options);
+  const o = ppoOptionsOf('PPO displayShift', options);
   return ppoDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('PPO displayShift', o.core));
 }
 
@@ -647,12 +665,12 @@ export function ppoDisplayShift(outputIdx: number, options?: PpoOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -672,7 +690,7 @@ export function ppoDisplayShift(outputIdx: number, options?: PpoOptions): number
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function ppo(real: ArrayLike<number>, options?: PpoOptions): PpoResult {
-  const o = optionsOf('PPO', options);
+  const o = ppoOptionsOf('PPO', options);
   if (o.endIdx === undefined) {
     requireSeries('PPO', 'real', real);
   }
@@ -1131,13 +1149,14 @@ export function ppoOpenAndFillPositional(
  * history bar, bit-identical to {@link ppo} there.
  *
  * @param real - Warm-up history. Input data series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PpoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PpoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ppoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1155,7 +1174,7 @@ export function ppoOpenAndFillPositional(
  * ```
  */
 export function ppoOpen(real: ArrayLike<number>, options?: PpoOptions): PpoStream {
-  const o = optionsOf('PPO open', options);
+  const o = ppoOptionsOf('PPO open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
   const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
@@ -1168,18 +1187,19 @@ export function ppoOpen(real: ArrayLike<number>, options?: PpoOptions): PpoStrea
  * same pass, bit-identically to {@link ppo}.
  *
  * @param real - Warm-up history. Input data series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link PpoOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link PpoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link ppo} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ppoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1196,7 +1216,7 @@ export function ppoOpen(real: ArrayLike<number>, options?: PpoOptions): PpoStrea
  * ```
  */
 export function ppoOpenAndFill(real: ArrayLike<number>, options?: PpoOptions): PpoResult & { stream: PpoStream } {
-  const o = optionsOf('PPO openAndFill', options);
+  const o = ppoOptionsOf('PPO openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
   const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);

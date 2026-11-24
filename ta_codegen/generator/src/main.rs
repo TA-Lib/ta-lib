@@ -2207,11 +2207,12 @@ fn copy_tree(from: &Path, to: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Run the Maven wrapper until its pinned distribution is installed, up to three
-/// times. Any failure is left for the build that follows to report, so the
-/// failure a machine without network sees is the build's own.
+/// Run the Maven wrapper until its pinned distribution is installed. The retries
+/// span about two and a half minutes because Maven Central can fail every request
+/// for tens of seconds. Any failure is left for the build that follows to
+/// report, so the failure a machine without network sees is the build's own.
 fn fetch_maven_distribution(mvnw: &Path, lib_dir: &Path) {
-    const DELAYS: [u64; 2] = [5, 15];
+    const DELAYS: [u64; 4] = [5, 15, 45, 90];
     let attempts = DELAYS.len() + 1;
     for attempt in 1..=attempts {
         let last = attempt == attempts;

@@ -2454,6 +2454,24 @@ public class ExamplesTest {
         check("MACDV", allFinite(macdv, r.count()));
     }
 
+    static void maenv() {
+        double[] series = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        double[] upperBand = new double[252];
+        double[] middleBand = new double[252];
+        double[] lowerBand = new double[252];
+
+        Core core = Core.DEFAULT;
+        OutRange r = core.maenv(0, series.length - 1, series, 20, 10.0, 10.0, MAType.SMA,
+                                upperBand, middleBand, lowerBand);
+        if (!check("MAENV", r.count() > 2)) return;
+        System.out.printf(Locale.ROOT, "%d values from bar %d:%n", r.count(), r.begIdx());
+        System.out.printf(Locale.ROOT, "upperBand = [%.4f, ..., %.4f]%n", upperBand[0], upperBand[r.count() - 1]);
+        System.out.printf(Locale.ROOT, "middleBand = [%.4f, ..., %.4f]%n", middleBand[0], middleBand[r.count() - 1]);
+        System.out.printf(Locale.ROOT, "lowerBand = [%.4f, ..., %.4f]%n", lowerBand[0], lowerBand[r.count() - 1]);
+        check("MAENV", allFinite(upperBand, r.count()));
+    }
+
     static void mama() {
         double[] series = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
@@ -3216,6 +3234,18 @@ public class ExamplesTest {
         check("SQZMOM", allFinite(momentum, r.count()));
     }
 
+    static void ssf() {
+        double[] series = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        double[] out = new double[252];
+
+        Core core = Core.DEFAULT;
+        OutRange r = core.ssf(0, series.length - 1, series, 10, out);
+        if (!check("SSF", r.count() > 2)) return;
+        System.out.printf(Locale.ROOT, "%d values from bar %d: [%.4f, ..., %.4f]%n", r.count(), r.begIdx(), out[0], out[r.count() - 1]);
+        check("SSF", allFinite(out, r.count()));
+    }
+
     static void stc() {
         double[] series = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
@@ -3892,6 +3922,7 @@ public class ExamplesTest {
         macdext();
         macdfix();
         macdv();
+        maenv();
         mama();
         marketfi();
         massi();
@@ -3948,6 +3979,7 @@ public class ExamplesTest {
         sortino();
         sqrt();
         sqzmom();
+        ssf();
         stc();
         stddev();
         stoch();

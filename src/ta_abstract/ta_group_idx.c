@@ -191,6 +191,7 @@ extern const TA_FuncDef TA_DEF_MACD;
 extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
 extern const TA_FuncDef TA_DEF_MACDV;
+extern const TA_FuncDef TA_DEF_MAENV;
 extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MARKETFI;
 extern const TA_FuncDef TA_DEF_MASSI;
@@ -247,6 +248,7 @@ extern const TA_FuncDef TA_DEF_SMI;
 extern const TA_FuncDef TA_DEF_SORTINO;
 extern const TA_FuncDef TA_DEF_SQRT;
 extern const TA_FuncDef TA_DEF_SQZMOM;
+extern const TA_FuncDef TA_DEF_SSF;
 extern const TA_FuncDef TA_DEF_STC;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_STOCH;
@@ -337,6 +339,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_KAMA,
 &TA_DEF_KC,
 &TA_DEF_MA,
+&TA_DEF_MAENV,
 &TA_DEF_MAMA,
 &TA_DEF_MAVP,
 &TA_DEF_MCGD,
@@ -346,6 +349,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_SAR,
 &TA_DEF_SAREXT,
 &TA_DEF_SMA,
+&TA_DEF_SSF,
 &TA_DEF_SUPERTREND,
 &TA_DEF_SWAK_BUTTER,
 &TA_DEF_SWAK_GAUSS,

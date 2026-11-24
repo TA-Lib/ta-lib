@@ -76,6 +76,7 @@ public partial class Core
     *                by var.c's scale-relative reseed floor; the square root is
     *                unconditional. Bands no longer collapse on a fine tick.
     *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Bbands</c> consumes before it can produce
@@ -94,7 +95,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
@@ -134,7 +135,13 @@ public partial class Core
        * Open is tied to lookback+1. The middle band still begins at the MA's earlier
        * begIdx internally and is realigned to this later bar in bbands() below.
        */
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
       maLookback = MaLookback(optInTimePeriod, optInMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
       stddevLookback = StddevLookback(optInTimePeriod, 1.0);
       return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
@@ -154,7 +161,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
@@ -754,7 +761,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outRealUpperBand">Middle band plus nbDevUp standard deviations. Must hold at least <c>endIdx
@@ -858,7 +865,7 @@ public partial class Core
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outRealUpperBand">Middle band plus nbDevUp standard deviations. Must hold at least <c>endIdx

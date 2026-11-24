@@ -68,6 +68,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -90,8 +91,8 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects
-    ///   the default)
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT`
+    ///   selects the default)
     ///
     /// # Errors
     ///
@@ -114,10 +115,13 @@ impl Core {
             optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
+        let mut maLookback: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
-        // Add the smoothing being done for Fast-D
-        retValue += self.ma_lookback(optInFastD_Period, optInFastD_MAType)?;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        maLookback = self.ma_lookback(optInFastD_Period, optInFastD_MAType)?;
+        retValue += maLookback;
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::stochf`]: how many bars ahead (positive) or behind
@@ -133,8 +137,8 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects
-    ///   the default)
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT`
+    ///   selects the default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -396,8 +400,8 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects
-    ///   the default)
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT`
+    ///   selects the default)
     /// * `outFastK` — Raw %K stochastic line.
     /// * `outFastD` — MA-smoothed %K (signal line)
     ///

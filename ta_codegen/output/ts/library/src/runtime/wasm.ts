@@ -46,7 +46,7 @@
  */
 
 
-import { float64, isOptionsObject, overlaps } from './checks.ts';
+import { float64, overlaps } from './checks.ts';
 import { Core } from './core.ts';
 
 /** @internal */
@@ -87,7 +87,8 @@ const OUT_OF_FRAME = -2147483647;
 /** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
-const NO_OPTIONS = Object.freeze({});
+/** @internal A module whose one export is lane 0 of `f64x2.relaxed_madd` over its three splatted arguments. */
+export const PREFLIGHT = 'AGFzbQEAAAABCAFgA3x8fAF8AwIBAAcFAQFwAAAKFgEUACAA/RQgAf0UIAL9FP2HAv0hAAs=';
 
 /**
  * Why the WebAssembly engine is not loaded:
@@ -97,9 +98,10 @@ const NO_OPTIONS = Object.freeze({});
  * - `'unavailable'`: the engine's bytes could not be loaded, or this entry has
  *   no engine (`ta-lib/js/abstract`, and the entries a `workerd`, `edge-light`
  *   or `react-native` build resolves to).
- * - `'compile'`: the runtime refused to compile the engine, as one without
+ * - `'compile'`: the runtime cannot compile the engine, as one without
  *   relaxed SIMD or under a Content-Security-Policy that forbids WebAssembly does.
- * - `'instantiate'`: the engine compiled but could not be instantiated.
+ * - `'instantiate'`: the engine, or its preflight module, compiled but could not be
+ *   instantiated.
  * - `'fma'`: this runtime does not fuse the multiply-add the engine relies on, so
  *   its values would differ from the TypeScript engine's.
  * - `'trap'`: the engine failed during calls too many times and was given up.
@@ -111,7 +113,7 @@ export type EngineReason = 'not-loaded' | 'unavailable' | 'compile' | 'instantia
 /**
  * Whether the WebAssembly engine is loaded; what {@link ready} resolves to. A
  * loaded engine runs the batch calls the routing table sends it, by function
- * and series length; every other call runs in TypeScript.
+ * and the number of bars a call reads; every other call runs in TypeScript.
  */
 export interface EngineStatus {
   /**
@@ -136,6 +138,7 @@ let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
 let budget = BUDGET;
 let retired = 0;
+let verdict: 'compile' | 'instantiate' | 'fma' | null | undefined;
 
 /** @internal */
 export type BytesImport = () => Promise<{ readonly WASM_BASE64: string }>;
@@ -203,6 +206,16 @@ export class WasmEngine {
   intsInto(address: number, count: number, into: Int32Array): void {
     if (count > 0) {
       into.set(new Int32Array(this.memory.buffer, address, count));
+    }
+  }
+
+  /** Adds `by` to `count` int32s in linear memory: bar positions the module counted from bar `by`. */
+  shiftInts(address: number, count: number, by: number): void {
+    if (by !== 0 && count > 0) {
+      const a = new Int32Array(this.memory.buffer, address, count);
+      for (let i = 0; i < count; i++) {
+        a[i] += by;
+      }
     }
   }
 
@@ -289,6 +302,7 @@ export function resetEngine(): void {
   failure = null;
   traps = 0;
   loading = null;
+  verdict = undefined;
   generation++;
 }
 
@@ -346,6 +360,11 @@ async function load(): Promise<EngineStatus | null> {
   if (live !== null || compiled !== null || failure !== null) {
     return null;
   }
+  const blocked = preflight();
+  if (blocked !== null) {
+    failure = blocked;
+    return null;
+  }
   const epoch = generation;
   let base64 = source;
   if (base64 === null) {
@@ -389,6 +408,29 @@ async function load(): Promise<EngineStatus | null> {
   return null;
 }
 
+/**
+ * Why the engine cannot run here, judged once on {@link PREFLIGHT}, so that a
+ * runtime that would refuse the engine imports and compiles none of its bytes.
+ */
+function preflight(): 'compile' | 'instantiate' | 'fma' | null {
+  if (verdict === undefined) {
+    let module: WasmModule;
+    try {
+      module = new WebAssembly.Module(decode(PREFLIGHT));
+    } catch {
+      verdict = 'compile';
+      return verdict;
+    }
+    try {
+      const madd = new WebAssembly.Instance(module, {}).exports.p as WasmBatch;
+      verdict = madd(PROBE[0], PROBE[0], PROBE[1]) === FUSED ? null : 'fma';
+    } catch {
+      verdict = 'instantiate';
+    }
+  }
+  return verdict;
+}
+
 function decode(base64: string): Uint8Array {
   const text = atob(base64);
   const bytes = new Uint8Array(text.length);
@@ -407,6 +449,11 @@ function current(compile: boolean): WasmEngine | null {
   }
   if (compiled === null) {
     if (source === null || !compile) {
+      return null;
+    }
+    const blocked = preflight();
+    if (blocked !== null) {
+      failure = blocked;
       return null;
     }
     try {
@@ -472,14 +519,6 @@ export class StrictFallThrough extends Error {
  */
 export function strictFallThrough(funcName: string, _accepted: unknown): never {
   throw new StrictFallThrough(funcName, lastReason);
-}
-
-/** @internal An omitted options object, or one `ta-lib/js` accepts; `null` for anything else. */
-export function routedOptions<T extends object>(options: T | undefined): T | null {
-  if (options === undefined) {
-    return NO_OPTIONS as T;
-  }
-  return isOptionsObject(options) ? options : null;
 }
 
 /** @internal */
@@ -575,6 +614,28 @@ export function routedSeries(x: unknown): Float64Array | null {
   } catch {
     return null;
   }
+}
+
+const TYPED_ARRAY = Object.getPrototypeOf(Float64Array.prototype) as object;
+function slotOf<T>(key: 'buffer' | 'byteOffset' | 'length'): (this: unknown) => T {
+  return Object.getOwnPropertyDescriptor(TYPED_ARRAY, key)?.get as (this: unknown) => T;
+}
+const bufferOf = slotOf<ArrayBufferLike>('buffer');
+const byteOffsetOf = slotOf<number>('byteOffset');
+const lengthOf = slotOf<number>('length');
+
+/**
+ * @internal Bars `lo` to `lo + len - 1` of `x`, without a copy, located through
+ * the built-in accessors: `x.subarray`, `x.buffer`, `x.byteOffset` and
+ * `x.length` may run caller code, or name other bars than the ones `ta-lib/js`
+ * indexes. Throws, so the call falls through, when `x` holds fewer bars.
+ */
+export function seriesBars(x: Float64Array, lo: number, len: number): Float64Array {
+  const length = lengthOf.call(x);
+  if (lo + len > length) {
+    throw new RangeError('the series holds fewer bars than its length says');
+  }
+  return lo === 0 && len === length ? x : new Float64Array(bufferOf.call(x), byteOffsetOf.call(x) + lo * 8, len);
 }
 
 /**

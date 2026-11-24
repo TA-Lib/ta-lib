@@ -40,10 +40,11 @@ import sys
 import glob
 import platform
 import shutil
+import tarfile
 
 from utilities.package_digest import PackageDigest
 from utilities.windows import call_vcvarsall
-from utilities.versions import sync_sources_digest, sync_versions
+from utilities.versions import sources_digest_files, sync_sources_digest, sync_versions
 from utilities.common import are_generated_files_git_changed, compare_dir, copy_file_list, create_temp_dir, get_git_bot_user_name, get_git_user_name, get_src_generated_files, is_arm64_toolchain_installed, is_cmake_installed, is_debian_based, is_dotnet_installed, is_i386_toolchain_installed, is_msbuild_installed, is_nightly_github_action, is_redhat_based, is_rpmbuild_installed, is_ubuntu, is_dotnet_installed, is_wix_installed, is_x86_64_toolchain_installed, run_command, run_command_term, verify_git_repo, run_command_sudo
 from utilities.files import compare_msi_files, compare_tar_gz_files, compare_zip_files, create_rtf_from_txt, create_zip_file, compare_deb_files, force_delete, force_delete_glob, path_join
 
@@ -559,6 +560,16 @@ def is_build_skipping_allowed(root_dir: str, asset_file_name: str, version: str,
     return False
 
 
+def tracked_files_missing_from_digest(root_dir: str, tarball: str) -> list:
+    # A tracked file outside the digest changes the tarball without changing the
+    # digest: a dispatched nightly then keeps the stale package and only a
+    # scheduled rebuild notices, on main.
+    with tarfile.open(tarball) as tar:
+        members = {m.name.split('/', 1)[1] for m in tar.getmembers() if m.isfile() and '/' in m.name}
+    ls = subprocess.run(['git', 'ls-files', '-z'], cwd=root_dir, check=True, capture_output=True, text=True)
+    tracked = set(ls.stdout.split('\0')) - {''}
+    return sorted((members & tracked) - set(sources_digest_files(root_dir)))
+
 def package_src_tar_gz(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, sudo_pwd: str) -> dict:
     # The src.tar.gz is for users wanting to build from source with autotools (./configure).
     #
@@ -616,6 +627,12 @@ def package_src_tar_gz(root_dir: str, asset_file_name: str, version: str, source
     # Move ta-lib-{version}.tar.gz into temp directory.
     if not os.path.isfile(package_temp_file_src):
         print(f"Error: {package_temp_file_src} not found.")
+        return result
+
+    missing = tracked_files_missing_from_digest(root_dir, package_temp_file_src)
+    if missing:
+        print(f"Error: {asset_file_name} carries tracked files that the sources digest does not hash: {missing}. "
+              "Add them to sources_digest_files() in scripts/utilities/versions.py.")
         return result
 
     os.makedirs(temp_dir, exist_ok=True)

@@ -46,7 +46,7 @@
  *  092926 MF,CC  First version (#472).
  */
 
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -592,7 +592,7 @@ export function kstPositional(
  * Options of {@link kst}, {@link kstLookback}, {@link kstDisplayShift},
  * {@link kstOpen} and {@link kstOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface KstOptions {
   /**
@@ -641,8 +641,8 @@ export interface KstOptions {
    */
   signalPeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -673,6 +673,22 @@ export interface KstOptions {
   outKstSignal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function kstOptionsOf(funcName: string, options: KstOptions | undefined): KstOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'roc1Period' && k !== 'roc2Period' && k !== 'roc3Period' && k !== 'roc4Period' && k !== 'sma1Period' && k !== 'sma2Period' && k !== 'sma3Period' && k !== 'sma4Period' && k !== 'signalPeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outKst' && k !== 'outKstSignal') {
+      unknownOption(funcName, options, k, 'roc1Period roc2Period roc3Period roc4Period sma1Period sma2Period sma3Period sma4Period signalPeriod startIdx endIdx core outKst outKstSignal');
+    }
+  }
+  return options;
+}
+
 /** What {@link kst} returns, and {@link kstOpenAndFill} with its stream. */
 export interface KstResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -690,15 +706,16 @@ export interface KstResult {
  * Number of leading input bars {@link kst} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function kstLookback(options?: KstOptions): number {
-  const o = optionsOf('KST lookback', options);
+  const o = kstOptionsOf('KST lookback', options);
   return kstLookbackPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.sma1Period, Core.INTEGER_DEFAULT), orDefault(o.sma2Period, Core.INTEGER_DEFAULT), orDefault(o.sma3Period, Core.INTEGER_DEFAULT), orDefault(o.sma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('KST lookback', o.core));
 }
 
@@ -709,15 +726,16 @@ export function kstLookback(options?: KstOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function kstDisplayShift(outputIdx: number, options?: KstOptions): number {
-  const o = optionsOf('KST displayShift', options);
+  const o = kstOptionsOf('KST displayShift', options);
   return kstDisplayShiftPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.sma1Period, Core.INTEGER_DEFAULT), orDefault(o.sma2Period, Core.INTEGER_DEFAULT), orDefault(o.sma3Period, Core.INTEGER_DEFAULT), orDefault(o.sma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('KST displayShift', o.core));
 }
 
@@ -764,12 +782,13 @@ export function kstDisplayShift(outputIdx: number, options?: KstOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -799,7 +818,7 @@ export function kstDisplayShift(outputIdx: number, options?: KstOptions): number
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
 export function kst(real: ArrayLike<number>, options?: KstOptions): KstResult {
-  const o = optionsOf('KST', options);
+  const o = kstOptionsOf('KST', options);
   if (o.endIdx === undefined) {
     requireSeries('KST', 'real', real);
   }
@@ -1240,8 +1259,9 @@ export class KstStream {
 
 /**
  * The outputs of one KST bar, as `update`, `peek` and `value` return them. Passed
- * back to one of them, it is filled and returned again, with no allocation; it
- * holds its values until the next call that writes it. A new one holds `NaN`.
+ * back to one of them, it is filled and returned again, so no result object is
+ * created; it holds its values until the next call that writes it. A new one holds
+ * `NaN`.
  */
 export class KstOut {
   /** Know Sure Thing line. */
@@ -1991,13 +2011,14 @@ export function kstOpenAndFillPositional(
  * history bar, bit-identical to {@link kst} there.
  *
  * @param real - Warm-up history. Source price series (canonically the close)
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link KstOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link KstOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -2021,7 +2042,7 @@ export function kstOpenAndFillPositional(
  * ```
  */
 export function kstOpen(real: ArrayLike<number>, options?: KstOptions): KstStream {
-  const o = optionsOf('KST open', options);
+  const o = kstOptionsOf('KST open', options);
   const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
   const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
   const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
@@ -2040,18 +2061,19 @@ export function kstOpen(real: ArrayLike<number>, options?: KstOptions): KstStrea
  * same pass, bit-identically to {@link kst}.
  *
  * @param real - Warm-up history. Source price series (canonically the close)
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link KstOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link KstOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link kst} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2079,7 +2101,7 @@ export function kstOpen(real: ArrayLike<number>, options?: KstOptions): KstStrea
  * ```
  */
 export function kstOpenAndFill(real: ArrayLike<number>, options?: KstOptions): KstResult & { stream: KstStream } {
-  const o = optionsOf('KST openAndFill', options);
+  const o = kstOptionsOf('KST openAndFill', options);
   const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
   const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
   const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);

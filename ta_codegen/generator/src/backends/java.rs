@@ -1872,6 +1872,12 @@ impl StatementEmitter for JavaStmt<'_> {
     fn if_stmt(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], cond_comments: &[Option<Vec<String>>], indent: usize) -> String {
         let (condition, _) = super::builtins::strip_unlikely(condition);
         let pad = " ".repeat(indent);
+        if cond_comments.is_empty() {
+            if let Some(step) = self.ctx.fma.and_then(|sets| super::select_rule::admitted_step(condition, then_body, else_body, sets)) {
+                let (target, value) = super::select_rule::addend_form(&step);
+                return self.assign(&target, &value, false, indent);
+            }
+        }
         // Skip post-allocation null-check blocks (dead code in Java — `new` never returns null)
         if contains_alloc_err_return(then_body) {
             return String::new();
@@ -2574,6 +2580,18 @@ fn render_func_call(
     helpers: &HelperRegistry,
 ) -> String {
     assert!(!super::eager_select::is_pseudo_call(fname), "{fname} is rendered by C and Rust only");
+    if super::select_rule::is_accrual_pick(fname) {
+        let [c, v] = args else { panic!("{fname} takes a condition and a value") };
+        let (c, v) = (render_expr(c, ctx, registry, helpers), render_expr(v, ctx, registry, helpers));
+        // A mask the JIT forms with a conditional move, where it keeps a
+        // ternary over doubles a branch. The addend's sign bit is flipped in
+        // and back out, so a cleared mask leaves -0.0.
+        return if fname == super::select_rule::ADDEND {
+            format!("Double.longBitsToDouble(((Double.doubleToRawLongBits({v}) ^ Long.MIN_VALUE) & (({c}) ? -1L : 0L)) ^ Long.MIN_VALUE)")
+        } else {
+            format!("Double.longBitsToDouble(Double.doubleToRawLongBits({v}) & (({c}) ? -1L : 0L))")
+        };
+    }
     let key_call = match fname {
         super::java_keyscan::KEY_BITS => Some("Double.doubleToRawLongBits"),
         super::java_keyscan::KEY_REAL => Some("Double.longBitsToDouble"),

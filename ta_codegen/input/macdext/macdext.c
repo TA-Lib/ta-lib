@@ -14,6 +14,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  *
  */
 
@@ -22,14 +23,21 @@ int macdext_lookback(int optInFastPeriod, TA_MAType optInFastMAType, int optInSl
    int tempInteger;
    int lookbackLargest;
 
-   /* Find the MA with the largest lookback */
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF). */
    lookbackLargest = ma_lookback( optInFastPeriod, optInFastMAType );
+   if( lookbackLargest < 0 )
+      return -1;
    tempInteger = ma_lookback( optInSlowPeriod, optInSlowMAType );
+   if( tempInteger < 0 )
+      return -1;
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 
-   /* Add to the largest MA lookback the signal line lookback */
-   return lookbackLargest + ma_lookback( optInSignalPeriod, optInSignalMAType );
+   tempInteger = ma_lookback( optInSignalPeriod, optInSignalMAType );
+   if( tempInteger < 0 )
+      return -1;
+   return lookbackLargest + tempInteger;
 }
 
 TA_RetCode macdext(int startIdx, int endIdx,
@@ -99,12 +107,18 @@ TA_RetCode macdext(int startIdx, int endIdx,
 
    /* Find the MA with the largest lookback */
    lookbackLargest = ma_lookback( optInFastPeriod, optInFastMAType );
+   if( lookbackLargest < 0 )
+      return TA_BAD_PARAM;
    tempInteger = ma_lookback( optInSlowPeriod, optInSlowMAType );
+   if( tempInteger < 0 )
+      return TA_BAD_PARAM;
    if( tempInteger > lookbackLargest )
       lookbackLargest = tempInteger;
 
    /* Add the lookback needed for the signal line */
    lookbackSignal = ma_lookback( optInSignalPeriod, optInSignalMAType );
+   if( lookbackSignal < 0 )
+      return TA_BAD_PARAM;
    lookbackTotal  = lookbackSignal+lookbackLargest;
 
    /* Move up the start index if there is not

@@ -447,8 +447,9 @@ export class FuncInfo {
   readonly outputs: readonly OutputInfo[];
   /**
    * Metadata no flag can carry, such as an output's reference levels, as one JSON
-   * object; `'{}'` when none. The same bytes as C's `TA_GetFuncAttributes`. Ignore a
-   * key you do not know: a release may add one
+   * object; `'{}'` when none. The same bytes as C's `TA_GetFuncAttributes`, so an
+   * entry is keyed by C's `paramName` (`outReal`), not by the row's `key`
+   * (`values`). Ignore a key you do not know: a release may add one
    * ([keys](https://ta-lib.org/spec/abstract/#attributes)).
    */
   readonly attributes: string;
@@ -1103,13 +1104,15 @@ export type { PriceInput } from '{d}paramHolder.ts';
 export type { RuntimeInfoKey } from '{d}runtimeInfo.ts';
 ";
 
-/// One entry: its imports, the shared exports from `d` (the shared modules'
-/// directory), `extra`, and its catalog and `getRuntimeInfo` over `status`.
-fn entry(imports: &str, d: &str, extra: &str, status: &str) -> String {
+/// One entry: its imports, the runtime's names from `runtime` (the path to
+/// `src/`), the shared exports from `d` (the shared modules' directory),
+/// `extra`, and its catalog and `getRuntimeInfo` over `status`.
+fn entry(imports: &str, d: &str, runtime: &str, extra: &str, status: &str) -> String {
     let mut s = header();
     s.push_str(imports);
     let _ = writeln!(s, "import {{ catalog, type FunctionCatalog }} from '{d}functions.ts';");
     s.push('\n');
+    s.push_str(&super::ts::runtime_exports(runtime));
     s.push_str(&SHARED_EXPORTS.replace("{d}", d));
     s.push_str(extra);
     s.push_str(
@@ -1129,6 +1132,7 @@ pub fn render_routed_entry() -> String {
          import { answerRuntimeInfo, type RuntimeInfoKey } from './runtimeInfo.ts';\n\
          import { DISPATCH } from './routedDispatch.ts';\n",
         "./",
+        "../",
         "export { ready } from '../runtime/wasm.ts';\nexport type { EngineReason, EngineStatus } from '../runtime/wasm.ts';\n",
         "engineStatus",
     )
@@ -1143,6 +1147,7 @@ pub fn render_plain_entry() -> String {
          import { answerRuntimeInfo, type RuntimeInfoKey } from './runtimeInfo.ts';\n\
          import { DISPATCH } from './dispatch.ts';\n",
         "./",
+        "../",
         super::ts_engine::PLAIN_ENGINE_EXPORTS,
         "noEngine",
     )
@@ -1157,6 +1162,7 @@ pub fn render_js_entry() -> String {
          import { answerRuntimeInfo, type RuntimeInfoKey } from '../../abstract/runtimeInfo.ts';\n\
          import { noEngine } from '../../runtime/plain.ts';\n",
         "../../abstract/",
+        "../../",
         "",
         "noEngine",
     )

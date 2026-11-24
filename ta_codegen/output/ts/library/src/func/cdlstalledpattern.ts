@@ -51,7 +51,7 @@
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -291,12 +291,12 @@ export function cdlstalledpatternPositional(
  * {@link cdlstalledpatternDisplayShift}, {@link cdlstalledpatternOpen} and
  * {@link cdlstalledpatternOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CdlstalledpatternOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -318,6 +318,22 @@ export interface CdlstalledpatternOptions {
   outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function cdlstalledpatternOptionsOf(funcName: string, options: CdlstalledpatternOptions | undefined): CdlstalledpatternOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outInteger');
+    }
+  }
+  return options;
+}
+
 /**
  * What {@link cdlstalledpattern} returns, and {@link cdlstalledpatternOpenAndFill}
  * with its stream.
@@ -337,15 +353,16 @@ export interface CdlstalledpatternResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlstalledpatternOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlstalledpatternOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlstalledpatternLookback(options?: CdlstalledpatternOptions): number {
-  const o = optionsOf('CDLSTALLEDPATTERN lookback', options);
+  const o = cdlstalledpatternOptionsOf('CDLSTALLEDPATTERN lookback', options);
   return cdlstalledpatternLookbackPositional(coreOf('CDLSTALLEDPATTERN lookback', o.core));
 }
 
@@ -356,15 +373,16 @@ export function cdlstalledpatternLookback(options?: CdlstalledpatternOptions): n
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlstalledpatternOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlstalledpatternOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlstalledpatternDisplayShift(outputIdx: number, options?: CdlstalledpatternOptions): number {
-  const o = optionsOf('CDLSTALLEDPATTERN displayShift', options);
+  const o = cdlstalledpatternOptionsOf('CDLSTALLEDPATTERN displayShift', options);
   return cdlstalledpatternDisplayShiftPositional(outputIdx, coreOf('CDLSTALLEDPATTERN displayShift', o.core));
 }
 
@@ -399,11 +417,12 @@ export function cdlstalledpatternDisplayShift(outputIdx: number, options?: Cdlst
  *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -423,7 +442,7 @@ export function cdlstalledpatternDisplayShift(outputIdx: number, options?: Cdlst
  */
 export function cdlstalledpattern(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult {
   requireArgument('CDLSTALLEDPATTERN', 'prices', prices);
-  const o = optionsOf('CDLSTALLEDPATTERN', options);
+  const o = cdlstalledpatternOptionsOf('CDLSTALLEDPATTERN', options);
   if (o.endIdx === undefined) {
     requireSeries('CDLSTALLEDPATTERN', 'prices.open', prices.open);
     requireSeries('CDLSTALLEDPATTERN', 'prices.high', prices.high);
@@ -1467,13 +1486,14 @@ export function cdlstalledpatternOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlstalledpatternOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlstalledpatternOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlstalledpatternLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -1494,7 +1514,7 @@ export function cdlstalledpatternOpenAndFillPositional(
  */
 export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternStream {
   requireArgument('CDLSTALLEDPATTERN open', 'prices', prices);
-  const o = optionsOf('CDLSTALLEDPATTERN open', options);
+  const o = cdlstalledpatternOptionsOf('CDLSTALLEDPATTERN open', options);
   const core = coreOf('CDLSTALLEDPATTERN open', o.core);
   return cdlstalledpatternOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
@@ -1507,18 +1527,19 @@ export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: A
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CdlstalledpatternOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CdlstalledpatternOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdlstalledpattern} returns them; the range is
  *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlstalledpatternLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, histories of different lengths or a buffer too short,
- *   of the wrong type or starting where another buffer or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1538,7 +1559,7 @@ export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: A
  */
 export function cdlstalledpatternOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult & { stream: CdlstalledpatternStream } {
   requireArgument('CDLSTALLEDPATTERN openAndFill', 'prices', prices);
-  const o = optionsOf('CDLSTALLEDPATTERN openAndFill', options);
+  const o = cdlstalledpatternOptionsOf('CDLSTALLEDPATTERN openAndFill', options);
   const core = coreOf('CDLSTALLEDPATTERN openAndFill', o.core);
   const capacity = fillCapacity(cdlstalledpatternLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
   const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;

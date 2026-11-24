@@ -107,8 +107,17 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Default return values */
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.Atan(inReal[i]);
+      i = startIdx;
+      outIdx = 0;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w1 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(i, _w1.Length);
+         for( int _wk = 0; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = Math.Atan(_w0[_wk]);
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -134,8 +143,17 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.Atan((double)inReal[i]);
+      i = startIdx;
+      outIdx = 0;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w1 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal.Slice(i, _w1.Length);
+         for( int _wk = 0; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = Math.Atan((double)_w0[_wk]);
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

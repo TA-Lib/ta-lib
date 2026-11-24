@@ -52,7 +52,7 @@
  *                and on the bar a large value leaves the window.
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -315,7 +315,7 @@ export function linearregSlopePositional(
  * {@link linearregSlopeDisplayShift}, {@link linearregSlopeOpen} and
  * {@link linearregSlopeOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface LinearregSlopeOptions {
   /**
@@ -324,8 +324,8 @@ export interface LinearregSlopeOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -348,6 +348,22 @@ export interface LinearregSlopeOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function linearregSlopeOptionsOf(funcName: string, options: LinearregSlopeOptions | undefined): LinearregSlopeOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /**
  * What {@link linearregSlope} returns, and {@link linearregSlopeOpenAndFill} with
  * its stream.
@@ -364,15 +380,16 @@ export interface LinearregSlopeResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LinearregSlopeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LinearregSlopeOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function linearregSlopeLookback(options?: LinearregSlopeOptions): number {
-  const o = optionsOf('LINEARREG_SLOPE lookback', options);
+  const o = linearregSlopeOptionsOf('LINEARREG_SLOPE lookback', options);
   return linearregSlopeLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('LINEARREG_SLOPE lookback', o.core));
 }
 
@@ -383,15 +400,16 @@ export function linearregSlopeLookback(options?: LinearregSlopeOptions): number 
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LinearregSlopeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LinearregSlopeOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function linearregSlopeDisplayShift(outputIdx: number, options?: LinearregSlopeOptions): number {
-  const o = optionsOf('LINEARREG_SLOPE displayShift', options);
+  const o = linearregSlopeOptionsOf('LINEARREG_SLOPE displayShift', options);
   return linearregSlopeDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('LINEARREG_SLOPE displayShift', o.core));
 }
 
@@ -415,12 +433,12 @@ export function linearregSlopeDisplayShift(outputIdx: number, options?: Linearre
  *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -437,7 +455,7 @@ export function linearregSlopeDisplayShift(outputIdx: number, options?: Linearre
  * @see [`tsf`](https://ta-lib.org/functions/tsf)
  */
 export function linearregSlope(real: ArrayLike<number>, options?: LinearregSlopeOptions): LinearregSlopeResult {
-  const o = optionsOf('LINEARREG_SLOPE', options);
+  const o = linearregSlopeOptionsOf('LINEARREG_SLOPE', options);
   if (o.endIdx === undefined) {
     requireSeries('LINEARREG_SLOPE', 'real', real);
   }
@@ -1108,14 +1126,14 @@ export function linearregSlopeOpenAndFillPositional(
  * at the last history bar, bit-identical to {@link linearregSlope} there.
  *
  * @param real - Warm-up history. Data series to fit.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LinearregSlopeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LinearregSlopeOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `linearregSlopeLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, an integer parameter that is not an int32 or a
- *   parameter outside its range.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, an
+ *   integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1129,7 +1147,7 @@ export function linearregSlopeOpenAndFillPositional(
  * ```
  */
 export function linearregSlopeOpen(real: ArrayLike<number>, options?: LinearregSlopeOptions): LinearregSlopeStream {
-  const o = optionsOf('LINEARREG_SLOPE open', options);
+  const o = linearregSlopeOptionsOf('LINEARREG_SLOPE open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('LINEARREG_SLOPE open', o.core);
   return linearregSlopeOpenPositional(real, optInTimePeriod, core);
@@ -1140,18 +1158,19 @@ export function linearregSlopeOpen(real: ArrayLike<number>, options?: LinearregS
  * in the same pass, bit-identically to {@link linearregSlope}.
  *
  * @param real - Warm-up history. Data series to fit.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link LinearregSlopeOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link LinearregSlopeOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link linearregSlope} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `linearregSlopeLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, an integer parameter that is not an int32, a parameter
- *   outside its range or a buffer too short, of the wrong type or starting where
- *   another buffer or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, an
+ *   integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1166,7 +1185,7 @@ export function linearregSlopeOpen(real: ArrayLike<number>, options?: LinearregS
  * ```
  */
 export function linearregSlopeOpenAndFill(real: ArrayLike<number>, options?: LinearregSlopeOptions): LinearregSlopeResult & { stream: LinearregSlopeStream } {
-  const o = optionsOf('LINEARREG_SLOPE openAndFill', options);
+  const o = linearregSlopeOptionsOf('LINEARREG_SLOPE openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('LINEARREG_SLOPE openAndFill', o.core);
   const capacity = fillCapacity(linearregSlopeLookbackPositional(optInTimePeriod, core), real);

@@ -50,7 +50,7 @@
  *  092926 MF,CC  First version (issue #475).
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -165,8 +165,22 @@ export function almaImpl(
     outBegIdx.value = startIdx;
     outNBElement.value = endIdx - startIdx + 1;
     i = startIdx;
-    for (outIdx = 0; outIdx < outNBElement.value; outIdx += 1) {
-      outReal[outIdx] = inReal[i++];
+    outIdx = 0;
+    if (outIdx < outNBElement.value) {
+      const _wn = outNBElement.value - outIdx;
+      const _w1_0 = outIdx;
+      const _w0_0 = i;
+      for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
+        outReal[(_w1_0 + _wk + 1) | 0] = inReal[(_w0_0 + _wk + 1) | 0];
+        outReal[(_w1_0 + _wk + 2) | 0] = inReal[(_w0_0 + _wk + 2) | 0];
+        outReal[(_w1_0 + _wk + 3) | 0] = inReal[(_w0_0 + _wk + 3) | 0];
+      }
+      for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
+      }
+      i += _wn;
+      outIdx += _wn;
     }
     return RetCode.SUCCESS;
   }
@@ -280,7 +294,7 @@ export function almaPositional(
  * Options of {@link alma}, {@link almaLookback}, {@link almaDisplayShift},
  * {@link almaOpen} and {@link almaOpenAndFill}. Every key is optional: an omitted
  * or `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface AlmaOptions {
   /**
@@ -299,8 +313,8 @@ export interface AlmaOptions {
    */
   offset?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -323,6 +337,22 @@ export interface AlmaOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function almaOptionsOf(funcName: string, options: AlmaOptions | undefined): AlmaOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'sigma' && k !== 'offset' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod sigma offset startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link alma} returns, and {@link almaOpenAndFill} with its stream. */
 export interface AlmaResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -338,15 +368,16 @@ export interface AlmaResult {
  * Number of leading input bars {@link alma} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AlmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AlmaOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function almaLookback(options?: AlmaOptions): number {
-  const o = optionsOf('ALMA lookback', options);
+  const o = almaOptionsOf('ALMA lookback', options);
   return almaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.sigma, Core.REAL_DEFAULT), orDefault(o.offset, Core.REAL_DEFAULT), coreOf('ALMA lookback', o.core));
 }
 
@@ -357,15 +388,16 @@ export function almaLookback(options?: AlmaOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AlmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AlmaOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): number {
-  const o = optionsOf('ALMA displayShift', options);
+  const o = almaOptionsOf('ALMA displayShift', options);
   return almaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.sigma, Core.REAL_DEFAULT), orDefault(o.offset, Core.REAL_DEFAULT), outputIdx, coreOf('ALMA displayShift', o.core));
 }
 
@@ -405,12 +437,13 @@ export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): numb
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
- *   with a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a real parameter that is not a number, a parameter outside its
+ *   range, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -431,7 +464,7 @@ export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): numb
  * @see [`hma`](https://ta-lib.org/functions/hma)
  */
 export function alma(real: ArrayLike<number>, options?: AlmaOptions): AlmaResult {
-  const o = optionsOf('ALMA', options);
+  const o = almaOptionsOf('ALMA', options);
   if (o.endIdx === undefined) {
     requireSeries('ALMA', 'real', real);
   }
@@ -895,14 +928,15 @@ export function almaOpenAndFillPositional(
  * history bar, bit-identical to {@link alma} there.
  *
  * @param real - Warm-up history. Data on which to compute the average.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AlmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AlmaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `almaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a number
- *   or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number or a parameter outside its
+ *   range.
  *
  * @example
  * ```ts
@@ -916,7 +950,7 @@ export function almaOpenAndFillPositional(
  * ```
  */
 export function almaOpen(real: ArrayLike<number>, options?: AlmaOptions): AlmaStream {
-  const o = optionsOf('ALMA open', options);
+  const o = almaOptionsOf('ALMA open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInSigma = orDefault(o.sigma, Core.REAL_DEFAULT);
   const optInOffset = orDefault(o.offset, Core.REAL_DEFAULT);
@@ -929,19 +963,19 @@ export function almaOpen(real: ArrayLike<number>, options?: AlmaOptions): AlmaSt
  * same pass, bit-identically to {@link alma}.
  *
  * @param real - Warm-up history. Data on which to compute the average.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link AlmaOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link AlmaOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link alma} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `almaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or a buffer too short, of the wrong type
- *   or starting where another buffer or a `Float64Array` input starts, or, on a
- *   history long enough to open, one sharing memory with another buffer or a
- *   `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -958,7 +992,7 @@ export function almaOpen(real: ArrayLike<number>, options?: AlmaOptions): AlmaSt
  * ```
  */
 export function almaOpenAndFill(real: ArrayLike<number>, options?: AlmaOptions): AlmaResult & { stream: AlmaStream } {
-  const o = optionsOf('ALMA openAndFill', options);
+  const o = almaOptionsOf('ALMA openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInSigma = orDefault(o.sigma, Core.REAL_DEFAULT);
   const optInOffset = orDefault(o.offset, Core.REAL_DEFAULT);

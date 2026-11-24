@@ -76,8 +76,8 @@ const INHERITED: &[(&str, &str)] = &[
 /// EMA; APO, PPO, PVO and KDJ default to a recursive average and so move even at
 /// defaults.
 const MATYPE_DEPENDENT: &[&str] = &[
-    "APO", "BBANDS", "BBW", "KDJ", "KSTEXT", "MA", "MACDEXT", "MAVP", "PERCENTB", "PPO",
-    "PVO", "STOCH", "STOCHF", "STOCHRSI",
+    "APO", "BBANDS", "BBW", "KDJ", "KSTEXT", "MA", "MACDEXT", "MAENV", "MAVP", "PERCENTB",
+    "PPO", "PVO", "STOCH", "STOCHF", "STOCHRSI",
 ];
 
 #[test]
@@ -91,7 +91,7 @@ fn classification_matches_the_measured_library() {
         .filter(|f| f.flags.iter().any(|x| x == "unstable_period"))
         .map(|f| f.name.as_str())
         .collect();
-    assert_eq!(declared.len(), 33, "the measured set of self-declaring functions is 33");
+    assert_eq!(declared.len(), 34, "the measured set of self-declaring functions is 34");
     for f in &funcs {
         assert_eq!(
             st[&f.name].intrinsic,
@@ -167,7 +167,7 @@ fn classification_matches_the_measured_library() {
 #[test]
 fn ma_types_split_into_recursive_and_windowed() {
     let st = stability::classify(&load());
-    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA", "VIDYA"] {
+    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA", "VIDYA", "SSF"] {
         assert!(st[name].unconditional(), "{name} carries an unstable period");
     }
     for name in ["SMA", "WMA", "TRIMA", "HMA", "ALMA"] {

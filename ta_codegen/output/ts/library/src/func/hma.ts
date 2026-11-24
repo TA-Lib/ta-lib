@@ -54,7 +54,7 @@
  *                unlikely re-anchors (PR #565).
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -182,8 +182,21 @@ export function hmaImpl(
     outBegIdx.value = startIdx;
     outIdx = 0;
     today = startIdx;
-    while (today <= endIdx) {
-      outReal[outIdx++] = inReal[today++];
+    if (today <= endIdx) {
+      const _wn = endIdx - today + 1;
+      const _w1_0 = outIdx;
+      const _w0_0 = today;
+      for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
+        outReal[(_w1_0 + _wk + 1) | 0] = inReal[(_w0_0 + _wk + 1) | 0];
+        outReal[(_w1_0 + _wk + 2) | 0] = inReal[(_w0_0 + _wk + 2) | 0];
+        outReal[(_w1_0 + _wk + 3) | 0] = inReal[(_w0_0 + _wk + 3) | 0];
+      }
+      for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+        outReal[(_w1_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0];
+      }
+      outIdx += _wn;
+      today += _wn;
     }
     outNBElement.value = outIdx;
     return RetCode.SUCCESS;
@@ -500,7 +513,7 @@ export function hmaPositional(
  * Options of {@link hma}, {@link hmaLookback}, {@link hmaDisplayShift},
  * {@link hmaOpen} and {@link hmaOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface HmaOptions {
   /**
@@ -510,8 +523,8 @@ export interface HmaOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -534,6 +547,22 @@ export interface HmaOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function hmaOptionsOf(funcName: string, options: HmaOptions | undefined): HmaOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link hma} returns, and {@link hmaOpenAndFill} with its stream. */
 export interface HmaResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -549,15 +578,16 @@ export interface HmaResult {
  * Number of leading input bars {@link hma} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HmaOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function hmaLookback(options?: HmaOptions): number {
-  const o = optionsOf('HMA lookback', options);
+  const o = hmaOptionsOf('HMA lookback', options);
   return hmaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('HMA lookback', o.core));
 }
 
@@ -568,15 +598,16 @@ export function hmaLookback(options?: HmaOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HmaOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function hmaDisplayShift(outputIdx: number, options?: HmaOptions): number {
-  const o = optionsOf('HMA displayShift', options);
+  const o = hmaOptionsOf('HMA displayShift', options);
   return hmaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('HMA displayShift', o.core));
 }
 
@@ -622,12 +653,12 @@ export function hmaDisplayShift(outputIdx: number, options?: HmaOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -644,7 +675,7 @@ export function hmaDisplayShift(outputIdx: number, options?: HmaOptions): number
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
 export function hma(real: ArrayLike<number>, options?: HmaOptions): HmaResult {
-  const o = optionsOf('HMA', options);
+  const o = hmaOptionsOf('HMA', options);
   if (o.endIdx === undefined) {
     requireSeries('HMA', 'real', real);
   }
@@ -1887,13 +1918,14 @@ export function hmaOpenAndFillPositional(
  * history bar, bit-identical to {@link hma} there.
  *
  * @param real - Warm-up history. Source price series, close by convention.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HmaOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HmaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `hmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1907,7 +1939,7 @@ export function hmaOpenAndFillPositional(
  * ```
  */
 export function hmaOpen(real: ArrayLike<number>, options?: HmaOptions): HmaStream {
-  const o = optionsOf('HMA open', options);
+  const o = hmaOptionsOf('HMA open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('HMA open', o.core);
   return hmaOpenPositional(real, optInTimePeriod, core);
@@ -1918,18 +1950,19 @@ export function hmaOpen(real: ArrayLike<number>, options?: HmaOptions): HmaStrea
  * same pass, bit-identically to {@link hma}.
  *
  * @param real - Warm-up history. Source price series, close by convention.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link HmaOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link HmaOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link hma} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `hmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1942,7 +1975,7 @@ export function hmaOpen(real: ArrayLike<number>, options?: HmaOptions): HmaStrea
  * ```
  */
 export function hmaOpenAndFill(real: ArrayLike<number>, options?: HmaOptions): HmaResult & { stream: HmaStream } {
-  const o = optionsOf('HMA openAndFill', options);
+  const o = hmaOptionsOf('HMA openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('HMA openAndFill', o.core);
   const capacity = fillCapacity(hmaLookbackPositional(optInTimePeriod, core), real);

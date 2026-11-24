@@ -520,7 +520,8 @@ static int run_is_transcendental(const Run *r)
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(r->fi->handle, i, &oi);
         if (oi->paramName && strstr(oi->paramName, "MAType") &&
-            ((int)oi->defaultValue == TA_MAType_MAMA || (int)oi->defaultValue == TA_MAType_ALMA))
+            ((int)oi->defaultValue == TA_MAType_MAMA || (int)oi->defaultValue == TA_MAType_ALMA
+             || (int)oi->defaultValue == TA_MAType_SSF))
             return 1;
     }
     return 0;

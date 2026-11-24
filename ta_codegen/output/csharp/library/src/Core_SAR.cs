@@ -547,6 +547,12 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>Wilder left a few details open, so SAR values can differ between charting tools, mostly near the start of a series and on reversal bars. TA-Lib's choices:</description></item>
+   /// <item><description>The first direction comes from Wilder's own Directional Movement on the first two bars (as in MINUS_DM): short if the low fell by more than the high rose, long otherwise.</description></item>
+   /// <item><description>A bar that touches the SAR exactly counts as a reversal.</description></item>
+   /// <item><description>Wilder's clamping rule is applied before checking for a reversal, so price must reach the clamped stop to trigger one.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are, and
@@ -628,6 +634,12 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>Wilder left a few details open, so SAR values can differ between charting tools, mostly near the start of a series and on reversal bars. TA-Lib's choices:</description></item>
+   /// <item><description>The first direction comes from Wilder's own Directional Movement on the first two bars (as in MINUS_DM): short if the low fell by more than the high rose, long otherwise.</description></item>
+   /// <item><description>A bar that touches the SAR exactly counts as a reversal.</description></item>
+   /// <item><description>Wilder's clamping rule is applied before checking for a reversal, so price must reach the clamped stop to trigger one.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

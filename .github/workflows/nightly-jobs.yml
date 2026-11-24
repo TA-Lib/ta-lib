@@ -814,8 +814,9 @@ jobs:
           fi
 
   # The npm package on Windows, the only job that runs it off Linux and macOS:
-  # the suites in source and against the installed tarball, the consumer check,
-  # then ts_package_check.py, which also runs the scripts' .cmd launch path.
+  # the suites in source and against the installed tarball, then
+  # ts_package_check.py, which type-checks and loads the installed package and
+  # also runs the scripts' .cmd launch path.
   typescript-windows:
     name: TypeScript package built and tested on windows-2022
     runs-on: windows-2022
@@ -890,34 +891,8 @@ jobs:
           printf '{"name":"ta-lib-package-test","private":true,"type":"module"}\n' > "$pack/consumer/package.json"
           cp -r test "$pack/consumer/test"
           cd "$pack/consumer"
-          npm install --no-audit --no-fund --ignore-scripts "../$tgz"
+          python "$GITHUB_WORKSPACE/scripts/ts_package_check.py" --install "$pack/$tgz" .
           suite "${packaged[@]}"
-
-      - name: Type-check and load the installed package by import and by require()
-        shell: bash
-        run: |
-          set -euo pipefail
-          tgz=$(cd bin/ts_windows && ls ./*.tgz)
-          mkdir bin/ts_windows/check
-          cp scripts/ts_consumer_check/* bin/ts_windows/check/
-          cd bin/ts_windows/check
-          npm install --no-audit --no-fund --ignore-scripts "../$tgz"
-          ../../../ta_codegen/output/ts/node_modules/.bin/tsc -p .
-          # The code subpaths only: "./package.json" is JSON, which a bare import() refuses.
-          specs=$(node -p "Object.entries(require('./node_modules/ta-lib/package.json').exports).filter(([, c]) => typeof c === 'object').map(([s]) => s === '.' ? 'ta-lib' : 'ta-lib' + s.slice(1)).join(' ')")
-          # shellcheck disable=SC2086
-          imp=$(node import.mjs $specs | tail -n 1 | tr -d '\r')
-          # shellcheck disable=SC2086
-          req=$(node require.cjs $specs | tail -n 1 | tr -d '\r')
-          echo "$imp"
-          if [ "$imp" != "$req" ]; then
-            echo "::error::import and require() disagree on Windows: $imp vs $req"
-            exit 1
-          fi
-          case "$imp" in
-            *'"sma":[2,8,2,3,4,5,6,7,8,9]'*) ;;
-            *) echo "::error::The installed package's SMA(3) over 1..10 is wrong on Windows: $imp"; exit 1 ;;
-          esac
 
       - name: Package gate
         shell: bash
@@ -1889,7 +1864,25 @@ jobs:
           echo "wrapper dev at $(git -C _wrapper/src rev-parse HEAD)"
           cd _wrapper/src
           pip install --require-hashes -r "$GITHUB_WORKSPACE/.github/requirements/build-tools.txt"
-          pip install -r requirements_test.txt
+          # The pinned copy has to cover exactly what the wrapper's own file
+          # names, or a test dependency the wrapper adds would go unnoticed.
+          python3 - "$GITHUB_WORKSPACE/.github/requirements/wrapper-test.in" requirements_test.txt <<'PY'
+          import os, re, sys
+          def names(path):
+              out = set()
+              for line in open(path):
+                  line = line.split("#")[0].strip()
+                  if line.startswith("-r"):
+                      out |= names(os.path.join(os.path.dirname(path), line[2:].strip()))
+                  elif line:
+                      out.add(re.split(r"[<>=!~\[; ]", line)[0].lower().replace("_", "-"))
+              return out
+          ours, theirs = names(sys.argv[1]), names(sys.argv[2])
+          if ours != theirs:
+              sys.exit("::error::ta-lib-python's test requirements name %s, .github/requirements/wrapper-test.in names %s: "
+                       "update it and regenerate wrapper-test.txt." % (sorted(theirs), sorted(ours)))
+          PY
+          pip install --require-hashes -r "$GITHUB_WORKSPACE/.github/requirements/wrapper-test.txt"
           python setup.py build_ext --inplace
           PYTHONPATH=. pytest -q
 

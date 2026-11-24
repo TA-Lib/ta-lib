@@ -1012,6 +1012,54 @@ DEF_FUNCTION( SQZMOM,
              );
 /* SQZMOM END */
 
+/* SSF BEGIN */
+static const TA_IntegerRange TA_DEF_SSF_TimePeriod =
+{
+   1,
+   10000,
+   5,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SSF_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SSF_TimePeriod,
+   10,
+   "Critical period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SSF_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SSF_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SSF_OptInputs[] =
+{ &TA_DEF_UI_D_SSF_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SSF,
+              TA_GroupId_OverlapStudies,
+              "Ehlers SuperSmoother Filter",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY | TA_FUNC_FLG_USES_TRANSCENDENTAL
+             );
+/* SSF END */
+
 /* STC BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_STC_FastPeriod =
 {
@@ -1794,6 +1842,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SORTINO),
    ADD_TO_TABLE(SQRT),
    ADD_TO_TABLE(SQZMOM),
+   ADD_TO_TABLE(SSF),
    ADD_TO_TABLE(STC),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),

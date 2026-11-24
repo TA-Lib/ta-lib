@@ -56,6 +56,7 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -79,7 +80,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -107,7 +108,11 @@ impl Core {
             optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
-        retValue = self.rsi_lookback(optInTimePeriod)? + self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        let mut stochfLookback: usize = 0_usize;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        stochfLookback = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        retValue = self.rsi_lookback(optInTimePeriod)? + stochfLookback;
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::stochrsi`]: how many bars ahead (positive) or behind
@@ -124,7 +129,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -218,10 +223,10 @@ impl Core {
         // version will be found in outFastD. The outFastK will still contain
         // the unsmoothed stoch RSI. If you do not care about the smoothing of
         // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rsi_lookback(optInTimePeriod).unwrap_or(usize::MAX) + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -271,7 +276,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `outFastK` — Unsmoothed stochastic of the RSI (raw %K)
     /// * `outFastD` — %K smoothed over FastD_Period (signal line)
     ///
@@ -501,10 +506,10 @@ impl Core {
         // version will be found in outFastD. The outFastK will still contain
         // the unsmoothed stoch RSI. If you do not care about the smoothing of
         // the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // Adjust startIdx to account for the lookback period.
         lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = self.rsi_lookback(optInTimePeriod)? + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;

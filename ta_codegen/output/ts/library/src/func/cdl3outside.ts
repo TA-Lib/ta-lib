@@ -49,7 +49,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -191,12 +191,13 @@ export function cdl3outsidePositional(
  * Options of {@link cdl3outside}, {@link cdl3outsideLookback},
  * {@link cdl3outsideDisplayShift}, {@link cdl3outsideOpen} and
  * {@link cdl3outsideOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface Cdl3outsideOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -216,6 +217,22 @@ export interface Cdl3outsideOptions {
    * buffer or with an input.
    */
   outInteger?: Int32Array<ArrayBuffer> | undefined;
+}
+
+/** @internal */
+export function cdl3outsideOptionsOf(funcName: string, options: Cdl3outsideOptions | undefined): Cdl3outsideOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outInteger');
+    }
+  }
+  return options;
 }
 
 /**
@@ -238,15 +255,16 @@ export interface Cdl3outsideResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3outsideOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3outsideOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3outsideLookback(options?: Cdl3outsideOptions): number {
-  const o = optionsOf('CDL3OUTSIDE lookback', options);
+  const o = cdl3outsideOptionsOf('CDL3OUTSIDE lookback', options);
   return cdl3outsideLookbackPositional(coreOf('CDL3OUTSIDE lookback', o.core));
 }
 
@@ -257,15 +275,16 @@ export function cdl3outsideLookback(options?: Cdl3outsideOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3outsideOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3outsideOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3outsideDisplayShift(outputIdx: number, options?: Cdl3outsideOptions): number {
-  const o = optionsOf('CDL3OUTSIDE displayShift', options);
+  const o = cdl3outsideOptionsOf('CDL3OUTSIDE displayShift', options);
   return cdl3outsideDisplayShiftPositional(outputIdx, coreOf('CDL3OUTSIDE displayShift', o.core));
 }
 
@@ -301,11 +320,12 @@ export function cdl3outsideDisplayShift(outputIdx: number, options?: Cdl3outside
  *   a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -325,7 +345,7 @@ export function cdl3outsideDisplayShift(outputIdx: number, options?: Cdl3outside
  */
 export function cdl3outside(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideResult {
   requireArgument('CDL3OUTSIDE', 'prices', prices);
-  const o = optionsOf('CDL3OUTSIDE', options);
+  const o = cdl3outsideOptionsOf('CDL3OUTSIDE', options);
   if (o.endIdx === undefined) {
     requireSeries('CDL3OUTSIDE', 'prices.open', prices.open);
     requireSeries('CDL3OUTSIDE', 'prices.high', prices.high);
@@ -805,13 +825,14 @@ export function cdl3outsideOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3outsideOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3outsideOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3outsideLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -832,7 +853,7 @@ export function cdl3outsideOpenAndFillPositional(
  */
 export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideStream {
   requireArgument('CDL3OUTSIDE open', 'prices', prices);
-  const o = optionsOf('CDL3OUTSIDE open', options);
+  const o = cdl3outsideOptionsOf('CDL3OUTSIDE open', options);
   const core = coreOf('CDL3OUTSIDE open', o.core);
   return cdl3outsideOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
@@ -845,18 +866,19 @@ export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link Cdl3outsideOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link Cdl3outsideOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdl3outside} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3outsideLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, histories of different lengths or a buffer too short,
- *   of the wrong type or starting where another buffer or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -876,7 +898,7 @@ export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  */
 export function cdl3outsideOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideResult & { stream: Cdl3outsideStream } {
   requireArgument('CDL3OUTSIDE openAndFill', 'prices', prices);
-  const o = optionsOf('CDL3OUTSIDE openAndFill', options);
+  const o = cdl3outsideOptionsOf('CDL3OUTSIDE openAndFill', options);
   const core = coreOf('CDL3OUTSIDE openAndFill', o.core);
   const capacity = fillCapacity(cdl3outsideLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
   const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;

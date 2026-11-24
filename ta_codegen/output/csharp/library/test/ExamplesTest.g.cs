@@ -2613,6 +2613,25 @@ public static class ExamplesTest
         Check("MACDV", AllFinite(macdv, r.Count));
     }
 
+    private static void Maenv()
+    {
+        var series = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        var upperBand = new double[252];
+        var middleBand = new double[252];
+        var lowerBand = new double[252];
+
+        var core = Core.Default;
+        OutRange r = core.Maenv(0, series.Length - 1, series, 20, 10.0, 10.0, MAType.SMA,
+                                upperBand, middleBand, lowerBand);
+        if (!Check("MAENV", r.Count > 2)) return;
+        Console.WriteLine($"{r.Count} values from bar {r.BegIdx}:");
+        Console.WriteLine(FormattableString.Invariant($"upperBand = [{upperBand[0]:F4}, ..., {upperBand[r.Count - 1]:F4}]"));
+        Console.WriteLine(FormattableString.Invariant($"middleBand = [{middleBand[0]:F4}, ..., {middleBand[r.Count - 1]:F4}]"));
+        Console.WriteLine(FormattableString.Invariant($"lowerBand = [{lowerBand[0]:F4}, ..., {lowerBand[r.Count - 1]:F4}]"));
+        Check("MAENV", AllFinite(upperBand, r.Count));
+    }
+
     private static void Mama()
     {
         var series = new double[252]; // your data, oldest first
@@ -3431,6 +3450,19 @@ public static class ExamplesTest
         Check("SQZMOM", AllFinite(momentum, r.Count));
     }
 
+    private static void Ssf()
+    {
+        var series = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+        var outReal = new double[252];
+
+        var core = Core.Default;
+        OutRange r = core.Ssf(0, series.Length - 1, series, 10, outReal);
+        if (!Check("SSF", r.Count > 2)) return;
+        Console.WriteLine(FormattableString.Invariant($"{r.Count} values from bar {r.BegIdx}: [{outReal[0]:F4}, ..., {outReal[r.Count - 1]:F4}]"));
+        Check("SSF", AllFinite(outReal, r.Count));
+    }
+
     private static void Stc()
     {
         var series = new double[252]; // your data, oldest first
@@ -4145,6 +4177,7 @@ public static class ExamplesTest
         Macdext();
         Macdfix();
         Macdv();
+        Maenv();
         Mama();
         Marketfi();
         Massi();
@@ -4201,6 +4234,7 @@ public static class ExamplesTest
         Sortino();
         Sqrt();
         Sqzmom();
+        Ssf();
         Stc();
         Stddev();
         Stoch();

@@ -77,7 +77,7 @@ The published package is emitted from the same sources twice: `--removeComments 
 
 ### 2.1 WebAssembly {#wasm}
 
-WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` and `ta-lib/abstract` entries run each batch call in their WebAssembly engine or in TypeScript, choosing by function and series length, with or without your own output buffers, and the results are the same either way, bit for bit on finite inputs. A call runs in TypeScript, with the same values, when it passes a `core` other than the `Core.DEFAULT` object, computes in place, or can reach a transcendental function.
+WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` and `ta-lib/abstract` entries run each batch call in their WebAssembly engine or in TypeScript, choosing by function and by the number of bars the call reads, with or without your own output buffers, and the results are the same either way, bit for bit on finite inputs. A call runs in TypeScript, with the same values, when it passes a `core` other than the `Core.DEFAULT` object, computes in place, or can reach a transcendental function.
 
 There is nothing to configure. In Node.js the engine loads on the first call that uses it, and awaiting `ready()` first moves its one-time compile out of that call. In a browser, and in any bundle built without the `node` export condition, calls run in TypeScript until `ready()` has loaded the engine, which each Worker calls for itself:
 
@@ -89,7 +89,7 @@ const { engine, reason } = await ready();   // 'wasm' once loaded, or 'js' and t
 
 `ready()` never rejects. A loaded engine still runs only the calls its routing sends it, so `'wasm'` does not mean a given call ran there.
 
-The engine needs WebAssembly relaxed SIMD with a fused multiply-add. Where that is missing, or a Content-Security-Policy forbids compiling WebAssembly (`'wasm-unsafe-eval'` in `script-src` allows it), the package runs its TypeScript code with the same values; under such a policy, a page that calls `ready()` also gets the browser's CSP violation report. A bundler that splits code fetches the engine's bytes only when `ready()` is called; one that does not puts them in the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. A build for the `workerd`, `edge-light` or `react-native` export condition resolves `ta-lib` and `ta-lib/abstract` to entries with no engine, where every call runs in TypeScript and `ready()` resolves to `'js'` with reason `'unavailable'`. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is loaded and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+The engine needs WebAssembly relaxed SIMD with a fused multiply-add. Where that is missing, or a Content-Security-Policy forbids compiling WebAssembly (`'wasm-unsafe-eval'` in `script-src` allows it), the package runs its TypeScript code with the same values; under such a policy, a page that calls `ready()` also gets the browser's CSP violation report. A bundler that splits code fetches the engine's bytes only when `ready()` is called; one that does not puts them in the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs without `ready`, with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. A build for the `workerd`, `edge-light` or `react-native` export condition resolves `ta-lib` and `ta-lib/abstract` to entries with no engine, where every call runs in TypeScript and `ready()` resolves to `'js'` with reason `'unavailable'`. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is loaded and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
 
 A stream is a TypeScript object, of one class in every entry ([Streaming API](/api/typescript/stream/)).
 
@@ -117,7 +117,7 @@ All TA functions use the same calling pattern, divided into four groups:
 <ul>
 <li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>. An object with more components than the function reads, a whole bar, passes.</span></li>
 <li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code> and in camelCase (<a href="/spec/#rj1">rJ1</a>): <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>, <code>fastDMaType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
-<li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
+<li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. The lookback's bars before startIdx are still read, which slicing the input there would lose.</span></li>
 <li><span class="ta-arg-out">Output buffers are optional, one key per output (outReal here): see <a href="#input_type">4.4</a>. Without them, each output is allocated.</span></li>
 </ul>
 
@@ -159,7 +159,7 @@ import { smaLookback } from 'ta-lib';
 const lookback = smaLookback({ timePeriod: 30 });   // 29 for a 30-period SMA
 ```
 
-Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
+Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the option keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -183,7 +183,8 @@ Misuse throws a `TALibError` rather than returning a return code. Its `code` nam
 | `endIdx` negative, above `Core.INDEX_MAX`, or below `startIdx` | `'TA_OUT_OF_RANGE_END_INDEX'` |
 | Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
-| Options that are not a plain object, an array included | `'TA_BAD_PARAM'` |
+| Options that are not a plain object, such as an array, a `Map` or a `Core` | `'TA_BAD_PARAM'` |
+| An option key the function does not have, such as a misspelt `timeperiod` | `'TA_BAD_PARAM'` |
 | Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
 | A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
 | An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |
@@ -205,13 +206,13 @@ try {
 
 A rejected call leaves every buffer untouched.
 
-A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
+A `NaN` or `±Inf` inside an input series is not detected, and neither is an element that is not a number, which is converted (`null` becomes 0). Clean the series before calling.
 
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstract API {#abstract}
 
-The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time, routing each call as `ta-lib` does ([2.1](#wasm)); `ta-lib/js/abstract` is the same API with WebAssembly never loaded. Either one references every function. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
+The `ta-lib/abstract` entry point describes every function at run time and calls it without naming it at compile time, routing each call as `ta-lib` does ([2.1](#wasm)); `ta-lib/js/abstract` is the same API without `ready`, with WebAssembly never loaded. Either one references every function. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -229,19 +230,19 @@ The `CDL*` pattern functions judge each candle against tunable thresholds. See [
 import { CandleSettingType, CoreBuilder, RangeType, cdldoji } from 'ta-lib';
 
 const core = new CoreBuilder()
-  .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.1)
+  .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.05)
   .build();
 
 const { begIdx, values } = cdldoji({ open, high, low, close }, { core });   // values: Int32Array<ArrayBuffer>
 ```
 
-Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out of range, so `build()` cannot fail.
+A call that passes a configured `Core` runs in TypeScript ([2.1](#wasm)). Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out of range, so `build()` cannot fail.
 
 ### 4.4 Input and Output Arrays {#input_type}
 
 An input is any `ArrayLike<number>`. A `Float64Array` is read in place; any other form, such as a `number[]` or a `Float32Array`, is first copied into a `Float64Array`, each element converted to a double. A `Float32Array` therefore gives the same output, bit for bit, as a `Float64Array` holding the same values.
 
-An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To reuse memory, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
+An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. Annotate a buffer you keep in a variable, a field or a parameter as `Float64Array<ArrayBuffer>` (`Int32Array<ArrayBuffer>`): TypeScript can reject a plain `Float64Array` annotation there, with a message that names `SharedArrayBuffer`. To reuse memory, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
 
 ```ts
 const buf = new Float64Array(close.length);
@@ -250,7 +251,7 @@ const { values } = sma(close, { timePeriod: 30, outReal: buf });   // values: a 
 
 A single output's key is `outReal` or `outInteger`; a multi-output function's keys are its result names (`outMacd`, `outMacdSignal`, `outMacdHist`). Each buffer is optional on its own: an omitted one is allocated. A buffer is written from index 0, sized as in [3.2](#output_size), and must not share memory with another buffer.
 
-You can pass the same `Float64Array` as an input and as an output buffer to compute in place. A buffer that overlaps a `Float64Array` input only partly is `'TA_BAD_PARAM'`; any other input is copied first.
+You can pass the same `Float64Array` as an input and as an output buffer to compute in place. A buffer that overlaps a `Float64Array` input only partly is `'TA_BAD_PARAM'`; any other input is copied first. To feed a result into the next call in place, pass its view as both: `sma(r.values, { outReal: r.values })`.
 
 ### 4.5 Index Range {#index_range}
 

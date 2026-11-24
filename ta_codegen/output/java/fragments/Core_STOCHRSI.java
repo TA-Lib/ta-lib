@@ -14,6 +14,7 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -32,8 +33,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int stochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -60,7 +61,15 @@
          optInFastD_MAType = MAType.SMA;
       }
       int retValue;
-      retValue = rsiLookback(optInTimePeriod) + stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      int stochfLookback;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      stochfLookback = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( stochfLookback < 0 ) {
+         return -1 ;
+      }
+      retValue = rsiLookback(optInTimePeriod) + stochfLookback;
       return retValue ;
 
    }
@@ -79,8 +88,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -166,10 +175,13 @@
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -250,9 +262,12 @@
       if( outFastK == outFastD ) {
          return RetCode.BAD_PARAM ;
       }
+      lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -315,8 +330,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
@@ -400,8 +415,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
@@ -722,10 +737,13 @@
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

@@ -860,15 +860,15 @@ static ErrorNumber test_bbw_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",        361, &g_bbwGoldenCmp   },
-      { "composition",    50841490, &g_bbwDiffCmp     },
-      { "middle == 0",      157150, &g_bbwDiffMid0    },
-      { "float tier",        29752, &g_bbwFloatCmp    },
-      { "rule 18",          765734, &g_bbwIdentCmp    },
-      { "lookback",           2890, &g_bbwLookbackCmp },
-      { "in-place",         1135924, &g_bbwAliasCmp    },
-      { "anchor",           377026, &g_bbwAnchorCmp   },
+      { "composition",    53721980, &g_bbwDiffCmp     },
+      { "middle == 0",      166520, &g_bbwDiffMid0    },
+      { "float tier",        31672, &g_bbwFloatCmp    },
+      { "rule 18",          813794, &g_bbwIdentCmp    },
+      { "lookback",           3070, &g_bbwLookbackCmp },
+      { "in-place",         1205686, &g_bbwAliasCmp    },
+      { "anchor",           401180, &g_bbwAnchorCmp   },
       { "parameters",         1194, &g_bbwParamCmp    },
-      { "degenerate",        70300, &g_bbwDegenCmp    },
+      { "degenerate",        74950, &g_bbwDegenCmp    },
    };
    ErrorNumber err;
    unsigned int c;
@@ -1445,7 +1445,8 @@ static ErrorNumber test_bbw_lookback( void )
             lb  = TA_BBW_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             lbB = TA_BBANDS_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             g_bbwLookbackCmp++;
-            if( lb != lbB || lb < 0 )
+            /* SSF refuses a period past its own cap, through MA. */
+            if( lb != lbB || (lb < 0) != (mt == TA_MAType_SSF && ns[p] > 10000) )
             {
                printf( "BBW lookback Fail [n=%d matype=%d unstable id %d = %u]: %d, "
                        "TA_BBANDS_Lookback %d\n", ns[p], mt, (int)ids[d], us[j], lb, lbB );

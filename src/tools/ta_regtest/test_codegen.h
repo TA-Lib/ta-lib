@@ -152,7 +152,8 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
 
 /* True if THIS CALL reaches a transcendental — TA_FUNC_FLG_USES_TRANSCENDENTAL, OR an
  * MA-dispatch function (MA/MAVP/BBANDS/MACDEXT/APO/PPO/STOCH*) whose *MAType
- * optional parameter selects TA_MAType_MAMA (atan) or TA_MAType_ALMA (exp). optVals[i] is one
+ * optional parameter selects TA_MAType_MAMA (atan), TA_MAType_ALMA (exp) or TA_MAType_SSF
+ * (exp, sin). optVals[i] is one
  * value per optInput in signature order; defaults are assumed beyond nbOpt. */
 int codegen_call_is_transcendental(const TA_FuncHandle *handle,
                                    const double optVals[], int nbOpt);

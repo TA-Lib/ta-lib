@@ -56,6 +56,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -76,15 +77,16 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -119,14 +121,15 @@ impl Core {
         }
         let mut tempInteger: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
-        // Find the MA with the largest lookback
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
         lookbackLargest = self.ma_lookback(optInFastPeriod, optInFastMAType)?;
         tempInteger = self.ma_lookback(optInSlowPeriod, optInSlowMAType)?;
         if tempInteger > lookbackLargest {
             lookbackLargest = tempInteger;
         }
-        // Add to the largest MA lookback the signal line lookback
-        return Ok((lookbackLargest + self.ma_lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
+        tempInteger = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
+        return Ok(lookbackLargest + tempInteger);
     }
     /// Display shift of one output of [`Core::macdext`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -139,15 +142,16 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -358,15 +362,16 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outMACD` — MACD line: fast MA minus slow MA.
     /// * `outMACDSignal` — Signal line: MA of the MACD line.
     /// * `outMACDHist` — Histogram: MACD minus signal.

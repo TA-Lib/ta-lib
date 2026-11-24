@@ -88,6 +88,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         new(13, "RMA"),
         new(14, "VIDYA"),
         new(15, "ALMA"),
+        new(16, "SSF"),
     ];
 
     /// <summary>The process-wide catalogue.</summary>
@@ -266,6 +267,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeMacdext(),
             MakeMacdfix(),
             MakeMacdv(),
+            MakeMaenv(),
             MakeMama(),
             MakeMarketfi(),
             MakeMassi(),
@@ -322,6 +324,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSortino(),
             MakeSqrt(),
             MakeSqzmom(),
+            MakeSsf(),
             MakeStc(),
             MakeStddev(),
             MakeStoch(),
@@ -4059,6 +4062,36 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             core.Macdv(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
+    private static FuncInfo MakeMaenv() => new(
+        name: "MAENV",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Moving Average Envelope",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PositiveInput,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 20, 1, 200, 1)),
+            new OptInputInfo("optInPercentUp", "Percent up", "Percent of the moving average added to form the upper band", OptInputFlags.IsPercent, new OptInputDomain.RealRange(-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5)),
+            new OptInputInfo("optInPercentDn", "Percent down", "Percent of the moving average subtracted to form the lower band", OptInputFlags.IsPercent, new OptInputDomain.RealRange(-3e37, 3e37, 2, 10.0, 0.5, 20.0, 0.5)),
+            new OptInputInfo("optInMAType", "MA Type", "Type of Moving Average", OptInputFlags.None, new OptInputDomain.IntegerList(MATypeValues, 0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outRealUpperBand", OutputFlags.UpperLimit),
+            new OutputInfo(OutputKind.Real, "outRealMiddleBand", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outRealLowerBand", OutputFlags.LowerLimit),
+        ],
+        attributes: "{}",
+        lookback: static (core, c) => core.MaenvLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
+        displayShift: static (core, c, outputIdx) => core.MaenvDisplayShift(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Maenv(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
     private static FuncInfo MakeMama() => new(
         name: "MAMA",
         group: FunctionGroup.OverlapStudies,
@@ -5472,6 +5505,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sqzmom(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOut(0), c.IntOut(1)));
+
+    private static FuncInfo MakeSsf() => new(
+        name: "SSF",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Ehlers SuperSmoother Filter",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity | FuncFlags.UsesTranscendental,
+        unstableId: FuncUnstId.SSF,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Critical period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 10000, 10, 5, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        attributes: "{}",
+        lookback: static (core, c) => core.SsfLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.SsfDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Ssf(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeStc() => new(
         name: "STC",

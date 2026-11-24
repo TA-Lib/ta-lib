@@ -3681,6 +3681,32 @@ func ExampleCore_MACDV() {
 	// macdvHist = [33.6794, ..., -24.1045]
 }
 
+func ExampleCore_MAENV() {
+	series := make([]float64, 252) // your data, oldest first
+	for i := range series {
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
+	}
+	upperBand := make([]float64, 252)
+	middleBand := make([]float64, 252)
+	lowerBand := make([]float64, 252)
+
+	core := talib.NewCore()
+	r, err := core.MAENV(0, len(series)-1, series, 20, 10, 10, talib.MATypeSMA,
+		upperBand, middleBand, lowerBand)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%d values from bar %d:\n", r.NBElement, r.BegIdx)
+	fmt.Printf("upperBand = [%.4f, ..., %.4f]\n", upperBand[0], upperBand[r.NBElement-1])
+	fmt.Printf("middleBand = [%.4f, ..., %.4f]\n", middleBand[0], middleBand[r.NBElement-1])
+	fmt.Printf("lowerBand = [%.4f, ..., %.4f]\n", lowerBand[0], lowerBand[r.NBElement-1])
+	// Output:
+	// 233 values from bar 19:
+	// upperBand = [106.8925, ..., 111.7325]
+	// middleBand = [97.1750, ..., 101.5750]
+	// lowerBand = [87.4575, ..., 91.4175]
+}
+
 func ExampleCore_MAMA() {
 	series := make([]float64, 252) // your data, oldest first
 	for i := range series {
@@ -4757,6 +4783,22 @@ func ExampleCore_SQZMOM() {
 	// 214 values from bar 38:
 	// momentum = [10.2949, ..., -4.9330]
 	// squeeze = [-1, ..., 1]
+}
+
+func ExampleCore_SSF() {
+	series := make([]float64, 252) // your data, oldest first
+	for i := range series {
+		series[i] = 90 + float64((i%40-20)*(i%40-20))/20
+	}
+	out := make([]float64, 252)
+
+	core := talib.NewCore()
+	r, err := core.SSF(0, len(series)-1, series, 10, out)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%d values from bar %d: [%.4f, ..., %.4f]\n", r.NBElement, r.BegIdx, out[0], out[r.NBElement-1])
+	// Output: 243 values from bar 9: [98.3806, ..., 95.8430]
 }
 
 func ExampleCore_STC() {

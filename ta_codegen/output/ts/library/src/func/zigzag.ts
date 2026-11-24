@@ -48,7 +48,7 @@
  *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
  */
 
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -291,7 +291,7 @@ export function zigzagPositional(
  * Options of {@link zigzag}, {@link zigzagLookback}, {@link zigzagDisplayShift},
  * {@link zigzagOpen} and {@link zigzagOpenAndFill}. Every key is optional: an
  * omitted or `undefined` key takes its default, and a call ignores the keys it has
- * no use for.
+ * no use for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface ZigzagOptions {
   /**
@@ -305,8 +305,8 @@ export interface ZigzagOptions {
    */
   minTrendLength?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -343,6 +343,22 @@ export interface ZigzagOptions {
   outPivotIdx?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function zigzagOptionsOf(funcName: string, options: ZigzagOptions | undefined): ZigzagOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'sensitivity' && k !== 'minTrendLength' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outZigZag' && k !== 'outTrend' && k !== 'outPivotIdx') {
+      unknownOption(funcName, options, k, 'sensitivity minTrendLength startIdx endIdx core outZigZag outTrend outPivotIdx');
+    }
+  }
+  return options;
+}
+
 /** What {@link zigzag} returns, and {@link zigzagOpenAndFill} with its stream. */
 export interface ZigzagResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -368,15 +384,16 @@ export interface ZigzagResult {
  * Number of leading input bars {@link zigzag} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ZigzagOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ZigzagOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function zigzagLookback(options?: ZigzagOptions): number {
-  const o = optionsOf('ZIGZAG lookback', options);
+  const o = zigzagOptionsOf('ZIGZAG lookback', options);
   return zigzagLookbackPositional(orDefault(o.sensitivity, Core.REAL_DEFAULT), orDefault(o.minTrendLength, Core.INTEGER_DEFAULT), coreOf('ZIGZAG lookback', o.core));
 }
 
@@ -387,15 +404,16 @@ export function zigzagLookback(options?: ZigzagOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ZigzagOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ZigzagOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): number {
-  const o = optionsOf('ZIGZAG displayShift', options);
+  const o = zigzagOptionsOf('ZIGZAG displayShift', options);
   return zigzagDisplayShiftPositional(orDefault(o.sensitivity, Core.REAL_DEFAULT), orDefault(o.minTrendLength, Core.INTEGER_DEFAULT), outputIdx, coreOf('ZIGZAG displayShift', o.core));
 }
 
@@ -467,13 +485,13 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a real parameter that is not a number, a parameter outside its
+ *   range, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -500,7 +518,7 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  */
 export function zigzag(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagResult {
   requireArgument('ZIGZAG', 'prices', prices);
-  const o = optionsOf('ZIGZAG', options);
+  const o = zigzagOptionsOf('ZIGZAG', options);
   if (o.endIdx === undefined) {
     requireSeries('ZIGZAG', 'prices.high', prices.high);
     requireSeries('ZIGZAG', 'prices.low', prices.low);
@@ -750,8 +768,9 @@ export class ZigzagStream {
 
 /**
  * The outputs of one ZIGZAG bar, as `update`, `peek` and `value` return them.
- * Passed back to one of them, it is filled and returned again, with no allocation;
- * it holds its values until the next call that writes it. A new one holds `NaN`.
+ * Passed back to one of them, it is filled and returned again, so no result object
+ * is created; it holds its values until the next call that writes it. A new one
+ * holds `NaN`.
  */
 export class ZigzagOut {
   /** Price of the swing extreme currently being tracked. */
@@ -1111,14 +1130,15 @@ export function zigzagOpenAndFillPositional(
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ZigzagOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ZigzagOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a real parameter that is not a number, a parameter outside its
+ *   range or histories of different lengths.
  *
  * @example
  * ```ts
@@ -1135,7 +1155,7 @@ export function zigzagOpenAndFillPositional(
  */
 export function zigzagOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagStream {
   requireArgument('ZIGZAG open', 'prices', prices);
-  const o = optionsOf('ZIGZAG open', options);
+  const o = zigzagOptionsOf('ZIGZAG open', options);
   const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
   const optInMinTrendLength = orDefault(o.minTrendLength, Core.INTEGER_DEFAULT);
   const core = coreOf('ZIGZAG open', o.core);
@@ -1149,19 +1169,20 @@ export function zigzagOpen(prices: { open?: ArrayLike<number> | undefined; high:
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link ZigzagOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link ZigzagOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link zigzag} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a real parameter that is not a number, a parameter outside its
+ *   range, histories of different lengths or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1183,7 +1204,7 @@ export function zigzagOpen(prices: { open?: ArrayLike<number> | undefined; high:
  */
 export function zigzagOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagResult & { stream: ZigzagStream } {
   requireArgument('ZIGZAG openAndFill', 'prices', prices);
-  const o = optionsOf('ZIGZAG openAndFill', options);
+  const o = zigzagOptionsOf('ZIGZAG openAndFill', options);
   const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
   const optInMinTrendLength = orDefault(o.minTrendLength, Core.INTEGER_DEFAULT);
   const core = coreOf('ZIGZAG openAndFill', o.core);

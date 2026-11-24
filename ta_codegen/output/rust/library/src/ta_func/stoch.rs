@@ -66,6 +66,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -89,12 +90,14 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -125,12 +128,15 @@ impl Core {
             optInSlowD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
+        let mut maLookback: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
-        // Add the smoothing being done for %K slow
-        retValue += self.ma_lookback(optInSlowK_Period, optInSlowK_MAType)?;
-        // Add the smoothing being done for %D slow.
-        retValue += self.ma_lookback(optInSlowD_Period, optInSlowD_MAType)?;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        maLookback = self.ma_lookback(optInSlowK_Period, optInSlowK_MAType)?;
+        retValue += maLookback;
+        maLookback = self.ma_lookback(optInSlowD_Period, optInSlowD_MAType)?;
+        retValue += maLookback;
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::stoch`]: how many bars ahead (positive) or behind
@@ -147,12 +153,14 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -434,12 +442,14 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
     /// * `outSlowD` — Signal line: SlowK smoothed by SlowD_Period MA.
     ///

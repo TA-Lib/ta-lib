@@ -338,8 +338,23 @@ public partial class Core
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
-      for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
+      i = 0;
+      if( i < stageLen ) {
+         int _wn = stageLen - i;
+         var _w1 = tempDev.Slice(i, _wn);
+         var _w0 = inClose.Slice(outBegIdx + i, _w1.Length);
+         var _w2 = tempKCM.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
+            _w1[_wk + 1] = _w0[_wk + 1] - (_w1[_wk + 1] + _w2[_wk + 1]) / 2.0;
+            _w1[_wk + 2] = _w0[_wk + 2] - (_w1[_wk + 2] + _w2[_wk + 2]) / 2.0;
+            _w1[_wk + 3] = _w0[_wk + 3] - (_w1[_wk + 3] + _w2[_wk + 3]) / 2.0;
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
+         }
+         i += _wn;
       }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -538,8 +553,23 @@ public partial class Core
       tempBegIdx = _xr1.BegIdx;
       kcmNb = _xr1.Count;
       retCode = RetCode.Success;
-      for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = (double)inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
+      i = 0;
+      if( i < stageLen ) {
+         int _wn = stageLen - i;
+         var _w1 = tempDev.Slice(i, _wn);
+         var _w0 = inClose.Slice(outBegIdx + i, _w1.Length);
+         var _w2 = tempKCM.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = (double)_w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
+            _w1[_wk + 1] = (double)_w0[_wk + 1] - (_w1[_wk + 1] + _w2[_wk + 1]) / 2.0;
+            _w1[_wk + 2] = (double)_w0[_wk + 2] - (_w1[_wk + 2] + _w2[_wk + 2]) / 2.0;
+            _w1[_wk + 3] = (double)_w0[_wk + 3] - (_w1[_wk + 3] + _w2[_wk + 3]) / 2.0;
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = (double)_w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
+         }
+         i += _wn;
       }
       OutRange _xr2 = Trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
       tempBegIdx = _xr2.BegIdx;

@@ -47,7 +47,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -152,8 +152,23 @@ export function momImpl(
   outIdx = 0;
   inIdx = startIdx;
   trailingIdx = startIdx - optInTimePeriod;
-  while (inIdx <= endIdx) {
-    outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+  if (inIdx <= endIdx) {
+    const _wn = endIdx - inIdx + 1;
+    const _w2_0 = outIdx;
+    const _w0_0 = inIdx;
+    const _w1_0 = trailingIdx;
+    for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0] - inReal[(_w1_0 + _wk) | 0];
+      outReal[(_w2_0 + _wk + 1) | 0] = inReal[(_w0_0 + _wk + 1) | 0] - inReal[(_w1_0 + _wk + 1) | 0];
+      outReal[(_w2_0 + _wk + 2) | 0] = inReal[(_w0_0 + _wk + 2) | 0] - inReal[(_w1_0 + _wk + 2) | 0];
+      outReal[(_w2_0 + _wk + 3) | 0] = inReal[(_w0_0 + _wk + 3) | 0] - inReal[(_w1_0 + _wk + 3) | 0];
+    }
+    for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+      outReal[(_w2_0 + _wk) | 0] = inReal[(_w0_0 + _wk) | 0] - inReal[(_w1_0 + _wk) | 0];
+    }
+    inIdx += _wn;
+    outIdx += _wn;
+    trailingIdx += _wn;
   }
   /* Set output limits. */
   outNBElement.value = outIdx;
@@ -202,7 +217,7 @@ export function momPositional(
  * Options of {@link mom}, {@link momLookback}, {@link momDisplayShift},
  * {@link momOpen} and {@link momOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface MomOptions {
   /**
@@ -211,8 +226,8 @@ export interface MomOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -235,6 +250,22 @@ export interface MomOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function momOptionsOf(funcName: string, options: MomOptions | undefined): MomOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link mom} returns, and {@link momOpenAndFill} with its stream. */
 export interface MomResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -250,15 +281,16 @@ export interface MomResult {
  * Number of leading input bars {@link mom} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MomOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MomOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function momLookback(options?: MomOptions): number {
-  const o = optionsOf('MOM lookback', options);
+  const o = momOptionsOf('MOM lookback', options);
   return momLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('MOM lookback', o.core));
 }
 
@@ -269,15 +301,16 @@ export function momLookback(options?: MomOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MomOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MomOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function momDisplayShift(outputIdx: number, options?: MomOptions): number {
-  const o = optionsOf('MOM displayShift', options);
+  const o = momOptionsOf('MOM displayShift', options);
   return momDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MOM displayShift', o.core));
 }
 
@@ -300,12 +333,12 @@ export function momDisplayShift(outputIdx: number, options?: MomOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -322,7 +355,7 @@ export function momDisplayShift(outputIdx: number, options?: MomOptions): number
  * @see [`rocr100`](https://ta-lib.org/functions/rocr100)
  */
 export function mom(real: ArrayLike<number>, options?: MomOptions): MomResult {
-  const o = optionsOf('MOM', options);
+  const o = momOptionsOf('MOM', options);
   if (o.endIdx === undefined) {
     requireSeries('MOM', 'real', real);
   }
@@ -667,13 +700,14 @@ export function momOpenAndFillPositional(
  * history bar, bit-identical to {@link mom} there.
  *
  * @param real - Warm-up history. Input price series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MomOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MomOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `momLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -687,7 +721,7 @@ export function momOpenAndFillPositional(
  * ```
  */
 export function momOpen(real: ArrayLike<number>, options?: MomOptions): MomStream {
-  const o = optionsOf('MOM open', options);
+  const o = momOptionsOf('MOM open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MOM open', o.core);
   return momOpenPositional(real, optInTimePeriod, core);
@@ -698,18 +732,19 @@ export function momOpen(real: ArrayLike<number>, options?: MomOptions): MomStrea
  * same pass, bit-identically to {@link mom}.
  *
  * @param real - Warm-up history. Input price series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link MomOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link MomOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link mom} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `momLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -722,7 +757,7 @@ export function momOpen(real: ArrayLike<number>, options?: MomOptions): MomStrea
  * ```
  */
 export function momOpenAndFill(real: ArrayLike<number>, options?: MomOptions): MomResult & { stream: MomStream } {
-  const o = optionsOf('MOM openAndFill', options);
+  const o = momOptionsOf('MOM openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MOM openAndFill', o.core);
   const capacity = fillCapacity(momLookbackPositional(optInTimePeriod, core), real);

@@ -48,7 +48,7 @@
  *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
  */
 
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -307,7 +307,8 @@ export function ichimokuPositional(
  * Options of {@link ichimoku}, {@link ichimokuLookback},
  * {@link ichimokuDisplayShift}, {@link ichimokuOpen} and
  * {@link ichimokuOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface IchimokuOptions {
   /**
@@ -326,8 +327,8 @@ export interface IchimokuOptions {
    */
   senkouBPeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -374,6 +375,22 @@ export interface IchimokuOptions {
   outSenkouSpanB?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function ichimokuOptionsOf(funcName: string, options: IchimokuOptions | undefined): IchimokuOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'tenkanPeriod' && k !== 'kijunPeriod' && k !== 'senkouBPeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outTenkanSen' && k !== 'outKijunSen' && k !== 'outSenkouSpanA' && k !== 'outSenkouSpanB') {
+      unknownOption(funcName, options, k, 'tenkanPeriod kijunPeriod senkouBPeriod startIdx endIdx core outTenkanSen outKijunSen outSenkouSpanA outSenkouSpanB');
+    }
+  }
+  return options;
+}
+
 /** What {@link ichimoku} returns, and {@link ichimokuOpenAndFill} with its stream. */
 export interface IchimokuResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -398,15 +415,16 @@ export interface IchimokuResult {
  * Number of leading input bars {@link ichimoku} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link IchimokuOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link IchimokuOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ichimokuLookback(options?: IchimokuOptions): number {
-  const o = optionsOf('ICHIMOKU lookback', options);
+  const o = ichimokuOptionsOf('ICHIMOKU lookback', options);
   return ichimokuLookbackPositional(orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT), orDefault(o.kijunPeriod, Core.INTEGER_DEFAULT), orDefault(o.senkouBPeriod, Core.INTEGER_DEFAULT), coreOf('ICHIMOKU lookback', o.core));
 }
 
@@ -417,15 +435,16 @@ export function ichimokuLookback(options?: IchimokuOptions): number {
  * The values are never shifted: this describes the drawing only.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link IchimokuOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link IchimokuOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOptions): number {
-  const o = optionsOf('ICHIMOKU displayShift', options);
+  const o = ichimokuOptionsOf('ICHIMOKU displayShift', options);
   return ichimokuDisplayShiftPositional(orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT), orDefault(o.kijunPeriod, Core.INTEGER_DEFAULT), orDefault(o.senkouBPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('ICHIMOKU displayShift', o.core));
 }
 
@@ -474,12 +493,13 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -512,7 +532,7 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  */
 export function ichimoku(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuResult {
   requireArgument('ICHIMOKU', 'prices', prices);
-  const o = optionsOf('ICHIMOKU', options);
+  const o = ichimokuOptionsOf('ICHIMOKU', options);
   if (o.endIdx === undefined) {
     requireSeries('ICHIMOKU', 'prices.high', prices.high);
     requireSeries('ICHIMOKU', 'prices.low', prices.low);
@@ -732,8 +752,9 @@ export class IchimokuStream {
 
 /**
  * The outputs of one ICHIMOKU bar, as `update`, `peek` and `value` return them.
- * Passed back to one of them, it is filled and returned again, with no allocation;
- * it holds its values until the next call that writes it. A new one holds `NaN`.
+ * Passed back to one of them, it is filled and returned again, so no result object
+ * is created; it holds its values until the next call that writes it. A new one
+ * holds `NaN`.
  */
 export class IchimokuOut {
   /** Conversion line. */
@@ -1101,14 +1122,15 @@ export function ichimokuOpenAndFillPositional(
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link IchimokuOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link IchimokuOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ichimokuLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or histories of different lengths.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or histories of different
+ *   lengths.
  *
  * @example
  * ```ts
@@ -1129,7 +1151,7 @@ export function ichimokuOpenAndFillPositional(
  */
 export function ichimokuOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuStream {
   requireArgument('ICHIMOKU open', 'prices', prices);
-  const o = optionsOf('ICHIMOKU open', options);
+  const o = ichimokuOptionsOf('ICHIMOKU open', options);
   const optInTenkanPeriod = orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT);
   const optInKijunPeriod = orDefault(o.kijunPeriod, Core.INTEGER_DEFAULT);
   const optInSenkouBPeriod = orDefault(o.senkouBPeriod, Core.INTEGER_DEFAULT);
@@ -1144,19 +1166,19 @@ export function ichimokuOpen(prices: { open?: ArrayLike<number> | undefined; hig
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link IchimokuOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link IchimokuOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link ichimoku} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ichimokuLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or a buffer too short, of the wrong type or
- *   starting where another buffer or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range, histories of different lengths
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1183,7 +1205,7 @@ export function ichimokuOpen(prices: { open?: ArrayLike<number> | undefined; hig
  */
 export function ichimokuOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuResult & { stream: IchimokuStream } {
   requireArgument('ICHIMOKU openAndFill', 'prices', prices);
-  const o = optionsOf('ICHIMOKU openAndFill', options);
+  const o = ichimokuOptionsOf('ICHIMOKU openAndFill', options);
   const optInTenkanPeriod = orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT);
   const optInKijunPeriod = orDefault(o.kijunPeriod, Core.INTEGER_DEFAULT);
   const optInSenkouBPeriod = orDefault(o.senkouBPeriod, Core.INTEGER_DEFAULT);

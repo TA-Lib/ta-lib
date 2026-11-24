@@ -11,7 +11,8 @@ bars, arm) then takes the median over the sweeps of its median and of its IQR.
 A row timed across more than MAX_MAJOR_GCS major GCs (`majorGcs`, 0 when
 absent) is dropped, and the report counts the drops per sweep; a cell whose
 every row is dropped is missing, as an unmeasured one is. Only --form=options
-sweeps set the table: a file holding rows of another form refuses.
+sweeps set the table: a file holding rows of another form, or rows that name
+--tail or --engine, refuses.
 Prints the YAML on stdout, or with --write writes it to
 ta_codegen/input/wasm_routing.yaml, and the report on stderr; writes no YAML,
 and exits 1, when it refuses. The table is written with --write, not by
@@ -83,6 +84,10 @@ def load(path):
                 host["fails"].append("%s line %d: not JSON" % (path, n))
                 continue
             form = row.get("form", "options")
+            if "tail" in row:
+                form += " --tail=%s" % row["tail"]
+            if "engine" in row:
+                form += " --engine=%s" % row["engine"]
             if form != "options":
                 host["forms"].add(form)
             elif "fail" in row:
@@ -652,6 +657,15 @@ def self_test():
         ("a file holding --form=buffered rows refuses",
          [_curve("A", [0.5] * 3, form="buffered"), _curve("A", [0.5] * 3), _curve("A", [0.5] * 3)], None,
          "host1: holds --form=buffered rows"),
+        ("a file holding --form=params rows refuses",
+         [_curve("A", [0.5] * 3), _curve("A", [0.5] * 3, form="params"), _curve("A", [0.5] * 3)], None,
+         "host2: holds --form=params rows"),
+        ("a file holding --tail rows refuses",
+         [_curve("A", [0.5] * 3), _curve("A", [0.5] * 3), _curve("A", [0.5] * 3, form="options", tail=1)], None,
+         "host3: holds --form=options --tail=1 rows"),
+        ("a file holding --engine=table rows refuses",
+         [_curve("A", [0.5] * 3, form="options", engine="table", inModule=True), _curve("A", [0.5] * 3),
+          _curve("A", [0.5] * 3)], None, "host1: holds --form=options --engine=table rows"),
     ]
     results = [_run(*c[:-1], **c[-1]) if isinstance(c[-1], dict) else _run(*c) for c in cases] + _file_cases()
     print("%d/%d passed" % (sum(results), len(results)))

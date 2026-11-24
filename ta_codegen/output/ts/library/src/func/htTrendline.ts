@@ -61,7 +61,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -657,12 +657,13 @@ export function htTrendlinePositional(
  * Options of {@link htTrendline}, {@link htTrendlineLookback},
  * {@link htTrendlineDisplayShift}, {@link htTrendlineOpen} and
  * {@link htTrendlineOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface HtTrendlineOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -683,6 +684,22 @@ export interface HtTrendlineOptions {
    * input of the same length.
    */
   outReal?: Float64Array<ArrayBuffer> | undefined;
+}
+
+/** @internal */
+export function htTrendlineOptionsOf(funcName: string, options: HtTrendlineOptions | undefined): HtTrendlineOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
 }
 
 /**
@@ -706,15 +723,16 @@ export interface HtTrendlineResult {
  *
  * It includes `core`'s unstable period for this function.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HtTrendlineOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HtTrendlineOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function htTrendlineLookback(options?: HtTrendlineOptions): number {
-  const o = optionsOf('HT_TRENDLINE lookback', options);
+  const o = htTrendlineOptionsOf('HT_TRENDLINE lookback', options);
   return htTrendlineLookbackPositional(coreOf('HT_TRENDLINE lookback', o.core));
 }
 
@@ -725,15 +743,16 @@ export function htTrendlineLookback(options?: HtTrendlineOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HtTrendlineOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HtTrendlineOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function htTrendlineDisplayShift(outputIdx: number, options?: HtTrendlineOptions): number {
-  const o = optionsOf('HT_TRENDLINE displayShift', options);
+  const o = htTrendlineOptionsOf('HT_TRENDLINE displayShift', options);
   return htTrendlineDisplayShiftPositional(outputIdx, coreOf('HT_TRENDLINE displayShift', o.core));
 }
 
@@ -756,11 +775,12 @@ export function htTrendlineDisplayShift(outputIdx: number, options?: HtTrendline
  *   a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -777,7 +797,7 @@ export function htTrendlineDisplayShift(outputIdx: number, options?: HtTrendline
  * @see [`wma`](https://ta-lib.org/functions/wma)
  */
 export function htTrendline(real: ArrayLike<number>, options?: HtTrendlineOptions): HtTrendlineResult {
-  const o = optionsOf('HT_TRENDLINE', options);
+  const o = htTrendlineOptionsOf('HT_TRENDLINE', options);
   if (o.endIdx === undefined) {
     requireSeries('HT_TRENDLINE', 'real', real);
   }
@@ -2425,13 +2445,13 @@ export function htTrendlineOpenAndFillPositional(
  * the last history bar, bit-identical to {@link htTrendline} there.
  *
  * @param real - Warm-up history. Source price series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link HtTrendlineOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link HtTrendlineOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `htTrendlineLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a `Core`
- *   or an absent input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -2445,7 +2465,7 @@ export function htTrendlineOpenAndFillPositional(
  * ```
  */
 export function htTrendlineOpen(real: ArrayLike<number>, options?: HtTrendlineOptions): HtTrendlineStream {
-  const o = optionsOf('HT_TRENDLINE open', options);
+  const o = htTrendlineOptionsOf('HT_TRENDLINE open', options);
   const core = coreOf('HT_TRENDLINE open', o.core);
   return htTrendlineOpenPositional(real, core);
 }
@@ -2455,18 +2475,18 @@ export function htTrendlineOpen(real: ArrayLike<number>, options?: HtTrendlineOp
  * the same pass, bit-identically to {@link htTrendline}.
  *
  * @param real - Warm-up history. Source price series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link HtTrendlineOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link HtTrendlineOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link htTrendline} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `htTrendlineLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or a buffer too short, of the wrong type or starting
- *   where another buffer or a `Float64Array` input starts, or, on a history long
- *   enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2479,7 +2499,7 @@ export function htTrendlineOpen(real: ArrayLike<number>, options?: HtTrendlineOp
  * ```
  */
 export function htTrendlineOpenAndFill(real: ArrayLike<number>, options?: HtTrendlineOptions): HtTrendlineResult & { stream: HtTrendlineStream } {
-  const o = optionsOf('HT_TRENDLINE openAndFill', options);
+  const o = htTrendlineOptionsOf('HT_TRENDLINE openAndFill', options);
   const core = coreOf('HT_TRENDLINE openAndFill', o.core);
   const capacity = fillCapacity(htTrendlineLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

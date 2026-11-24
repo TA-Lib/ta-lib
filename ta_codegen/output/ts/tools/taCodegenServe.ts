@@ -162,6 +162,7 @@ import * as MACD from '../library/src/func/macd.ts';
 import * as MACDEXT from '../library/src/func/macdext.ts';
 import * as MACDFIX from '../library/src/func/macdfix.ts';
 import * as MACDV from '../library/src/func/macdv.ts';
+import * as MAENV from '../library/src/func/maenv.ts';
 import * as MAMA from '../library/src/func/mama.ts';
 import * as MARKETFI from '../library/src/func/marketfi.ts';
 import * as MASSI from '../library/src/func/massi.ts';
@@ -218,6 +219,7 @@ import * as SMI from '../library/src/func/smi.ts';
 import * as SORTINO from '../library/src/func/sortino.ts';
 import * as SQRT from '../library/src/func/sqrt.ts';
 import * as SQZMOM from '../library/src/func/sqzmom.ts';
+import * as SSF from '../library/src/func/ssf.ts';
 import * as STC from '../library/src/func/stc.ts';
 import * as STDDEV from '../library/src/func/stddev.ts';
 import * as STOCH from '../library/src/func/stoch.ts';
@@ -858,7 +860,7 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['ALLIGATOR', { exported: true, perIn: 16, perOut: 24, declined: () => false }],
   ['ALMA', { exported: false, perIn: 8, perOut: 8, declined: () => false }],
   ['AO', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
-  ['APO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[2]) }],
+  ['APO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[2]) }],
   ['AROON', { exported: true, perIn: 16, perOut: 16, declined: () => false }],
   ['AROONOSC', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['ASI', { exported: true, perIn: 32, perOut: 8, declined: () => false }],
@@ -867,8 +869,8 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['ATR', { exported: true, perIn: 24, perOut: 8, declined: () => false }],
   ['AVGDEV', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['AVGPRICE', { exported: true, perIn: 32, perOut: 8, declined: () => false }],
-  ['BBANDS', { exported: true, perIn: 8, perOut: 24, declined: (o) => [7, 15].includes(o[3]) }],
-  ['BBW', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[3]) }],
+  ['BBANDS', { exported: true, perIn: 8, perOut: 24, declined: (o) => [7, 15, 16].includes(o[3]) }],
+  ['BBW', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[3]) }],
   ['BETA', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['BOP', { exported: true, perIn: 32, perOut: 8, declined: () => false }],
   ['CCI', { exported: true, perIn: 24, perOut: 8, declined: () => false }],
@@ -981,9 +983,9 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['IMI', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['KAMA', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['KC', { exported: true, perIn: 24, perOut: 24, declined: () => false }],
-  ['KDJ', { exported: true, perIn: 24, perOut: 24, declined: (o) => [7, 15].includes(o[2]) || [7, 15].includes(o[4]) }],
+  ['KDJ', { exported: true, perIn: 24, perOut: 24, declined: (o) => [7, 15, 16].includes(o[2]) || [7, 15, 16].includes(o[4]) }],
   ['KST', { exported: true, perIn: 8, perOut: 16, declined: () => false }],
-  ['KSTEXT', { exported: true, perIn: 8, perOut: 16, declined: (o) => [7, 15].includes(o[9]) || [7, 15].includes(o[10]) }],
+  ['KSTEXT', { exported: true, perIn: 8, perOut: 16, declined: (o) => [7, 15, 16].includes(o[9]) || [7, 15, 16].includes(o[10]) }],
   ['KURTOSIS', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['KVO', { exported: true, perIn: 32, perOut: 16, declined: () => false }],
   ['LINEARREG', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
@@ -992,15 +994,16 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['LINEARREG_SLOPE', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['LN', { exported: false, perIn: 8, perOut: 8, declined: () => false }],
   ['LOG10', { exported: false, perIn: 8, perOut: 8, declined: () => false }],
-  ['MA', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[1]) }],
+  ['MA', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[1]) }],
   ['MACD', { exported: true, perIn: 8, perOut: 24, declined: () => false }],
-  ['MACDEXT', { exported: true, perIn: 8, perOut: 24, declined: (o) => [7, 15].includes(o[1]) || [7, 15].includes(o[3]) || [7, 15].includes(o[5]) }],
+  ['MACDEXT', { exported: true, perIn: 8, perOut: 24, declined: (o) => [7, 15, 16].includes(o[1]) || [7, 15, 16].includes(o[3]) || [7, 15, 16].includes(o[5]) }],
   ['MACDFIX', { exported: true, perIn: 8, perOut: 24, declined: () => false }],
   ['MACDV', { exported: true, perIn: 24, perOut: 24, declined: () => false }],
+  ['MAENV', { exported: true, perIn: 8, perOut: 24, declined: (o) => [7, 15, 16].includes(o[3]) }],
   ['MAMA', { exported: false, perIn: 8, perOut: 16, declined: () => false }],
   ['MARKETFI', { exported: true, perIn: 24, perOut: 8, declined: () => false }],
   ['MASSI', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
-  ['MAVP', { exported: true, perIn: 16, perOut: 8, declined: (o) => [7, 15].includes(o[2]) }],
+  ['MAVP', { exported: true, perIn: 16, perOut: 8, declined: (o) => [7, 15, 16].includes(o[2]) }],
   ['MAX', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['MAXINDEX', { exported: true, perIn: 8, perOut: 4, declined: () => false }],
   ['MCGD', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
@@ -1020,15 +1023,15 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['NATR', { exported: true, perIn: 24, perOut: 8, declined: () => false }],
   ['NVI', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['OBV', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
-  ['PERCENTB', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[3]) }],
+  ['PERCENTB', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[3]) }],
   ['PERCENTILE', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['PERCENTRANK', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['PLUS_DI', { exported: true, perIn: 24, perOut: 8, declined: () => false }],
   ['PLUS_DM', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
-  ['PPO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[2]) }],
+  ['PPO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[2]) }],
   ['PSO', { exported: false, perIn: 24, perOut: 8, declined: () => false }],
   ['PVI', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
-  ['PVO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15].includes(o[2]) }],
+  ['PVO', { exported: true, perIn: 8, perOut: 8, declined: (o) => [7, 15, 16].includes(o[2]) }],
   ['PVT', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['QSTICK', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['RMA', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
@@ -1053,11 +1056,12 @@ const ENGINE_FACTS = new Map<string, { exported: boolean; perIn: number; perOut:
   ['SORTINO', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['SQRT', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['SQZMOM', { exported: true, perIn: 24, perOut: 12, declined: () => false }],
+  ['SSF', { exported: false, perIn: 8, perOut: 8, declined: () => false }],
   ['STC', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['STDDEV', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
-  ['STOCH', { exported: true, perIn: 24, perOut: 16, declined: (o) => [7, 15].includes(o[2]) || [7, 15].includes(o[4]) }],
-  ['STOCHF', { exported: true, perIn: 24, perOut: 16, declined: (o) => [7, 15].includes(o[2]) }],
-  ['STOCHRSI', { exported: true, perIn: 8, perOut: 16, declined: (o) => [7, 15].includes(o[3]) }],
+  ['STOCH', { exported: true, perIn: 24, perOut: 16, declined: (o) => [7, 15, 16].includes(o[2]) || [7, 15, 16].includes(o[4]) }],
+  ['STOCHF', { exported: true, perIn: 24, perOut: 16, declined: (o) => [7, 15, 16].includes(o[2]) }],
+  ['STOCHRSI', { exported: true, perIn: 8, perOut: 16, declined: (o) => [7, 15, 16].includes(o[3]) }],
   ['SUB', { exported: true, perIn: 16, perOut: 8, declined: () => false }],
   ['SUM', { exported: true, perIn: 8, perOut: 8, declined: () => false }],
   ['SUPERTREND', { exported: true, perIn: 24, perOut: 12, declined: () => false }],
@@ -1261,6 +1265,7 @@ const FUNCTION_LIST = '{"functions":[' + [
   '"TA_MACDEXT"',
   '"TA_MACDFIX"',
   '"TA_MACDV"',
+  '"TA_MAENV"',
   '"TA_MAMA"',
   '"TA_MARKETFI"',
   '"TA_MASSI"',
@@ -1317,6 +1322,7 @@ const FUNCTION_LIST = '{"functions":[' + [
   '"TA_SORTINO"',
   '"TA_SQRT"',
   '"TA_SQZMOM"',
+  '"TA_SSF"',
   '"TA_STC"',
   '"TA_STDDEV"',
   '"TA_STOCH"',
@@ -2584,7 +2590,7 @@ function handle_APO(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.apo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.apo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -2611,7 +2617,7 @@ function handle_APO(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.apo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.apo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -3456,7 +3462,7 @@ function handle_BBANDS(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.bbands(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 }) : ENGINE.bbands(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outUpperBand.length;
@@ -3485,7 +3491,7 @@ function handle_BBANDS(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.bbands(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 }) : ENGINE.bbands(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outUpperBand.length;
@@ -3557,7 +3563,7 @@ function handle_BBW(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.bbw(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.bbw(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -3584,7 +3590,7 @@ function handle_BBW(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.bbw(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.bbw(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -14656,7 +14662,7 @@ function handle_KDJ(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInSlowK_MAType) || [7, 15, 16].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.kdj({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c, outK: out0, outD: out1, outJ: out2 }) : ENGINE.kdj({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outK.length;
@@ -14685,7 +14691,7 @@ function handle_KDJ(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInSlowK_MAType) || [7, 15, 16].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.kdj({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c, outK: out0, outD: out1, outJ: out2 }) : ENGINE.kdj({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outK.length;
@@ -14870,7 +14876,7 @@ function handle_KSTEXT(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInROCMAType) || [7, 15].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInROCMAType) || [7, 15, 16].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.kstext(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c, outKst: out0, outKstSignal: out1 }) : ENGINE.kstext(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outKst.length;
@@ -14898,7 +14904,7 @@ function handle_KSTEXT(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInROCMAType) || [7, 15].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInROCMAType) || [7, 15, 16].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.kstext(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c, outKst: out0, outKstSignal: out1 }) : ENGINE.kstext(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outKst.length;
@@ -15728,7 +15734,7 @@ function handle_MA(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.ma(inReal, { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ma(inReal, { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -15755,7 +15761,7 @@ function handle_MA(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.ma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -15931,7 +15937,7 @@ function handle_MACDEXT(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastMAType) || [7, 15].includes(optInSlowMAType) || [7, 15].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastMAType) || [7, 15, 16].includes(optInSlowMAType) || [7, 15, 16].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.macdext(inReal, { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 }) : ENGINE.macdext(inReal, { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outMacd.length;
@@ -15960,7 +15966,7 @@ function handle_MACDEXT(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1, out2]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastMAType) || [7, 15].includes(optInSlowMAType) || [7, 15].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastMAType) || [7, 15, 16].includes(optInSlowMAType) || [7, 15, 16].includes(optInSignalMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
           (c) => buffered ? ENGINE.macdext(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 }) : ENGINE.macdext(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outMacd.length;
@@ -16189,6 +16195,109 @@ function handle_MACDV(p: Params): string {
     usedFloat = 1;
   }
   const rideFields = wasmEngine ? '' : rideMacdv(core, p, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
+}
+
+function handle_MAENV(p: Params): string {
+  const startIdx = int(p, 'startIdx', 0);
+  const endIdx = int(p, 'endIdx', 0);
+  const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;
+  const inReal = pre ? refClose.slice(0, refN) : f64Array(p, 'inReal');
+  const benchMode = int(p, 'bench_mode', 0);
+  const warm_inReal = benchMode === 0 ? inReal : warmView(inReal, endIdx + 1);
+  const optInTimePeriod = int(p, 'optInTimePeriod', Core.INTEGER_DEFAULT);
+  const optInPercentUp = real(p, 'optInPercentUp', Core.REAL_DEFAULT);
+  const optInPercentDn = real(p, 'optInPercentDn', Core.REAL_DEFAULT);
+  const optInMAType = int(p, 'optInMAType', Core.INTEGER_DEFAULT) as MAType;
+  const outLen = outLength(p, startIdx, endIdx, MAENV.maenvLookback({ timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core }));
+  const out0 = f64Out(outLen);
+  const out1 = f64Out(outLen);
+  const out2 = f64Out(outLen);
+  const iters = benchIters(p);
+  const useFloat = int(p, 'use_float', 0) !== 0;
+  const replyCall = useFloat ? iters + 1 : iters;
+  const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
+  const ord = wasmEngine && benchMode === 0 ? requestOrdinal('MAENV') : 0;
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  let rc: number = RetCode.SUCCESS;
+  let t0 = 0n;
+  for (let bi = 0; bi <= iters; bi++) {
+    if (bi === 1) t0 = process.hrtime.bigint();
+    if (benchMode !== 0) {
+      try {
+        if (benchMode === 1) {
+          MAENV.maenvOpen(warm_inReal, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core });
+        } else {
+          const wh = MAENV.maenvOpenAndFill(warm_inReal, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+          outBegIdx.value = wh.begIdx;
+          outNBElement.value = wh.outUpperBand.length;
+        }
+        rc = RetCode.SUCCESS;
+      } catch (e) {
+        rc = e instanceof TALibError ? e.retCode : RetCode.BAD_PARAM;
+      }
+      continue;
+    }
+    try {
+      if (timed) {
+        rc = MAENV.maenvImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const buffered = ((ord + replyCall - bi) & 1) === 1;
+        refill([out0, out1, out2]);
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+          (c) => buffered ? ENGINE.maenv(inReal, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core: c, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 }) : ENGINE.maenv(inReal, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        if (!buffered) {
+          out0.set(r.outUpperBand);
+          out1.set(r.outMiddleBand);
+          out2.set(r.outLowerBand);
+        }
+        rc = RetCode.SUCCESS;
+      } else {
+        const r = MAENV.maenv(inReal, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        rc = RetCode.SUCCESS;
+      }
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+  }
+  const elapsedNs = (process.hrtime.bigint() - t0) / BigInt(iters);
+  let usedFloat = 0;
+  if (useFloat) {
+    try {
+      if (wasmEngine) {
+        const buffered = (ord & 1) === 1;
+        refill([out0, out1, out2]);
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 24, buffered, unbound: false },
+          (c) => buffered ? ENGINE.maenv(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core: c, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 }) : ENGINE.maenv(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        if (!buffered) {
+          out0.set(r.outUpperBand);
+          out1.set(r.outMiddleBand);
+          out2.set(r.outLowerBand);
+        }
+      } else {
+        const r = MAENV.maenv(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+      }
+      rc = RetCode.SUCCESS;
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+    usedFloat = 1;
+  }
+  const rideFields = wasmEngine ? '' : rideMaenv(core, p, endIdx, inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16532,7 +16641,7 @@ function handle_MAVP(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: inReal1.length !== inReal0.length, bytes: inReal0.length * 16 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: inReal1.length !== inReal0.length, bytes: inReal0.length * 16 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.mavp(inReal0, inReal1, { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.mavp(inReal0, inReal1, { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -16559,7 +16668,7 @@ function handle_MAVP(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: inReal1.length !== inReal0.length, bytes: inReal0.length * 16 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: inReal1.length !== inReal0.length, bytes: inReal0.length * 16 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.mavp(Float32Array.from(inReal0), Float32Array.from(inReal1), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.mavp(Float32Array.from(inReal0), Float32Array.from(inReal1), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -18447,7 +18556,7 @@ function handle_PERCENTB(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.percentb(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.percentb(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -18474,7 +18583,7 @@ function handle_PERCENTB(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.percentb(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.percentb(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -18928,7 +19037,7 @@ function handle_PPO(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.ppo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ppo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -18955,7 +19064,7 @@ function handle_PPO(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.ppo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ppo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -19218,7 +19327,7 @@ function handle_PVO(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inVolume.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inVolume.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.pvo({ volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.pvo({ volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -19245,7 +19354,7 @@ function handle_PVO(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInMAType), lengthsDiffer: false, bytes: inVolume.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInMAType), lengthsDiffer: false, bytes: inVolume.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
           (c) => buffered ? ENGINE.pvo({ volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.pvo({ volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.values.length;
@@ -21583,6 +21692,101 @@ function handle_SQZMOM(p: Params): string {
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outInteger'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
+function handle_SSF(p: Params): string {
+  const startIdx = int(p, 'startIdx', 0);
+  const endIdx = int(p, 'endIdx', 0);
+  const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;
+  const inReal = pre ? refClose.slice(0, refN) : f64Array(p, 'inReal');
+  const benchMode = int(p, 'bench_mode', 0);
+  const warm_inReal = benchMode === 0 ? inReal : warmView(inReal, endIdx + 1);
+  const optInTimePeriod = int(p, 'optInTimePeriod', Core.INTEGER_DEFAULT);
+  pinUnstable(FuncUnstId.SSF, int(p, 'unstablePeriod', 0));
+  const outLen = outLength(p, startIdx, endIdx, SSF.ssfLookback({ timePeriod: optInTimePeriod, core }));
+  const out0 = f64Out(outLen);
+  const iters = benchIters(p);
+  const useFloat = int(p, 'use_float', 0) !== 0;
+  const replyCall = useFloat ? iters + 1 : iters;
+  const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
+  const ord = wasmEngine && benchMode === 0 ? requestOrdinal('SSF') : 0;
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  let rc: number = RetCode.SUCCESS;
+  let t0 = 0n;
+  for (let bi = 0; bi <= iters; bi++) {
+    if (bi === 1) t0 = process.hrtime.bigint();
+    if (benchMode !== 0) {
+      try {
+        if (benchMode === 1) {
+          SSF.ssfOpen(warm_inReal, { timePeriod: optInTimePeriod, core });
+        } else {
+          const wh = SSF.ssfOpenAndFill(warm_inReal, { timePeriod: optInTimePeriod, core, outReal: out0 });
+          outBegIdx.value = wh.begIdx;
+          outNBElement.value = wh.values.length;
+        }
+        rc = RetCode.SUCCESS;
+      } catch (e) {
+        rc = e instanceof TALibError ? e.retCode : RetCode.BAD_PARAM;
+      }
+      continue;
+    }
+    try {
+      if (timed) {
+        rc = SSF.ssfImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const buffered = ((ord + replyCall - bi) & 1) === 1;
+        refill([out0]);
+        const r = engineBatch({ exported: false, declined: false, lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+          (c) => buffered ? ENGINE.ssf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ssf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        if (!buffered) {
+          out0.set(r.values);
+        }
+        rc = RetCode.SUCCESS;
+      } else {
+        const r = SSF.ssf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        rc = RetCode.SUCCESS;
+      }
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+  }
+  const elapsedNs = (process.hrtime.bigint() - t0) / BigInt(iters);
+  let usedFloat = 0;
+  if (useFloat) {
+    try {
+      if (wasmEngine) {
+        const buffered = (ord & 1) === 1;
+        refill([out0]);
+        const r = engineBatch({ exported: false, declined: false, lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 8, buffered, unbound: false },
+          (c) => buffered ? ENGINE.ssf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c, outReal: out0 }) : ENGINE.ssf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        if (!buffered) {
+          out0.set(r.values);
+        }
+      } else {
+        const r = SSF.ssf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
+      rc = RetCode.SUCCESS;
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+    usedFloat = 1;
+  }
+  const rideFields = wasmEngine ? '' : rideSsf(core, p, endIdx, inReal, optInTimePeriod);
+  return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
+}
+
 function handle_STC(p: Params): string {
   const startIdx = int(p, 'startIdx', 0);
   const endIdx = int(p, 'endIdx', 0);
@@ -21827,7 +22031,7 @@ function handle_STOCH(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInSlowK_MAType) || [7, 15, 16].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stoch({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c, outSlowK: out0, outSlowD: out1 }) : ENGINE.stoch({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outSlowK.length;
@@ -21855,7 +22059,7 @@ function handle_STOCH(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInSlowK_MAType) || [7, 15, 16].includes(optInSlowD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stoch({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c, outSlowK: out0, outSlowD: out1 }) : ENGINE.stoch({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outSlowK.length;
@@ -21930,7 +22134,7 @@ function handle_STOCHF(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stochf({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c, outFastK: out0, outFastD: out1 }) : ENGINE.stochf({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outFastK.length;
@@ -21958,7 +22162,7 @@ function handle_STOCHF(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastD_MAType), lengthsDiffer: inLow.length !== inHigh.length || inClose.length !== inHigh.length, bytes: inHigh.length * 24 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stochf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c, outFastK: out0, outFastD: out1 }) : ENGINE.stochf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outFastK.length;
@@ -22030,7 +22234,7 @@ function handle_STOCHRSI(p: Params): string {
       } else if (wasmEngine) {
         const buffered = ((ord + replyCall - bi) & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastD_MAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastD_MAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stochrsi(inReal, { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c, outFastK: out0, outFastD: out1 }) : ENGINE.stochrsi(inReal, { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outFastK.length;
@@ -22058,7 +22262,7 @@ function handle_STOCHRSI(p: Params): string {
       if (wasmEngine) {
         const buffered = (ord & 1) === 1;
         refill([out0, out1]);
-        const r = engineBatch({ exported: true, declined: [7, 15].includes(optInFastD_MAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
+        const r = engineBatch({ exported: true, declined: [7, 15, 16].includes(optInFastD_MAType), lengthsDiffer: false, bytes: inReal.length * 8 + (endIdx - startIdx + 1) * 16, buffered, unbound: false },
           (c) => buffered ? ENGINE.stochrsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c, outFastK: out0, outFastD: out1 }) : ENGINE.stochrsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
         outBegIdx.value = r.begIdx;
         outNBElement.value = r.outFastK.length;
@@ -25316,6 +25520,7 @@ const FUNCTIONS = new Map<string, (p: Params) => string>([
   ['TA_MACDEXT', handle_MACDEXT],
   ['TA_MACDFIX', handle_MACDFIX],
   ['TA_MACDV', handle_MACDV],
+  ['TA_MAENV', handle_MAENV],
   ['TA_MAMA', handle_MAMA],
   ['TA_MARKETFI', handle_MARKETFI],
   ['TA_MASSI', handle_MASSI],
@@ -25372,6 +25577,7 @@ const FUNCTIONS = new Map<string, (p: Params) => string>([
   ['TA_SORTINO', handle_SORTINO],
   ['TA_SQRT', handle_SQRT],
   ['TA_SQZMOM', handle_SQZMOM],
+  ['TA_SSF', handle_SSF],
   ['TA_STC', handle_STC],
   ['TA_STDDEV', handle_STDDEV],
   ['TA_STOCH', handle_STOCH],
@@ -27605,7 +27811,7 @@ function sv_APO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = APO.apoImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -29105,7 +29311,7 @@ function sv_BBANDS(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = BBANDS.bbandsImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0, b1, b2); }
@@ -29318,7 +29524,7 @@ function sv_BBW(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = BBW.bbwImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0); }
@@ -48132,7 +48338,7 @@ function sv_KDJ(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KDJ.kdjImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1, b2); }
@@ -48553,7 +48759,7 @@ function sv_KSTEXT(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KSTEXT.kstextImpl(c2, 0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, beg, nb, b0, b1); }
@@ -50087,7 +50293,7 @@ function sv_MA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MA.maImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInMAType, beg, nb, b0); }
@@ -50478,7 +50684,7 @@ function sv_MACDEXT(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MACDEXT.macdextImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, beg, nb, b0, b1, b2); }
@@ -51075,6 +51281,221 @@ function sv_MACDV(p: Params): string {
   return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
+function sv_MAENV(p: Params): string {
+  const svShape = int(p, 'gen_shape', 0);
+  const svSeed = int(p, 'gen_seed', 0);
+  let svN = int(p, 'gen_n', 0);
+  if (svN < 2) svN = 2;
+  if (svN > 256) svN = 256;
+  const svK = int(p, 'unstablePeriod', 0);
+  const optInTimePeriod = int(p, 'optInTimePeriod', 20);
+  const optInPercentUp = real(p, 'optInPercentUp', 1e1);
+  const optInPercentDn = real(p, 'optInPercentDn', 1e1);
+  const _raw_optInMAType = int(p, 'optInMAType', MAType.DEFAULT);
+  const optInMAType = _raw_optInMAType as MAType;
+  const fz_o = new Float64Array(svN);
+  const fz_h = new Float64Array(svN);
+  const fz_l = new Float64Array(svN);
+  const fz_c = new Float64Array(svN);
+  const fz_v = new Float64Array(svN);
+  const fz_oi = new Float64Array(svN);
+  fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+  const b0 = new Float64Array(svN);
+  const b1 = new Float64Array(svN);
+  const b2 = new Float64Array(svN);
+  let legs = 0;
+  let roundMask = 0;
+  let allOk = true;
+  let peekAll = true;
+  let peekReps = 0;
+  let peekRejects = 0;
+  let peekRepAll = true;
+  let fillChecked = 0;
+  let fillOk = true;
+  const beg = new MInteger();
+  const nb = new MInteger();
+  let diag = '';
+  let rangeChecked = 0;
+  let rangeOk = true;
+  let rangeLegs = 0;
+  let rangeSites = 0;
+  const zsign = [0];
+  const rounds = 1;
+  for (let rd = 0; rd < rounds; rd++) {
+    let c2: Core;
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
+    let rc: number;
+    try { rc = MAENV.maenvImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, beg, nb, b0, b1, b2); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
+    const lb = MAENV.maenvLookback({ timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 });
+    if (rc !== RetCode.SUCCESS || nb.value === 0) {
+      let openRejects: boolean;
+      try { MAENV.maenvOpen(fz_c, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
+      return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
+    }
+    fillChecked = 1;
+    try {
+      const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const f2 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const _fh = MAENV.maenvOpenAndFill(fz_c, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2, outUpperBand: f0, outMiddleBand: f1, outLowerBand: f2 });
+      const _fr = _fh.stream.outRange();
+      rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) rangeOk = false;
+      if (_fh.begIdx !== _fr.begIdx || _fh.outUpperBand.length !== _fr.count || _fh.outMiddleBand.length !== _fr.count || _fh.outLowerBand.length !== _fr.count) fillOk = false;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) fillOk = false;
+      else {
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f0[i] !== -1.2345678901234e300) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f1[i] !== -1.2345678901234e300) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f2[i] !== -1.2345678901234e300) fillOk = false;
+      }
+      try { MAENV.maenvOpenAndFill(fz_c, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2, outUpperBand: fz_c, outMiddleBand: f1, outLowerBand: f2 }); fillOk = false; } catch (e) { svRejected(e); }
+      try { MAENV.maenvOpenAndFill(fz_c, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2, outUpperBand: f0, outMiddleBand: f0, outLowerBand: f2 }); fillOk = false; } catch (e) { svRejected(e); }
+    } catch (e) { svRejected(e); fillOk = false; }
+    const pcs = [lb + 1, lb + 13, Math.trunc(svN / 2), svN - 1].sort((x, y) => x - y);
+    let prevP = -1;
+    for (let pi = 0; pi < pcs.length; pi++) {
+      const P = pcs[pi];
+      if (P < lb + 1 || P > svN - 1 || P === prevP) continue;
+      prevP = P;
+      let st: MAENV.MaenvStream;
+      try { st = MAENV.maenvOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 }); }
+      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
+      legs++; roundMask |= 1 << rd;
+      const v0 = new MAENV.MaenvOut(); st.value(v0);
+      if (svXtierNe(v0.outUpperBand, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
+      if (svXtierNe(v0.outMiddleBand, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
+      if (svXtierNe(v0.outLowerBand, b2[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":2,"where":"open"`; }
+      const pk = new MAENV.MaenvOut();
+      const up = new MAENV.MaenvOut();
+      const vc = new MAENV.MaenvOut();
+      const rp = new MAENV.MaenvOut();
+      for (let t = P; t < svN; t++) {
+        let pkTook = true;
+        try { st.peek(fz_c[t], pk); } catch (e) { svRejected(e); pkTook = false; peekRejects++; }
+        if (t % 7 === 0) {
+          let rpTook = pkTook;
+          try { st.peek(fz_c[t - 1], rp); } catch (e) { svRejected(e); peekRejects++; }
+          try { st.peek(fz_c[t], rp); } catch (e) { svRejected(e); rpTook = false; }
+          if (rpTook) {
+            peekReps++;
+            if (svBne(rp.outUpperBand, pk.outUpperBand)) peekRepAll = false;
+            if (svBne(rp.outMiddleBand, pk.outMiddleBand)) peekRepAll = false;
+            if (svBne(rp.outLowerBand, pk.outLowerBand)) peekRepAll = false;
+          } else { peekRejects++; }
+        }
+        st.update(fz_c[t], up);
+        if (pkTook && svBne(pk.outUpperBand, up.outUpperBand)) peekAll = false;
+        if (pkTook && svBne(pk.outMiddleBand, up.outMiddleBand)) peekAll = false;
+        if (pkTook && svBne(pk.outLowerBand, up.outLowerBand)) peekAll = false;
+        try { st.peek(fz_c[t - 1], pk); } catch (e) { svRejected(e); peekRejects++; }
+        st.value(vc);
+        if (svBne(vc.outUpperBand, up.outUpperBand)) allOk = false;
+        if (svBne(vc.outMiddleBand, up.outMiddleBand)) allOk = false;
+        if (svBne(vc.outLowerBand, up.outLowerBand)) allOk = false;
+        if (svXtierNe(up.outUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":0,"batchv":"${hex64(float64Bits(b0[t - beg.value]))}","streamv":"${hex64(float64Bits(up.outUpperBand))}"`; }
+        if (svXtierNe(up.outMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":1,"batchv":"${hex64(float64Bits(b1[t - beg.value]))}","streamv":"${hex64(float64Bits(up.outMiddleBand))}"`; }
+        if (svXtierNe(up.outLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":2,"batchv":"${hex64(float64Bits(b2[t - beg.value]))}","streamv":"${hex64(float64Bits(up.outLowerBand))}"`; }
+      }
+      if (allOk) {
+        rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value) rangeOk = false;
+        rangeLegs++; rangeSites |= 16;
+        st.advance();
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value + 1) rangeOk = false;
+      }
+    }
+    {
+      const p0 = lb + 1;
+      if (p0 <= svN - 1) {
+        try {
+          const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const f2 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const sA = MAENV.maenvOpenAndFill(fz_c.slice(0, p0), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2, outUpperBand: f0, outMiddleBand: f1, outLowerBand: f2 }).stream;
+          const mid = Math.trunc((p0 + svN) / 2);
+          const uA = new MAENV.MaenvOut();
+          const uB = new MAENV.MaenvOut();
+          for (let t = p0; t < mid; t++) {
+            sA.update(fz_c[t], uA);
+            if (svXtierNe(uA.outUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svXtierNe(uA.outMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svXtierNe(uA.outLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          const sB = sA.clone();
+          sB.advance();
+          sB.advance();
+          const fk0 = new Float64Array(svN);
+          const fk1 = new Float64Array(svN);
+          const fk2 = new Float64Array(svN);
+          for (let t = mid; t < svN; t++) {
+            sB.update(fz_c[t], uB);
+            fk0[t] = uB.outUpperBand;
+            if (svXtierNe(uB.outUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            fk1[t] = uB.outMiddleBand;
+            if (svXtierNe(uB.outMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            fk2[t] = uB.outLowerBand;
+            if (svXtierNe(uB.outLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          for (let t = mid; t < svN; t++) {
+            sA.update(fz_c[t], uA);
+            if (svBne(uA.outUpperBand, fk0[t]) || svXtierNe(uA.outUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svBne(uA.outMiddleBand, fk1[t]) || svXtierNe(uA.outMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svBne(uA.outLowerBand, fk2[t]) || svXtierNe(uA.outLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          if (allOk) {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+            if (sA.outRange().begIdx !== beg.value || sA.outRange().count !== nb.value) { rangeOk = false; if (diag === '') diag = ',"copyRangeSrc":1'; }
+            if (sB.outRange().begIdx !== beg.value || sB.outRange().count !== nb.value + 2) { rangeOk = false; if (diag === '') diag = ',"copyRange":1'; }
+          }
+        } catch (e) { svRejected(e); allOk = false; if (diag === '') diag = ',"copyOpenReject":1'; }
+      }
+    }
+    if (lb >= 1 && lb < svN) {
+      try { MAENV.maenvOpen(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 }); allOk = false; if (diag === '') diag = ',"shortHistoryAccepted":1'; }
+      catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryWrongType":1'; } }
+      {
+        const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+        const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+        const f2 = new Float64Array(svN).fill(-1.2345678901234e300);
+        try { MAENV.maenvOpenAndFill(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2, outUpperBand: f0, outMiddleBand: f1, outLowerBand: f2 }); allOk = false; if (diag === '') diag = ',"shortHistoryFillAccepted":1'; }
+        catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryFillWrongType":1'; } }
+      }
+    }
+    try {
+      const sD = MAENV.maenvOpen(fz_c, { timePeriod: Core.INTEGER_DEFAULT, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 });
+      const sE = MAENV.maenvOpen(fz_c, { timePeriod: 20, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 });
+      const vD = new MAENV.MaenvOut(); sD.value(vD);
+      const vE = new MAENV.MaenvOut(); sE.value(vE);
+      if (svBne(vD.outUpperBand, vE.outUpperBand)) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+      if (svBne(vD.outMiddleBand, vE.outMiddleBand)) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+      if (svBne(vD.outLowerBand, vE.outLowerBand)) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+    } catch (e) { svRejected(e); }
+    {
+      const Sidx = lb + Math.trunc((svN - lb) / 3);
+      if (Sidx > lb && Sidx < svN - 1) {
+        const begS = new MInteger();
+        const nbS = new MInteger();
+        let rcS: number;
+        try { rcS = MAENV.maenvImpl(c2, Sidx, svN - 1, fz_c, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, begS, nbS, b0, b1, b2); }
+        catch (e) { if (!(e instanceof TALibError)) throw e; rcS = e.retCode; }
+        if (rcS === RetCode.SUCCESS && nbS.value > 0) {
+          try {
+            const stA = MAENV.maenvOpenInternal(c2, fz_c.slice(0, svN), Sidx, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType);
+            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+            if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;
+          } catch (e) { svRejected(e); rangeOk = false; if (diag === '') diag = ',"anchoredOpenRejected":1'; }
+        }
+      }
+    }
+  }
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+}
+
 function sv_MAMA(p: Params): string {
   const svShape = int(p, 'gen_shape', 0);
   const svSeed = int(p, 'gen_seed', 0);
@@ -51630,7 +52051,7 @@ function sv_MAVP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MAVP.mavpImpl(c2, 0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, beg, nb, b0); }
@@ -54973,7 +55394,7 @@ function sv_PERCENTB(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PERCENTB.percentbImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0); }
@@ -55811,7 +56232,7 @@ function sv_PPO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PPO.ppoImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -56310,7 +56731,7 @@ function sv_PVO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PVO.pvoImpl(c2, 0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -60452,6 +60873,174 @@ function sv_SQZMOM(p: Params): string {
   return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
+function sv_SSF(p: Params): string {
+  const svShape = int(p, 'gen_shape', 0);
+  const svSeed = int(p, 'gen_seed', 0);
+  let svN = int(p, 'gen_n', 0);
+  if (svN < 2) svN = 2;
+  if (svN > 256) svN = 256;
+  const svK = int(p, 'unstablePeriod', 0);
+  const optInTimePeriod = int(p, 'optInTimePeriod', 10);
+  const fz_o = new Float64Array(svN);
+  const fz_h = new Float64Array(svN);
+  const fz_l = new Float64Array(svN);
+  const fz_c = new Float64Array(svN);
+  const fz_v = new Float64Array(svN);
+  const fz_oi = new Float64Array(svN);
+  fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+  const b0 = new Float64Array(svN);
+  let legs = 0;
+  let roundMask = 0;
+  let allOk = true;
+  let peekAll = true;
+  let peekReps = 0;
+  let peekRejects = 0;
+  let peekRepAll = true;
+  let fillChecked = 0;
+  let fillOk = true;
+  const beg = new MInteger();
+  const nb = new MInteger();
+  let diag = '';
+  let rangeChecked = 0;
+  let rangeOk = true;
+  let rangeLegs = 0;
+  let rangeSites = 0;
+  const zsign = [0];
+  const rounds = 1;
+  for (let rd = 0; rd < rounds; rd++) {
+    let c2: Core;
+    try { c2 = Core.builder().unstablePeriod(37, svK).build(); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
+    let rc: number;
+    try { rc = SSF.ssfImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
+    const lb = SSF.ssfLookback({ timePeriod: optInTimePeriod, core: c2 });
+    if (rc !== RetCode.SUCCESS || nb.value === 0) {
+      let openRejects: boolean;
+      try { SSF.ssfOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
+      return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
+    }
+    fillChecked = 1;
+    try {
+      const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const _fh = SSF.ssfOpenAndFill(fz_c, { timePeriod: optInTimePeriod, core: c2, outReal: f0 });
+      const _fr = _fh.stream.outRange();
+      rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) rangeOk = false;
+      if (_fh.begIdx !== _fr.begIdx || _fh.values.length !== _fr.count) fillOk = false;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) fillOk = false;
+      else {
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f0[i] !== -1.2345678901234e300) fillOk = false;
+      }
+      try { SSF.ssfOpenAndFill(fz_c, { timePeriod: optInTimePeriod, core: c2, outReal: fz_c }); fillOk = false; } catch (e) { svRejected(e); }
+    } catch (e) { svRejected(e); fillOk = false; }
+    const pcs = [lb + 1, lb + 13, Math.trunc(svN / 2), svN - 1].sort((x, y) => x - y);
+    let prevP = -1;
+    for (let pi = 0; pi < pcs.length; pi++) {
+      const P = pcs[pi];
+      if (P < lb + 1 || P > svN - 1 || P === prevP) continue;
+      prevP = P;
+      let st: SSF.SsfStream;
+      try { st = SSF.ssfOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
+      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
+      legs++; roundMask |= 1 << rd;
+      if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
+      for (let t = P; t < svN; t++) {
+        let pkTook = true;
+        let pk = 0;
+        try { pk = st.peek(fz_c[t]); } catch (e) { svRejected(e); pkTook = false; peekRejects++; }
+        if (t % 7 === 0) {
+          let rpTook = pkTook;
+          try { st.peek(fz_c[t - 1]); } catch (e) { svRejected(e); peekRejects++; }
+          let rp = 0;
+          try { rp = st.peek(fz_c[t]); } catch (e) { svRejected(e); rpTook = false; }
+          if (rpTook) {
+            peekReps++;
+            if (svBne(rp, pk)) peekRepAll = false;
+          } else { peekRejects++; }
+        }
+        const up = st.update(fz_c[t]);
+        if (pkTook && svBne(pk, up)) peekAll = false;
+        try { st.peek(fz_c[t - 1]); } catch (e) { svRejected(e); peekRejects++; }
+        if (svBne(st.value(), up)) allOk = false;
+        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":0,"batchv":"${hex64(float64Bits(b0[t - beg.value]))}","streamv":"${hex64(float64Bits(up))}"`; }
+      }
+      if (allOk) {
+        rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value) rangeOk = false;
+        rangeLegs++; rangeSites |= 16;
+        st.advance();
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value + 1) rangeOk = false;
+      }
+    }
+    {
+      const p0 = lb + 1;
+      if (p0 <= svN - 1) {
+        try {
+          const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const sA = SSF.ssfOpenAndFill(fz_c.slice(0, p0), { timePeriod: optInTimePeriod, core: c2, outReal: f0 }).stream;
+          const mid = Math.trunc((p0 + svN) / 2);
+          for (let t = p0; t < mid; t++) {
+            const uA = sA.update(fz_c[t]);
+            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          const sB = sA.clone();
+          sB.advance();
+          sB.advance();
+          const fk0 = new Float64Array(svN);
+          for (let t = mid; t < svN; t++) {
+            const uB = sB.update(fz_c[t]);
+            fk0[t] = uB;
+            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          for (let t = mid; t < svN; t++) {
+            const uA = sA.update(fz_c[t]);
+            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          if (allOk) {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+            if (sA.outRange().begIdx !== beg.value || sA.outRange().count !== nb.value) { rangeOk = false; if (diag === '') diag = ',"copyRangeSrc":1'; }
+            if (sB.outRange().begIdx !== beg.value || sB.outRange().count !== nb.value + 2) { rangeOk = false; if (diag === '') diag = ',"copyRange":1'; }
+          }
+        } catch (e) { svRejected(e); allOk = false; if (diag === '') diag = ',"copyOpenReject":1'; }
+      }
+    }
+    if (lb >= 1 && lb < svN) {
+      try { SSF.ssfOpen(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, core: c2 }); allOk = false; if (diag === '') diag = ',"shortHistoryAccepted":1'; }
+      catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryWrongType":1'; } }
+      {
+        const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+        try { SSF.ssfOpenAndFill(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, core: c2, outReal: f0 }); allOk = false; if (diag === '') diag = ',"shortHistoryFillAccepted":1'; }
+        catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryFillWrongType":1'; } }
+      }
+    }
+    try {
+      const sD = SSF.ssfOpen(fz_c, { timePeriod: Core.INTEGER_DEFAULT, core: c2 });
+      const sE = SSF.ssfOpen(fz_c, { timePeriod: 10, core: c2 });
+      if (svBne(sD.value(), sE.value())) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+    } catch (e) { svRejected(e); }
+    {
+      const Sidx = lb + Math.trunc((svN - lb) / 3);
+      if (Sidx > lb && Sidx < svN - 1) {
+        const begS = new MInteger();
+        const nbS = new MInteger();
+        let rcS: number;
+        try { rcS = SSF.ssfImpl(c2, Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+        catch (e) { if (!(e instanceof TALibError)) throw e; rcS = e.retCode; }
+        if (rcS === RetCode.SUCCESS && nbS.value > 0) {
+          try {
+            const stA = SSF.ssfOpenInternal(c2, fz_c.slice(0, svN), Sidx, optInTimePeriod);
+            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+            if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;
+          } catch (e) { svRejected(e); rangeOk = false; if (diag === '') diag = ',"anchoredOpenRejected":1'; }
+        }
+      }
+    }
+  }
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+}
+
 function sv_STC(p: Params): string {
   const svShape = int(p, 'gen_shape', 0);
   const svSeed = int(p, 'gen_seed', 0);
@@ -60831,7 +61420,7 @@ function sv_STOCH(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCH.stochImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1); }
@@ -61028,7 +61617,7 @@ function sv_STOCHF(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCHF.stochfImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
@@ -61226,7 +61815,7 @@ function sv_STOCHRSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).unstablePeriod(21, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(21, svK).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCHRSI.stochrsiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
@@ -66937,6 +67526,7 @@ function handleStreamVerify(p: Params): string {
     case 'TA_MACDEXT': return sv_MACDEXT(p);
     case 'TA_MACDFIX': return sv_MACDFIX(p);
     case 'TA_MACDV': return sv_MACDV(p);
+    case 'TA_MAENV': return sv_MAENV(p);
     case 'TA_MAMA': return sv_MAMA(p);
     case 'TA_MARKETFI': return sv_MARKETFI(p);
     case 'TA_MASSI': return sv_MASSI(p);
@@ -66993,6 +67583,7 @@ function handleStreamVerify(p: Params): string {
     case 'TA_SORTINO': return sv_SORTINO(p);
     case 'TA_SQRT': return sv_SQRT(p);
     case 'TA_SQZMOM': return sv_SQZMOM(p);
+    case 'TA_SSF': return sv_SSF(p);
     case 'TA_STC': return sv_STC(p);
     case 'TA_STDDEV': return sv_STDDEV(p);
     case 'TA_STOCH': return sv_STOCH(p);
@@ -82671,6 +83262,119 @@ function rideBodyMacdv(core: Core, p: Params, endIdx: number, inHigh: Float64Arr
   }
 }
 
+function rideMaenv(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number, optInPercentUp: number, optInPercentDn: number, optInMAType: MAType): string {
+  if (!rideGate(p)) return '';
+  const r = new RideResult();
+  rideBodyMaenv(core, p, endIdx, inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, r);
+  return r.emit();
+}
+
+function rideBodyMaenv(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number, optInPercentUp: number, optInPercentDn: number, optInMAType: MAType, r: RideResult): void {
+  r.lb = MAENV.maenvLookback({ timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core });
+  const lb = r.lb;
+  let navail = endIdx + 1;
+  if (inReal.length < navail) navail = inReal.length;
+  let m = lb >= 0 ? 2 * lb + 10 : navail;
+  if (m > navail) m = navail;
+  r.m = m;
+  if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+  if (m < 1) { r.skip = 2; return; }
+  if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+  if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+  let hash = rideKey();
+  hash = rideMixStr(hash, 'TA_MAENV');
+  hash = rideMix(hash, m);
+  hash = rideMix(hash, rideGen);
+  hash = rideMix(hash, int(p, 'unstablePeriod', 0));
+  hash = rideMix(hash, optInTimePeriod);
+  hash = rideMix(hash, optInPercentUp);
+  hash = rideMix(hash, optInPercentDn);
+  hash = rideMix(hash, optInMAType);
+  hash = rideMixArr(hash, inReal, m);
+  const slot = hash.a & (RIDE_SEEN_N - 1);
+  if (rideSeenUsed[slot] !== 0 && rideSeenA[slot] === hash.a && rideSeenB[slot] === hash.b) {
+    r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+  }
+
+  const rb0 = new Float64Array(m);
+  const rb1 = new Float64Array(m);
+  const rb2 = new Float64Array(m);
+  let beg = 0;
+  let nb = 0;
+  let codeB = '';
+  let rejected = false;
+  try { const _rr = MAENV.maenv(inReal.slice(0, m), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, startIdx: 0, endIdx: m - 1, core, outUpperBand: rb0, outMiddleBand: rb1, outLowerBand: rb2 }); beg = _rr.begIdx; nb = _rr.outUpperBand.length; }
+  catch (_e) { r.rcBatch = rideCode(_e); codeB = rideCodeName(_e); rejected = true; }
+  if (rejected) {
+    let codeO = '';
+    let codeF = '';
+    try { MAENV.maenvOpen(inReal.slice(0, m), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core }); } catch (_e) { r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }
+    const fb0 = new Float64Array(m);
+    const fb1 = new Float64Array(m);
+    const fb2 = new Float64Array(m);
+    try { MAENV.maenvOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core, outUpperBand: fb0, outMiddleBand: fb1, outLowerBand: fb2 }); } catch (_e) { r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }
+    const cmpO = r.rcOpen === r.rcBatch && codeO === codeB;
+    if (cmpO) r.rej++;
+    if (!cmpO) { r.ok = false; r.leg = r.rcOpen === r.rcBatch ? 4 : 3; }
+    const cmpF = r.rcFill === r.rcBatch && codeF === codeB;
+    if (cmpF) r.rej++;
+    if (!cmpF) { r.ok = false; r.leg = r.rcFill === r.rcBatch ? 4 : 3; }
+    return;
+  }
+  if (lb < 0) { r.skip = 7; return; }
+  if (nb === 0) { r.skip = 5; return; }
+  if (beg !== lb) { r.skip = 6; return; }
+
+  try {
+    let cmp: boolean;
+    const st = MAENV.maenvOpen(inReal.slice(0, lb + 1), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core });
+    const uo = new MAENV.MaenvOut(); st.value(uo);
+    cmp = true;
+    if (cmp && svXtierNe(rb0[lb - beg], uo.outUpperBand, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[lb - beg]); r.stream = float64Bits(uo.outUpperBand); }
+    if (cmp && svXtierNe(rb1[lb - beg], uo.outMiddleBand, r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[lb - beg]); r.stream = float64Bits(uo.outMiddleBand); }
+    if (cmp && svXtierNe(rb2[lb - beg], uo.outLowerBand, r.benign)) { cmp = false; r.out = 2; r.batch = float64Bits(rb2[lb - beg]); r.stream = float64Bits(uo.outLowerBand); }
+    if (cmp) r.openBars++;
+    if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+    for (let t = lb + 1; r.ok && t < m; t++) {
+      st.update(inReal[t], uo);
+      cmp = true;
+      if (cmp && svXtierNe(rb0[t - beg], uo.outUpperBand, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[t - beg]); r.stream = float64Bits(uo.outUpperBand); }
+      if (cmp && svXtierNe(rb1[t - beg], uo.outMiddleBand, r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[t - beg]); r.stream = float64Bits(uo.outMiddleBand); }
+      if (cmp && svXtierNe(rb2[t - beg], uo.outLowerBand, r.benign)) { cmp = false; r.out = 2; r.batch = float64Bits(rb2[t - beg]); r.stream = float64Bits(uo.outLowerBand); }
+      if (cmp) r.openBars++;
+      if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+    }
+  } catch (_e) { r.ok = false; r.leg = 1; }
+
+  if (r.ok) {
+    const fb0 = new Float64Array(m);
+    const fb1 = new Float64Array(m);
+    const fb2 = new Float64Array(m);
+    try {
+      const f2 = MAENV.maenvOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core, outUpperBand: fb0, outMiddleBand: fb1, outLowerBand: fb2 });
+      const st2 = f2.stream;
+      if (f2.begIdx !== beg || f2.outUpperBand.length !== nb || f2.outMiddleBand.length !== nb || f2.outLowerBand.length !== nb) { r.ok = false; r.leg = 2; }
+      if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }
+      if (r.ok) {
+        for (let k = 0; k < nb; k++) {
+          let cmp = true;
+          if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
+          if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[k]); r.stream = float64Bits(fb1[k]); }
+          if (cmp && svXtierNe(rb2[k], fb2[k], r.benign)) { cmp = false; r.out = 2; r.batch = float64Bits(rb2[k]); r.stream = float64Bits(fb2[k]); }
+          if (cmp) r.fillBars++;
+          if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+        }
+      }
+    } catch (_e) { r.ok = false; r.leg = 2; }
+  }
+
+  if (r.ok) {
+    rideSeenUsed[slot] = 1; rideSeenA[slot] = hash.a; rideSeenB[slot] = hash.b;
+    rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+  }
+}
+
 function rideMama(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInFastLimit: number, optInSlowLimit: number): string {
   if (!rideGate(p)) return '';
   const r = new RideResult();
@@ -88278,6 +88982,104 @@ function rideBodySqzmom(core: Core, p: Params, endIdx: number, inHigh: Float64Ar
           let cmp = true;
           if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
           if (cmp && fib0[k] !== rib0[k]) { cmp = false; r.out = 1; r.batch = float64Bits(rib0[k]); r.stream = float64Bits(fib0[k]); }
+          if (cmp) r.fillBars++;
+          if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+        }
+      }
+    } catch (_e) { r.ok = false; r.leg = 2; }
+  }
+
+  if (r.ok) {
+    rideSeenUsed[slot] = 1; rideSeenA[slot] = hash.a; rideSeenB[slot] = hash.b;
+    rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+  }
+}
+
+function rideSsf(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number): string {
+  if (!rideGate(p)) return '';
+  const r = new RideResult();
+  rideBodySsf(core, p, endIdx, inReal, optInTimePeriod, r);
+  return r.emit();
+}
+
+function rideBodySsf(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number, r: RideResult): void {
+  r.lb = SSF.ssfLookback({ timePeriod: optInTimePeriod, core });
+  const lb = r.lb;
+  let navail = endIdx + 1;
+  if (inReal.length < navail) navail = inReal.length;
+  let m = lb >= 0 ? 2 * lb + 10 : navail;
+  if (m > navail) m = navail;
+  r.m = m;
+  if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+  if (m < 1) { r.skip = 2; return; }
+  if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+  if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+  let hash = rideKey();
+  hash = rideMixStr(hash, 'TA_SSF');
+  hash = rideMix(hash, m);
+  hash = rideMix(hash, rideGen);
+  hash = rideMix(hash, int(p, 'unstablePeriod', 0));
+  hash = rideMix(hash, optInTimePeriod);
+  hash = rideMixArr(hash, inReal, m);
+  const slot = hash.a & (RIDE_SEEN_N - 1);
+  if (rideSeenUsed[slot] !== 0 && rideSeenA[slot] === hash.a && rideSeenB[slot] === hash.b) {
+    r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+  }
+
+  const rb0 = new Float64Array(m);
+  let beg = 0;
+  let nb = 0;
+  let codeB = '';
+  let rejected = false;
+  try { const _rr = SSF.ssf(inReal.slice(0, m), { timePeriod: optInTimePeriod, startIdx: 0, endIdx: m - 1, core, outReal: rb0 }); beg = _rr.begIdx; nb = _rr.values.length; }
+  catch (_e) { r.rcBatch = rideCode(_e); codeB = rideCodeName(_e); rejected = true; }
+  if (rejected) {
+    let codeO = '';
+    let codeF = '';
+    try { SSF.ssfOpen(inReal.slice(0, m), { timePeriod: optInTimePeriod, core }); } catch (_e) { r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }
+    const fb0 = new Float64Array(m);
+    try { SSF.ssfOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, core, outReal: fb0 }); } catch (_e) { r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }
+    const cmpO = r.rcOpen === r.rcBatch && codeO === codeB;
+    if (cmpO) r.rej++;
+    if (!cmpO) { r.ok = false; r.leg = r.rcOpen === r.rcBatch ? 4 : 3; }
+    const cmpF = r.rcFill === r.rcBatch && codeF === codeB;
+    if (cmpF) r.rej++;
+    if (!cmpF) { r.ok = false; r.leg = r.rcFill === r.rcBatch ? 4 : 3; }
+    return;
+  }
+  if (lb < 0) { r.skip = 7; return; }
+  if (nb === 0) { r.skip = 5; return; }
+  if (beg !== lb) { r.skip = 6; return; }
+
+  try {
+    let cmp: boolean;
+    const st = SSF.ssfOpen(inReal.slice(0, lb + 1), { timePeriod: optInTimePeriod, core });
+    let uv = st.value();
+    cmp = true;
+    if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[lb - beg]); r.stream = float64Bits(uv); }
+    if (cmp) r.openBars++;
+    if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+    for (let t = lb + 1; r.ok && t < m; t++) {
+      uv = st.update(inReal[t]);
+      cmp = true;
+      if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[t - beg]); r.stream = float64Bits(uv); }
+      if (cmp) r.openBars++;
+      if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+    }
+  } catch (_e) { r.ok = false; r.leg = 1; }
+
+  if (r.ok) {
+    const fb0 = new Float64Array(m);
+    try {
+      const f2 = SSF.ssfOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, core, outReal: fb0 });
+      const st2 = f2.stream;
+      if (f2.begIdx !== beg || f2.values.length !== nb) { r.ok = false; r.leg = 2; }
+      if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }
+      if (r.ok) {
+        for (let k = 0; k < nb; k++) {
+          let cmp = true;
+          if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
           if (cmp) r.fillBars++;
           if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
         }

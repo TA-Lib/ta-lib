@@ -54,7 +54,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -261,7 +261,7 @@ export function cmoPositional(
  * Options of {@link cmo}, {@link cmoLookback}, {@link cmoDisplayShift},
  * {@link cmoOpen} and {@link cmoOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CmoOptions {
   /**
@@ -270,8 +270,8 @@ export interface CmoOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -294,6 +294,22 @@ export interface CmoOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function cmoOptionsOf(funcName: string, options: CmoOptions | undefined): CmoOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link cmo} returns, and {@link cmoOpenAndFill} with its stream. */
 export interface CmoResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -308,15 +324,16 @@ export interface CmoResult {
  *
  * It includes `core`'s unstable period for this function.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CmoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CmoOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cmoLookback(options?: CmoOptions): number {
-  const o = optionsOf('CMO lookback', options);
+  const o = cmoOptionsOf('CMO lookback', options);
   return cmoLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('CMO lookback', o.core));
 }
 
@@ -327,15 +344,16 @@ export function cmoLookback(options?: CmoOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CmoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CmoOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cmoDisplayShift(outputIdx: number, options?: CmoOptions): number {
-  const o = optionsOf('CMO displayShift', options);
+  const o = cmoOptionsOf('CMO displayShift', options);
   return cmoDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('CMO displayShift', o.core));
 }
 
@@ -363,12 +381,12 @@ export function cmoDisplayShift(outputIdx: number, options?: CmoOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -382,7 +400,7 @@ export function cmoDisplayShift(outputIdx: number, options?: CmoOptions): number
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
 export function cmo(real: ArrayLike<number>, options?: CmoOptions): CmoResult {
-  const o = optionsOf('CMO', options);
+  const o = cmoOptionsOf('CMO', options);
   if (o.endIdx === undefined) {
     requireSeries('CMO', 'real', real);
   }
@@ -799,13 +817,14 @@ export function cmoOpenAndFillPositional(
  * history bar, bit-identical to {@link cmo} there.
  *
  * @param real - Warm-up history. Source price/value series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CmoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CmoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cmoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -819,7 +838,7 @@ export function cmoOpenAndFillPositional(
  * ```
  */
 export function cmoOpen(real: ArrayLike<number>, options?: CmoOptions): CmoStream {
-  const o = optionsOf('CMO open', options);
+  const o = cmoOptionsOf('CMO open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('CMO open', o.core);
   return cmoOpenPositional(real, optInTimePeriod, core);
@@ -830,18 +849,19 @@ export function cmoOpen(real: ArrayLike<number>, options?: CmoOptions): CmoStrea
  * same pass, bit-identically to {@link cmo}.
  *
  * @param real - Warm-up history. Source price/value series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CmoOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CmoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cmo} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cmoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -854,7 +874,7 @@ export function cmoOpen(real: ArrayLike<number>, options?: CmoOptions): CmoStrea
  * ```
  */
 export function cmoOpenAndFill(real: ArrayLike<number>, options?: CmoOptions): CmoResult & { stream: CmoStream } {
-  const o = optionsOf('CMO openAndFill', options);
+  const o = cmoOptionsOf('CMO openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('CMO openAndFill', o.core);
   const capacity = fillCapacity(cmoLookbackPositional(optInTimePeriod, core), real);

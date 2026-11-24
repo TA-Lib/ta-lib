@@ -50,7 +50,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -673,7 +673,7 @@ export function ckspPositional(
  * Options of {@link cksp}, {@link ckspLookback}, {@link ckspDisplayShift},
  * {@link ckspOpen} and {@link ckspOpenAndFill}. Every key is optional: an omitted
  * or `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CkspOptions {
   /**
@@ -693,8 +693,8 @@ export interface CkspOptions {
    */
   stopPeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -725,6 +725,22 @@ export interface CkspOptions {
   outLowStop?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function ckspOptionsOf(funcName: string, options: CkspOptions | undefined): CkspOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'multiplier' && k !== 'stopPeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outHighStop' && k !== 'outLowStop') {
+      unknownOption(funcName, options, k, 'timePeriod multiplier stopPeriod startIdx endIdx core outHighStop outLowStop');
+    }
+  }
+  return options;
+}
+
 /** What {@link cksp} returns, and {@link ckspOpenAndFill} with its stream. */
 export interface CkspResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -745,15 +761,16 @@ export interface CkspResult {
  * Number of leading input bars {@link cksp} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CkspOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CkspOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ckspLookback(options?: CkspOptions): number {
-  const o = optionsOf('CKSP lookback', options);
+  const o = ckspOptionsOf('CKSP lookback', options);
   return ckspLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.multiplier, Core.REAL_DEFAULT), orDefault(o.stopPeriod, Core.INTEGER_DEFAULT), coreOf('CKSP lookback', o.core));
 }
 
@@ -764,15 +781,16 @@ export function ckspLookback(options?: CkspOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CkspOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CkspOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): number {
-  const o = optionsOf('CKSP displayShift', options);
+  const o = ckspOptionsOf('CKSP displayShift', options);
   return ckspDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.multiplier, Core.REAL_DEFAULT), orDefault(o.stopPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('CKSP displayShift', o.core));
 }
 
@@ -818,13 +836,13 @@ export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): numb
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a real parameter that is not a number, a parameter outside its
+ *   range, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -852,7 +870,7 @@ export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): numb
  */
 export function cksp(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspResult {
   requireArgument('CKSP', 'prices', prices);
-  const o = optionsOf('CKSP', options);
+  const o = ckspOptionsOf('CKSP', options);
   if (o.endIdx === undefined) {
     requireSeries('CKSP', 'prices.high', prices.high);
     requireSeries('CKSP', 'prices.low', prices.low);
@@ -1211,8 +1229,9 @@ export class CkspStream {
 
 /**
  * The outputs of one CKSP bar, as `update`, `peek` and `value` return them. Passed
- * back to one of them, it is filled and returned again, with no allocation; it
- * holds its values until the next call that writes it. A new one holds `NaN`.
+ * back to one of them, it is filled and returned again, so no result object is
+ * created; it holds its values until the next call that writes it. A new one holds
+ * `NaN`.
  */
 export class CkspOut {
   /** Highest of the recent first high stops; usually plotted as the short stop. */
@@ -2082,14 +2101,15 @@ export function ckspOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CkspOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CkspOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ckspLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -2112,7 +2132,7 @@ export function ckspOpenAndFillPositional(
  */
 export function ckspOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspStream {
   requireArgument('CKSP open', 'prices', prices);
-  const o = optionsOf('CKSP open', options);
+  const o = ckspOptionsOf('CKSP open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInMultiplier = orDefault(o.multiplier, Core.REAL_DEFAULT);
   const optInStopPeriod = orDefault(o.stopPeriod, Core.INTEGER_DEFAULT);
@@ -2128,19 +2148,20 @@ export function ckspOpen(prices: { open?: ArrayLike<number> | undefined; high: A
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CkspOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CkspOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cksp} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ckspLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -2167,7 +2188,7 @@ export function ckspOpen(prices: { open?: ArrayLike<number> | undefined; high: A
  */
 export function ckspOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspResult & { stream: CkspStream } {
   requireArgument('CKSP openAndFill', 'prices', prices);
-  const o = optionsOf('CKSP openAndFill', options);
+  const o = ckspOptionsOf('CKSP openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInMultiplier = orDefault(o.multiplier, Core.REAL_DEFAULT);
   const optInStopPeriod = orDefault(o.stopPeriod, Core.INTEGER_DEFAULT);

@@ -58,6 +58,7 @@ public partial class Core
     *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
     *                when all three MA types are EMA (bit-exact).
     *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Macdext</c> consumes before it can produce
@@ -72,20 +73,23 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MacdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
@@ -121,14 +125,25 @@ public partial class Core
       }
       int tempInteger = 0;
       int lookbackLargest = 0;
-      /* Find the MA with the largest lookback */
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
       lookbackLargest = MaLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return -1 ;
+      }
       tempInteger = MaLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
-      /* Add to the largest MA lookback the signal line lookback */
-      return lookbackLargest + MaLookback(optInSignalPeriod, optInSignalMAType) ;
+      tempInteger = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
+      return lookbackLargest + tempInteger ;
 
    }
    /// <summary>
@@ -142,20 +157,23 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -276,12 +294,21 @@ public partial class Core
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = MaLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BadParam ;
+      }
       tempInteger = MaLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -325,8 +352,22 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */
-      for( i = 0; i < outNbElement1; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
+      i = 0;
+      if( i < outNbElement1 ) {
+         int _wn = outNbElement1 - i;
+         var _w0 = fastMABuffer.Slice(i, _wn);
+         var _w1 = slowMABuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+            _w0[_wk + 1] = _w0[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = _w0[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = _w0[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       /* Copy the result into the output for the caller. */
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
@@ -341,8 +382,23 @@ public partial class Core
       ReturnScratch(ref _rent_fastMABuffer);
       ReturnScratch(ref _rent_slowMABuffer);
       /* Calculate the histogram. */
-      for( i = 0; i < outNbElement2; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      i = 0;
+      if( i < outNbElement2 ) {
+         int _wn = outNbElement2 - i;
+         var _w1 = outMACDHist.Slice(i, _wn);
+         var _w0 = outMACD.Slice(i, _w1.Length);
+         var _w2 = outMACDSignal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+            _w1[_wk + 1] = _w0[_wk + 1] - _w2[_wk + 1];
+            _w1[_wk + 2] = _w0[_wk + 2] - _w2[_wk + 2];
+            _w1[_wk + 3] = _w0[_wk + 3] - _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+         }
+         i += _wn;
       }
       /* All done! Indicate the output limits and return success. */
       outBegIdx = startIdx;
@@ -438,11 +494,20 @@ public partial class Core
          optInFastMAType = tempMAType;
       }
       lookbackLargest = MaLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BadParam ;
+      }
       tempInteger = MaLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -471,8 +536,22 @@ public partial class Core
          ReturnScratch(ref _rent_slowMABuffer);
          return RetCode.BadParam ;
       }
-      for( i = 0; i < outNbElement1; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
+      i = 0;
+      if( i < outNbElement1 ) {
+         int _wn = outNbElement1 - i;
+         var _w0 = fastMABuffer.Slice(i, _wn);
+         var _w1 = slowMABuffer.Slice(i, _w0.Length);
+         int _wk = 0;
+         for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+            _w0[_wk + 1] = _w0[_wk + 1] - _w1[_wk + 1];
+            _w0[_wk + 2] = _w0[_wk + 2] - _w1[_wk + 2];
+            _w0[_wk + 3] = _w0[_wk + 3] - _w1[_wk + 3];
+         }
+         for( ; _wk < _w0.Length; _wk++ ) {
+            _w0[_wk] = _w0[_wk] - _w1[_wk];
+         }
+         i += _wn;
       }
       fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outMACD.Slice(0));
       OutRange _xr3 = Ma(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
@@ -481,8 +560,23 @@ public partial class Core
       retCode = RetCode.Success;
       ReturnScratch(ref _rent_fastMABuffer);
       ReturnScratch(ref _rent_slowMABuffer);
-      for( i = 0; i < outNbElement2; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
+      i = 0;
+      if( i < outNbElement2 ) {
+         int _wn = outNbElement2 - i;
+         var _w1 = outMACDHist.Slice(i, _wn);
+         var _w0 = outMACD.Slice(i, _w1.Length);
+         var _w2 = outMACDSignal.Slice(i, _w1.Length);
+         int _wk = 0;
+         for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+            _w1[_wk + 1] = _w0[_wk + 1] - _w2[_wk + 1];
+            _w1[_wk + 2] = _w0[_wk + 2] - _w2[_wk + 2];
+            _w1[_wk + 3] = _w0[_wk + 3] - _w2[_wk + 3];
+         }
+         for( ; _wk < _w1.Length; _wk++ ) {
+            _w1[_wk] = _w0[_wk] - _w2[_wk];
+         }
+         i += _wn;
       }
       outBegIdx = startIdx;
       outNBElement = outNbElement2;
@@ -524,20 +618,23 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx -
    /// max(startIdx, MacdextLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
@@ -646,20 +743,23 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx -
    /// max(startIdx, MacdextLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
@@ -1010,12 +1110,21 @@ public partial class Core
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = MaLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BadParam ;
+      }
       tempInteger = MaLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.

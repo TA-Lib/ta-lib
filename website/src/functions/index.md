@@ -135,6 +135,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
 - [KC](/functions/kc.md) — Keltner Channels
 - [MA](/functions/ma.md) — Moving average
+- [MAENV](/functions/maenv.md) — Moving Average Envelope
 - [MAMA](/functions/mama.md) — MESA Adaptive Moving Average
 - [MAVP](/functions/mavp.md) — Moving average with variable period
 - [MCGD](/functions/mcgd.md) — McGinley Dynamic
@@ -144,6 +145,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [SAR](/functions/sar.md) — Parabolic SAR
 - [SAREXT](/functions/sarext.md) — Parabolic SAR - Extended
 - [SMA](/functions/sma.md) — Simple Moving Average
+- [SSF](/functions/ssf.md) — Ehlers SuperSmoother Filter
 - [SUPERTREND](/functions/supertrend.md) — SuperTrend
 - [SWAK_BUTTER](/functions/swak_butter.md) — Swiss Army Knife - Butterworth Filter
 - [SWAK_GAUSS](/functions/swak_gauss.md) — Swiss Army Knife - Gaussian Filter

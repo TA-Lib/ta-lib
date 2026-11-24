@@ -48,7 +48,7 @@
  *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -204,7 +204,8 @@ export function minindexPositional(
  * Options of {@link minindex}, {@link minindexLookback},
  * {@link minindexDisplayShift}, {@link minindexOpen} and
  * {@link minindexOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface MinindexOptions {
   /**
@@ -213,8 +214,8 @@ export interface MinindexOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -236,6 +237,22 @@ export interface MinindexOptions {
   outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function minindexOptionsOf(funcName: string, options: MinindexOptions | undefined): MinindexOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outInteger');
+    }
+  }
+  return options;
+}
+
 /** What {@link minindex} returns, and {@link minindexOpenAndFill} with its stream. */
 export interface MinindexResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -251,15 +268,16 @@ export interface MinindexResult {
  * Number of leading input bars {@link minindex} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MinindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MinindexOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function minindexLookback(options?: MinindexOptions): number {
-  const o = optionsOf('MININDEX lookback', options);
+  const o = minindexOptionsOf('MININDEX lookback', options);
   return minindexLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('MININDEX lookback', o.core));
 }
 
@@ -270,15 +288,16 @@ export function minindexLookback(options?: MinindexOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MinindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MinindexOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function minindexDisplayShift(outputIdx: number, options?: MinindexOptions): number {
-  const o = optionsOf('MININDEX displayShift', options);
+  const o = minindexOptionsOf('MININDEX displayShift', options);
   return minindexDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MININDEX displayShift', o.core));
 }
 
@@ -305,12 +324,12 @@ export function minindexDisplayShift(outputIdx: number, options?: MinindexOption
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -327,7 +346,7 @@ export function minindexDisplayShift(outputIdx: number, options?: MinindexOption
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  */
 export function minindex(real: ArrayLike<number>, options?: MinindexOptions): MinindexResult {
-  const o = optionsOf('MININDEX', options);
+  const o = minindexOptionsOf('MININDEX', options);
   if (o.endIdx === undefined) {
     requireSeries('MININDEX', 'real', real);
   }
@@ -729,14 +748,14 @@ export function minindexOpenAndFillPositional(
  * last history bar, bit-identical to {@link minindex} there.
  *
  * @param real - Warm-up history. Series to scan for its minimum.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MinindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MinindexOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `minindexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32 or a parameter outside its
- *   range.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -750,7 +769,7 @@ export function minindexOpenAndFillPositional(
  * ```
  */
 export function minindexOpen(real: ArrayLike<number>, options?: MinindexOptions): MinindexStream {
-  const o = optionsOf('MININDEX open', options);
+  const o = minindexOptionsOf('MININDEX open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MININDEX open', o.core);
   return minindexOpenPositional(real, optInTimePeriod, core);
@@ -761,18 +780,19 @@ export function minindexOpen(real: ArrayLike<number>, options?: MinindexOptions)
  * the same pass, bit-identically to {@link minindex}.
  *
  * @param real - Warm-up history. Series to scan for its minimum.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link MinindexOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link MinindexOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link minindex} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `minindexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or a buffer too short, of the
+ *   wrong type or starting where another buffer or a `Float64Array` input starts,
+ *   or, on a history long enough to open, one sharing memory with another buffer or
+ *   a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -787,7 +807,7 @@ export function minindexOpen(real: ArrayLike<number>, options?: MinindexOptions)
  * ```
  */
 export function minindexOpenAndFill(real: ArrayLike<number>, options?: MinindexOptions): MinindexResult & { stream: MinindexStream } {
-  const o = optionsOf('MININDEX openAndFill', options);
+  const o = minindexOptionsOf('MININDEX openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MININDEX openAndFill', o.core);
   const capacity = fillCapacity(minindexLookbackPositional(optInTimePeriod, core), real);

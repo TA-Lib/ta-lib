@@ -343,6 +343,8 @@ export { macdfix, macdfixLookback, macdfixDisplayShift, macdfixOpen, macdfixOpen
 export type { MacdfixOptions, MacdfixResult } from './func/macdfix.ts';
 export { macdv, macdvLookback, macdvDisplayShift, macdvOpen, macdvOpenAndFill, MacdvStream, MacdvOut } from './func/macdv.ts';
 export type { MacdvOptions, MacdvResult } from './func/macdv.ts';
+export { maenv, maenvLookback, maenvDisplayShift, maenvOpen, maenvOpenAndFill, MaenvStream, MaenvOut } from './func/maenv.ts';
+export type { MaenvOptions, MaenvResult } from './func/maenv.ts';
 export { mama, mamaLookback, mamaDisplayShift, mamaOpen, mamaOpenAndFill, MamaStream, MamaOut } from '../func/mama.ts';
 export type { MamaOptions, MamaResult } from '../func/mama.ts';
 export { marketfi, marketfiLookback, marketfiDisplayShift, marketfiOpen, marketfiOpenAndFill, MarketfiStream } from './func/marketfi.ts';
@@ -455,6 +457,8 @@ export { sqrt, sqrtLookback, sqrtDisplayShift, sqrtOpen, sqrtOpenAndFill, SqrtSt
 export type { SqrtOptions, SqrtResult } from './func/sqrt.ts';
 export { sqzmom, sqzmomLookback, sqzmomDisplayShift, sqzmomOpen, sqzmomOpenAndFill, SqzmomStream, SqzmomOut } from './func/sqzmom.ts';
 export type { SqzmomOptions, SqzmomResult } from './func/sqzmom.ts';
+export { ssf, ssfLookback, ssfDisplayShift, ssfOpen, ssfOpenAndFill, SsfStream } from '../func/ssf.ts';
+export type { SsfOptions, SsfResult } from '../func/ssf.ts';
 export { stc, stcLookback, stcDisplayShift, stcOpen, stcOpenAndFill, StcStream } from './func/stc.ts';
 export type { StcOptions, StcResult } from './func/stc.ts';
 export { stddev, stddevLookback, stddevDisplayShift, stddevOpen, stddevOpenAndFill, StddevStream } from './func/stddev.ts';

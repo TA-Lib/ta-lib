@@ -246,7 +246,7 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (36)
+//! ## Overlap Studies (38)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALLIGATOR`](Core::alligator) — Williams Alligator
@@ -264,6 +264,7 @@
 //! * [`KAMA`](Core::kama) — Kaufman Adaptive Moving Average
 //! * [`KC`](Core::kc) — Keltner Channels
 //! * [`MA`](Core::ma) — Moving average
+//! * [`MAENV`](Core::maenv) — Moving Average Envelope
 //! * [`MAMA`](Core::mama) — MESA Adaptive Moving Average
 //! * [`MAVP`](Core::mavp) — Moving average with variable period
 //! * [`MCGD`](Core::mcgd) — McGinley Dynamic
@@ -273,6 +274,7 @@
 //! * [`SAR`](Core::sar) — Parabolic SAR
 //! * [`SAREXT`](Core::sarext) — Parabolic SAR - Extended
 //! * [`SMA`](Core::sma) — Simple Moving Average
+//! * [`SSF`](Core::ssf) — Ehlers SuperSmoother Filter
 //! * [`SUPERTREND`](Core::supertrend) — SuperTrend
 //! * [`SWAK_BUTTER`](Core::swak_butter) — Swiss Army Knife - Butterworth Filter
 //! * [`SWAK_GAUSS`](Core::swak_gauss) — Swiss Army Knife - Gaussian Filter

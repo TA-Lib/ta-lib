@@ -66,7 +66,7 @@ pub mod rust_phantom_io;
 pub mod rust_prune;
 pub mod rust_respell;
 pub mod lockstep;
-pub mod rust_window;
+pub mod window;
 pub mod rust_stream;
 pub mod stmt_walk;
 pub mod stream_frame;

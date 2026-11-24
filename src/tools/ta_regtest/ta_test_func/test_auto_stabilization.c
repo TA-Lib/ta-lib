@@ -190,6 +190,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return hilbert + (int)ceil( (double)(2*K) / big );
    }
    if( !strcmp(name,"FISHER") ) return awCeilDiv( 5*(K+6), 2 );
+   if( !strcmp(name,"SSF") ) return p0 > 1 ? awCeilDiv( 7*(K+2)*p0, 31 ) : 0;
    /* STC: p0 = fast, p1 = slow; on top of the EMA count it inherits. */
    if( !strcmp(name,"STC") ) return awCeilDiv( 5*K, 2 ) + 3*( (p0 > p1 ? p0 : p1) + 1 );
    return -1;
@@ -444,6 +445,7 @@ static TA_FuncUnstId awOwnId( const char *name )
       { "SWAK_2PHP", TA_FUNC_UNST_SWAK_2PHP },
       { "FISHER", TA_FUNC_UNST_FISHER },
       { "SWAK_BP", TA_FUNC_UNST_SWAK_BP },
+      { "SSF", TA_FUNC_UNST_SSF },
    };
    unsigned int i;
    for( i=0; i < sizeof(own)/sizeof(own[0]); i++ )

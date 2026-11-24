@@ -48,7 +48,7 @@
  *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -438,7 +438,7 @@ export function psoPositional(
  * Options of {@link pso}, {@link psoLookback}, {@link psoDisplayShift},
  * {@link psoOpen} and {@link psoOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface PsoOptions {
   /**
@@ -452,8 +452,8 @@ export interface PsoOptions {
    */
   emaPeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -476,6 +476,22 @@ export interface PsoOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function psoOptionsOf(funcName: string, options: PsoOptions | undefined): PsoOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastKPeriod' && k !== 'emaPeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'fastKPeriod emaPeriod startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link pso} returns, and {@link psoOpenAndFill} with its stream. */
 export interface PsoResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -491,15 +507,16 @@ export interface PsoResult {
  * Number of leading input bars {@link pso} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PsoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PsoOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function psoLookback(options?: PsoOptions): number {
-  const o = optionsOf('PSO lookback', options);
+  const o = psoOptionsOf('PSO lookback', options);
   return psoLookbackPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.emaPeriod, Core.INTEGER_DEFAULT), coreOf('PSO lookback', o.core));
 }
 
@@ -510,15 +527,16 @@ export function psoLookback(options?: PsoOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PsoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PsoOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number {
-  const o = optionsOf('PSO displayShift', options);
+  const o = psoOptionsOf('PSO displayShift', options);
   return psoDisplayShiftPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.emaPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('PSO displayShift', o.core));
 }
 
@@ -568,12 +586,12 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -596,7 +614,7 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  */
 export function pso(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoResult {
   requireArgument('PSO', 'prices', prices);
-  const o = optionsOf('PSO', options);
+  const o = psoOptionsOf('PSO', options);
   if (o.endIdx === undefined) {
     requireSeries('PSO', 'prices.high', prices.high);
     requireSeries('PSO', 'prices.low', prices.low);
@@ -1378,14 +1396,14 @@ export function psoOpenAndFillPositional(
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series. `close`: Close price series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link PsoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link PsoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `psoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or histories of different lengths.
  *
  * @example
  * ```ts
@@ -1404,7 +1422,7 @@ export function psoOpenAndFillPositional(
  */
 export function psoOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoStream {
   requireArgument('PSO open', 'prices', prices);
-  const o = optionsOf('PSO open', options);
+  const o = psoOptionsOf('PSO open', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
   const optInEMAPeriod = orDefault(o.emaPeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('PSO open', o.core);
@@ -1418,19 +1436,19 @@ export function psoOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series. `close`: Close price series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link PsoOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link PsoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link pso} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `psoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or a buffer too short, of the wrong type or
- *   starting where another buffer or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range, histories of different lengths or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1451,7 +1469,7 @@ export function psoOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  */
 export function psoOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoResult & { stream: PsoStream } {
   requireArgument('PSO openAndFill', 'prices', prices);
-  const o = optionsOf('PSO openAndFill', options);
+  const o = psoOptionsOf('PSO openAndFill', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
   const optInEMAPeriod = orDefault(o.emaPeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('PSO openAndFill', o.core);

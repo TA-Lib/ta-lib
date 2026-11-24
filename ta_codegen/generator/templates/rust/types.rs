@@ -176,6 +176,8 @@ pub enum FuncUnstId {
     SWAK_BP,
     /// Unstable period of [`Core::fisher`].
     FISHER,
+    /// Unstable period of [`Core::ssf`].
+    SSF,
     /// Wildcard: set the unstable period for all functions at once.
     ///
     /// Pinned rather than sitting one past the last function id, so that adding
@@ -187,7 +189,7 @@ impl FuncUnstId {
     /// Size of the unstable-period table: one past the highest function id.
     /// [`FuncUnstId::ALL`] selects every slot and is not one. Mirrors C's
     /// `TA_FUNC_UNST_COUNT`.
-    pub(crate) const COUNT: usize = 37;
+    pub(crate) const COUNT: usize = 38;
 }
 
 /// What a candlestick setting measures a candle against. Mirrors the C

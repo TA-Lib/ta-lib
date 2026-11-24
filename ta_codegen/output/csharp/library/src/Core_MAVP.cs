@@ -65,6 +65,7 @@ public partial class Core
     *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
     *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
     *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Mavp</c> consumes before it can produce
@@ -81,8 +82,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MavpLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
@@ -124,8 +126,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -217,6 +220,9 @@ public partial class Core
        * to calculate at least one output.
        */
       lookbackTotal = MaLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -360,25 +366,57 @@ public partial class Core
           * by period, one contiguous ascending slice per distinct period, with
           * bucketOfs[p] the end of period p's slice.
           */
-         for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
-            bucketOfs[curPeriod - minUsed] = 0;
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed + 1 ) {
+            int _wn = maxUsed + 1 - curPeriod + 1;
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _wn);
+            int _wk = 0;
+            for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+               _w0[_wk] = 0;
+               _w0[_wk + 1] = 0;
+               _w0[_wk + 2] = 0;
+               _w0[_wk + 3] = 0;
+            }
+            for( ; _wk < _w0.Length; _wk++ ) {
+               _w0[_wk] = 0;
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            /* Staged through tempInt, not indexed inline: the Rust backend only
-             * coerces an int-array read to the index type when it is a DIRECT
-             * operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
-             * i32 with usize and fail to compile.
-             */
-            tempInt = localPeriodArray[i];
-            bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               /* Staged through tempInt, not indexed inline: the Rust backend only
+                * coerces an int-array read to the index type when it is a DIRECT
+                * operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
+                * i32 with usize and fail to compile.
+                */
+               tempInt = _w0[_wk];
+               bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+            }
+            i += _wn;
          }
-         for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {
-            bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed ) {
+            int _wn = maxUsed - curPeriod + 1;
+            var _w0_1 = bucketOfs.Slice(curPeriod - minUsed + 1, _wn);
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _w0_1.Length);
+            for( int _wk = 0; _wk < _w0_1.Length; _wk++ ) {
+               _w0_1[_wk] = _w0_1[_wk] + _w0[_wk];
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-            bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               sortedIdx[bucketOfs[tempInt - minUsed]] = i;
+               bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+               i += 1;
+            }
          }
          /* One MA pass per period actually requested, ending at the last output
           * that uses it: outputs before that point cannot depend on later input
@@ -501,6 +539,9 @@ public partial class Core
          return RetCode.BadParam ;
       }
       lookbackTotal = MaLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -574,20 +615,52 @@ public partial class Core
          sortedIdx = _rent_sortedIdx.AsSpan(0, (int)(outputSize * 1));
          _rent_bucketOfs = System.Buffers.ArrayPool<int>.Shared.Rent((int)((maxUsed - minUsed + 2) * 1));
          bucketOfs = _rent_bucketOfs.AsSpan(0, (int)((maxUsed - minUsed + 2) * 1));
-         for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
-            bucketOfs[curPeriod - minUsed] = 0;
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed + 1 ) {
+            int _wn = maxUsed + 1 - curPeriod + 1;
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _wn);
+            int _wk = 0;
+            for( ; _wk <= _w0.Length - 4; _wk += 4 ) {
+               _w0[_wk] = 0;
+               _w0[_wk + 1] = 0;
+               _w0[_wk + 2] = 0;
+               _w0[_wk + 3] = 0;
+            }
+            for( ; _wk < _w0.Length; _wk++ ) {
+               _w0[_wk] = 0;
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
+            }
+            i += _wn;
          }
-         for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {
-            bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
+         curPeriod = minUsed;
+         if( curPeriod <= maxUsed ) {
+            int _wn = maxUsed - curPeriod + 1;
+            var _w0_1 = bucketOfs.Slice(curPeriod - minUsed + 1, _wn);
+            var _w0 = bucketOfs.Slice(curPeriod - minUsed, _w0_1.Length);
+            for( int _wk = 0; _wk < _w0_1.Length; _wk++ ) {
+               _w0_1[_wk] = _w0_1[_wk] + _w0[_wk];
+            }
+            curPeriod += _wn;
          }
-         for( i = 0; i < outputSize; i += 1 ) {
-            tempInt = localPeriodArray[i];
-            sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-            bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+         i = 0;
+         if( i < outputSize ) {
+            int _wn = outputSize - i;
+            var _w0 = localPeriodArray.Slice(i, _wn);
+            for( int _wk = 0; _wk < _w0.Length; _wk++ ) {
+               tempInt = _w0[_wk];
+               sortedIdx[bucketOfs[tempInt - minUsed]] = i;
+               bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
+               i += 1;
+            }
          }
          bucketStart = 0;
          for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 ) {
@@ -663,8 +736,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx -
    /// max(startIdx, MavpLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
@@ -760,8 +834,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx -
    /// max(startIdx, MavpLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>

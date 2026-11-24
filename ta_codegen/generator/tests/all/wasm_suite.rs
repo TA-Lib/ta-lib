@@ -194,8 +194,9 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
 
 /// A routing-table entry. Under the threshold the call must go to `./js`
 /// without counting a fall-through (the strict gates read the counter) and
-/// without taking a frame (which loads the engine); from the threshold on it
-/// must route in table mode.
+/// without taking a frame (which loads the engine), and so must a call that
+/// copies fewer bars than the threshold; from the threshold on it routes in
+/// table mode, whole input or ranged.
 #[test]
 fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     if crate::common::sweep_filtered() {
@@ -210,19 +211,32 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
     let public = &text[at("export function sma(")..at("function smaWasm(")];
     assert!(!public.contains("engineRoute.mode !== 0"), "a tabled function routes in table mode:\n{public}");
-    assert_eq!(text.matches("WASM_FROM_BARS").count(), 3, "{text}");
+    assert_eq!(text.matches("WASM_FROM_BARS").count(), 5, "{text}");
     let gate = "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n";
-    // Each front checks the threshold before anything but the input's length,
-    // and before the frame: the options front takes its own, the copy into
-    // buffers takes one and checks no threshold.
-    for (front, next) in [("function smaWasm(", "function smaBuffered("), ("function smaPositionalWasm(", "function smaInto(")] {
+    // Each front checks the input's length before anything but the length
+    // itself, and the bars it copies once the range and parameters passed;
+    // both before the frame. The copy into buffers checks neither.
+    for (front, next, last) in [("function smaWasm(", "function smaBuffered(", "last"), ("function smaPositionalWasm(", "function smaInto(", "endIdx")] {
         let body = &text[at(front)..at(next)];
         let gate_at = body.find(gate).unwrap_or_else(|| panic!("no threshold check:\n{body}"));
         assert!(body.find("const n = seriesLength(").unwrap() < gate_at);
-        assert!(!body[..gate_at].contains("wasmFrame("), "{front} takes the frame before the threshold:\n{body}");
         assert_eq!(body[..gate_at].matches("fellThrough(").count(), 1, "only an empty input counts above the threshold check:\n{body}");
         assert!(body[..gate_at].contains("if (n < 1) {\n    return fellThrough('input');"), "{body}");
+        assert!(body.find("if (engineDown()) {").unwrap() > gate_at, "{front} reads the engine state before the length:\n{body}");
+        let copied = format!("  if (engineRoute.mode === 0 && {last} - lo + 1 < WASM_FROM_BARS) {{\n    return null;\n  }}\n");
+        let copied_at = body.find(&copied).unwrap_or_else(|| panic!("no check of the bars copied:\n{body}"));
+        assert!(body.find("const lo = (").unwrap() < copied_at, "{body}");
+        assert!(body.find("fellThrough('range')").unwrap() < copied_at, "{front} checks the copy before the range:\n{body}");
+        for later in ["engineFor(", "routedSeries(", "Buffered(", "Into(", "wasmFrame("] {
+            if let Some(k) = body.find(later) {
+                assert!(k > copied_at, "{front} reaches `{later}` before the check of the bars copied:\n{body}");
+            }
+        }
     }
+    // A call the length check leaves in `./js` walks its option keys there alone.
+    let options_front = &text[at("function smaWasm(")..at("function smaBuffered(")];
+    let walk = options_front.find("o = smaOptionsOf('SMA', options);").unwrap_or_else(|| panic!("no options walk:\n{options_front}"));
+    assert!(walk > options_front.find(gate).unwrap(), "the options walk precedes the table's check:\n{options_front}");
     let into = &text[at("function smaInto(")..];
     assert!(into.contains("wasmFrame(") && !into.contains("WASM_FROM_BARS"));
 
@@ -231,8 +245,10 @@ fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     assert!(untabled.contains("  if (engineRoute.mode !== 0) {\n"));
 }
 
-/// A ranged entry: the same check, closed above, so a call over the range
-/// stays in `./js` exactly as one under it does.
+/// A ranged entry: the bars copied are checked on both ends, so a call copying
+/// more stays in `./js` exactly as one copying fewer does; the input's length
+/// is checked against the first count alone, since a range of a longer input
+/// may copy fewer bars.
 #[test]
 fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
     let (sma, _) = load_indicator("sma");
@@ -241,13 +257,59 @@ fn ts_engine_routes_a_ranged_function_only_within_its_bar_counts() {
     assert!(text.contains("\nconst WASM_FROM_BARS = 37;\nconst WASM_TO_BARS = 90;\n"), "{text}");
     assert_eq!(text.matches("WASM_TO_BARS").count(), 3, "{text}");
     let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
-    let gate = "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n";
-    for (front, next) in [("function smaWasm(", "function smaBuffered("), ("function smaPositionalWasm(", "function smaInto(")] {
+    for (front, next, last) in [("function smaWasm(", "function smaBuffered(", "last"), ("function smaPositionalWasm(", "function smaInto(", "endIdx")] {
         let body = &text[at(front)..at(next)];
-        let gate_at = body.find(gate).unwrap_or_else(|| panic!("no bounded check:\n{body}"));
+        let gate = format!(
+            "  if (engineRoute.mode === 0 && ({last} - lo + 1 < WASM_FROM_BARS || {last} - lo + 1 > WASM_TO_BARS)) {{\n    return null;\n  }}\n"
+        );
+        assert!(body.contains(&gate), "no bounded check of the bars copied:\n{body}");
         assert_eq!(body.matches("WASM_TO_BARS").count(), 1, "{body}");
-        assert!(!body[..gate_at].contains("wasmFrame("), "{front} takes the frame before the range check:\n{body}");
+        assert!(body.contains("  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n"), "{body}");
     }
+}
+
+/// The module sees only bars `lo` through `last`, rebased to start at 0: the
+/// glue copies those, passes both bounds less `lo`, and adds `lo` back to
+/// `begIdx` and to each bar position, in every output that holds one and in
+/// no other. Each value gate compares through the public call, which hides a
+/// copy of the whole input; only the frame's size shows it.
+#[test]
+fn ts_engine_copies_only_the_bars_a_range_reads() {
+    if crate::common::sweep_filtered() {
+        return;
+    }
+    let funcs = corpus();
+    let enums = load_enums();
+    let zigzag = funcs.iter().find(|f| f.name == "ZIGZAG").unwrap();
+    let positions: Vec<&str> = zigzag.outputs.iter().filter(|o| o.flags.iter().any(|f| f == "bar_index")).map(|o| o.name.as_str()).collect();
+    assert_eq!(positions, ["outPivotIdx"]);
+    let text = ts_engine::render_routed(zigzag, &funcs, &enums, make_registry(), None);
+    let at = |needle: &str| text.find(needle).unwrap_or_else(|| panic!("no `{needle}`:\n{text}"));
+    for (front, next) in [("function zigzagWasm(", "function zigzagBuffered("), ("function zigzagPositionalWasm(", "function zigzagInto(")] {
+        let body = &text[at(front)..at(next)];
+        assert!(body.contains("const lookback = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength);\n"), "{body}");
+        assert!(body.contains(" - lo + 1) * 16 + ("), "{front} sizes its budget check over the whole input:\n{body}");
+        assert!(!body.contains("engineFor(n *"), "{body}");
+    }
+    let options_front = &text[at("function zigzagWasm(")..at("function zigzagBuffered(")];
+    let into = &text[at("function zigzagInto(")..];
+    for body in [options_front, into] {
+        assert!(body.contains("  const len = last - lo + 1;\n  const inHighBars = seriesBars(inHigh, lo, len);\n  const inLowBars = seriesBars(inLow, lo, len);\n  const w = wasmFrame(len * 16 + outLen * 16);\n"), "{body}");
+        assert!(body.contains("w.f64.set(inHighBars, inHighAt / 8);") && body.contains("const inLowAt = at + len * 8;"), "{body}");
+        assert!(!body.contains("w.f64.set(inHigh,") && !body.contains("w.f64.set(inLow,"), "{body}");
+        assert!(body.contains("count = w.x.zigzag_batch(first - lo, last - lo, inHighAt, inLowAt, len, "), "{body}");
+        let shift = body.find("  w.shiftInts(outPivotIdxAt, count, lo);\n").unwrap_or_else(|| panic!("no shift of the pivot index:\n{body}"));
+        assert_eq!(body.matches("w.shiftInts(").count(), 1, "{body}");
+        assert!(shift > body.find("if (count < 0) {").unwrap(), "{body}");
+        let copied_out = body.find("w.ints(outPivotIdxAt, count)").or_else(|| body.find("w.intsInto(outPivotIdxAt, count, ")).unwrap();
+        assert!(shift < copied_out, "the pivot index is copied out before its shift:\n{body}");
+    }
+    assert!(options_front.contains("{ begIdx: w.begIdx() + lo, "), "{options_front}");
+    assert!(into.contains("  const begIdx = w.begIdx() + lo;\n"), "{into}");
+
+    let ema = funcs.iter().find(|f| f.name == "EMA").unwrap();
+    let plain = ts_engine::render_routed(ema, &funcs, &enums, make_registry(), None);
+    assert!(!plain.contains("shiftInts"), "EMA holds no bar position:\n{plain}");
 }
 
 #[test]
@@ -261,8 +323,13 @@ fn ts_engine_routing_test_checks_both_ends_of_a_ranged_entry() {
     let row = |name: &str| text.lines().find(|l| l.starts_with(&format!("  {{ name: '{name}', "))).unwrap_or_else(|| panic!("no {name} row:\n{text}"));
     assert!(row("SMA").ends_with(" bars: 5, to: 200000 },"), "{text}");
     assert!(row("EMA").ends_with(" bars: 7 },"), "{text}");
-    assert!(text.contains("\nconst MAX_BARS = 200001;\n"), "MAX_BARS must reach one bar over the range:\n{text}");
+    assert!(row("EMA").contains(" lookback: 'emaLookback', "), "{text}");
+    assert!(text.contains("\nconst RANGED_PAD = 3;\nconst MAX_BARS = 200003;\n"), "MAX_BARS must hold a copy of one bar over the range from bar 2:\n{text}");
     assert!(text.contains("const over = run(row, row.to + 1);"), "{text}");
+    assert!(text.contains("const counts: [number, boolean][] = [[row.bars - 1, false], [row.bars, true]];"), "{text}");
+    assert!(text.contains("if (row.to !== undefined) counts.push([row.to, true], [row.to + 1, false]);"), "{text}");
+    assert!(text.contains("for (const lo of [0, 1, 2]) {"), "{text}");
+    assert!(text.contains("const whole = run(row, row.bars, { startIdx: 0, endIdx: row.bars - 1 });"), "{text}");
     assert!(text.contains("[['options', call], ['buffered', callBuffered], ['positional', callPositional]]"), "{text}");
 }
 

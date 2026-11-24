@@ -64,9 +64,18 @@ func (c *Core) stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MA
 		return -1
 	}
 	var retValue int32
+	var maLookback int32
 	retValue = optInFastK_Period - 1
-	retValue += c.maLookback(optInSlowK_Period, optInSlowK_MAType)
-	retValue += c.maLookback(optInSlowD_Period, optInSlowD_MAType)
+	maLookback = c.maLookback(optInSlowK_Period, optInSlowK_MAType)
+	if maLookback < 0 {
+		return -1
+	}
+	retValue += maLookback
+	maLookback = c.maLookback(optInSlowD_Period, optInSlowD_MAType)
+	if maLookback < 0 {
+		return -1
+	}
+	retValue += maLookback
 	return retValue
 }
 
@@ -121,7 +130,13 @@ func (c *Core) stochImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 	}
 	lookbackK = optInFastK_Period - 1
 	lookbackKSlow = c.maLookback(optInSlowK_Period, optInSlowK_MAType)
+	if lookbackKSlow < 0 {
+		return BadParam
+	}
 	lookbackDSlow = c.maLookback(optInSlowD_Period, optInSlowD_MAType)
+	if lookbackDSlow < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
@@ -749,7 +764,13 @@ func (c *Core) stochOpenImpl(sp *STOCHStream, inHigh, inLow, inClose []float64, 
 	i = 0
 	lookbackK = optInFastK_Period - 1
 	lookbackKSlow = c.maLookback(optInSlowK_Period, optInSlowK_MAType)
+	if lookbackKSlow < 0 {
+		return BadParam
+	}
 	lookbackDSlow = c.maLookback(optInSlowD_Period, optInSlowD_MAType)
+	if lookbackDSlow < 0 {
+		return BadParam
+	}
 	lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal

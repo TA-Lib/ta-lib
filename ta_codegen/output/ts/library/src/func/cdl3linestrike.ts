@@ -51,7 +51,7 @@
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -234,12 +234,12 @@ export function cdl3linestrikePositional(
  * {@link cdl3linestrikeDisplayShift}, {@link cdl3linestrikeOpen} and
  * {@link cdl3linestrikeOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface Cdl3linestrikeOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -259,6 +259,22 @@ export interface Cdl3linestrikeOptions {
    * buffer or with an input.
    */
   outInteger?: Int32Array<ArrayBuffer> | undefined;
+}
+
+/** @internal */
+export function cdl3linestrikeOptionsOf(funcName: string, options: Cdl3linestrikeOptions | undefined): Cdl3linestrikeOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outInteger');
+    }
+  }
+  return options;
 }
 
 /**
@@ -281,15 +297,16 @@ export interface Cdl3linestrikeResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3linestrikeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3linestrikeOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3linestrikeLookback(options?: Cdl3linestrikeOptions): number {
-  const o = optionsOf('CDL3LINESTRIKE lookback', options);
+  const o = cdl3linestrikeOptionsOf('CDL3LINESTRIKE lookback', options);
   return cdl3linestrikeLookbackPositional(coreOf('CDL3LINESTRIKE lookback', o.core));
 }
 
@@ -300,15 +317,16 @@ export function cdl3linestrikeLookback(options?: Cdl3linestrikeOptions): number 
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3linestrikeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3linestrikeOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3linestrikeOptions): number {
-  const o = optionsOf('CDL3LINESTRIKE displayShift', options);
+  const o = cdl3linestrikeOptionsOf('CDL3LINESTRIKE displayShift', options);
   return cdl3linestrikeDisplayShiftPositional(outputIdx, coreOf('CDL3LINESTRIKE displayShift', o.core));
 }
 
@@ -352,11 +370,12 @@ export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3line
  *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -375,7 +394,7 @@ export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3line
  */
 export function cdl3linestrike(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult {
   requireArgument('CDL3LINESTRIKE', 'prices', prices);
-  const o = optionsOf('CDL3LINESTRIKE', options);
+  const o = cdl3linestrikeOptionsOf('CDL3LINESTRIKE', options);
   if (o.endIdx === undefined) {
     requireSeries('CDL3LINESTRIKE', 'prices.open', prices.open);
     requireSeries('CDL3LINESTRIKE', 'prices.high', prices.high);
@@ -1100,13 +1119,14 @@ export function cdl3linestrikeOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3linestrikeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3linestrikeOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3linestrikeLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -1127,7 +1147,7 @@ export function cdl3linestrikeOpenAndFillPositional(
  */
 export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeStream {
   requireArgument('CDL3LINESTRIKE open', 'prices', prices);
-  const o = optionsOf('CDL3LINESTRIKE open', options);
+  const o = cdl3linestrikeOptionsOf('CDL3LINESTRIKE open', options);
   const core = coreOf('CDL3LINESTRIKE open', o.core);
   return cdl3linestrikeOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
@@ -1140,18 +1160,19 @@ export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: Arra
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link Cdl3linestrikeOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link Cdl3linestrikeOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdl3linestrike} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3linestrikeLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, histories of different lengths or a buffer too short,
- *   of the wrong type or starting where another buffer or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1171,7 +1192,7 @@ export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: Arra
  */
 export function cdl3linestrikeOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult & { stream: Cdl3linestrikeStream } {
   requireArgument('CDL3LINESTRIKE openAndFill', 'prices', prices);
-  const o = optionsOf('CDL3LINESTRIKE openAndFill', options);
+  const o = cdl3linestrikeOptionsOf('CDL3LINESTRIKE openAndFill', options);
   const core = coreOf('CDL3LINESTRIKE openAndFill', o.core);
   const capacity = fillCapacity(cdl3linestrikeLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
   const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;

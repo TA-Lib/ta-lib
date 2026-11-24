@@ -124,16 +124,36 @@ fn lookback_call(func: &FuncDef) -> String {
     format!("{}({})", ts_names(&func.name).lookback_positional, args.join(", "))
 }
 
-/// The `outputRoom` call over `inputs` (the caller's own series) and every output.
+/// The `outputRoom` call over `inputs` (the caller's own series) and every
+/// output, at the `lookback` local.
 fn room_call(func: &FuncDef, first: &str, last: &str, outs: &[String], inputs: &[String]) -> String {
     let types: Vec<&str> = func.outputs.iter().map(|o| ts::array_ts_type(&o.param_type)).collect();
-    format!(
-        "outputRoom({first}, {last}, {}, [{}], [{}], [{}])",
-        lookback_call(func),
-        inputs.join(", "),
-        outs.join(", "),
-        types.join(", ")
-    )
+    format!("outputRoom({first}, {last}, lookback, [{}], [{}], [{}])", inputs.join(", "), outs.join(", "), types.join(", "))
+}
+
+/// `lookback` and `lo`, the first bar the range reads (rL1), then the table's
+/// test on the bars `lo` through `last`, the ones the call copies: an entry's
+/// counts are of whole-series calls, which copy every bar.
+fn copy_start(func: &FuncDef, first: &str, last: &str, route: Option<Route>) -> String {
+    let mut s = format!(
+        "  const lookback = {};\n  if (lookback < 0) {{\n    return fellThrough('parameter');\n  }}\n  \
+         const lo = ({first} > lookback ? {first} : lookback) - lookback;\n",
+        lookback_call(func)
+    );
+    if let Some(route) = route {
+        let bars = format!("{last} - lo + 1");
+        let test = match route.to {
+            None => format!("{bars} < WASM_FROM_BARS"),
+            Some(_) => format!("({bars} < WASM_FROM_BARS || {bars} > WASM_TO_BARS)"),
+        };
+        let _ = writeln!(s, "  if (engineRoute.mode === 0 && {test}) {{\n    return null;\n  }}");
+    }
+    s
+}
+
+/// An output whose values are bar positions, which the glue rebases.
+fn holds_bars(o: &crate::ir::Output) -> bool {
+    o.flags.iter().any(|f| f == "bar_index")
 }
 
 /// Every input after the first is as long as the first; `./js` accepts other
@@ -169,16 +189,16 @@ fn declined_check(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, Enu
     format!("  if ({}) {{\n    return fellThrough('declined');\n  }}\n", tests.join(" || "))
 }
 
-/// The frame's bytes over `n` and the output length `out_len`.
-fn frame_size(func: &FuncDef, out_len: &str) -> String {
+/// The frame's bytes over the input bars `in_len` and the output length `out_len`.
+fn frame_size(func: &FuncDef, in_len: &str, out_len: &str) -> String {
     let (per_in, per_out) = frame_bytes(func);
-    plus(&format!("n * {per_in}"), &[(per_out, out_len)])
+    plus(&format!("{in_len} * {per_in}"), &[(per_out, out_len)])
 }
 
 /// `engineFor` over the frame the call will take: the last check before the
 /// first conversion.
-fn engine_for(func: &FuncDef, out_len: &str) -> String {
-    format!("  if (!engineFor({})) {{\n    return null;\n  }}\n", frame_size(func, out_len))
+fn engine_for(func: &FuncDef, in_len: &str, out_len: &str) -> String {
+    format!("  if (!engineFor({})) {{\n    return null;\n  }}\n", frame_size(func, in_len, out_len))
 }
 
 /// Each `(local, series)` converted as `./js` converts it, then refused together.
@@ -193,30 +213,37 @@ fn conversions(pairs: &[(String, String)]) -> String {
     s
 }
 
-/// The call into the module over converted inputs, up to a count it accepted.
+/// The call into the module over the bars `lo` through `last` of converted
+/// inputs, up to a count it accepted, with every bar position made absolute.
+///
+/// # Panics
+/// On a `bar_index` output that is not an integer.
 #[allow(clippy::cast_possible_truncation)]
 fn frame_call(func: &FuncDef) -> String {
     // Nothing from `wasmFrame` on may run caller code: a `valueOf` that calls a
     // routed function back takes the same scratch and may grow linear memory,
     // detaching the views `wasmFrame` derived.
-    let mut c = String::from("  const outLen = last - first + 1;\n");
+    let mut c = String::from("  const outLen = last - first + 1;\n  const len = last - lo + 1;\n");
     let n_in = func.inputs.len() as u32;
     let (reals, ints): (Vec<_>, Vec<_>) = func.outputs.iter().partition(|o| is_real(&o.param_type));
     let n_real = reals.len() as u32;
-    let _ = writeln!(c, "  const w = wasmFrame({});\n  if (w === null) {{\n    return null;\n  }}\n  const at = w.base;", frame_size(func, "outLen"));
+    for i in &func.inputs {
+        let _ = writeln!(c, "  const {0}Bars = seriesBars({0}, lo, len);", i.name);
+    }
+    let _ = writeln!(c, "  const w = wasmFrame({});\n  if (w === null) {{\n    return null;\n  }}\n  const at = w.base;", frame_size(func, "len", "outLen"));
     for (k, i) in func.inputs.iter().enumerate() {
-        let at = plus("at", &[(8 * k as u32, "n")]);
-        let _ = writeln!(c, "  const {}At = {at};\n  w.f64.set({0}, {0}At / 8);", i.name);
+        let at = plus("at", &[(8 * k as u32, "len")]);
+        let _ = writeln!(c, "  const {}At = {at};\n  w.f64.set({0}Bars, {0}At / 8);", i.name);
     }
     for (j, o) in reals.iter().enumerate() {
-        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * j as u32, "outLen")]));
+        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "len"), (8 * j as u32, "outLen")]));
     }
     for (j, o) in ints.iter().enumerate() {
-        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "n"), (8 * n_real + 4 * j as u32, "outLen")]));
+        let _ = writeln!(c, "  const {}At = {};", o.name, plus("at", &[(8 * n_in, "len"), (8 * n_real + 4 * j as u32, "outLen")]));
     }
-    let mut call: Vec<String> = vec!["first".into(), "last".into()];
+    let mut call: Vec<String> = vec!["first - lo".into(), "last - lo".into()];
     call.extend(func.inputs.iter().map(|i| format!("{}At", i.name)));
-    call.push("n".into());
+    call.push("len".into());
     call.extend(func.optional_inputs.iter().map(|o| o.name.clone()));
     call.extend(func.outputs.iter().map(|o| format!("{}At", o.name)));
     call.push("outLen".into());
@@ -227,16 +254,22 @@ fn frame_call(func: &FuncDef) -> String {
          if (count < 0) {{\n    return refused(count);\n  }}",
         call.join(", ")
     );
+    for o in func.outputs.iter().filter(|o| holds_bars(o)) {
+        assert!(!is_real(&o.param_type), "{}: {} holds bar positions in a real output", func.name, o.name);
+        let _ = writeln!(c, "  w.shiftInts({}At, count, lo);", o.name);
+    }
     c
 }
 
-/// The table-mode test every front makes on the input's length, so the call
-/// forms cannot route one length differently; empty for an untabled function.
+/// The table-mode test every front makes on the input's length before reading
+/// anything else, so the call forms cannot route one length differently; empty
+/// for an untabled function. No call copies more bars than the input holds, so
+/// a call this leaves in `./js` neither walks its options nor reads the
+/// engine's state here; [`copy_start`] tests the count copied.
 fn route_check(route: Option<Route>) -> &'static str {
     match route {
         None => "",
-        Some(Route { to: None, .. }) => "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n",
-        Some(Route { to: Some(_), .. }) => "  if (engineRoute.mode === 0 && (n < WASM_FROM_BARS || n > WASM_TO_BARS)) {\n    return null;\n  }\n",
+        Some(_) => "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n",
     }
 }
 
@@ -295,7 +328,6 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let inputs: Vec<String> = func.inputs.iter().map(|i| i.name.clone()).collect();
     let has_real = func.optional_inputs.iter().any(|o| is_real(&o.param_type));
     let multi = func.outputs.len() > 1;
-    let gate = route_check(route);
     // State only, ahead of the options: a call with no engine reads them once.
     let engine_down = "  if (engineDown()) {\n    return null;\n  }\n";
     let room_fail = "  if (room < 0) {\n    return fellThrough(room === -1 ? 'parameter' : 'buffer');\n  }\n";
@@ -326,10 +358,16 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         }
     }
     let _ = writeln!(b, "  const n = seriesLength({});\n  if (n < 1) {{\n    return fellThrough('input');\n  }}", raw[0]);
-    b.push_str(gate);
+    b.push_str(route_check(route));
     b.push_str(engine_down);
     b.push_str(&same_lengths(&raw[1..]));
-    b.push_str("  const o = routedOptions(options);\n  if (o === null) {\n    return fellThrough('options');\n  }\n");
+    // After the table's length check, so a call too short for the table
+    // walks the keys only in `./js`.
+    let _ = writeln!(
+        b,
+        "  let o: {};\n  try {{\n    o = {}('{}', options);\n  }} catch {{\n    return fellThrough('options');\n  }}",
+        names.options_type, names.options_of, func.name
+    );
     b.push_str("  const startIdx = o.startIdx;\n  const endIdx = o.endIdx;\n");
     b.push_str(
         "  if (!usesDefaultCore(o.core) || !optionalInt32(startIdx) || !optionalInt32(endIdx)) {\n    return fellThrough('options');\n  }\n",
@@ -349,9 +387,15 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "  const first = startIdx === undefined ? 0 : startIdx;\n  const last = endIdx === undefined ? n - 1 : endIdx;\n  \
          if (first < 0 || last < first || last >= n) {\n    return fellThrough('range');\n  }\n",
     );
+    b.push_str(&copy_start(func, "first", "last", route));
     let given: Vec<String> = out_names.iter().map(|o| format!("{o} !== undefined")).collect();
-    let _ = writeln!(b, "  if ({}) {{\n    return {buffered_fn}({});\n  }}", given.join(" || "), args(&["first", "last", "n"], &raw, &out_names, &[]));
-    b.push_str(&engine_for(func, "(last - first + 1)"));
+    let _ = writeln!(
+        b,
+        "  if ({}) {{\n    return {buffered_fn}({});\n  }}",
+        given.join(" || "),
+        args(&["first", "last", "lo", "lookback", "n"], &raw, &out_names, &[])
+    );
+    b.push_str(&engine_for(func, "(last - lo + 1)", "(last - first + 1)"));
     b.push_str(&conversions(&converted("", &raw)));
     b.push_str(&frame_call(func));
     let made: Vec<String> = func
@@ -359,13 +403,13 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .iter()
         .map(|o| format!("{}: w.{}({}At, count)", result_key(func, o), if is_real(&o.param_type) { "reals" } else { "ints" }, o.name))
         .collect();
-    let _ = writeln!(b, "  const result: {} = {{ begIdx: w.begIdx(), {} }};\n  w.done();\n  return result;", names.result_type, made.join(", "));
+    let _ = writeln!(b, "  const result: {} = {{ begIdx: w.begIdx() + lo, {} }};\n  w.done();\n  return result;", names.result_type, made.join(", "));
 
     // The options call with buffers: any buffer it was not given is allocated
     // as `./js` allocates it, once the engine is known to run the call.
     let mut bf = String::new();
     let _ = write!(bf, "  const room = {};\n{room_fail}", room_call(func, "first", "last", &out_names, &raw));
-    bf.push_str(&engine_for(func, "(last - first + 1)"));
+    bf.push_str(&engine_for(func, "(last - lo + 1)", "(last - first + 1)"));
     bf.push_str(&conversions(&converted("", &raw)));
     let filled: Vec<String> = if multi {
         for o in &func.outputs {
@@ -376,7 +420,7 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     } else {
         out_names.clone()
     };
-    let _ = writeln!(bf, "  const range = {into_fn}({});", args(&["first", "last", "n"], &inputs, &filled, &["room"]));
+    let _ = writeln!(bf, "  const range = {into_fn}({});", args(&["first", "last", "lo"], &inputs, &filled, &["room"]));
     let views: Vec<String> =
         func.outputs.iter().zip(&filled).map(|(o, f)| format!("{}: {f}.subarray(0, range.count)", result_key(func, o))).collect();
     let _ = writeln!(bf, "  return range === null ? null : {{ begIdx: range.begIdx, {} }};", views.join(", "));
@@ -384,7 +428,7 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // The positional front: its buffers are the caller's, all of them.
     let mut p = String::new();
     let _ = writeln!(p, "  const n = seriesLength({});\n  if (n < 1) {{\n    return fellThrough('input');\n  }}", inputs[0]);
-    p.push_str(gate);
+    p.push_str(route_check(route));
     p.push_str(engine_down);
     p.push_str(&same_lengths(&inputs[1..]));
     p.push_str("  if (!usesDefaultCore(core) || !isInt32(startIdx) || !isInt32(endIdx)) {\n    return fellThrough('options');\n  }\n");
@@ -393,15 +437,16 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let absent: Vec<String> = out_names.iter().map(|o| format!("{o} === undefined")).collect();
     let _ = writeln!(p, "  if ({}) {{\n    return fellThrough('buffer');\n  }}", absent.join(" || "));
     p.push_str("  if (startIdx < 0 || endIdx < startIdx || endIdx >= n) {\n    return fellThrough('range');\n  }\n");
+    p.push_str(&copy_start(func, "startIdx", "endIdx", route));
     let _ = write!(p, "  const room = {};\n{room_fail}", room_call(func, "startIdx", "endIdx", &out_names, &inputs));
-    p.push_str(&engine_for(func, "(endIdx - startIdx + 1)"));
+    p.push_str(&engine_for(func, "(endIdx - lo + 1)", "(endIdx - startIdx + 1)"));
     p.push_str(&conversions(&converted("F64", &inputs)));
     let f64s: Vec<String> = inputs.iter().map(|i| format!("{i}F64")).collect();
-    let _ = writeln!(p, "  return {into_fn}({});", args(&["startIdx", "endIdx", "n"], &f64s, &out_names, &["room"]));
+    let _ = writeln!(p, "  return {into_fn}({});", args(&["startIdx", "endIdx", "lo"], &f64s, &out_names, &["room"]));
 
     // Into the caller's buffers: every output is copied before any view of one is built.
     let mut it = frame_call(func);
-    it.push_str("  if (count > room) {\n    return fellThrough('overrun');\n  }\n  const begIdx = w.begIdx();\n");
+    it.push_str("  if (count > room) {\n    return fellThrough('overrun');\n  }\n  const begIdx = w.begIdx() + lo;\n");
     for o in &func.outputs {
         let _ = writeln!(it, "  w.{}({1}At, count, {1});", if is_real(&o.param_type) { "realsInto" } else { "intsInto" }, o.name);
     }
@@ -418,10 +463,11 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let positional_args = args(&["startIdx", "endIdx"], &inputs, &out_names, &["core"]);
     let mut positional_wasm_sig = positional_sig.clone();
     *positional_wasm_sig.last_mut().unwrap() = "core: Core".into();
-    let head_sig = ["first: number".to_string(), "last: number".into(), "n: number".into()];
+    let head_sig = ["first: number".to_string(), "last: number".into(), "lo: number".into()];
     let param_sig: Vec<String> = params.iter().map(|o| format!("{o}: number")).collect();
     let public_type = |o: &crate::ir::Output| ts::public_array_ts_type(&o.param_type);
     let mut buffered_sig: Vec<String> = head_sig.to_vec();
+    buffered_sig.extend(["lookback: number".to_string(), "n: number".into()]);
     buffered_sig.extend(raw.iter().map(|r| format!("{r}: ArrayLike<number>")));
     buffered_sig.extend(positional_sig[2 + inputs.len()..2 + inputs.len() + params.len()].iter().cloned());
     buffered_sig.extend(func.outputs.iter().map(|o| format!("{}: {}{}", o.name, public_type(o), if multi { " | undefined" } else { "" })));
@@ -432,8 +478,8 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     into_sig.push("room: number".into());
 
     let mut imports = vec![
-        "engineDown", "engineFor", "engineRoute", "fellThrough", "isInt32", "optionalInt32", "outputRoom", "refused", "routedOptions", "routedSeries",
-        "seriesLength", "strictFallThrough", "trapped", "usesDefaultCore", "wasmFrame",
+        "engineDown", "engineFor", "engineRoute", "fellThrough", "isInt32", "optionalInt32", "outputRoom", "refused", "routedSeries",
+        "seriesBars", "seriesLength", "strictFallThrough", "trapped", "usesDefaultCore", "wasmFrame",
     ];
     if has_real {
         imports.extend(["isReal", "optionalReal"]);
@@ -454,8 +500,8 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
     let _ = writeln!(
         s,
-        "import {{ {} as {js_fn}, {}, {} as {js_positional} }} from '{js_module}';",
-        names.public, names.lookback_positional, names.positional
+        "import {{ {} as {js_fn}, {}, {}, {} as {js_positional} }} from '{js_module}';",
+        names.public, names.lookback_positional, names.options_of, names.positional
     );
     let _ = writeln!(s, "import type {{ {}, {} }} from '{js_module}';", names.options_type, names.result_type);
     if !enum_types.is_empty() {
@@ -686,10 +732,11 @@ fn bufs_row(func: &FuncDef) -> String {
 /// The fields every row carries: the function, its module and its call shapes.
 fn row_head(f: &FuncDef) -> String {
     format!(
-        "name: '{}', fn: '{}', pos: '{}', stem: '{}', args: {}, legs: {}, outs: {}",
+        "name: '{}', fn: '{}', pos: '{}', lookback: '{}', stem: '{}', args: {}, legs: {}, outs: {}",
         f.name,
         ts_names(&f.name).public,
         ts_names(&f.name).positional,
+        ts_names(&f.name).lookback,
         module_stem(f),
         args_row(f),
         legs_row(f),
@@ -709,7 +756,8 @@ pub fn render_parity_test(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     o.push_str("\nconst ROWS: Row[] = [\n");
     for f in &sorted {
         let declined: Vec<Vec<String>> = f.optional_inputs.iter().map(|p| declined_spellings(p, funcs, enums)).collect();
-        let _ = writeln!(o, "  {{\n    {},\n    bufs: {},", row_head(f), bufs_row(f));
+        let (per_in, per_out) = frame_bytes(f);
+        let _ = writeln!(o, "  {{\n    {},\n    bufs: {}, frame: [{per_in}, {per_out}],", row_head(f), bufs_row(f));
         let params: Vec<String> = f.optional_inputs.iter().map(|p| param_row(p, funcs, enums)).collect();
         if params.is_empty() {
             o.push_str("    params: [],\n");
@@ -757,7 +805,7 @@ pub fn render_routing_test(funcs: &[FuncDef], table: &BTreeMap<String, Route>) -
     let mut sorted = routed(funcs);
     sorted.sort_by_key(|f| module_stem(f));
     let untabled = sorted.iter().find(|f| !table.contains_key(&f.name)).expect("an exported function the table does not name");
-    let max = table.values().map(|r| r.to.map_or(r.from, |to| to.saturating_add(1))).max().unwrap_or(0).max(UNTABLED_BARS);
+    let max = table.values().map(|r| r.to.unwrap_or(r.from).saturating_add(RANGED_PAD)).max().unwrap_or(0).max(UNTABLED_BARS);
     let mut o = String::from(super::ta_abstract_c::LICENSE);
     o.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
     o.push_str(ROUTING_HEAD);
@@ -768,7 +816,7 @@ pub fn render_routing_test(funcs: &[FuncDef], table: &BTreeMap<String, Route>) -
     o.push_str("];\n");
     let _ = write!(
         o,
-        "const TABLED_FLOOR = {};\nconst UNTABLED: Row = {};\nconst MAX_BARS = {max};\n",
+        "const TABLED_FLOOR = {};\nconst UNTABLED: Row = {};\nconst RANGED_PAD = {RANGED_PAD};\nconst MAX_BARS = {max};\n",
         table.len(),
         routing_row(untabled, Route { from: UNTABLED_BARS, to: None })
     );
@@ -789,6 +837,10 @@ pub fn generate_routing_test(funcs: &[FuncDef], root: &Path, test_dir: &Path) {
 
 const UNTABLED_BARS: u32 = 100_000;
 
+/// Bars past an entry's last count in the input its ranged calls slice: room
+/// for a copy of one bar over it that starts at bar 2.
+const RANGED_PAD: u32 = 3;
+
 const ROUTING_HEAD: &str = r"import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
@@ -801,7 +853,7 @@ type Fn = (...args: unknown[]) => Record<string, unknown>;
 type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
 type Row = {
-  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  name: string; fn: string; pos: string; lookback: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
   bufs: string[]; sentinels: number[]; bars: number; to?: number;
 };
 type Range = { begIdx: number; count: number };
@@ -819,11 +871,12 @@ function head(n: number): Data {
 }
 
 type Ran = { ran: number; fell: number };
+type Span = { startIdx?: number; endIdx?: number };
 
-/** One call through each entry at `n` bars: the module's batch calls and the fall-throughs the default entry's call made. */
-function call(row: Row, n: number): Ran {
-  const args = row.args(head(n));
-  const where = `${row.name} at ${n} bars`;
+/** One call through each entry at `n` bars, over `span` when given: the module's batch calls and the fall-throughs the default entry's call made. */
+function call(row: Row, n: number, span?: Span): Ran {
+  const args = span === undefined ? row.args(head(n)) : [...row.args(head(n)), span];
+  const where = `${row.name} at ${n} bars${span === undefined ? '' : ` over ${JSON.stringify(span)}`}`;
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
   const a = (routed as unknown as Record<string, Fn>)[row.fn](...args);
@@ -839,12 +892,12 @@ function call(row: Row, n: number): Ran {
 }
 
 /** {@link call} with a caller buffer for every output. */
-function callBuffered(row: Row, n: number): Ran {
+function callBuffered(row: Row, n: number, span?: Span): Ran {
   const d = head(n);
-  const where = `${row.name} into buffers at ${n} bars`;
+  const where = `${row.name} into buffers at ${n} bars${span === undefined ? '' : ` over ${JSON.stringify(span)}`}`;
   const mine = blank(row.outs, n);
   const theirs = blank(row.outs, n);
-  const given = (bs: Arr[]): unknown[] => [...row.args(d), Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]]))];
+  const given = (bs: Arr[]): unknown[] => [...row.args(d), { ...span, ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])) }];
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
   const a = (routed as unknown as Record<string, Fn>)[row.fn](...given(mine));
@@ -857,26 +910,37 @@ function callBuffered(row: Row, n: number): Ran {
 }
 
 /** {@link call} for the positional tier, the one the Abstract API calls, with every parameter at its default. */
-function callPositional(row: Row, n: number): Ran {
+function callPositional(row: Row, n: number, span?: Span): Ran {
   const d = head(n);
-  const where = `${row.pos} at ${n} bars`;
+  const s = span?.startIdx ?? 0;
+  const e = span?.endIdx ?? n - 1;
+  const where = `${row.pos} at ${n} bars over ${s}..${e}`;
   const m = MODULES.get(row.stem)!;
   const mine = blank(row.outs, n);
   const theirs = blank(row.outs, n);
   const fell = hooks.fallThroughCount();
   const entered = hooks.moduleCalls();
-  const a = m.routed[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
+  const a = m.routed[row.pos](s, e, ...row.legs(d), ...row.sentinels, ...mine) as unknown as Range;
   const ran = hooks.moduleCalls() - entered;
   const counted = hooks.fallThroughCount() - fell;
-  const b = m.js[row.pos](0, n - 1, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
+  const b = m.js[row.pos](s, e, ...row.legs(d), ...row.sentinels, ...theirs) as unknown as Range;
   assert.deepEqual([a.begIdx, a.count], [b.begIdx, b.count], where);
   mine.forEach((x, k) => assert.ok(bytes(x).equals(bytes(theirs[k])), `${where}: buffer ${k} bits differ`));
   return { ran, fell: counted };
 }
 
-/** Every tabled function under and at its bar count, at and over the end of its range, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions checked. */
-function sweep(mode: string): number {
+/** The range that copies `bars` bars from bar `lo` on, at the default lookback; `null` when every range copying from `lo > 0` copies more. */
+function copying(row: Row, lo: number, bars: number): Span | null {
+  if (lo === 0) return { startIdx: 0, endIdx: bars - 1 };
+  const lookback = (js as unknown as Record<string, () => number>)[row.lookback]();
+  return lookback < bars ? { startIdx: lo + lookback, endIdx: lo + bars - 1 } : null;
+}
+
+/** Every tabled function under and at its bar count, at and over the end of its range, over the explicit whole input, and over ranges of a longer input copying as many bars from bar 0, 1 and 2, and one untabled function at UNTABLED.bars, in every call form; returns the tabled functions, the ranged calls and those copying from a bar past 0 checked. */
+function sweep(mode: string): { checked: number; ranged: number; shifted: number } {
   let checked = 0;
+  let ranged = 0;
+  let shifted = 0;
   for (const [form, run] of [['options', call], ['buffered', callBuffered], ['positional', callPositional]] as const) {
     for (const row of TABLED) {
       if (row.bars > 1) {
@@ -895,25 +959,46 @@ function sweep(mode: string): number {
         assert.equal(over.ran, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars entered the module; the table routes it through ${row.to}`);
         assert.equal(over.fell, 0, `${mode}, ${form}: ${row.name} at ${row.to + 1} bars counted a fall-through`);
       }
+      const whole = run(row, row.bars, { startIdx: 0, endIdx: row.bars - 1 });
+      assert.equal(whole.ran, 1, `${mode}, ${form}: ${row.name} at ${row.bars} bars over the explicit whole input: the module counted ${whole.ran} batch calls, not one`);
+      assert.equal(whole.fell, 0, `${mode}, ${form}: ${row.name} at ${row.bars} bars over the explicit whole input fell through as '${hooks.lastFallThrough()}'`);
+      const n = (row.to ?? row.bars) + RANGED_PAD;
+      const counts: [number, boolean][] = [[row.bars - 1, false], [row.bars, true]];
+      if (row.to !== undefined) counts.push([row.to, true], [row.to + 1, false]);
+      for (const lo of [0, 1, 2]) {
+        for (const [bars, routes] of counts) {
+          const span = bars < 1 ? null : copying(row, lo, bars);
+          if (span === null) continue;
+          const where = `${mode}, ${form}: ${row.name} at ${n} bars over ${JSON.stringify(span)}, copying ${bars} from bar ${lo}`;
+          const r = run(row, n, span);
+          assert.equal(r.ran, routes ? 1 : 0, routes ? `${where}: the module counted ${r.ran} batch calls, not one` : `${where} entered the module`);
+          assert.equal(r.fell, 0, `${where} fell through as '${hooks.lastFallThrough()}'`);
+          ranged++;
+          if (lo > 0) shifted++;
+        }
+      }
       if (form === 'options') checked++;
     }
     const off = run(UNTABLED, UNTABLED.bars);
     assert.equal(off.ran, 0, `${mode}, ${form}: ${UNTABLED.name}, which the table does not name, entered the module`);
     assert.equal(off.fell, 0, `${mode}, ${form}: ${UNTABLED.name} counted a fall-through`);
   }
-  return checked;
+  return { checked, ranged, shifted };
 }
 
-test('a fresh engine routes by the table: each tabled function over its bar counts, and no other function', () => {
-  const checked = sweep('fresh');
+test('a fresh engine routes by the table: each tabled function over the bars a call copies, whole input or ranged, and no other function', () => {
+  const { checked, ranged, shifted } = sweep('fresh');
   assert.ok(checked >= TABLED_FLOOR, `${checked} tabled functions checked; the table names ${TABLED_FLOOR}`);
+  assert.ok(ranged >= 3 * TABLED_FLOOR, `${ranged} ranged calls checked; at least one per call form for each of ${TABLED_FLOOR} tabled functions`);
+  if (TABLED_FLOOR > 0) assert.ok(shifted > 0, 'no ranged call copied from a bar past 0');
   if (TABLED_FLOOR > 0) assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
 });
 
 test('table mode routes by the table again after force mode', () => {
   hooks.setEngineMode('force');
   hooks.setEngineMode('table');
-  assert.ok(sweep('table after force') >= TABLED_FLOOR);
+  const { checked, ranged } = sweep('table after force');
+  assert.ok(checked >= TABLED_FLOOR && ranged >= 3 * TABLED_FLOOR);
 });
 ";
 
@@ -932,8 +1017,8 @@ type Arr = Float64Array | Int32Array;
 type Data = { open: Float64Array; high: Float64Array; low: Float64Array; close: Float64Array; volume: Float64Array; periods: Float64Array };
 type Param = { key: string; kind: 'int' | 'real' | 'enum'; dflt: number; min: number; max: number; members: number[] };
 type Row = {
-  name: string; fn: string; pos: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
-  bufs: string[]; params: Param[]; vectors: (string | number)[][];
+  name: string; fn: string; pos: string; lookback: string; stem: string; args: (d: Data) => unknown[]; legs: (d: Data) => unknown[]; outs: string[];
+  bufs: string[]; frame: [number, number]; params: Param[]; vectors: (string | number)[][];
 };
 type Range = { begIdx: number; count: number };
 ";
@@ -1074,7 +1159,9 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
           options[p.key] = values[i];
         });
         const params = row.params.map((p, i) => values[i] ?? (p.kind === 'real' ? Core.REAL_DEFAULT : Core.INTEGER_DEFAULT));
-        const ranges: { startIdx?: number; endIdx?: number }[] = [{}, { startIdx: 37, endIdx: N - 11 }];
+        const ranges: { startIdx?: number; endIdx?: number }[] = [
+          {}, { startIdx: 37, endIdx: N - 11 }, { startIdx: 0, endIdx: 0 }, { startIdx: 3, endIdx: 120 }, { startIdx: N - 2, endIdx: N - 2 }, { startIdx: N - 1 },
+        ];
         for (const range of ranges) {
           const where = `${row.name} ${label} ${JSON.stringify(range)}`;
           const args = [...row.args(DATA), { ...options, ...range }];
@@ -1120,6 +1207,58 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     console.log(`${ROWS.length} functions, ${compared} calls compared, ${rejected} rejected by both`);
   } finally {
+    hooks.setEngineMode('table');
+  }
+});
+
+test('a ranged call copies only the bars its range reads: under a budget of just those, the last bar runs in WASM in every call form, and a byte less falls through', () => {
+  const previous = hooks.setBudget(hooks.BUDGET);
+  try {
+    for (const row of ROWS) {
+      const lookback = (js as unknown as Record<string, () => number>)[row.lookback]();
+      const lo = N - 1 - lookback;
+      assert.ok(lo > 0, `${row.name}: a lookback of ${lookback} leaves no bar before the copy of the last bar of ${N}`);
+      const budget = (N - lo) * row.frame[0] + row.frame[1];
+      const f = (routed as unknown as Record<string, Fn>)[row.fn];
+      const g = (js as unknown as Record<string, Fn>)[row.fn];
+      const m = MODULES.get(row.stem)!;
+      const sentinels = row.params.map((p) => (p.kind === 'real' ? Core.REAL_DEFAULT : Core.INTEGER_DEFAULT));
+      const forms: [string, (outs: Arr[]) => unknown][] = [
+        ['options', () => f(...row.args(DATA), { startIdx: N - 1 })],
+        ['buffered', (outs) => f(...row.args(DATA), { startIdx: N - 1, ...Object.fromEntries(row.bufs.map((key, i) => [key, outs[i]])) })],
+        ['positional', (outs) => m.routed[row.pos](N - 1, N - 1, ...row.legs(DATA), ...sentinels, ...outs)],
+      ];
+      const want = g(...row.args(DATA), { startIdx: N - 1 });
+      const keys = Object.keys(want).filter((key) => key !== 'begIdx');
+      for (const [form, run] of forms) {
+        for (const [mode, room] of [['strict', budget], ['force', budget - 1]] as const) {
+          const where = `${row.name}, ${form}, last bar, ${mode} mode under a budget of ${room} bytes`;
+          hooks.setEngineMode(mode);
+          hooks.setBudget(room);
+          const outs = blank(row.outs, 1);
+          const fell = hooks.fallThroughCount();
+          const entered = hooks.moduleCalls();
+          const got = run(outs) as Record<string, unknown>;
+          const ran = hooks.moduleCalls() - entered;
+          if (room === budget) {
+            assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
+          } else {
+            assert.equal(ran, 0, `${where} entered the module`);
+            assert.equal(hooks.fallThroughCount() - fell, 1, `${where}: no fall-through counted`);
+            assert.equal(hooks.lastFallThrough(), 'budget', where);
+          }
+          if (form === 'options') {
+            sameResult(got, want, where);
+          } else {
+            const count = form === 'positional' ? (got as unknown as Range).count : (got[keys[0]] as Arr).length;
+            assert.deepEqual([got.begIdx, count], [want.begIdx, (want[keys[0]] as Arr).length], where);
+            keys.forEach((key, k) => assert.ok(bytes(outs[k]).equals(bytes(want[key] as Arr)), `${where}: buffer ${k} bits differ`));
+          }
+        }
+      }
+    }
+  } finally {
+    hooks.setBudget(previous);
     hooks.setEngineMode('table');
   }
 });
@@ -1176,5 +1315,53 @@ test('the default entry replaces exactly the routed batch calls and re-exports e
     }
   }
   for (const name of names) assert.ok(name in j, `${name} is not a ta-lib/js export`);
+});
+
+test('every routed function rejects a key that is not one of its option keys before the module, as ta-lib/js does, and runs in WASM given every key it has', () => {
+  hooks.setEngineMode('strict');
+  hooks.resetFallThroughs();
+  let rejected = 0;
+  let ran = 0;
+  try {
+    for (const row of ROWS) {
+      const f = (routed as unknown as Record<string, Fn>)[row.fn];
+      const g = (js as unknown as Record<string, Fn>)[row.fn];
+      const keys = [...row.params.map((p) => p.key), 'startIdx', 'endIdx', 'core', ...row.bufs];
+      for (const bad of [{ [keys[0].toUpperCase()]: undefined }, new Map()]) {
+        const where = `${row.name} ${bad instanceof Map ? 'a Map' : `key ${keys[0].toUpperCase()}`}`;
+        const want = outcome(g, [...row.args(DATA), bad]);
+        const entered = hooks.moduleCalls();
+        const got = outcome(f, [...row.args(DATA), bad]);
+        assert.ok(want.error instanceof TALibError && want.error.code === 'TA_BAD_PARAM', `${where}: ta-lib/js gave ${String(want.error)}`);
+        assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}`);
+        assert.equal(got.error.message, want.error.message, where);
+        assert.equal(hooks.lastFallThrough(), 'options', where);
+        assert.equal(hooks.moduleCalls(), entered, `${where}: entered the module`);
+        rejected++;
+      }
+      const mine = blank(row.outs, N);
+      const theirs = blank(row.outs, N);
+      const every = (bs: Arr[]): Record<string, unknown> => ({
+        ...Object.fromEntries(row.params.map((p) => [p.key, undefined])),
+        startIdx: 0,
+        endIdx: N - 1,
+        core: Core.DEFAULT,
+        ...Object.fromEntries(row.bufs.map((key, i) => [key, bs[i]])),
+      });
+      assert.deepEqual(Object.keys(every(mine)).sort(), [...keys].sort(), `${row.name}: the object misses a key`);
+      const entered = hooks.moduleCalls();
+      const got = outcome(f, [...row.args(DATA), every(mine)]);
+      assert.equal(got.error, undefined, `${row.name} every key: ${String(got.error)}`);
+      assert.equal(hooks.moduleCalls() - entered, 1, `${row.name} every key: the module counted no batch call`);
+      sameResult(got.value!, outcome(g, [...row.args(DATA), every(theirs)]).value!, `${row.name} every key`);
+      sameBuffers(mine, theirs, `${row.name} every key`);
+      ran++;
+    }
+    assert.equal(hooks.fallThroughCount(), rejected, 'a call ta-lib/js accepts fell through');
+  } finally {
+    hooks.setEngineMode('table');
+  }
+  assert.equal(rejected, 2 * ROWS.length);
+  assert.equal(ran, ROWS.length);
 });
 ";

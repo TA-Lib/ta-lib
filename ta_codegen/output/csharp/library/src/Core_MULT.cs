@@ -109,10 +109,23 @@ public partial class Core
       }
       outIdx = 0;
       i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = inReal0[i] * inReal1[i];
-         outIdx += 1;
-         i += 1;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal0.Slice(i, _w2.Length);
+         var _w1 = inReal1.Slice(i, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = _w0[_wk] * _w1[_wk];
+            _w2[_wk + 1] = _w0[_wk + 1] * _w1[_wk + 1];
+            _w2[_wk + 2] = _w0[_wk + 2] * _w1[_wk + 2];
+            _w2[_wk + 3] = _w0[_wk + 3] * _w1[_wk + 3];
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = _w0[_wk] * _w1[_wk];
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -141,10 +154,23 @@ public partial class Core
       }
       outIdx = 0;
       i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
-         outIdx += 1;
-         i += 1;
+      if( i <= endIdx ) {
+         int _wn = endIdx - i + 1;
+         var _w2 = outReal.Slice(outIdx, _wn);
+         var _w0 = inReal0.Slice(i, _w2.Length);
+         var _w1 = inReal1.Slice(i, _w2.Length);
+         int _wk = 0;
+         for( ; _wk <= _w2.Length - 4; _wk += 4 ) {
+            _w2[_wk] = (double)_w0[_wk] * (double)_w1[_wk];
+            _w2[_wk + 1] = (double)_w0[_wk + 1] * (double)_w1[_wk + 1];
+            _w2[_wk + 2] = (double)_w0[_wk + 2] * (double)_w1[_wk + 2];
+            _w2[_wk + 3] = (double)_w0[_wk + 3] * (double)_w1[_wk + 3];
+         }
+         for( ; _wk < _w2.Length; _wk++ ) {
+            _w2[_wk] = (double)_w0[_wk] * (double)_w1[_wk];
+         }
+         i += _wn;
+         outIdx += _wn;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;

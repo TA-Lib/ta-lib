@@ -37,25 +37,31 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| rL2 | [rejection signal](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rL3 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#rl3) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rL4 | [agrees with C](https://ta-lib.org/spec/lookback/#rl4) | — | ✅ | ✅ | ✅ |  |  |
-| rL2 | [its only failure](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ |  | ✅ |
+| rL2 | [rejection signal](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rL3 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#rl3) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rL4 | [agrees with C](https://ta-lib.org/spec/lookback/#rl4) | — | ✅ | ✅ | ✅ | ✅ |  |
+| rL2 | [its only failure](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ | ⚠️<br>[27] |  |
+| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ | ⚠️<br>[27] | ✅ |
+
+[27] Deliberate, TypeScript Caveat [rJ4](https://ta-lib.org/spec/#rj4): options
+that are not a plain object or hold a key the function does not have, or a
+`core` that is not a `Core`, throw `TALibError` `'TA_BAD_PARAM'`. A rejected
+parameter or output index still returns the invalid constant. Decided in
+`docs/typescript-api-design.md` (A11, A23).
 
 ### Batch tier
 
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| rB1 | [start index](https://ta-lib.org/spec/errors/#rb1) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rB2 | [end index](https://ta-lib.org/spec/errors/#rb2) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rB3 | [parameter value](https://ta-lib.org/spec/errors/#rb3) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |  |  |
-| rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |  |  |
-| rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |  |  |
+| rB1 | [start index](https://ta-lib.org/spec/errors/#rb1) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rB2 | [end index](https://ta-lib.org/spec/errors/#rb2) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rB3 | [parameter value](https://ta-lib.org/spec/errors/#rb3) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] | ⚠️<br>[28] |  |
+| rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ | ✅ |  |
+| rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | rB7 | [allocation failure](https://ta-lib.org/spec/errors/#rb7) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
-| rB8 | [internal error](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |  |  |
-| rB9 | [non-integer index or parameter](https://ta-lib.org/spec/errors/#rb9) | — | — | — | — |  |  |
+| rB8 | [internal error](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] | ⚠️<br>[29] |  |
+| rB9 | [non-integer index or parameter](https://ta-lib.org/spec/errors/#rb9) | — | — | — | — | ✅ |  |
 
 [1] Rust slices cannot be null: an empty one is the absent argument. What C
 writes through a pointer (the index/count pair, a stream handle) is returned
@@ -77,16 +83,25 @@ guard on a corrupted holder. No generated guard is reachable (rationale rB8),
 so Java's `InternalFailureTest` and C#'s `BatchApiTest` check the mappers both
 tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 
+[28] Deliberate, TypeScript Caveat [rJ3](https://ta-lib.org/spec/#rj3): an output
+omitted or `undefined` is allocated. `null` or an empty array is still absent.
+Decided in `docs/typescript-api-design.md` (A8).
+
+[29] Not verified by the CI suite. No generated guard is reachable (rationale
+rB8); a probe of the two mappers both tiers throw through, `failure` and
+`streamFailure` (`runtime/checks.ts`), got `TALibError` `'TA_INTERNAL_ERROR'`,
+but no TypeScript test calls them.
+
 ### Stream opening
 
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] |  |  |
-| rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |  |  |
-| rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |  |  |
-| rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ |  |  |
-| rS7 | [short history](https://ta-lib.org/spec/streaming/#rs7) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |  |  |
+| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] | ✅ |  |
+| rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] | ⚠️<br>[28] |  |
+| rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ | ✅ |  |
+| rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ | ✅ |  |
+| rS7 | [short history](https://ta-lib.org/spec/streaming/#rs7) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |  |
 
 The openers do not scan the history for non-finite values (rationale: finite
 inputs).
@@ -123,9 +138,9 @@ tier emits nothing.
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
 | rU1 | [absent handle](https://ta-lib.org/spec/streaming/#ru1) | ✅ | — | — | — | — | ⚠️<br>[26] |
-| rU4 | [index ceiling](https://ta-lib.org/spec/streaming/#ru4) | ✅ | ✅ | ✅ | ✅ |  |  |
+| rU4 | [index ceiling](https://ta-lib.org/spec/streaming/#ru4) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | rU2 | [absent output](https://ta-lib.org/spec/streaming/#ru2) | ✅ | — | ✅ | — | — | — |
-| rU3 | [non-finite bar](https://ta-lib.org/spec/streaming/#ru3) | ✅ | ✅ | ✅ | ✅ |  |  |
+| rU3 | [non-finite bar](https://ta-lib.org/spec/streaming/#ru3) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 [26] A nil Go handle is not checked: a method call on one panics.
 
@@ -145,16 +160,16 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| rT2 | [target](https://ta-lib.org/spec/settings-threads/#rt2) | ✅ | ✅<br>[13] | ✅<br>[13] | ✅ |  |  |
-| rT3 | [unstable period values](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ |  |  |
-| rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ |  |  |
-| rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rT7 | [factor domain](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |  |  |
+| rT2 | [target](https://ta-lib.org/spec/settings-threads/#rt2) | ✅ | ✅<br>[13] | ✅<br>[13] | ✅ | ✅ |  |
+| rT3 | [unstable period values](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ | ✅ |  |
+| rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ | ✅ |  |
+| rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rT7 | [factor domain](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ | ✅ |  |
 | rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — | — |  |
 | rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — | — | — |
-| rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ |  |  |
+| rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ | ⚠️<br>[30] |  |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.
@@ -166,15 +181,20 @@ getter that can fail costs it nothing.
 [16] Verified that a later valid setter does not clear an earlier latched
 rejection.
 
+[30] Not verified by the CI suite for a level: `runtime.test.ts` reads a count
+back through the getter, and an Auto level only through the bars it resolves
+to. A probe read both levels back as their constants.
+
 ### TypeScript caveats
 
 | Rule | Topic | C | Rust | Java | C# | TypeScript | Go |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| rJ1 | [names](https://ta-lib.org/spec/#rj1) | — | — | — | — |  | — |
-| rJ2 | [call shape](https://ta-lib.org/spec/#rj2) | — | — | — | — |  | — |
-| rJ3 | [absent output allocated](https://ta-lib.org/spec/#rj3) | — | — | — | — |  | — |
-| rJ4 | [lookback options](https://ta-lib.org/spec/#rj4) | — | — | — | — |  | — |
-| rJ5 | [display-shift order](https://ta-lib.org/spec/#rj5) | — | — | — | — |  | — |
+| rJ1 | [names](https://ta-lib.org/spec/#rj1) | — | — | — | — | ✅ | — |
+| rJ2 | [call shape](https://ta-lib.org/spec/#rj2) | — | — | — | — | ✅ | — |
+| rJ3 | [absent output allocated](https://ta-lib.org/spec/#rj3) | — | — | — | — | ✅ | — |
+| rJ4 | [lookback options](https://ta-lib.org/spec/#rj4) | — | — | — | — | ✅ | — |
+| rJ5 | [display-shift order](https://ta-lib.org/spec/#rj5) | — | — | — | — | ✅ | — |
+| rJ6 | [metadata keys](https://ta-lib.org/spec/#rj6) | — | — | — | — | ✅ | — |
 
 ## Test coverage
 
@@ -256,14 +276,16 @@ in `BatchApiTest` (Java) for a null MA type.
 `c_batch_prologue_orders_parameters_before_presence`,
 `rust_public_entry_orders_the_argument_contract`,
 `rust_batch_impl_orders_capacity_before_aliasing`,
-`every_declared_input_is_checked_in_every_backend`, `BatchApiTest` (Java, C#);
+`every_declared_input_is_checked_in_every_backend`, `BatchApiTest` (Java, C#),
+`batchContract.test.ts` and `batchArgs.test.ts` (TypeScript);
 no phantom io and `--xlang-hash` for behaviour matching.
 
 rB6: `checkOutputAliasRejected` (`test_abstract.c`) sweeps every ordered output
 pair of every function, cross-typed pairs included, binding both onto one buffer
 and requiring `TA_BAD_PARAM`, once over the full range and once over a range
 that produces no values (Appendix D item 15), with the pair rebound apart as
-that leg's control. Java's and C#'s `BatchApiTest` pass one array as two outputs.
+that leg's control. Java's and C#'s `BatchApiTest` pass one array as two outputs,
+and TypeScript's `batchArgs.test.ts` two views at one address of every output pair.
 
 rB4 and rS4, an empty argument: an output is refused when empty, on a range that
 produces nothing and on a history too short to open, with a one-element control
@@ -272,7 +294,8 @@ for each. Java `anEmptyOutputIsAnAbsentOne` and C#
 `an_empty_output_is_an_absent_one` (`tests/batch_contract.rs`),
 `a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound`
 (`tests/empty_range.rs`) and the short-history test of
-`tests/stream_open_contract.rs`. An empty input was already refused by the
+`tests/stream_open_contract.rs`, and TypeScript `batchContract.test.ts` and
+`streamContract.test.ts`. An empty input was already refused by the
 length rule.
 
 rW6: `checkInPlaceAliasCorrect` (`test_abstract.c`),
@@ -303,7 +326,9 @@ and fill, and the lookback and display-shift throws (rJ4, rJ5). rJ1:
 to the rule on each word shape; the corpus suites read each key off the
 generated source, so a key's spelling in a function is held only where a test
 hard-codes it (`batchArgs.test.ts`, `publicApi.test.ts`, `abstract.test.ts`,
-`ts_stream_suite.rs`, `scripts/ts_consumer_check`).
+`ts_stream_suite.rs`, `scripts/ts_consumer_check`). rJ6: `abstract.test.ts`
+holds the keys of four functions' rows, binds SMA's period by key and by
+position, and refuses C's name and a miscased key.
 
 rW7: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
 whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
@@ -361,7 +386,8 @@ does the same for Java, and adds the empty history's; `StreamApiTest` covers rS4
 in C#, where the condition is a zero-length span on a later input beside a
 non-empty history. In
 Rust `tests/stream_open_contract.rs` covers the empty history, rS2 and rS4's
-empty output. Java's `BatchApiTest`
+empty output. In TypeScript `streamContract.test.ts` covers the empty history,
+rS2 to rS5 and rS7 over every opener. Java's `BatchApiTest`
 asserts `BAD_PARAM`, not only the exception type, at each rS4 rejection and at
 an `OpenAndFill` output placed on its input (rS6).
 
@@ -420,8 +446,8 @@ probe per backend. `only_an_accepted_bar_advances_the_range` asserts the guard's
 *position* (first, with only C's handle check allowed in front of it), the code
 it names, and its ABSENCE from `Peek`, in all four backends over the whole
 corpus. Then each of `test_stream_finite.c`, `stream_out_range.rs`,
-`StreamSmokeTest` and `StreamApiTest` drives one handle to the ceiling and
-demands the refusal, the code, and that nothing moved. The code is asserted
+`StreamSmokeTest`, `StreamApiTest` and `streamContract.test.ts` drives one
+handle to the ceiling and demands the refusal, the code, and that nothing moved. The code is asserted
 twice because the type cannot stand in for it: Java renders rB1's code and rU4's
 as one exception class.
 
@@ -506,7 +532,8 @@ rT4's C getter: `test_internals.c`. rT8's Rust latch: verified by probe
 (`CoreApiTest`), through CDLDOJI. rT2,
 rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
-(`test_internals.c`) changes the settings and initializes over them.
+(`test_internals.c`) changes the settings and initializes over them. rT2 to rT8,
+and rT12 for a count and a candle setting, in TypeScript: `runtime.test.ts`.
 
 `TA_Initialize` and `TA_Shutdown` are idempotent (ruled 2026-10-02): a repeated
 call of either answers `TA_SUCCESS` and leaves every setting at its default,

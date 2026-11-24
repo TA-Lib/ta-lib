@@ -70,6 +70,7 @@ public partial class Core
     *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
     *               range that the guard still called "not flat".
+    *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Stochf</c> consumes before it can produce
@@ -86,7 +87,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
@@ -108,10 +109,17 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
+      int maLookback = 0;
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
-      /* Add the smoothing being done for Fast-D */
-      retValue += MaLookback(optInFastD_Period, optInFastD_MAType);
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = MaLookback(optInFastD_Period, optInFastD_MAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      retValue += maLookback;
       return retValue ;
 
    }
@@ -128,7 +136,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
@@ -236,6 +244,9 @@ public partial class Core
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MaLookback(optInFastD_Period, optInFastD_MAType);
+      if( lookbackFastD < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackFastD;
       /* Move up the start index if there is not
        * enough initial data.
@@ -442,6 +453,9 @@ public partial class Core
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MaLookback(optInFastD_Period, optInFastD_MAType);
+      if( lookbackFastD < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackFastD;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -562,7 +576,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outFastK">Raw %K stochastic line. Must hold at least <c>endIdx - max(startIdx,
@@ -667,7 +681,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
    /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
    /// default).</param>
    /// <param name="outFastK">Raw %K stochastic line. Must hold at least <c>endIdx - max(startIdx,
@@ -1138,6 +1152,9 @@ public partial class Core
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MaLookback(optInFastD_Period, optInFastD_MAType);
+      if( lookbackFastD < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = lookbackK + lookbackFastD;
       /* Move up the start index if there is not
        * enough initial data.

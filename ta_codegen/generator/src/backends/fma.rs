@@ -41,7 +41,7 @@ pub const FUSING_INVENTORY: &[&str] = &[
     "dema", "dosc", "efi", "ema", "eri", "fisher", "fosc", "frama", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
     "ht_trendline", "ht_trendmode", "kama", "kst", "kstext", "kurtosis", "kvo", "linearreg", "macd",
     "macdfix", "macdv", "mama", "massi", "natr", "percentb", "ppo", "pso", "pvo", "rma", "rvi",
-    "sar", "sarext", "skew", "smi", "stc", "supertrend",
+    "sar", "sarext", "skew", "smi", "ssf", "stc", "supertrend",
     "swak_2php", "swak_bp", "swak_butter", "swak_gauss", "swak_hp",
     "t3", "tema", "trix", "tsf", "tsi", "vidya", "wavetrend", "wclprice", "zlema",
 ];
@@ -81,6 +81,7 @@ pub struct FmaCtx<'a> {
 
 /// Owned name-sets, for a renderer that does not otherwise track per-variable
 /// types. Built by [`build_fma_var_sets`].
+#[derive(Clone)]
 pub struct FmaVarSets {
     pub real_vars: HashSet<String>,
     pub index_vars: HashSet<String>,
@@ -96,6 +97,14 @@ pub struct FmaVarSets {
 }
 
 impl FmaVarSets {
+    /// These sets with no ordered step admitted, for a Java, C# or TS peek: a peek
+    /// carries no sum to the next bar, and there its select runs no faster than
+    /// the branch.
+    #[must_use]
+    pub fn for_peek(&self) -> Self {
+        Self { ordered_step_targets: HashSet::new(), ..self.clone() }
+    }
+
     #[must_use]
     pub fn view(&self) -> FmaCtx<'_> {
         FmaCtx {

@@ -260,7 +260,7 @@ pub unsafe extern "C" fn apo_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
@@ -425,7 +425,7 @@ pub unsafe extern "C" fn bbands_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inReal, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
@@ -452,7 +452,7 @@ pub unsafe extern "C" fn bbw_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
@@ -2757,10 +2757,10 @@ pub unsafe extern "C" fn kdj_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
+    let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
-    let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15]) else {
+    let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outK), Some(outD), Some(outJ),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outK, out_len), output(outD, out_len), output(outJ, out_len),) else {
@@ -2825,10 +2825,10 @@ pub unsafe extern "C" fn kstext_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInROCMAType) = enum_param(optInROCMAType, &[7, 15]) else {
+    let Some(optInROCMAType) = enum_param(optInROCMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
-    let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15]) else {
+    let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outKST), Some(outKSTSignal),) = (input(inReal, len), output(outKST, out_len), output(outKSTSignal, out_len),) else {
@@ -2964,7 +2964,7 @@ pub unsafe extern "C" fn ma_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
@@ -3020,13 +3020,13 @@ pub unsafe extern "C" fn macdext_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInFastMAType) = enum_param(optInFastMAType, &[7, 15]) else {
+    let Some(optInFastMAType) = enum_param(optInFastMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
-    let Some(optInSlowMAType) = enum_param(optInSlowMAType, &[7, 15]) else {
+    let Some(optInSlowMAType) = enum_param(optInSlowMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
-    let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15]) else {
+    let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outMACD), Some(outMACDSignal), Some(outMACDHist),) = (input(inReal, len), output(outMACD, out_len), output(outMACDSignal, out_len), output(outMACDHist, out_len),) else {
@@ -3083,6 +3083,35 @@ pub unsafe extern "C" fn macdv_batch(
         return DECLINED;
     };
     answer(CORE.macdv(startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn maenv_batch(
+    startIdx: usize,
+    endIdx: usize,
+    inReal: *const f64,
+    len: usize,
+    optInTimePeriod: i32,
+    optInPercentUp: f64,
+    optInPercentDn: f64,
+    optInMAType: i32,
+    outRealUpperBand: *mut f64,
+    outRealMiddleBand: *mut f64,
+    outRealLowerBand: *mut f64,
+    out_len: usize,
+) -> i32 {
+    entered();
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
+        return DECLINED;
+    };
+    let (Some(inReal), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inReal, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
+        return DECLINED;
+    };
+    answer(CORE.maenv(startIdx, endIdx, inReal, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand))
 }
 
 #[no_mangle]
@@ -3148,7 +3177,7 @@ pub unsafe extern "C" fn mavp_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(inPeriods), Some(outReal),) = (input(inReal, len), input(inPeriods, len), output(outReal, out_len),) else {
@@ -3585,7 +3614,7 @@ pub unsafe extern "C" fn percentb_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
@@ -3699,7 +3728,7 @@ pub unsafe extern "C" fn ppo_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
@@ -3746,7 +3775,7 @@ pub unsafe extern "C" fn pvo_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
+    let Some(optInMAType) = enum_param(optInMAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inVolume), Some(outReal),) = (input(inVolume, len), output(outReal, out_len),) else {
@@ -4297,10 +4326,10 @@ pub unsafe extern "C" fn stoch_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
+    let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
-    let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15]) else {
+    let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outSlowK), Some(outSlowD),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outSlowK, out_len), output(outSlowD, out_len),) else {
@@ -4329,7 +4358,7 @@ pub unsafe extern "C" fn stochf_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
+    let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outFastK), Some(outFastD),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outFastK, out_len), output(outFastD, out_len),) else {
@@ -4357,7 +4386,7 @@ pub unsafe extern "C" fn stochrsi_batch(
     if refused != 0 {
         return refused;
     }
-    let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
+    let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15, 16]) else {
         return DECLINED;
     };
     let (Some(inReal), Some(outFastK), Some(outFastD),) = (input(inReal, len), output(outFastK, out_len), output(outFastD, out_len),) else {

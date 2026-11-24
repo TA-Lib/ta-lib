@@ -1708,6 +1708,17 @@ unsigned int TA_MACDV_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_MACDV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_MAENV_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_MAENV_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_MAENV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2322,6 +2333,17 @@ TA_RetCode TA_SQZMOM_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_SQZMOM_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 int TA_SQZMOM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_SSF_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SSF_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SSF_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
 TA_RetCode TA_STC_FramePP( const TA_ParamHolderPriv *params,

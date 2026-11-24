@@ -28,6 +28,7 @@
 | A20 | `ParamHolder.call` defaults its range as the typed call does | Ruled (owner, 2026-11-07) |
 | A21 | `Core.candleSetting(settingType)` reads a candle setting back, in TypeScript and Java | Ruled (owner, 2026-11-07) |
 | A22 | A metadata row carries the typed call's key (input name, option key, result key); `setOptInput` takes the key as well as the position | Ruled (owner, 2026-11-07) |
+| A23 | A key that is not one of the function's option keys is `TA_BAD_PARAM`, and the options must be a plain object | Ruled (owner, 2026-11-22) |
 
 ## 2. Batch call
 
@@ -46,8 +47,8 @@ mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 - **Parameter keys.** C's name without `optIn`, in camelCase by the word split of [rJ1](../website/src/spec/README.md#rj1): `timePeriod`, `nbDevUp`, `maType`, `fastDMaType`.
 - **Range.** `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. `endIdx` is inclusive, as in every TA-Lib API; the TSDoc says so because `slice` is not. Bars before `startIdx` are still read as warm-up, which slicing the input would lose.
 - **`core`** defaults to `Core.DEFAULT`.
-- **First fault.** What only TypeScript has comes first: that a price object exists and that `options` is a plain object; then, for a batch call with `endIdx` omitted, each series present and non-empty, because the default reads their lengths; then `core`; then that each index and integer parameter is an int32 and each real parameter a number ([H17](typescript-backend.md)). Every backend's order follows: the range first, and in an opener the history's upper bound (rS2) ahead of an absent leg, and an empty history after every argument check. [rE1](../website/src/spec/errors/README.md#re1) leaves the order of several faults open.
-- **`core`** that is not a `Core` is `TA_BAD_PARAM` at every entry point; lookback and display shift throw for it and for options that are not a plain object, and answer a rejected parameter with their invalid constant.
+- **First fault.** What only TypeScript has comes first: that a price object exists and that `options` is a plain object holding only the function's option keys; then, for a batch call with `endIdx` omitted, each series present and non-empty, because the default reads their lengths; then `core`; then that each index and integer parameter is an int32 and each real parameter a number ([H17](typescript-backend.md)). Every backend's order follows: the range first, and in an opener the history's upper bound (rS2) ahead of an absent leg, and an empty history after every argument check. [rE1](../website/src/spec/errors/README.md#re1) leaves the order of several faults open.
+- **`core`** that is not a `Core` is `TA_BAD_PARAM` at every entry point; lookback and display shift throw for it and for options that are not a plain object or hold a key the function does not have, and answer a rejected parameter with their invalid constant.
 - **Function names** keep the rule every backend shares (`cdlengulfing`, `stochrsi`, `var_`).
 - **Speed.** The timed benchmark request calls the body, so the options object is on no measured path. A caller who passes every buffer allocates no output (A7).
 
@@ -99,7 +100,7 @@ const a = atrOpen({ high, low, close }, { timePeriod: 14 });
 const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 20 });
 ```
 
-- Each takes the batch call's options type and ignores the keys it has no use for, so one object serves every call.
+- Each takes the batch call's options type and ignores the option keys it has no use for, so one object serves every call; a key the type does not have is `TA_BAD_PARAM` at each (A23).
 - openAndFill returns the stream with the batch result over the history. Its buffers follow section 4, except that an output shares no memory with an input, and each holds `historyLen - lookback` values.
 
 ## 7. Streams
@@ -107,7 +108,7 @@ const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 20 });
 ```ts
 const m = macdOpen(history);
 const { outMacd, outMacdSignal } = m.update(101.2);   // a new object
-m.update(101.5, sink);                                 // fills and returns sink: no allocation
+m.update(101.5, sink);                                 // fills and returns sink: no result object
 ```
 
 - `update`, `peek` and `value` of a multi-output stream take an optional sink and return it, or a new object. Sink fields carry the result names (`outMacd`); a fresh sink starts at `NaN`.
@@ -119,7 +120,7 @@ m.update(101.5, sink);                                 // fills and returns sink
 - A rejected call throws `TALibError`; `code` is C's name as a string and `retCode` C's number, compared against the exported `RetCode`.
 - **Empty history** (A16): every backend's opener answers an empty history with `TA_INSUFFICIENT_HISTORY` ([rS7](../website/src/spec/streaming/README.md#rs7)), after every argument check, like any too-short history. This is the spec's rule, not a TypeScript Caveat.
 - **Messages** name the parameter, its value and its range (`SMA: timePeriod must be in 1..100000, got 0`, `SMA: startIdx must be in 0..100000000, got -1`), a string value quoted (`got "5"`); overlap gets its own (`MACD: outMacd and outMacdSignal share memory`). Messages are not API.
-- **JavaScript misuse.** A series that is not array-like (a number, a string, an object without a numeric `length`), a primitive where a price object goes, and an array or typed array where the options go are each `TA_BAD_PARAM`: the types exclude them, and read as a series or as options they would make the call succeed over nothing. A value of a type no signature admits (a `BigInt`) may surface as the `TypeError` [D8](typescript-backend.md) leaves unwrapped.
+- **JavaScript misuse.** A series that is not array-like (a number, a string, an object without a numeric `length`), a primitive where a price object goes, and options that are not a plain object (an array, a typed array, a `Map`, a `Core` or any other class instance) are each `TA_BAD_PARAM`: the types exclude most of them, and read as a series or as options they would make the call succeed over nothing. An own enumerable key the function's options type does not have is `TA_BAD_PARAM` too (A23), its value unread: a misspelt or C-spelled key would otherwise compute with the default. Only own keys are checked: an inherited key is never rejected. A value of a type no signature admits (a `BigInt`) may surface as the `TypeError` [D8](typescript-backend.md) leaves unwrapped.
 - **No C leftovers:** no `FuncUnstId.UNUSED_*`; no `ALL` or `ALL_CANDLE_SETTINGS` where a parameter only throws on them; hover text in plain terms ("Exponential moving average", not "The `TA_MAType_EMA` moving average").
 
 ## 9. Spec caveats

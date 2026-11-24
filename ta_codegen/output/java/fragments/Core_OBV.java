@@ -71,11 +71,7 @@
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
+         prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;
       }
@@ -107,11 +103,7 @@
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = (double)inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += (double)inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= (double)inVolume[i];
-         }
+         prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits((double)inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits((double)inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
          outReal[outIdx++] = prevOBV;
          prevReal = tempReal;
       }
@@ -380,11 +372,7 @@
    {
       double tempReal = 0.0;
       tempReal = inReal;
-      if( tempReal > sp.prevReal ) {
-         sp.prevOBV += inVolume;
-      } else if( tempReal < sp.prevReal ) {
-         sp.prevOBV -= inVolume;
-      }
+      sp.prevOBV = sp.prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume) ^ Long.MIN_VALUE) & ((sp.prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume) & ((tempReal < sp.prevReal) ? -1L : 0L));
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
@@ -413,11 +401,7 @@
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
+         prevOBV = prevOBV + Double.longBitsToDouble(((Double.doubleToRawLongBits(inVolume[i]) ^ Long.MIN_VALUE) & ((prevReal < tempReal) ? -1L : 0L)) ^ Long.MIN_VALUE) - Double.longBitsToDouble(Double.doubleToRawLongBits(inVolume[i]) & ((tempReal < prevReal) ? -1L : 0L));
          outReal[outIdx++ * outStride] = prevOBV;
          prevReal = tempReal;
       }

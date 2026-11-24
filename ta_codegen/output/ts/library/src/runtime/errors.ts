@@ -50,7 +50,9 @@
  * throws rather than returning one: a caught {@link TALibError} carries it.
  */
 export const RetCode = Object.freeze({
+  /** The call succeeded; no {@link TALibError} carries it. */
   SUCCESS: 0,
+  /** An argument was rejected: a parameter, an input, a buffer, an option or a setting. */
   BAD_PARAM: 2,
   /** C parity only: never thrown here. */
   ALLOC_ERR: 3,
@@ -62,7 +64,9 @@ export const RetCode = Object.freeze({
   INPUT_NOT_ALL_INITIALIZE: 10,
   /** Abstract API only: an output is not bound. */
   OUTPUT_NOT_ALL_INITIALIZE: 11,
+  /** `startIdx` is below 0 or above `Core.INDEX_MAX`. */
   OUT_OF_RANGE_START_INDEX: 12,
+  /** `endIdx` is below 0, above `Core.INDEX_MAX` or below `startIdx`, or a stream's bars would pass index `Core.INDEX_MAX`. */
   OUT_OF_RANGE_END_INDEX: 13,
   /**
    * A stream opener was given `lookback` bars or fewer: the one recoverable
@@ -70,6 +74,7 @@ export const RetCode = Object.freeze({
    * an empty result.
    */
   INSUFFICIENT_HISTORY: 17,
+  /** The library found an inconsistency in its own state: a TA-Lib bug to report. */
   INTERNAL_ERROR: 5000,
 } as const);
 export type RetCode = (typeof RetCode)[keyof typeof RetCode];
@@ -86,8 +91,8 @@ const CODE_NAME = Object.fromEntries(
 
 /**
  * The one error class the library throws. Match on {@link TALibError.code}:
- * it survives a second copy of the package and a second realm, where
- * `instanceof` does not.
+ * it survives a second copy of the package, where `instanceof` does not; a
+ * structured clone, as `postMessage` makes, drops `code` and `retCode`.
  */
 export class TALibError extends Error {
   override readonly name = 'TALibError';

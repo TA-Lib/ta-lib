@@ -154,6 +154,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_MACDEXT.c \
 	ta_MACDFIX.c \
 	ta_MACDV.c \
+	ta_MAENV.c \
 	ta_MAMA.c \
 	ta_MARKETFI.c \
 	ta_MASSI.c \
@@ -210,6 +211,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_SORTINO.c \
 	ta_SQRT.c \
 	ta_SQZMOM.c \
+	ta_SSF.c \
 	ta_STC.c \
 	ta_STDDEV.c \
 	ta_STOCH.c \

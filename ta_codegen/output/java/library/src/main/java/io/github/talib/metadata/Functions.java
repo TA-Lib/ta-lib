@@ -302,6 +302,7 @@ public final class Functions {
       put(m, f_MACDEXT());
       put(m, f_MACDFIX());
       put(m, f_MACDV());
+      put(m, f_MAENV());
       put(m, f_MAMA());
       put(m, f_MARKETFI());
       put(m, f_MASSI());
@@ -358,6 +359,7 @@ public final class Functions {
       put(m, f_SORTINO());
       put(m, f_SQRT());
       put(m, f_SQZMOM());
+      put(m, f_SSF());
       put(m, f_STC());
       put(m, f_STDDEV());
       put(m, f_STOCH());
@@ -681,7 +683,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 1.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
@@ -841,7 +843,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
@@ -876,7 +878,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
@@ -2631,7 +2633,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSlowK_MAType", 0x00000000,
                "Slow-K MA", "Type of Moving Average for Slow-K", 13.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInSlowD_Period", 0x00000000,
                "Slow-D Period", "Smoothing for making the Slow-D line", 3.0,
@@ -2641,7 +2643,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSlowD_MAType", 0x00000000,
                "Slow-D MA", "Type of Moving Average for Slow-D", 13.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outK", 0x00000701),
@@ -2765,12 +2767,12 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInROCMAType", 0x00000000,
                "ROC MA", "Type of Moving Average smoothing the four legs", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"),
             new OptInputInfo(
                OptInputType.INTEGER_LIST, "optInSignalMAType", 0x00000000,
                "Signal MA", "Type of Moving Average for signal line", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outKST", 0x00000701),
@@ -2937,7 +2939,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
@@ -2990,7 +2992,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInFastMAType", 0x00000000,
                "Fast MA", "Type of Moving Average for fast MA", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
                "Slow Period", "Period of the slow MA", 26.0,
@@ -3000,7 +3002,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSlowMAType", 0x00000000,
                "Slow MA", "Type of Moving Average for slow MA", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
                "Signal Period", "Smoothing for the signal line (period length)", 9.0,
@@ -3010,7 +3012,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSignalMAType", 0x00000000,
                "Signal MA", "Type of Moving Average for signal line", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outMACD", 0x00000701),
@@ -3066,6 +3068,41 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outMACDV", 0x00000701),
             new OutputInfo(OutputType.REAL, "outMACDVSignal", 0x00000704),
             new OutputInfo(OutputType.REAL, "outMACDVHist", 0x00000710)
+         ));
+   }
+
+   private static FuncInfo f_MAENV() {
+      return new FuncInfo(
+         "MAENV", "Overlap Studies", "Moving Average Envelope", 0x03000008,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInPercentUp", 0x00100000,
+               "Percent up", "Percent of the moving average added to form the upper band", 10.0,
+               -3e37, 3e37, 2, 0.5, 20.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInPercentDn", 0x00100000,
+               "Percent down", "Percent of the moving average subtracted to form the lower band", 10.0,
+               -3e37, 3e37, 2, 0.5, 20.0, 0.5,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
+               "MA Type", "Type of Moving Average", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
+            new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
          ));
    }
 
@@ -3150,7 +3187,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
@@ -3505,7 +3542,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
@@ -3610,7 +3647,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 1.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
@@ -3673,7 +3710,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
                "MA Type", "Type of Moving Average", 1.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
@@ -4205,6 +4242,24 @@ public final class Functions {
          ));
    }
 
+   private static FuncInfo f_SSF() {
+      return new FuncInfo(
+         "SSF", "Overlap Studies", "Ehlers SuperSmoother Filter", 0x0B000005,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Critical period", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 10000, 5, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
    private static FuncInfo f_STC() {
       return new FuncInfo(
          "STC", "Momentum Indicators", "Schaff Trend Cycle", 0x0A000000,
@@ -4277,7 +4332,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSlowK_MAType", 0x00000000,
                "Slow-K MA", "Type of Moving Average for Slow-K", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"),
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInSlowD_Period", 0x00000000,
                "Slow-D Period", "Smoothing for making the Slow-D line", 3.0,
@@ -4287,7 +4342,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInSlowD_MAType", 0x00000000,
                "Slow-D MA", "Type of Moving Average for Slow-D", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outSlowK", 0x00000701),
@@ -4316,7 +4371,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInFastD_MAType", 0x00000000,
                "Fast-D MA", "Type of Moving Average for Fast-D", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outFastK", 0x00000501),
@@ -4350,7 +4405,7 @@ public final class Functions {
                OptInputType.INTEGER_LIST, "optInFastD_MAType", 0x00000000,
                "Fast-D MA", "Type of Moving Average for Fast-D", 0.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF")
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outFastK", 0x00000501),

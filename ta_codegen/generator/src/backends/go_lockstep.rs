@@ -14,7 +14,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use super::builtins::MathFn;
-use super::lockstep::{as_step, each_access, eager_call, flatten, form, invariant, linear, shifted, step, substitute, Facts, Names, Reach};
+use super::lockstep::{as_step, each_access, flatten, form, inline, invariant, linear, shifted, substitute, unrollable, Facts, Names, Reach};
 use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, Statement};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -308,27 +308,11 @@ fn step_mentions(plan: &Plan, at: usize, s: &Statement, arrays: &dyn Fn(&str) ->
 /// Passes per trip, when no pass depends on another: every scalar the pass
 /// reads it either never writes or writes first on every path, every element
 /// it touches is a lane at its own position, an index is read through a lane
-/// only, and nothing is called that gc keeps a call. Eight when the pass is
-/// one store of an expression to an element, four otherwise. The unrolled
-/// passes run in their original order over the same memory, so an output
-/// that is its input stays exact.
+/// only, and nothing is called that gc keeps a call
+/// ([`super::lockstep::unrollable`]). Eight when the pass is one store of an
+/// expression to an element, four otherwise.
 fn unroll(plan: &Plan, env: &Env) -> Option<usize> {
-    fn plain(list: &[Statement]) -> bool {
-        list.iter().all(|s| match s {
-            Statement::Assign { target, .. } => !matches!(target, Expr::PointerDeref(_)),
-            Statement::If { then_body, else_body, .. } => plain(then_body) && plain(else_body),
-            Statement::Comment(_) | Statement::UnrollHint { .. } => true,
-            _ => false,
-        })
-    }
-    if env.nested || plan.down || plan.calls_out || !plain(&plan.pass) {
-        return None;
-    }
-    let mut eager = true;
-    for s in &plan.pass {
-        crate::streaming::walk_stmt_exprs(s, &mut |top| crate::streaming::walk_expr(top, &mut |e| eager &= !matches!(e, Expr::FuncCall(n, _) if !eager_call(n))));
-    }
-    if !eager || carries(plan) {
+    if env.nested || plan.down || plan.calls_out || carries(plan) {
         return None;
     }
     let mut code = Vec::new();
@@ -344,7 +328,7 @@ fn unroll(plan: &Plan, env: &Env) -> Option<usize> {
             return None;
         }
     }
-    let single = matches!(code.as_slice(), [Statement::Assign { target: Expr::ArrayAccess(..), compound: false, .. }]);
+    let single = unrollable(&code, &|m| matches!(m, MathFn::Sqrt | MathFn::Abs | MathFn::Max | MathFn::Min))?;
     Some(if single { 8 } else { 4 })
 }
 
@@ -600,115 +584,6 @@ fn every_path(s: &Statement) -> BTreeSet<(String, String)> {
         out.extend(arm(then_body).intersection(&arm(else_body)).cloned());
     }
     out
-}
-
-/// `s` with blocks inlined and each step it takes at a place every
-/// evaluation reaches moved into a statement of its own: a pre-step before
-/// it, a post-step after. Exact when the statement names the variable nowhere
-/// else, which is also what the renderer requires of a step. A step both arms
-/// of an `if` take last moves after it.
-fn inline(s: &Statement, out: &mut Vec<Statement>) {
-    match s {
-        Statement::If { condition, then_body, else_body, cond_comments } if !else_body.is_empty() => {
-            let flat = |b: &[Statement]| {
-                let mut v = Vec::new();
-                for x in b {
-                    inline(x, &mut v);
-                }
-                v
-            };
-            let last = |v: &[Statement]| v.iter().rposition(|x| !matches!(x, Statement::Comment(_))).filter(|&at| as_step(&v[at]).is_some());
-            let (mut then2, mut else2) = (flat(then_body), flat(else_body));
-            match (last(&then2), last(&else2)) {
-                (Some(a), Some(b)) if as_step(&then2[a]) == as_step(&else2[b]) => {
-                    let moved = then2.remove(a);
-                    else2.remove(b);
-                    out.push(Statement::If { condition: condition.clone(), then_body: then2, else_body: else2, cond_comments: cond_comments.clone() });
-                    out.push(moved);
-                }
-                _ => out.push(s.clone()),
-            }
-        }
-        Statement::Block { body } => {
-            for x in body {
-                inline(x, out);
-            }
-        }
-        Statement::Expr(Expr::PostIncrement(v) | Expr::PreIncrement(v)) if matches!(v.as_ref(), Expr::Var(_)) => {
-            let Expr::Var(n) = v.as_ref() else { unreachable!() };
-            out.push(step(n, 1));
-        }
-        Statement::Expr(Expr::PostDecrement(v) | Expr::PreDecrement(v)) if matches!(v.as_ref(), Expr::Var(_)) => {
-            let Expr::Var(n) = v.as_ref() else { unreachable!() };
-            out.push(step(n, -1));
-        }
-        Statement::Assign { target, value, compound } if as_step(s).is_none() => {
-            let (mut pre, mut post) = (Vec::new(), Vec::new());
-            let value2 = eager(value, &mut pre, &mut post);
-            let target2 = eager(target, &mut pre, &mut post);
-            if pre.is_empty() && post.is_empty() || !named_once(&[target, value], &pre, &post) {
-                out.push(s.clone());
-                return;
-            }
-            out.extend(pre);
-            out.push(Statement::Assign { target: target2, value: value2, compound: *compound });
-            out.extend(post);
-        }
-        Statement::Expr(e) => {
-            let (mut pre, mut post) = (Vec::new(), Vec::new());
-            let e2 = eager(e, &mut pre, &mut post);
-            if pre.is_empty() && post.is_empty() || !named_once(&[e], &pre, &post) {
-                out.push(s.clone());
-                return;
-            }
-            out.extend(pre);
-            out.push(Statement::Expr(e2));
-            out.extend(post);
-        }
-        other => out.push(other.clone()),
-    }
-}
-
-/// Each variable stepped is stepped once and named nowhere else in `exprs`.
-fn named_once(exprs: &[&Expr], pre: &[Statement], post: &[Statement]) -> bool {
-    let stepped: Vec<&str> = pre.iter().chain(post).filter_map(|s| as_step(s).map(|(v, _)| v)).collect();
-    stepped.iter().all(|v| {
-        let mut n = 0;
-        for e in exprs {
-            crate::streaming::walk_expr(e, &mut |x| n += usize::from(matches!(x, Expr::Var(m) if m == v)));
-        }
-        n == 1
-    })
-}
-
-/// `e` with each step every evaluation of it takes lifted into `pre` / `post`.
-fn eager(e: &Expr, pre: &mut Vec<Statement>, post: &mut Vec<Statement>) -> Expr {
-    let bx = Box::new;
-    match e {
-        Expr::PostIncrement(i) | Expr::PostDecrement(i) | Expr::PreIncrement(i) | Expr::PreDecrement(i) => {
-            let Expr::Var(v) = i.as_ref() else { return e.clone() };
-            let d = if matches!(e, Expr::PostIncrement(_) | Expr::PreIncrement(_)) { 1 } else { -1 };
-            if matches!(e, Expr::PostIncrement(_) | Expr::PostDecrement(_)) {
-                post.push(step(v, d));
-            } else {
-                pre.push(step(v, d));
-            }
-            Expr::Var(v.clone())
-        }
-        Expr::ArrayAccess(a, i) => Expr::ArrayAccess(a.clone(), bx(eager(i, pre, post))),
-        Expr::BinOp(l, op @ (BinOp::And | BinOp::Or), r) => Expr::BinOp(bx(eager(l, pre, post)), op.clone(), r.clone()),
-        Expr::BinOp(l, op, r) => {
-            let l = eager(l, pre, post);
-            Expr::BinOp(bx(l), op.clone(), bx(eager(r, pre, post)))
-        }
-        Expr::Ternary(c, t, f) => Expr::Ternary(bx(eager(c, pre, post)), t.clone(), f.clone()),
-        Expr::FuncCall(n, args) if eager_call(n) => Expr::FuncCall(n.clone(), args.iter().map(|a| eager(a, pre, post)).collect()),
-        Expr::Cast(t, i) => Expr::Cast(t.clone(), bx(eager(i, pre, post))),
-        Expr::Not(i) => Expr::Not(bx(eager(i, pre, post))),
-        Expr::Neg(i) => Expr::Neg(bx(eager(i, pre, post))),
-        Expr::BitwiseNot(i) => Expr::BitwiseNot(bx(eager(i, pre, post))),
-        _ => e.clone(),
-    }
 }
 
 /// Statements the pass may hold; `nested` inside a loop of its own.

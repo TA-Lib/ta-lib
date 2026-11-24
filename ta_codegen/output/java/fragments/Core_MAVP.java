@@ -21,6 +21,7 @@
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -36,7 +37,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
@@ -80,7 +81,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
@@ -162,6 +163,9 @@
        * to calculate at least one output.
        */
       lookbackTotal = maLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -418,6 +422,9 @@
          return RetCode.BAD_PARAM ;
       }
       lookbackTotal = maLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -560,7 +567,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal variable-period moving average. Must hold at least
     *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
@@ -639,7 +646,7 @@
     *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving-average type applied (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal variable-period moving average. Must hold at least
     *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be

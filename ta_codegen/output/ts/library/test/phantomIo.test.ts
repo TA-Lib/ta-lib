@@ -191,6 +191,7 @@ import * as m_macd from '../src/func/macd.ts';
 import * as m_macdext from '../src/func/macdext.ts';
 import * as m_macdfix from '../src/func/macdfix.ts';
 import * as m_macdv from '../src/func/macdv.ts';
+import * as m_maenv from '../src/func/maenv.ts';
 import * as m_mama from '../src/func/mama.ts';
 import * as m_marketfi from '../src/func/marketfi.ts';
 import * as m_massi from '../src/func/massi.ts';
@@ -247,6 +248,7 @@ import * as m_smi from '../src/func/smi.ts';
 import * as m_sortino from '../src/func/sortino.ts';
 import * as m_sqrt from '../src/func/sqrt.ts';
 import * as m_sqzmom from '../src/func/sqzmom.ts';
+import * as m_ssf from '../src/func/ssf.ts';
 import * as m_stc from '../src/func/stc.ts';
 import * as m_stddev from '../src/func/stddev.ts';
 import * as m_stoch from '../src/func/stoch.ts';
@@ -694,6 +696,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 24, 52, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 24, 52, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 24, 52, MAType.SSF],
     ],
   },
   {
@@ -849,6 +853,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
     ],
   },
   {
@@ -895,6 +901,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
     ],
   },
   {
@@ -2439,6 +2447,8 @@ const PROBES: Probe[] = [
       ['optInSlowK_MAType=VIDYA, periods doubled', 18, 6, MAType.VIDYA, 6, MAType.DEFAULT],
       ['optInSlowK_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA, Core.INTEGER_DEFAULT, MAType.DEFAULT],
       ['optInSlowK_MAType=ALMA, periods doubled', 18, 6, MAType.ALMA, 6, MAType.DEFAULT],
+      ['optInSlowK_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF, Core.INTEGER_DEFAULT, MAType.DEFAULT],
+      ['optInSlowK_MAType=SSF, periods doubled', 18, 6, MAType.SSF, 6, MAType.DEFAULT],
       ['optInSlowD_MAType=SMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SMA],
       ['optInSlowD_MAType=SMA, periods doubled', 18, 6, MAType.DEFAULT, 6, MAType.SMA],
       ['optInSlowD_MAType=EMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.EMA],
@@ -2471,6 +2481,8 @@ const PROBES: Probe[] = [
       ['optInSlowD_MAType=VIDYA, periods doubled', 18, 6, MAType.DEFAULT, 6, MAType.VIDYA],
       ['optInSlowD_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInSlowD_MAType=ALMA, periods doubled', 18, 6, MAType.DEFAULT, 6, MAType.ALMA],
+      ['optInSlowD_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInSlowD_MAType=SSF, periods doubled', 18, 6, MAType.DEFAULT, 6, MAType.SSF],
     ],
   },
   {
@@ -2531,6 +2543,8 @@ const PROBES: Probe[] = [
       ['optInROCMAType=VIDYA, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.VIDYA, MAType.DEFAULT],
       ['optInROCMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA, MAType.DEFAULT],
       ['optInROCMAType=ALMA, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.ALMA, MAType.DEFAULT],
+      ['optInROCMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF, MAType.DEFAULT],
+      ['optInROCMAType=SSF, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.SSF, MAType.DEFAULT],
       ['optInSignalMAType=SMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, MAType.SMA],
       ['optInSignalMAType=SMA, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.DEFAULT, MAType.SMA],
       ['optInSignalMAType=EMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, MAType.EMA],
@@ -2563,6 +2577,8 @@ const PROBES: Probe[] = [
       ['optInSignalMAType=VIDYA, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.DEFAULT, MAType.VIDYA],
       ['optInSignalMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, MAType.ALMA],
       ['optInSignalMAType=ALMA, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.DEFAULT, MAType.ALMA],
+      ['optInSignalMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, MAType.SSF],
+      ['optInSignalMAType=SSF, periods doubled', 20, 30, 40, 60, 20, 20, 20, 30, 18, MAType.DEFAULT, MAType.SSF],
     ],
   },
   {
@@ -2719,6 +2735,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 60, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 60, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 60, MAType.SSF],
     ],
   },
   {
@@ -2779,6 +2797,8 @@ const PROBES: Probe[] = [
       ['optInFastMAType=VIDYA, periods doubled', 24, MAType.VIDYA, 52, MAType.DEFAULT, 18, MAType.DEFAULT],
       ['optInFastMAType=ALMA', Core.INTEGER_DEFAULT, MAType.ALMA, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT],
       ['optInFastMAType=ALMA, periods doubled', 24, MAType.ALMA, 52, MAType.DEFAULT, 18, MAType.DEFAULT],
+      ['optInFastMAType=SSF', Core.INTEGER_DEFAULT, MAType.SSF, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT],
+      ['optInFastMAType=SSF, periods doubled', 24, MAType.SSF, 52, MAType.DEFAULT, 18, MAType.DEFAULT],
       ['optInSlowMAType=SMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SMA, Core.INTEGER_DEFAULT, MAType.DEFAULT],
       ['optInSlowMAType=SMA, periods doubled', 24, MAType.DEFAULT, 52, MAType.SMA, 18, MAType.DEFAULT],
       ['optInSlowMAType=EMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.EMA, Core.INTEGER_DEFAULT, MAType.DEFAULT],
@@ -2811,6 +2831,8 @@ const PROBES: Probe[] = [
       ['optInSlowMAType=VIDYA, periods doubled', 24, MAType.DEFAULT, 52, MAType.VIDYA, 18, MAType.DEFAULT],
       ['optInSlowMAType=ALMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA, Core.INTEGER_DEFAULT, MAType.DEFAULT],
       ['optInSlowMAType=ALMA, periods doubled', 24, MAType.DEFAULT, 52, MAType.ALMA, 18, MAType.DEFAULT],
+      ['optInSlowMAType=SSF', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF, Core.INTEGER_DEFAULT, MAType.DEFAULT],
+      ['optInSlowMAType=SSF, periods doubled', 24, MAType.DEFAULT, 52, MAType.SSF, 18, MAType.DEFAULT],
       ['optInSignalMAType=SMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SMA],
       ['optInSignalMAType=SMA, periods doubled', 24, MAType.DEFAULT, 52, MAType.DEFAULT, 18, MAType.SMA],
       ['optInSignalMAType=EMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.EMA],
@@ -2843,6 +2865,8 @@ const PROBES: Probe[] = [
       ['optInSignalMAType=VIDYA, periods doubled', 24, MAType.DEFAULT, 52, MAType.DEFAULT, 18, MAType.VIDYA],
       ['optInSignalMAType=ALMA', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInSignalMAType=ALMA, periods doubled', 24, MAType.DEFAULT, 52, MAType.DEFAULT, 18, MAType.ALMA],
+      ['optInSignalMAType=SSF', Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInSignalMAType=SSF, periods doubled', 24, MAType.DEFAULT, 52, MAType.DEFAULT, 18, MAType.SSF],
     ],
   },
   {
@@ -2871,6 +2895,54 @@ const PROBES: Probe[] = [
     vectors: [
       ['defaults', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT],
       ['minimums', 2, 2, 1],
+    ],
+  },
+  {
+    name: 'MAENV',
+    batch: m_maenv.maenvPositional,
+    body: m_maenv.maenvImpl,
+    lookback: m_maenv.maenvLookbackPositional,
+    open: m_maenv.maenvOpenPositional,
+    fill: m_maenv.maenvOpenAndFillPositional,
+    ins: ['real'],
+    outs: ['f', 'f', 'f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['minimums', 1, -3e37, -3e37, MAType.DEFAULT],
+      ['optInMAType=SMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SMA],
+      ['optInMAType=SMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SMA],
+      ['optInMAType=EMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.EMA],
+      ['optInMAType=EMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.EMA],
+      ['optInMAType=WMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.WMA],
+      ['optInMAType=WMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.WMA],
+      ['optInMAType=DEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEMA],
+      ['optInMAType=DEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEMA],
+      ['optInMAType=TEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TEMA],
+      ['optInMAType=TEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TEMA],
+      ['optInMAType=TRIMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TRIMA],
+      ['optInMAType=TRIMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.TRIMA],
+      ['optInMAType=KAMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.KAMA],
+      ['optInMAType=KAMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.KAMA],
+      ['optInMAType=MAMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.MAMA],
+      ['optInMAType=MAMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.MAMA],
+      ['optInMAType=T3', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.T3],
+      ['optInMAType=T3, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.T3],
+      ['optInMAType=HMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.HMA],
+      ['optInMAType=HMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.HMA],
+      ['optInMAType=DISABLED', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DISABLED],
+      ['optInMAType=DISABLED, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DISABLED],
+      ['optInMAType=DEFAULT', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['optInMAType=DEFAULT, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.DEFAULT],
+      ['optInMAType=ZLEMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ZLEMA],
+      ['optInMAType=ZLEMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ZLEMA],
+      ['optInMAType=RMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.RMA],
+      ['optInMAType=RMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.RMA],
+      ['optInMAType=VIDYA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
+      ['optInMAType=VIDYA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
+      ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=ALMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
     ],
   },
   {
@@ -2958,6 +3030,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 4, 60, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 4, 60, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 4, 60, MAType.SSF],
     ],
   },
   {
@@ -3266,6 +3340,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 40, Core.REAL_DEFAULT, Core.REAL_DEFAULT, MAType.SSF],
     ],
   },
   {
@@ -3368,6 +3444,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 24, 52, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 24, 52, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 24, 52, MAType.SSF],
     ],
   },
   {
@@ -3441,6 +3519,8 @@ const PROBES: Probe[] = [
       ['optInMAType=VIDYA, periods doubled', 24, 52, MAType.VIDYA],
       ['optInMAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInMAType=ALMA, periods doubled', 24, 52, MAType.ALMA],
+      ['optInMAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInMAType=SSF, periods doubled', 24, 52, MAType.SSF],
     ],
   },
   {
@@ -3776,6 +3856,20 @@ const PROBES: Probe[] = [
     ],
   },
   {
+    name: 'SSF',
+    batch: m_ssf.ssfPositional,
+    body: m_ssf.ssfImpl,
+    lookback: m_ssf.ssfLookbackPositional,
+    open: m_ssf.ssfOpenPositional,
+    fill: m_ssf.ssfOpenAndFillPositional,
+    ins: ['real'],
+    outs: ['f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT],
+      ['minimums', 1],
+    ],
+  },
+  {
     name: 'STC',
     batch: m_stc.stcPositional,
     body: m_stc.stcImpl,
@@ -3847,6 +3941,8 @@ const PROBES: Probe[] = [
       ['optInSlowK_MAType=VIDYA, periods doubled', 10, 6, MAType.VIDYA, 6, MAType.DEFAULT],
       ['optInSlowK_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA, Core.INTEGER_DEFAULT, MAType.DEFAULT],
       ['optInSlowK_MAType=ALMA, periods doubled', 10, 6, MAType.ALMA, 6, MAType.DEFAULT],
+      ['optInSlowK_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF, Core.INTEGER_DEFAULT, MAType.DEFAULT],
+      ['optInSlowK_MAType=SSF, periods doubled', 10, 6, MAType.SSF, 6, MAType.DEFAULT],
       ['optInSlowD_MAType=SMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SMA],
       ['optInSlowD_MAType=SMA, periods doubled', 10, 6, MAType.DEFAULT, 6, MAType.SMA],
       ['optInSlowD_MAType=EMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.EMA],
@@ -3879,6 +3975,8 @@ const PROBES: Probe[] = [
       ['optInSlowD_MAType=VIDYA, periods doubled', 10, 6, MAType.DEFAULT, 6, MAType.VIDYA],
       ['optInSlowD_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInSlowD_MAType=ALMA, periods doubled', 10, 6, MAType.DEFAULT, 6, MAType.ALMA],
+      ['optInSlowD_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInSlowD_MAType=SSF, periods doubled', 10, 6, MAType.DEFAULT, 6, MAType.SSF],
     ],
   },
   {
@@ -3925,6 +4023,8 @@ const PROBES: Probe[] = [
       ['optInFastD_MAType=VIDYA, periods doubled', 10, 6, MAType.VIDYA],
       ['optInFastD_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInFastD_MAType=ALMA, periods doubled', 10, 6, MAType.ALMA],
+      ['optInFastD_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInFastD_MAType=SSF, periods doubled', 10, 6, MAType.SSF],
     ],
   },
   {
@@ -3971,6 +4071,8 @@ const PROBES: Probe[] = [
       ['optInFastD_MAType=VIDYA, periods doubled', 28, 10, 6, MAType.VIDYA],
       ['optInFastD_MAType=ALMA', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.ALMA],
       ['optInFastD_MAType=ALMA, periods doubled', 28, 10, 6, MAType.ALMA],
+      ['optInFastD_MAType=SSF', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, MAType.SSF],
+      ['optInFastD_MAType=SSF, periods doubled', 28, 10, 6, MAType.SSF],
     ],
   },
   {
@@ -4415,7 +4517,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 244;
+const CORPUS = 246;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

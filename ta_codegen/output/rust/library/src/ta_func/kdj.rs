@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #365).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -75,12 +76,14 @@ impl Core {
     ///   range 1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into K (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the D signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the D line (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -126,12 +129,14 @@ impl Core {
     ///   range 1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into K (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the D signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the D line (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -263,12 +268,14 @@ impl Core {
     ///   range 1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into K (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSlowD_Period` — Smoothing period for the D signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the D line (default 13 = RMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outK` — Raw stochastic smoothed by SlowK_Period MA.
     /// * `outD` — Signal line: K smoothed by SlowD_Period MA.
     /// * `outJ` — Divergence line, three parts K less two parts D.

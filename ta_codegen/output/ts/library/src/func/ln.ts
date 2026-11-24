@@ -45,7 +45,7 @@
  *  090807 MF     Initial Version
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -82,8 +82,17 @@ export function lnImpl(
   if (endIdx < 0 || endIdx > Core.INDEX_MAX || endIdx < startIdx) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
-  for (i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1) {
-    outReal[outIdx] = Math.log(inReal[i]);
+  i = startIdx;
+  outIdx = 0;
+  if (i <= endIdx) {
+    const _wn = endIdx - i + 1;
+    const _w1_0 = outIdx;
+    const _w0_0 = i;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w1_0 + _wk] = Math.log(inReal[_w0_0 + _wk]);
+    }
+    i += _wn;
+    outIdx += _wn;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;
@@ -123,12 +132,12 @@ export function lnPositional(
  * Options of {@link ln}, {@link lnLookback}, {@link lnDisplayShift},
  * {@link lnOpen} and {@link lnOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface LnOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -151,6 +160,22 @@ export interface LnOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function lnOptionsOf(funcName: string, options: LnOptions | undefined): LnOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link ln} returns, and {@link lnOpenAndFill} with its stream. */
 export interface LnResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -166,15 +191,16 @@ export interface LnResult {
  * Number of leading input bars {@link ln} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LnOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LnOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function lnLookback(options?: LnOptions): number {
-  const o = optionsOf('LN lookback', options);
+  const o = lnOptionsOf('LN lookback', options);
   return lnLookbackPositional(coreOf('LN lookback', o.core));
 }
 
@@ -185,15 +211,16 @@ export function lnLookback(options?: LnOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LnOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LnOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function lnDisplayShift(outputIdx: number, options?: LnOptions): number {
-  const o = optionsOf('LN displayShift', options);
+  const o = lnOptionsOf('LN displayShift', options);
   return lnDisplayShiftPositional(outputIdx, coreOf('LN displayShift', o.core));
 }
 
@@ -218,11 +245,12 @@ export function lnDisplayShift(outputIdx: number, options?: LnOptions): number {
  *   its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -238,7 +266,7 @@ export function lnDisplayShift(outputIdx: number, options?: LnOptions): number {
  * @see [`sqrt`](https://ta-lib.org/functions/sqrt)
  */
 export function ln(real: ArrayLike<number>, options?: LnOptions): LnResult {
-  const o = optionsOf('LN', options);
+  const o = lnOptionsOf('LN', options);
   if (o.endIdx === undefined) {
     requireSeries('LN', 'real', real);
   }
@@ -476,13 +504,13 @@ export function lnOpenAndFillPositional(
  * history bar, bit-identical to {@link ln} there.
  *
  * @param real - Warm-up history. Input value series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link LnOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link LnOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `lnLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core` or an absent
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -496,7 +524,7 @@ export function lnOpenAndFillPositional(
  * ```
  */
 export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
-  const o = optionsOf('LN open', options);
+  const o = lnOptionsOf('LN open', options);
   const core = coreOf('LN open', o.core);
   return lnOpenPositional(real, core);
 }
@@ -506,17 +534,18 @@ export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
  * pass, bit-identically to {@link ln}.
  *
  * @param real - Warm-up history. Input value series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link LnOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link LnOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link ln} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `lnLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input or a buffer too short, of the wrong
+ *   type or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -529,7 +558,7 @@ export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
  * ```
  */
 export function lnOpenAndFill(real: ArrayLike<number>, options?: LnOptions): LnResult & { stream: LnStream } {
-  const o = optionsOf('LN openAndFill', options);
+  const o = lnOptionsOf('LN openAndFill', options);
   const core = coreOf('LN openAndFill', o.core);
   const capacity = fillCapacity(lnLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

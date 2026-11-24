@@ -58,7 +58,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -458,7 +458,7 @@ export function apoPositional(
  * Options of {@link apo}, {@link apoLookback}, {@link apoDisplayShift},
  * {@link apoOpen} and {@link apoOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface ApoOptions {
   /**
@@ -474,13 +474,13 @@ export interface ApoOptions {
   /**
    * Moving-average type used for both MAs (default `MAType.EMA`; values: 0=SMA,
    * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
-   * `MAType.DEFAULT` selects the default).
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF; `Core.INTEGER_DEFAULT`
+   * or `MAType.DEFAULT` selects the default).
    */
   maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -503,6 +503,22 @@ export interface ApoOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function apoOptionsOf(funcName: string, options: ApoOptions | undefined): ApoOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastPeriod' && k !== 'slowPeriod' && k !== 'maType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'fastPeriod slowPeriod maType startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link apo} returns, and {@link apoOpenAndFill} with its stream. */
 export interface ApoResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -515,15 +531,16 @@ export interface ApoResult {
  * Number of leading input bars {@link apo} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ApoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ApoOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function apoLookback(options?: ApoOptions): number {
-  const o = optionsOf('APO lookback', options);
+  const o = apoOptionsOf('APO lookback', options);
   return apoLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('APO lookback', o.core));
 }
 
@@ -534,15 +551,16 @@ export function apoLookback(options?: ApoOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ApoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ApoOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number {
-  const o = optionsOf('APO displayShift', options);
+  const o = apoOptionsOf('APO displayShift', options);
   return apoDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('APO displayShift', o.core));
 }
 
@@ -572,12 +590,12 @@ export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -599,7 +617,7 @@ export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
 export function apo(real: ArrayLike<number>, options?: ApoOptions): ApoResult {
-  const o = optionsOf('APO', options);
+  const o = apoOptionsOf('APO', options);
   if (o.endIdx === undefined) {
     requireSeries('APO', 'real', real);
   }
@@ -962,13 +980,14 @@ export function apoOpenAndFillPositional(
  * history bar, bit-identical to {@link apo} there.
  *
  * @param real - Warm-up history. Source data series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link ApoOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link ApoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `apoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32 or a parameter outside its range.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -986,7 +1005,7 @@ export function apoOpenAndFillPositional(
  * ```
  */
 export function apoOpen(real: ArrayLike<number>, options?: ApoOptions): ApoStream {
-  const o = optionsOf('APO open', options);
+  const o = apoOptionsOf('APO open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
   const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
@@ -999,18 +1018,19 @@ export function apoOpen(real: ArrayLike<number>, options?: ApoOptions): ApoStrea
  * same pass, bit-identically to {@link apo}.
  *
  * @param real - Warm-up history. Source data series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link ApoOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link ApoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link apo} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `apoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1027,7 +1047,7 @@ export function apoOpen(real: ArrayLike<number>, options?: ApoOptions): ApoStrea
  * ```
  */
 export function apoOpenAndFill(real: ArrayLike<number>, options?: ApoOptions): ApoResult & { stream: ApoStream } {
-  const o = optionsOf('APO openAndFill', options);
+  const o = apoOptionsOf('APO openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
   const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
   const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);

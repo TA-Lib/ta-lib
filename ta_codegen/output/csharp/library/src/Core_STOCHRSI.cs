@@ -58,6 +58,7 @@ public partial class Core
     *  101103 PP   Initial creation of code.
     *  112603 MF   Add independent control to the RSI period.
     *  020605 AA   Fix #1117656. NULL pointer assignement.
+    *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Stochrsi</c> consumes before it can
@@ -76,8 +77,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int StochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
@@ -102,7 +104,15 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
-      retValue = RsiLookback(optInTimePeriod) + StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      int stochfLookback = 0;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      stochfLookback = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( stochfLookback < 0 ) {
+         return -1 ;
+      }
+      retValue = RsiLookback(optInTimePeriod) + stochfLookback;
       return retValue ;
 
    }
@@ -121,8 +131,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -215,10 +226,13 @@ public partial class Core
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = RsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -310,9 +324,12 @@ public partial class Core
          return RetCode.BadParam ;
       }
       double[]? _rent_tempRSIBuffer = null;
+      lookbackSTOCHF = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BadParam ;
+      }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackSTOCHF = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
       lookbackTotal = RsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -387,8 +404,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// max(startIdx, StochrsiLookback(...)) + 1</c> values, and never be empty:
    /// an empty span is an absent output.</param>
@@ -490,8 +508,9 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; <c>MAType.DEFAULT</c> (or
-   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
+   /// <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects the
+   /// default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// max(startIdx, StochrsiLookback(...)) + 1</c> values, and never be empty:
    /// an empty span is an absent output.</param>
@@ -806,10 +825,13 @@ public partial class Core
        * the unsmoothed stoch RSI. If you do not care about the smoothing of
        * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
       lookbackSTOCHF = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( lookbackSTOCHF < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = RsiLookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

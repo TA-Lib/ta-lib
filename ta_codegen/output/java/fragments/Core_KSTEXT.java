@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -40,12 +41,12 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int kstextLookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
@@ -109,20 +110,44 @@
       }
       int legMax;
       int leg;
-      legMax = optInROC1Period + maLookback(optInMA1Period, optInROCMAType);
-      leg = optInROC2Period + maLookback(optInMA2Period, optInROCMAType);
+      int maLookback;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = maLookback(optInMA1Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      legMax = optInROC1Period + maLookback;
+      maLookback = maLookback(optInMA2Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC2Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC3Period + maLookback(optInMA3Period, optInROCMAType);
+      maLookback = maLookback(optInMA3Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC3Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC4Period + maLookback(optInMA4Period, optInROCMAType);
+      maLookback = maLookback(optInMA4Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC4Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      return legMax + maLookback(optInSignalPeriod, optInSignalMAType) ;
+      maLookback = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      return legMax + maLookback ;
 
    }
    /**
@@ -151,12 +176,12 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -272,14 +297,29 @@
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -465,13 +505,28 @@
       if( outKST == outKSTSignal ) {
          return RetCode.BAD_PARAM ;
       }
+      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
-      lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
-      lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
-      lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -606,12 +661,12 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outKST Know Sure Thing line. Must hold at least
     *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -724,12 +779,12 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outKST Know Sure Thing line. Must hold at least
     *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -1133,14 +1188,29 @@
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {

@@ -50,7 +50,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -217,12 +217,12 @@ export function cdldragonflydojiPositional(
  * {@link cdldragonflydojiDisplayShift}, {@link cdldragonflydojiOpen} and
  * {@link cdldragonflydojiOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CdldragonflydojiOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -242,6 +242,22 @@ export interface CdldragonflydojiOptions {
    * buffer or with an input.
    */
   outInteger?: Int32Array<ArrayBuffer> | undefined;
+}
+
+/** @internal */
+export function cdldragonflydojiOptionsOf(funcName: string, options: CdldragonflydojiOptions | undefined): CdldragonflydojiOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outInteger');
+    }
+  }
+  return options;
 }
 
 /**
@@ -264,15 +280,16 @@ export interface CdldragonflydojiResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdldragonflydojiOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdldragonflydojiOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdldragonflydojiLookback(options?: CdldragonflydojiOptions): number {
-  const o = optionsOf('CDLDRAGONFLYDOJI lookback', options);
+  const o = cdldragonflydojiOptionsOf('CDLDRAGONFLYDOJI lookback', options);
   return cdldragonflydojiLookbackPositional(coreOf('CDLDRAGONFLYDOJI lookback', o.core));
 }
 
@@ -283,15 +300,16 @@ export function cdldragonflydojiLookback(options?: CdldragonflydojiOptions): num
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdldragonflydojiOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdldragonflydojiOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdldragonflydojiDisplayShift(outputIdx: number, options?: CdldragonflydojiOptions): number {
-  const o = optionsOf('CDLDRAGONFLYDOJI displayShift', options);
+  const o = cdldragonflydojiOptionsOf('CDLDRAGONFLYDOJI displayShift', options);
   return cdldragonflydojiDisplayShiftPositional(outputIdx, coreOf('CDLDRAGONFLYDOJI displayShift', o.core));
 }
 
@@ -328,11 +346,12 @@ export function cdldragonflydojiDisplayShift(outputIdx: number, options?: Cdldra
  *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -353,7 +372,7 @@ export function cdldragonflydojiDisplayShift(outputIdx: number, options?: Cdldra
  */
 export function cdldragonflydoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldragonflydojiOptions): CdldragonflydojiResult {
   requireArgument('CDLDRAGONFLYDOJI', 'prices', prices);
-  const o = optionsOf('CDLDRAGONFLYDOJI', options);
+  const o = cdldragonflydojiOptionsOf('CDLDRAGONFLYDOJI', options);
   if (o.endIdx === undefined) {
     requireSeries('CDLDRAGONFLYDOJI', 'prices.open', prices.open);
     requireSeries('CDLDRAGONFLYDOJI', 'prices.high', prices.high);
@@ -985,13 +1004,14 @@ export function cdldragonflydojiOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdldragonflydojiOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdldragonflydojiOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdldragonflydojiLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -1012,7 +1032,7 @@ export function cdldragonflydojiOpenAndFillPositional(
  */
 export function cdldragonflydojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldragonflydojiOptions): CdldragonflydojiStream {
   requireArgument('CDLDRAGONFLYDOJI open', 'prices', prices);
-  const o = optionsOf('CDLDRAGONFLYDOJI open', options);
+  const o = cdldragonflydojiOptionsOf('CDLDRAGONFLYDOJI open', options);
   const core = coreOf('CDLDRAGONFLYDOJI open', o.core);
   return cdldragonflydojiOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
@@ -1025,18 +1045,19 @@ export function cdldragonflydojiOpen(prices: { open: ArrayLike<number>; high: Ar
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CdldragonflydojiOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CdldragonflydojiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdldragonflydoji} returns them; the range is
  *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdldragonflydojiLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, histories of different lengths or a buffer too short,
- *   of the wrong type or starting where another buffer or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1056,7 +1077,7 @@ export function cdldragonflydojiOpen(prices: { open: ArrayLike<number>; high: Ar
  */
 export function cdldragonflydojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldragonflydojiOptions): CdldragonflydojiResult & { stream: CdldragonflydojiStream } {
   requireArgument('CDLDRAGONFLYDOJI openAndFill', 'prices', prices);
-  const o = optionsOf('CDLDRAGONFLYDOJI openAndFill', options);
+  const o = cdldragonflydojiOptionsOf('CDLDRAGONFLYDOJI openAndFill', options);
   const core = coreOf('CDLDRAGONFLYDOJI openAndFill', o.core);
   const capacity = fillCapacity(cdldragonflydojiLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
   const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;

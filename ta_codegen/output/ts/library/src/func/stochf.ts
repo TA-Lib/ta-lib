@@ -60,10 +60,11 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -97,10 +98,17 @@ export function stochfLookbackPositional(optInFastK_Period: number, optInFastD_P
     return -1;
   }
   let retValue = 0;
+  let maLookback = 0;
   /* Account for the initial data needed for Fast-K. */
   retValue = optInFastK_Period - 1;
-  /* Add the smoothing being done for Fast-D */
-  retValue += maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+   * range is narrower than this function's (SSF).
+   */
+  maLookback = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (maLookback < 0) {
+    return -1;
+  }
+  retValue += maLookback;
   return retValue;
 }
 
@@ -203,6 +211,9 @@ export function stochfImpl(
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
   lookbackFastD = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackFastD < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackK + lookbackFastD;
   /* Move up the start index if there is not
    * enough initial data.
@@ -409,7 +420,7 @@ export function stochfPositional(
  * Options of {@link stochf}, {@link stochfLookback}, {@link stochfDisplayShift},
  * {@link stochfOpen} and {@link stochfOpenAndFill}. Every key is optional: an
  * omitted or `undefined` key takes its default, and a call ignores the keys it has
- * no use for.
+ * no use for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface StochfOptions {
   /**
@@ -425,13 +436,13 @@ export interface StochfOptions {
   /**
    * Moving-average type used to smooth Fast-D (default `MAType.SMA`; values: 0=SMA,
    * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
-   * `MAType.DEFAULT` selects the default).
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF; `Core.INTEGER_DEFAULT`
+   * or `MAType.DEFAULT` selects the default).
    */
   fastDMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -462,6 +473,22 @@ export interface StochfOptions {
   outFastD?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function stochfOptionsOf(funcName: string, options: StochfOptions | undefined): StochfOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'fastKPeriod' && k !== 'fastDPeriod' && k !== 'fastDMaType' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outFastK' && k !== 'outFastD') {
+      unknownOption(funcName, options, k, 'fastKPeriod fastDPeriod fastDMaType startIdx endIdx core outFastK outFastD');
+    }
+  }
+  return options;
+}
+
 /** What {@link stochf} returns, and {@link stochfOpenAndFill} with its stream. */
 export interface StochfResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -479,15 +506,16 @@ export interface StochfResult {
  * Number of leading input bars {@link stochf} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link StochfOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link StochfOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function stochfLookback(options?: StochfOptions): number {
-  const o = optionsOf('STOCHF lookback', options);
+  const o = stochfOptionsOf('STOCHF lookback', options);
   return stochfLookbackPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDMaType, Core.INTEGER_DEFAULT), coreOf('STOCHF lookback', o.core));
 }
 
@@ -498,15 +526,16 @@ export function stochfLookback(options?: StochfOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link StochfOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link StochfOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function stochfDisplayShift(outputIdx: number, options?: StochfOptions): number {
-  const o = optionsOf('STOCHF displayShift', options);
+  const o = stochfOptionsOf('STOCHF displayShift', options);
   return stochfDisplayShiftPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('STOCHF displayShift', o.core));
 }
 
@@ -535,12 +564,13 @@ export function stochfDisplayShift(outputIdx: number, options?: StochfOptions): 
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -565,7 +595,7 @@ export function stochfDisplayShift(outputIdx: number, options?: StochfOptions): 
  */
 export function stochf(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochfOptions): StochfResult {
   requireArgument('STOCHF', 'prices', prices);
-  const o = optionsOf('STOCHF', options);
+  const o = stochfOptionsOf('STOCHF', options);
   if (o.endIdx === undefined) {
     requireSeries('STOCHF', 'prices.high', prices.high);
     requireSeries('STOCHF', 'prices.low', prices.low);
@@ -859,8 +889,9 @@ export class StochfStream {
 
 /**
  * The outputs of one STOCHF bar, as `update`, `peek` and `value` return them.
- * Passed back to one of them, it is filled and returned again, with no allocation;
- * it holds its values until the next call that writes it. A new one holds `NaN`.
+ * Passed back to one of them, it is filled and returned again, so no result object
+ * is created; it holds its values until the next call that writes it. A new one
+ * holds `NaN`.
  */
 export class StochfOut {
   /** Raw %K stochastic line. */
@@ -1028,6 +1059,9 @@ function stochfOpenImpl(
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
   lookbackFastD = maLookbackPositional(optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackFastD < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackK + lookbackFastD;
   /* Move up the start index if there is not
    * enough initial data.
@@ -1364,14 +1398,15 @@ export function stochfOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link StochfOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link StochfOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `stochfLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or histories of different lengths.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or histories of different
+ *   lengths.
  *
  * @example
  * ```ts
@@ -1394,7 +1429,7 @@ export function stochfOpenAndFillPositional(
  */
 export function stochfOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochfOptions): StochfStream {
   requireArgument('STOCHF open', 'prices', prices);
-  const o = optionsOf('STOCHF open', options);
+  const o = stochfOptionsOf('STOCHF open', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
   const optInFastD_Period = orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT);
   const optInFastD_MAType = orDefault(o.fastDMaType, Core.INTEGER_DEFAULT);
@@ -1410,19 +1445,19 @@ export function stochfOpen(prices: { open?: ArrayLike<number> | undefined; high:
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link StochfOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link StochfOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link stochf} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `stochfLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or a buffer too short, of the wrong type or
- *   starting where another buffer or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range, histories of different lengths
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1444,7 +1479,7 @@ export function stochfOpen(prices: { open?: ArrayLike<number> | undefined; high:
  */
 export function stochfOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochfOptions): StochfResult & { stream: StochfStream } {
   requireArgument('STOCHF openAndFill', 'prices', prices);
-  const o = optionsOf('STOCHF openAndFill', options);
+  const o = stochfOptionsOf('STOCHF openAndFill', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
   const optInFastD_Period = orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT);
   const optInFastD_MAType = orDefault(o.fastDMaType, Core.INTEGER_DEFAULT);

@@ -46,7 +46,7 @@
  *  103126 MF,CC  Creation (#568).
  */
 
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -424,7 +424,7 @@ export function cePositional(
  * Options of {@link ce}, {@link ceLookback}, {@link ceDisplayShift},
  * {@link ceOpen} and {@link ceOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CeOptions {
   /**
@@ -439,8 +439,8 @@ export interface CeOptions {
    */
   multiplier?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -471,6 +471,22 @@ export interface CeOptions {
   outShort?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function ceOptionsOf(funcName: string, options: CeOptions | undefined): CeOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'multiplier' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outLong' && k !== 'outShort') {
+      unknownOption(funcName, options, k, 'timePeriod multiplier startIdx endIdx core outLong outShort');
+    }
+  }
+  return options;
+}
+
 /** What {@link ce} returns, and {@link ceOpenAndFill} with its stream. */
 export interface CeResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -491,15 +507,16 @@ export interface CeResult {
  * Number of leading input bars {@link ce} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CeOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ceLookback(options?: CeOptions): number {
-  const o = optionsOf('CE lookback', options);
+  const o = ceOptionsOf('CE lookback', options);
   return ceLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.multiplier, Core.REAL_DEFAULT), coreOf('CE lookback', o.core));
 }
 
@@ -510,15 +527,16 @@ export function ceLookback(options?: CeOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CeOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
-  const o = optionsOf('CE displayShift', options);
+  const o = ceOptionsOf('CE displayShift', options);
   return ceDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.multiplier, Core.REAL_DEFAULT), outputIdx, coreOf('CE displayShift', o.core));
 }
 
@@ -567,13 +585,13 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  *   its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, an input too short for the range, a
- *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
- *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a real parameter that is not a number, a parameter outside its
+ *   range, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -601,7 +619,7 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  */
 export function ce(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeResult {
   requireArgument('CE', 'prices', prices);
-  const o = optionsOf('CE', options);
+  const o = ceOptionsOf('CE', options);
   if (o.endIdx === undefined) {
     requireSeries('CE', 'prices.high', prices.high);
     requireSeries('CE', 'prices.low', prices.low);
@@ -894,8 +912,9 @@ export class CeStream {
 
 /**
  * The outputs of one CE bar, as `update`, `peek` and `value` return them. Passed
- * back to one of them, it is filled and returned again, with no allocation; it
- * holds its values until the next call that writes it. A new one holds `NaN`.
+ * back to one of them, it is filled and returned again, so no result object is
+ * created; it holds its values until the next call that writes it. A new one holds
+ * `NaN`.
  */
 export class CeOut {
   /**
@@ -1465,14 +1484,15 @@ export function ceOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CeOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CeOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ceLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -1491,7 +1511,7 @@ export function ceOpenAndFillPositional(
  */
 export function ceOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeStream {
   requireArgument('CE open', 'prices', prices);
-  const o = optionsOf('CE open', options);
+  const o = ceOptionsOf('CE open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInMultiplier = orDefault(o.multiplier, Core.REAL_DEFAULT);
   const core = coreOf('CE open', o.core);
@@ -1506,19 +1526,20 @@ export function ceOpen(prices: { open?: ArrayLike<number> | undefined; high: Arr
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
  *   price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CeOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CeOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link ce} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ceLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or a
- *   buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a real parameter that is not a number, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1539,7 +1560,7 @@ export function ceOpen(prices: { open?: ArrayLike<number> | undefined; high: Arr
  */
 export function ceOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeResult & { stream: CeStream } {
   requireArgument('CE openAndFill', 'prices', prices);
-  const o = optionsOf('CE openAndFill', options);
+  const o = ceOptionsOf('CE openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const optInMultiplier = orDefault(o.multiplier, Core.REAL_DEFAULT);
   const core = coreOf('CE openAndFill', o.core);

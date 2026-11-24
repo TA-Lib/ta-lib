@@ -53,6 +53,7 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -85,10 +86,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     ///
     /// # Errors
     ///
@@ -150,20 +153,28 @@ impl Core {
         }
         let mut legMax: usize = 0_usize;
         let mut leg: usize = 0_usize;
-        legMax = (optInROC1Period as usize) + self.ma_lookback(optInMA1Period, optInROCMAType)?;
-        leg = (optInROC2Period as usize) + self.ma_lookback(optInMA2Period, optInROCMAType)?;
+        let mut maLookback: usize = 0_usize;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        maLookback = self.ma_lookback(optInMA1Period, optInROCMAType)?;
+        legMax = (optInROC1Period as usize) + maLookback;
+        maLookback = self.ma_lookback(optInMA2Period, optInROCMAType)?;
+        leg = (optInROC2Period as usize) + maLookback;
         if leg > legMax {
             legMax = leg;
         }
-        leg = (optInROC3Period as usize) + self.ma_lookback(optInMA3Period, optInROCMAType)?;
+        maLookback = self.ma_lookback(optInMA3Period, optInROCMAType)?;
+        leg = (optInROC3Period as usize) + maLookback;
         if leg > legMax {
             legMax = leg;
         }
-        leg = (optInROC4Period as usize) + self.ma_lookback(optInMA4Period, optInROCMAType)?;
+        maLookback = self.ma_lookback(optInMA4Period, optInROCMAType)?;
+        leg = (optInROC4Period as usize) + maLookback;
         if leg > legMax {
             legMax = leg;
         }
-        return Ok((legMax + self.ma_lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
+        maLookback = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
+        return Ok(legMax + maLookback);
     }
     /// Display shift of one output of [`Core::kstext`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -188,10 +199,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -366,14 +379,14 @@ impl Core {
         // With every type SMA this is bit-exact with kst(): each leg's average
         // starts on the first bar the signal consumes, and the line accumulates
         // its legs left to right. Changing either breaks the equality.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType).unwrap_or(usize::MAX);
         lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType).unwrap_or(usize::MAX);
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = (optInROC1Period as usize) + lookbackMA1;
         tempInteger = (optInROC2Period as usize) + lookbackMA2;
         if tempInteger > lookbackTotal {
@@ -492,10 +505,12 @@ impl Core {
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInROCMAType` — MA type smoothing the four legs (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF, `MAType::DEFAULT` selects the
+    ///   default)
     /// * `outKST` — Know Sure Thing line.
     /// * `outKSTSignal` — Signal line: MA of the line.
     ///
@@ -805,14 +820,14 @@ impl Core {
         // With every type SMA this is bit-exact with kst(): each leg's average
         // starts on the first bar the signal consumes, and the line accumulates
         // its legs left to right. Changing either breaks the equality.
-        *outBegIdx = 0;
-        *outNBElement = 0;
         // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
         lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType)?;
         lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType)?;
         lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType)?;
         lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType)?;
+        *outBegIdx = 0;
+        *outNBElement = 0;
         lookbackTotal = (optInROC1Period as usize) + lookbackMA1;
         tempInteger = (optInROC2Period as usize) + lookbackMA2;
         if tempInteger > lookbackTotal {

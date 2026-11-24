@@ -43,6 +43,14 @@ spends ~97% of its wall clock formatting and parsing JSON nobody looks at.
 Anything that needs the values (`--codegen`, `--xlang-hash`, `server_verify`)
 simply omits the flag.
 
+A **C# row** is timed only after a warm-up has carried the body to its final
+tier: about half a second per function and parameter set per server process, at
+most 10 s per request, so `--iters` need not cover tiering. A timed call that saw a
+compile anywhere in the process is run again, up to twice, so a long `--iters` can cost
+up to three times its span. A row whose kept pass still compiled
+code while it was timed, or whose warm-up stopped at that cap, ends in
+`unsettled` and is counted on the spread line: re-run it alone before reading it.
+
 ## The same source, six binaries
 
 Every benchmark ratio in this tree compares two *builds*, and they are not the
@@ -245,9 +253,8 @@ and it runs the first `node` on PATH: a timing job puts
 have the TS stream tier, or the arm dies at the floor before anything builds.
 Its rows are a change between two TS builds and are never compared with C.
 
-There is still **no C# row in `ta_bench`** — `ta_bench --mode=open` answers
-`unsupported_mode` for it — so batch-vs-stream ratios remain a three-language
-table.
+`ta_bench --mode=open` and `--mode=openfill` time C#'s `Open` and `OpenAndFill`
+as they do its batch call.
 
 ```bash
 scripts/stream_ab.py --base=origin/dev                                  # all four
@@ -338,6 +345,12 @@ ratio-based indicators), not stressors. Only `trend-chop-*` varies the rescan
 rate; `mono-*` and `constant` are the analytic tail. `peg` returns to 3.30 and
 holds for 360 bars at a time, a level whose window mean does not round back at
 the icount periods.
+
+`gap-daily` and `gap-intraday` are for code that compares a bar with the
+previous close, as true range does: on every other shape that gap beats the
+bar's range never or on most bars, so a branch on it reads as free or as a
+coin flip. Short series replayed many times teach the predictor either way:
+read such a branch at 100000 bars.
 
 One documented exemption in `--verify-corpus`: the walk family floors `low` at
 1.0 but leaves `close` unclamped, so `low <= min(open,close)` fails on 32 bars of

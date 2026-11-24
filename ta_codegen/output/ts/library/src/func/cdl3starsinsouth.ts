@@ -51,7 +51,7 @@
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -278,12 +278,12 @@ export function cdl3starsinsouthPositional(
  * {@link cdl3starsinsouthDisplayShift}, {@link cdl3starsinsouthOpen} and
  * {@link cdl3starsinsouthOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface Cdl3starsinsouthOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -305,6 +305,22 @@ export interface Cdl3starsinsouthOptions {
   outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function cdl3starsinsouthOptionsOf(funcName: string, options: Cdl3starsinsouthOptions | undefined): Cdl3starsinsouthOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outInteger');
+    }
+  }
+  return options;
+}
+
 /**
  * What {@link cdl3starsinsouth} returns, and {@link cdl3starsinsouthOpenAndFill}
  * with its stream.
@@ -324,15 +340,16 @@ export interface Cdl3starsinsouthResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3starsinsouthOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3starsinsouthOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3starsinsouthLookback(options?: Cdl3starsinsouthOptions): number {
-  const o = optionsOf('CDL3STARSINSOUTH lookback', options);
+  const o = cdl3starsinsouthOptionsOf('CDL3STARSINSOUTH lookback', options);
   return cdl3starsinsouthLookbackPositional(coreOf('CDL3STARSINSOUTH lookback', o.core));
 }
 
@@ -343,15 +360,16 @@ export function cdl3starsinsouthLookback(options?: Cdl3starsinsouthOptions): num
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3starsinsouthOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3starsinsouthOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3starsinsouthOptions): number {
-  const o = optionsOf('CDL3STARSINSOUTH displayShift', options);
+  const o = cdl3starsinsouthOptionsOf('CDL3STARSINSOUTH displayShift', options);
   return cdl3starsinsouthDisplayShiftPositional(outputIdx, coreOf('CDL3STARSINSOUTH displayShift', o.core));
 }
 
@@ -391,11 +409,12 @@ export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3st
  *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -415,7 +434,7 @@ export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3st
  */
 export function cdl3starsinsouth(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult {
   requireArgument('CDL3STARSINSOUTH', 'prices', prices);
-  const o = optionsOf('CDL3STARSINSOUTH', options);
+  const o = cdl3starsinsouthOptionsOf('CDL3STARSINSOUTH', options);
   if (o.endIdx === undefined) {
     requireSeries('CDL3STARSINSOUTH', 'prices.open', prices.open);
     requireSeries('CDL3STARSINSOUTH', 'prices.high', prices.high);
@@ -1415,13 +1434,14 @@ export function cdl3starsinsouthOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link Cdl3starsinsouthOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link Cdl3starsinsouthOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3starsinsouthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input or
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -1442,7 +1462,7 @@ export function cdl3starsinsouthOpenAndFillPositional(
  */
 export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthStream {
   requireArgument('CDL3STARSINSOUTH open', 'prices', prices);
-  const o = optionsOf('CDL3STARSINSOUTH open', options);
+  const o = cdl3starsinsouthOptionsOf('CDL3STARSINSOUTH open', options);
   const core = coreOf('CDL3STARSINSOUTH open', o.core);
   return cdl3starsinsouthOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
@@ -1455,18 +1475,19 @@ export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: Ar
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link Cdl3starsinsouthOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link Cdl3starsinsouthOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdl3starsinsouth} returns them; the range is
  *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3starsinsouthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, histories of different lengths or a buffer too short,
- *   of the wrong type or starting where another buffer or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   buffer or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1486,7 +1507,7 @@ export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: Ar
  */
 export function cdl3starsinsouthOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult & { stream: Cdl3starsinsouthStream } {
   requireArgument('CDL3STARSINSOUTH openAndFill', 'prices', prices);
-  const o = optionsOf('CDL3STARSINSOUTH openAndFill', options);
+  const o = cdl3starsinsouthOptionsOf('CDL3STARSINSOUTH openAndFill', options);
   const core = coreOf('CDL3STARSINSOUTH openAndFill', o.core);
   const capacity = fillCapacity(cdl3starsinsouthLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
   const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;

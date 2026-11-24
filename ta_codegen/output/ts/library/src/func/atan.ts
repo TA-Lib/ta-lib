@@ -45,7 +45,7 @@
  *  090807 MF     Initial Version
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -83,8 +83,17 @@ export function atanImpl(
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
   /* Default return values */
-  for (i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1) {
-    outReal[outIdx] = Math.atan(inReal[i]);
+  i = startIdx;
+  outIdx = 0;
+  if (i <= endIdx) {
+    const _wn = endIdx - i + 1;
+    const _w1_0 = outIdx;
+    const _w0_0 = i;
+    for (let _wk = 0; _wk < _wn; _wk++) {
+      outReal[_w1_0 + _wk] = Math.atan(inReal[_w0_0 + _wk]);
+    }
+    i += _wn;
+    outIdx += _wn;
   }
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;
@@ -124,12 +133,12 @@ export function atanPositional(
  * Options of {@link atan}, {@link atanLookback}, {@link atanDisplayShift},
  * {@link atanOpen} and {@link atanOpenAndFill}. Every key is optional: an omitted
  * or `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface AtanOptions {
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -152,6 +161,22 @@ export interface AtanOptions {
   outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function atanOptionsOf(funcName: string, options: AtanOptions | undefined): AtanOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outReal') {
+      unknownOption(funcName, options, k, 'startIdx endIdx core outReal');
+    }
+  }
+  return options;
+}
+
 /** What {@link atan} returns, and {@link atanOpenAndFill} with its stream. */
 export interface AtanResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -167,15 +192,16 @@ export interface AtanResult {
  * Number of leading input bars {@link atan} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AtanOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AtanOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function atanLookback(options?: AtanOptions): number {
-  const o = optionsOf('ATAN lookback', options);
+  const o = atanOptionsOf('ATAN lookback', options);
   return atanLookbackPositional(coreOf('ATAN lookback', o.core));
 }
 
@@ -186,15 +212,16 @@ export function atanLookback(options?: AtanOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AtanOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AtanOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function atanDisplayShift(outputIdx: number, options?: AtanOptions): number {
-  const o = optionsOf('ATAN displayShift', options);
+  const o = atanOptionsOf('ATAN displayShift', options);
   return atanDisplayShiftPositional(outputIdx, coreOf('ATAN displayShift', o.core));
 }
 
@@ -215,11 +242,12 @@ export function atanDisplayShift(outputIdx: number, options?: AtanOptions): numb
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an input too short for the range, a buffer that is empty, too short or of
- *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an input too short for the
+ *   range, a buffer that is empty, too short or of the wrong type or a buffer
+ *   sharing memory with a `Float64Array` input it is not. Checked before anything is
+ *   written.
  *
  * @example
  * ```ts
@@ -235,7 +263,7 @@ export function atanDisplayShift(outputIdx: number, options?: AtanOptions): numb
  * @see [`asin`](https://ta-lib.org/functions/asin)
  */
 export function atan(real: ArrayLike<number>, options?: AtanOptions): AtanResult {
-  const o = optionsOf('ATAN', options);
+  const o = atanOptionsOf('ATAN', options);
   if (o.endIdx === undefined) {
     requireSeries('ATAN', 'real', real);
   }
@@ -474,13 +502,13 @@ export function atanOpenAndFillPositional(
  * history bar, bit-identical to {@link atan} there.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link AtanOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link AtanOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `atanLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core` or an absent
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core` or an absent input.
  *
  * @example
  * ```ts
@@ -494,7 +522,7 @@ export function atanOpenAndFillPositional(
  * ```
  */
 export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanStream {
-  const o = optionsOf('ATAN open', options);
+  const o = atanOptionsOf('ATAN open', options);
   const core = coreOf('ATAN open', o.core);
   return atanOpenPositional(real, core);
 }
@@ -504,17 +532,18 @@ export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanSt
  * same pass, bit-identically to {@link atan}.
  *
  * @param real - Warm-up history. Input values.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link AtanOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link AtanOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link atan} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `atanLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input or a buffer too short, of the wrong
+ *   type or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -527,7 +556,7 @@ export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanSt
  * ```
  */
 export function atanOpenAndFill(real: ArrayLike<number>, options?: AtanOptions): AtanResult & { stream: AtanStream } {
-  const o = optionsOf('ATAN openAndFill', options);
+  const o = atanOptionsOf('ATAN openAndFill', options);
   const core = coreOf('ATAN openAndFill', o.core);
   const capacity = fillCapacity(atanLookbackPositional(core), real);
   const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;

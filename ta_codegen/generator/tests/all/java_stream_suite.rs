@@ -279,7 +279,7 @@ fn test_java_ma_dispatch() {
     };
     for label in [
         "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3", "HMA", "ZLEMA",
-        "RMA", "VIDYA", "ALMA",
+        "RMA", "VIDYA", "ALMA", "SSF",
     ] {
         let cb = label.to_lowercase();
         let cls = format!("{}{}Stream", &label[..1], &cb[1..]);

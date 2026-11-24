@@ -58,7 +58,68 @@ import { defaultAbstract, defaultEntry, hooks } from './engineHooks.ts';
 
 const lib = (await import(defaultEntry)) as typeof import('ta-lib');
 const { getRuntimeInfo } = (await import(defaultAbstract)) as typeof import('ta-lib/abstract');
+const { WASM_BASE64 } = (await import(new URL('../runtime/wasmBytes.js', import.meta.resolve('ta-lib')).href)) as {
+  WASM_BASE64: string;
+};
 const close = Float64Array.from({ length: 200 }, (_, i) => Math.round((50 + 5 * Math.sin(i / 6) + i / 30) * 100) / 100);
+
+interface Api {
+  Module: new (bytes: Uint8Array) => object;
+  Instance: new (module: object, imports: object) => { readonly exports: Record<string, unknown> };
+  CompileError: new (message: string) => Error;
+  compile: (bytes: Uint8Array) => Promise<unknown>;
+  validate: (bytes: Uint8Array) => boolean;
+}
+const wasm = (globalThis as unknown as { WebAssembly: Api }).WebAssembly;
+const real = { Module: wasm.Module, Instance: wasm.Instance, compile: wasm.compile };
+const restoreWasm = (): void => void Object.assign(wasm, real);
+const unbase64 = (text: string): Uint8Array => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+const isPreflight = (bytes: Uint8Array): boolean => Buffer.from(bytes).equals(Buffer.from(unbase64(hooks.PREFLIGHT)));
+const preflightRuns = { compiles: 0, engineCompiles: 0 };
+
+/** A `WebAssembly.Module` that counts compiles and, when asked, refuses the preflight module as a runtime without relaxed SIMD does. */
+function moduleStub(refusePreflight: boolean): Api['Module'] {
+  return class extends real.Module {
+    constructor(bytes: Uint8Array) {
+      if (isPreflight(bytes)) {
+        preflightRuns.compiles++;
+        if (refusePreflight) {
+          throw new wasm.CompileError('WebAssembly.Module(): relaxed SIMD is not supported');
+        }
+      } else {
+        preflightRuns.engineCompiles++;
+      }
+      super(bytes);
+    }
+  };
+}
+
+/** A `WebAssembly.Instance` whose memory-less modules answer the plain, unfused `a * b + c`. */
+class Unfused extends real.Instance {
+  constructor(module: object, imports: object) {
+    super(module, imports);
+    if (!('memory' in this.exports)) {
+      const plain = (a: number, b: number, c: number): number => a * b + c;
+      return { exports: Object.fromEntries(Object.keys(this.exports).map((name) => [name, plain])) };
+    }
+  }
+}
+
+/** A `WebAssembly.Instance` that refuses the memory-less preflight module as a runtime that forbids instantiation does. */
+class Uninstantiable extends real.Instance {
+  constructor(module: object, imports: object) {
+    super(module, imports);
+    if (!('memory' in this.exports)) {
+      throw new RangeError('WebAssembly.Instance(): instantiation is not allowed');
+    }
+  }
+}
+
+const FAILING: readonly (readonly ['compile' | 'instantiate' | 'fma', Partial<Api>])[] = [
+  ['compile', { Module: moduleStub(true) }],
+  ['instantiate', { Module: moduleStub(false), Instance: Uninstantiable }],
+  ['fma', { Module: moduleStub(false), Instance: Unfused }],
+];
 
 /** `wasm.engine` and `wasm.reason`, which must agree with the engine's own status. */
 function info(): [number, number] {
@@ -189,9 +250,7 @@ test('ready() imports the bytes and resolves to the WASM engine', async () => {
 });
 
 test('a call made while ready() compiles falls through without compiling, and ready() still ends in WASM', async () => {
-  type Api = { Module: unknown; compile: (bytes: Uint8Array) => Promise<unknown> };
-  const wasm = (globalThis as unknown as { WebAssembly: Api }).WebAssembly;
-  const { Module, compile } = wasm;
+  const { compile } = real;
   let syncCompiles = 0;
   let release!: () => void;
   const released = new Promise<void>((resolve) => {
@@ -202,9 +261,14 @@ test('a call made while ready() compiles falls through without compiling, and re
     compiling = resolve;
   });
   hooks.resetEngine();
-  wasm.Module = function refused(): never {
-    syncCompiles++;
-    throw new RangeError('WebAssembly.Module is disallowed on the main thread for a module this size');
+  wasm.Module = class extends real.Module {
+    constructor(bytes: Uint8Array) {
+      if (bytes.byteLength > 4096) {
+        syncCompiles++;
+        throw new RangeError('WebAssembly.Module is disallowed on the main thread for a module this size');
+      }
+      super(bytes);
+    }
   };
   wasm.compile = async (bytes: Uint8Array): Promise<unknown> => {
     compiling();
@@ -222,8 +286,7 @@ test('a call made while ready() compiles falls through without compiling, and re
     release();
     status = await pending;
   } finally {
-    wasm.Module = Module;
-    wasm.compile = compile;
+    restoreWasm();
   }
   assert.deepEqual(status, { engine: 'wasm', reason: null });
   hooks.setEngineMode('strict');
@@ -235,4 +298,88 @@ test('a call made while ready() compiles falls through without compiling, and re
   } finally {
     hooks.setEngineMode('table');
   }
+});
+
+test('the preflight module is one relaxed multiply-add and answers as the engine\'s own probe', () => {
+  const tiny = unbase64(hooks.PREFLIGHT);
+  assert.ok(wasm.validate(tiny));
+  const exported = Object.values(new real.Instance(new real.Module(tiny), {}).exports);
+  assert.equal(exported.length, 1);
+  const madd = exported[0] as (a: number, b: number, c: number) => number;
+  const probe = new real.Instance(new real.Module(unbase64(WASM_BASE64)), {}).exports.fma_probe as typeof madd;
+  const a = 1 + 2 ** -30;
+  for (const [x, y, z] of [[a, a, -1], [0.1, 0.1, -0.01], [Math.PI, Math.E, -8.539734222673566]]) {
+    assert.ok(Object.is(madd(x, y, z), probe(x, y, z)), `${x} * ${y} + ${z}: ${madd(x, y, z)} against ${probe(x, y, z)}`);
+  }
+});
+
+test('a failing preflight settles ready() without importing the bytes', async () => {
+  for (const [reason, stub] of FAILING) {
+    let imports = 0;
+    hooks.resetEngine();
+    const realImport = hooks.setBytesImport(() => {
+      imports++;
+      return realImport();
+    });
+    Object.assign(wasm, stub);
+    try {
+      assert.deepEqual(await lib.ready(), { engine: 'js', reason }, reason);
+      assert.deepEqual(await lib.ready(), { engine: 'js', reason }, reason);
+      assert.equal(imports, 0, `${reason}: ready() imported the bytes`);
+      assert.equal(forced(), 1, reason);
+    } finally {
+      restoreWasm();
+      hooks.setBytesImport(realImport);
+      hooks.resetEngine();
+    }
+  }
+});
+
+test('with the bytes handed over, a failing preflight sends routed calls to ta-lib/js without compiling the engine', () => {
+  for (const [reason, stub] of FAILING) {
+    hooks.resetEngine();
+    hooks.provideWasmBytes(WASM_BASE64);
+    preflightRuns.compiles = 0;
+    preflightRuns.engineCompiles = 0;
+    Object.assign(wasm, stub);
+    try {
+      assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' }, reason);
+      assert.equal(forced(), 1, reason);
+      assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason }, reason);
+      assert.equal(hooks.lastFallThrough(), reason);
+      assert.equal(forced(), 1, reason);
+      assert.deepEqual(preflightRuns, { compiles: 1, engineCompiles: 0 }, reason);
+    } finally {
+      restoreWasm();
+      hooks.resetEngine();
+    }
+  }
+});
+
+test('the preflight runs once, and resetEngine() forgets its verdict', async () => {
+  hooks.resetEngine();
+  preflightRuns.compiles = 0;
+  let imports = 0;
+  const realImport = hooks.setBytesImport(() => {
+    imports++;
+    return imports === 1 ? Promise.reject(new TypeError('Failed to fetch dynamically imported module')) : realImport();
+  });
+  wasm.Module = moduleStub(false);
+  try {
+    assert.deepEqual(await lib.ready(), { engine: 'js', reason: 'unavailable' });
+    assert.deepEqual(await lib.ready(), { engine: 'wasm', reason: null });
+    assert.equal(imports, 2);
+    assert.equal(preflightRuns.compiles, 1, 'the retry after unavailable ran the preflight again');
+    hooks.resetEngine();
+    wasm.Module = moduleStub(true);
+    assert.deepEqual(await lib.ready(), { engine: 'js', reason: 'compile' });
+    assert.equal(preflightRuns.compiles, 2, 'resetEngine() kept the passing verdict');
+    restoreWasm();
+    hooks.resetEngine();
+    assert.deepEqual(await lib.ready(), { engine: 'wasm', reason: null }, 'resetEngine() kept the failing verdict');
+  } finally {
+    restoreWasm();
+    hooks.setBytesImport(realImport);
+  }
+  assert.equal(forced(), 0);
 });

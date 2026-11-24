@@ -50,7 +50,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -257,7 +257,7 @@ export function cdlmorningstarPositional(
  * {@link cdlmorningstarDisplayShift}, {@link cdlmorningstarOpen} and
  * {@link cdlmorningstarOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface CdlmorningstarOptions {
   /**
@@ -267,8 +267,8 @@ export interface CdlmorningstarOptions {
    */
   penetration?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -290,6 +290,22 @@ export interface CdlmorningstarOptions {
   outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function cdlmorningstarOptionsOf(funcName: string, options: CdlmorningstarOptions | undefined): CdlmorningstarOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'penetration' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'penetration startIdx endIdx core outInteger');
+    }
+  }
+  return options;
+}
+
 /**
  * What {@link cdlmorningstar} returns, and {@link cdlmorningstarOpenAndFill} with
  * its stream.
@@ -309,15 +325,16 @@ export interface CdlmorningstarResult {
  * value: the index of the first bar with a value when the whole series is
  * requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlmorningstarOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlmorningstarOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlmorningstarLookback(options?: CdlmorningstarOptions): number {
-  const o = optionsOf('CDLMORNINGSTAR lookback', options);
+  const o = cdlmorningstarOptionsOf('CDLMORNINGSTAR lookback', options);
   return cdlmorningstarLookbackPositional(orDefault(o.penetration, Core.REAL_DEFAULT), coreOf('CDLMORNINGSTAR lookback', o.core));
 }
 
@@ -328,15 +345,16 @@ export function cdlmorningstarLookback(options?: CdlmorningstarOptions): number 
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlmorningstarOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlmorningstarOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function cdlmorningstarDisplayShift(outputIdx: number, options?: CdlmorningstarOptions): number {
-  const o = optionsOf('CDLMORNINGSTAR displayShift', options);
+  const o = cdlmorningstarOptionsOf('CDLMORNINGSTAR displayShift', options);
   return cdlmorningstarDisplayShiftPositional(orDefault(o.penetration, Core.REAL_DEFAULT), outputIdx, coreOf('CDLMORNINGSTAR displayShift', o.core));
 }
 
@@ -373,12 +391,12 @@ export function cdlmorningstarDisplayShift(outputIdx: number, options?: Cdlmorni
  *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, a real parameter that is not a number, a parameter outside its range, an
- *   input too short for the range, a buffer that is empty, too short or of the wrong
- *   type or a buffer sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, a real parameter that is not
+ *   a number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -401,7 +419,7 @@ export function cdlmorningstarDisplayShift(outputIdx: number, options?: Cdlmorni
  */
 export function cdlmorningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarResult {
   requireArgument('CDLMORNINGSTAR', 'prices', prices);
-  const o = optionsOf('CDLMORNINGSTAR', options);
+  const o = cdlmorningstarOptionsOf('CDLMORNINGSTAR', options);
   if (o.endIdx === undefined) {
     requireSeries('CDLMORNINGSTAR', 'prices.open', prices.open);
     requireSeries('CDLMORNINGSTAR', 'prices.high', prices.high);
@@ -1168,14 +1186,15 @@ export function cdlmorningstarOpenAndFillPositional(
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link CdlmorningstarOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link CdlmorningstarOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlmorningstarLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, a real parameter that is not a number, a parameter
- *   outside its range or histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, a real
+ *   parameter that is not a number, a parameter outside its range or histories of
+ *   different lengths.
  *
  * @example
  * ```ts
@@ -1198,7 +1217,7 @@ export function cdlmorningstarOpenAndFillPositional(
  */
 export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarStream {
   requireArgument('CDLMORNINGSTAR open', 'prices', prices);
-  const o = optionsOf('CDLMORNINGSTAR open', options);
+  const o = cdlmorningstarOptionsOf('CDLMORNINGSTAR open', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
   const core = coreOf('CDLMORNINGSTAR open', o.core);
   return cdlmorningstarOpenPositional(prices.open, prices.high, prices.low, prices.close, optInPenetration, core);
@@ -1212,19 +1231,19 @@ export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  *   reads, all of one length; other components may be present and are ignored.
  *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
  *   of each bar. `close`: Close price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link CdlmorningstarOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link CdlmorningstarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link cdlmorningstar} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlmorningstarLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
- *   `Core`, an absent input, a real parameter that is not a number, a parameter
- *   outside its range, histories of different lengths or a buffer too short, of the
- *   wrong type or starting where another buffer or a `Float64Array` input starts,
- *   or, on a history long enough to open, one sharing memory with another buffer or
- *   a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not a plain object, an option key the
+ *   function does not have, a `core` that is not a `Core`, an absent input, a real
+ *   parameter that is not a number, a parameter outside its range, histories of
+ *   different lengths or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1246,7 +1265,7 @@ export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  */
 export function cdlmorningstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarResult & { stream: CdlmorningstarStream } {
   requireArgument('CDLMORNINGSTAR openAndFill', 'prices', prices);
-  const o = optionsOf('CDLMORNINGSTAR openAndFill', options);
+  const o = cdlmorningstarOptionsOf('CDLMORNINGSTAR openAndFill', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
   const core = coreOf('CDLMORNINGSTAR openAndFill', o.core);
   const capacity = fillCapacity(cdlmorningstarLookbackPositional(optInPenetration, core), prices.open, prices.high, prices.low, prices.close);

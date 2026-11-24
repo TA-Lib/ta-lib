@@ -188,6 +188,7 @@ import * as MACD from '../func/macd.ts';
 import * as MACDEXT from '../func/macdext.ts';
 import * as MACDFIX from '../func/macdfix.ts';
 import * as MACDV from '../func/macdv.ts';
+import * as MAENV from '../func/maenv.ts';
 import * as MAMA from '../func/mama.ts';
 import * as MARKETFI from '../func/marketfi.ts';
 import * as MASSI from '../func/massi.ts';
@@ -244,6 +245,7 @@ import * as SMI from '../func/smi.ts';
 import * as SORTINO from '../func/sortino.ts';
 import * as SQRT from '../func/sqrt.ts';
 import * as SQZMOM from '../func/sqzmom.ts';
+import * as SSF from '../func/ssf.ts';
 import * as STC from '../func/stc.ts';
 import * as STDDEV from '../func/stddev.ts';
 import * as STOCH from '../func/stoch.ts';
@@ -1046,6 +1048,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     displayShift: (h, o) => MACDV.macdvDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], o, h.core),
     call: (h, s, e) => MACDV.macdvPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.prices[0]![3]!, h.opts[0], h.opts[1], h.opts[2], h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.outputs[2] as Float64Array, h.core),
   }],
+  ['MAENV', {
+    lookback: (h) => MAENV.maenvLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, h.core),
+    displayShift: (h, o) => MAENV.maenvDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, o, h.core),
+    call: (h, s, e) => MAENV.maenvPositional(s, e, h.inputs[0]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3] as MAType, h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.outputs[2] as Float64Array, h.core),
+  }],
   ['MAMA', {
     lookback: (h) => MAMA.mamaLookbackPositional(h.opts[0], h.opts[1], h.core),
     displayShift: (h, o) => MAMA.mamaDisplayShiftPositional(h.opts[0], h.opts[1], o, h.core),
@@ -1325,6 +1332,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => SQZMOM.sqzmomLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.core),
     displayShift: (h, o) => SQZMOM.sqzmomDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], o, h.core),
     call: (h, s, e) => SQZMOM.sqzmomPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.prices[0]![3]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.outputs[0] as Float64Array, h.outputs[1] as Int32Array, h.core),
+  }],
+  ['SSF', {
+    lookback: (h) => SSF.ssfLookbackPositional(h.opts[0], h.core),
+    displayShift: (h, o) => SSF.ssfDisplayShiftPositional(h.opts[0], o, h.core),
+    call: (h, s, e) => SSF.ssfPositional(s, e, h.inputs[0]!, h.opts[0], h.outputs[0] as Float64Array, h.core),
   }],
   ['STC', {
     lookback: (h) => STC.stcLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.core),

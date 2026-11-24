@@ -73,6 +73,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_alligator.c \
 	ta_test_func/test_gator.c \
 	ta_test_func/test_kc.c \
+	ta_test_func/test_maenv.c \
 	ta_test_func/test_kurtosis.c \
 	ta_test_func/test_skew.c \
 	ta_test_func/test_sharpe.c \
@@ -102,6 +103,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_stc.c \
 	ta_test_func/test_auto_stabilization.c \
 	ta_test_func/test_transcendental_ref.c \
+	ta_test_func/test_ssf.c \
 	ta_test_func/test_swak.c \
 	ta_test_func/test_fractal.c \
 	ta_test_func/test_ha.c \

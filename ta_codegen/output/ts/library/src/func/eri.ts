@@ -45,7 +45,7 @@
  *  090626 KL     First version (issue #361).
  */
 
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -153,14 +153,44 @@ export function eriImpl(
   if (optInTimePeriod === 1) {
     outIdx = 0;
     today = startIdx;
-    while (today <= endIdx) {
-      tempHT = inHigh[today];
-      tempLT = inLow[today];
-      tempReal = inClose[today];
-      outBullPower[outIdx] = tempHT - tempReal;
-      outBearPower[outIdx] = tempLT - tempReal;
-      outIdx += 1;
-      today += 1;
+    if (today <= endIdx) {
+      const _wn = endIdx - today + 1;
+      const _w1_0 = today;
+      const _w2_0 = today;
+      const _w0_0 = today;
+      const _w4_0 = outIdx;
+      const _w3_0 = outIdx;
+      for (let _wk = 0; _wk < (_wn & ~3); _wk = (_wk + 4) | 0) {
+        tempHT = inHigh[(_w1_0 + _wk) | 0];
+        tempLT = inLow[(_w2_0 + _wk) | 0];
+        tempReal = inClose[(_w0_0 + _wk) | 0];
+        outBullPower[(_w4_0 + _wk) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 1) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 1) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 1) | 0];
+        outBullPower[(_w4_0 + _wk + 1) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 1) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 2) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 2) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 2) | 0];
+        outBullPower[(_w4_0 + _wk + 2) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 2) | 0] = tempLT - tempReal;
+        tempHT = inHigh[(_w1_0 + _wk + 3) | 0];
+        tempLT = inLow[(_w2_0 + _wk + 3) | 0];
+        tempReal = inClose[(_w0_0 + _wk + 3) | 0];
+        outBullPower[(_w4_0 + _wk + 3) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk + 3) | 0] = tempLT - tempReal;
+      }
+      for (let _wk = _wn & ~3; _wk < _wn; _wk = (_wk + 1) | 0) {
+        tempHT = inHigh[(_w1_0 + _wk) | 0];
+        tempLT = inLow[(_w2_0 + _wk) | 0];
+        tempReal = inClose[(_w0_0 + _wk) | 0];
+        outBullPower[(_w4_0 + _wk) | 0] = tempHT - tempReal;
+        outBearPower[(_w3_0 + _wk) | 0] = tempLT - tempReal;
+      }
+      outIdx += _wn;
+      today += _wn;
     }
     outBegIdx.value = startIdx;
     outNBElement.value = outIdx;
@@ -274,7 +304,7 @@ export function eriPositional(
  * Options of {@link eri}, {@link eriLookback}, {@link eriDisplayShift},
  * {@link eriOpen} and {@link eriOpenAndFill}. Every key is optional: an omitted or
  * `undefined` key takes its default, and a call ignores the keys it has no use
- * for.
+ * for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface EriOptions {
   /**
@@ -283,8 +313,8 @@ export interface EriOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -315,6 +345,22 @@ export interface EriOptions {
   outBearPower?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function eriOptionsOf(funcName: string, options: EriOptions | undefined): EriOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outBullPower' && k !== 'outBearPower') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outBullPower outBearPower');
+    }
+  }
+  return options;
+}
+
 /** What {@link eri} returns, and {@link eriOpenAndFill} with its stream. */
 export interface EriResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -335,15 +381,16 @@ export interface EriResult {
  * Number of leading input bars {@link eri} consumes before its first value: the
  * index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link EriOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link EriOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function eriLookback(options?: EriOptions): number {
-  const o = optionsOf('ERI lookback', options);
+  const o = eriOptionsOf('ERI lookback', options);
   return eriLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('ERI lookback', o.core));
 }
 
@@ -354,15 +401,16 @@ export function eriLookback(options?: EriOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link EriOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link EriOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function eriDisplayShift(outputIdx: number, options?: EriOptions): number {
-  const o = optionsOf('ERI displayShift', options);
+  const o = eriOptionsOf('ERI displayShift', options);
   return eriDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('ERI displayShift', o.core));
 }
 
@@ -395,12 +443,13 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -423,7 +472,7 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  */
 export function eri(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult {
   requireArgument('ERI', 'prices', prices);
-  const o = optionsOf('ERI', options);
+  const o = eriOptionsOf('ERI', options);
   if (o.endIdx === undefined) {
     requireSeries('ERI', 'prices.high', prices.high);
     requireSeries('ERI', 'prices.low', prices.low);
@@ -631,8 +680,9 @@ export class EriStream {
 
 /**
  * The outputs of one ERI bar, as `update`, `peek` and `value` return them. Passed
- * back to one of them, it is filled and returned again, with no allocation; it
- * holds its values until the next call that writes it. A new one holds `NaN`.
+ * back to one of them, it is filled and returned again, so no result object is
+ * created; it holds its values until the next call that writes it. A new one holds
+ * `NaN`.
  */
 export class EriOut {
   /** High minus the EMA of close. */
@@ -997,14 +1047,14 @@ export function eriOpenAndFillPositional(
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series. `close`: Close price series.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link EriOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link EriOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `eriLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range or histories of different lengths.
  *
  * @example
  * ```ts
@@ -1023,7 +1073,7 @@ export function eriOpenAndFillPositional(
  */
 export function eriOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriStream {
   requireArgument('ERI open', 'prices', prices);
-  const o = optionsOf('ERI open', options);
+  const o = eriOptionsOf('ERI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('ERI open', o.core);
   return eriOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, core);
@@ -1036,19 +1086,19 @@ export function eriOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price series. `low`: Low price series. `close`: Close price series.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link EriOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link EriOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link eri} returns them; the range is the stream's
  *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `eriLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   options that are not an object, a `core` that is not a `Core`, an absent input,
- *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or a buffer too short, of the wrong type or
- *   starting where another buffer or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   options that are not a plain object, an option key the function does not have, a
+ *   `core` that is not a `Core`, an absent input, an integer parameter that is not
+ *   an int32, a parameter outside its range, histories of different lengths or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1071,7 +1121,7 @@ export function eriOpen(prices: { open?: ArrayLike<number> | undefined; high: Ar
  */
 export function eriOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult & { stream: EriStream } {
   requireArgument('ERI openAndFill', 'prices', prices);
-  const o = optionsOf('ERI openAndFill', options);
+  const o = eriOptionsOf('ERI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('ERI openAndFill', o.core);
   const capacity = fillCapacity(eriLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);

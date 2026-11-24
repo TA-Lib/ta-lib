@@ -65,5 +65,6 @@ public enum MAType
    ZLEMA,
    RMA,
    VIDYA,
-   ALMA
+   ALMA,
+   SSF
 };

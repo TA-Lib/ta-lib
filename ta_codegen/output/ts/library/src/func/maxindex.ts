@@ -48,7 +48,7 @@
  *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
-import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -204,7 +204,8 @@ export function maxindexPositional(
  * Options of {@link maxindex}, {@link maxindexLookback},
  * {@link maxindexDisplayShift}, {@link maxindexOpen} and
  * {@link maxindexOpenAndFill}. Every key is optional: an omitted or `undefined`
- * key takes its default, and a call ignores the keys it has no use for.
+ * key takes its default, and a call ignores the keys it has no use for. A key that
+ * is not one of these is `TA_BAD_PARAM`.
  */
 export interface MaxindexOptions {
   /**
@@ -213,8 +214,8 @@ export interface MaxindexOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -236,6 +237,22 @@ export interface MaxindexOptions {
   outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function maxindexOptionsOf(funcName: string, options: MaxindexOptions | undefined): MaxindexOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outInteger') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outInteger');
+    }
+  }
+  return options;
+}
+
 /** What {@link maxindex} returns, and {@link maxindexOpenAndFill} with its stream. */
 export interface MaxindexResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -251,15 +268,16 @@ export interface MaxindexResult {
  * Number of leading input bars {@link maxindex} consumes before its first value:
  * the index of the first bar with a value when the whole series is requested.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MaxindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MaxindexOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function maxindexLookback(options?: MaxindexOptions): number {
-  const o = optionsOf('MAXINDEX lookback', options);
+  const o = maxindexOptionsOf('MAXINDEX lookback', options);
   return maxindexLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('MAXINDEX lookback', o.core));
 }
 
@@ -270,15 +288,16 @@ export function maxindexLookback(options?: MaxindexOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MaxindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MaxindexOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function maxindexDisplayShift(outputIdx: number, options?: MaxindexOptions): number {
-  const o = optionsOf('MAXINDEX displayShift', options);
+  const o = maxindexOptionsOf('MAXINDEX displayShift', options);
   return maxindexDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MAXINDEX displayShift', o.core));
 }
 
@@ -304,12 +323,12 @@ export function maxindexDisplayShift(outputIdx: number, options?: MaxindexOption
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
- *   Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -326,7 +345,7 @@ export function maxindexDisplayShift(outputIdx: number, options?: MaxindexOption
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
  */
 export function maxindex(real: ArrayLike<number>, options?: MaxindexOptions): MaxindexResult {
-  const o = optionsOf('MAXINDEX', options);
+  const o = maxindexOptionsOf('MAXINDEX', options);
   if (o.endIdx === undefined) {
     requireSeries('MAXINDEX', 'real', real);
   }
@@ -728,14 +747,14 @@ export function maxindexOpenAndFillPositional(
  * last history bar, bit-identical to {@link maxindex} there.
  *
  * @param real - Warm-up history. Input series to scan.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link MaxindexOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link MaxindexOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `maxindexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32 or a parameter outside its
- *   range.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -749,7 +768,7 @@ export function maxindexOpenAndFillPositional(
  * ```
  */
 export function maxindexOpen(real: ArrayLike<number>, options?: MaxindexOptions): MaxindexStream {
-  const o = optionsOf('MAXINDEX open', options);
+  const o = maxindexOptionsOf('MAXINDEX open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MAXINDEX open', o.core);
   return maxindexOpenPositional(real, optInTimePeriod, core);
@@ -760,18 +779,19 @@ export function maxindexOpen(real: ArrayLike<number>, options?: MaxindexOptions)
  * the same pass, bit-identically to {@link maxindex}.
  *
  * @param real - Warm-up history. Input series to scan.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link MaxindexOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link MaxindexOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link maxindex} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `maxindexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or a buffer too short, of the wrong type or starting where another buffer or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another buffer or a `Float64Array` input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or a buffer too short, of the
+ *   wrong type or starting where another buffer or a `Float64Array` input starts,
+ *   or, on a history long enough to open, one sharing memory with another buffer or
+ *   a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -786,7 +806,7 @@ export function maxindexOpen(real: ArrayLike<number>, options?: MaxindexOptions)
  * ```
  */
 export function maxindexOpenAndFill(real: ArrayLike<number>, options?: MaxindexOptions): MaxindexResult & { stream: MaxindexStream } {
-  const o = optionsOf('MAXINDEX openAndFill', options);
+  const o = maxindexOptionsOf('MAXINDEX openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('MAXINDEX openAndFill', o.core);
   const capacity = fillCapacity(maxindexLookbackPositional(optInTimePeriod, core), real);

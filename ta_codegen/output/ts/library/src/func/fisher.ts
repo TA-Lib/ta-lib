@@ -50,7 +50,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
+import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -339,7 +339,7 @@ export function fisherPositional(
  * Options of {@link fisher}, {@link fisherLookback}, {@link fisherDisplayShift},
  * {@link fisherOpen} and {@link fisherOpenAndFill}. Every key is optional: an
  * omitted or `undefined` key takes its default, and a call ignores the keys it has
- * no use for.
+ * no use for. A key that is not one of these is `TA_BAD_PARAM`.
  */
 export interface FisherOptions {
   /**
@@ -348,8 +348,8 @@ export interface FisherOptions {
    */
   timePeriod?: number | undefined;
   /**
-   * First bar of the requested range (default 0). Bars before it are still read as
-   * warm-up. Batch calls only.
+   * First bar of the requested range (default 0). The lookback's bars before it are
+   * still read. Batch calls only.
    */
   startIdx?: number | undefined;
   /**
@@ -380,6 +380,22 @@ export interface FisherOptions {
   outTrigger?: Float64Array<ArrayBuffer> | undefined;
 }
 
+/** @internal */
+export function fisherOptionsOf(funcName: string, options: FisherOptions | undefined): FisherOptions {
+  if (options === undefined) {
+    return NO_OPTIONS;
+  }
+  if (!isPlainOptions(options)) {
+    throw notPlainOptions(funcName, options);
+  }
+  for (const k in options) {
+    if (k !== 'timePeriod' && k !== 'startIdx' && k !== 'endIdx' && k !== 'core' && k !== 'outFisher' && k !== 'outTrigger') {
+      unknownOption(funcName, options, k, 'timePeriod startIdx endIdx core outFisher outTrigger');
+    }
+  }
+  return options;
+}
+
 /** What {@link fisher} returns, and {@link fisherOpenAndFill} with its stream. */
 export interface FisherResult {
   /** Input bar of the first value; 0 when there is none. */
@@ -399,15 +415,16 @@ export interface FisherResult {
  *
  * It includes `core`'s unstable period for this function.
  *
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link FisherOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link FisherOptions}.
  * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
  *   range.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function fisherLookback(options?: FisherOptions): number {
-  const o = optionsOf('FISHER lookback', options);
+  const o = fisherOptionsOf('FISHER lookback', options);
   return fisherLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('FISHER lookback', o.core));
 }
 
@@ -418,15 +435,16 @@ export function fisherLookback(options?: FisherOptions): number {
  * Every output of this function is drawn at its own bar, so the answer is 0.
  *
  * @param outputIdx - Position of the output among the result's outputs, from 0.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link FisherOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link FisherOptions}.
  * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
  *   parameter is out of range or the index names no output.
- * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
- *   `core` is not a `Core`.
+ * @throws `TALibError` with code `TA_BAD_PARAM` for options that are not a plain
+ *   object, an option key the function does not have or a `core` that is not a
+ *   `Core`.
  */
 export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): number {
-  const o = optionsOf('FISHER displayShift', options);
+  const o = fisherOptionsOf('FISHER displayShift', options);
   return fisherDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('FISHER displayShift', o.core));
 }
 
@@ -460,12 +478,13 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
- *   `core` that is not a `Core`, an absent input, a range bound that is not an
- *   int32, an integer parameter that is not an int32, a parameter outside its range,
- *   an input too short for the range, a buffer that is empty, too short or of the
- *   wrong type, two buffers sharing memory or a buffer sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not a plain object, an
+ *   option key the function does not have, a `core` that is not a `Core`, an absent
+ *   or empty input, a range bound that is not an int32, an integer parameter that is
+ *   not an int32, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -488,7 +507,7 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  */
 export function fisher(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherResult {
   requireArgument('FISHER', 'prices', prices);
-  const o = optionsOf('FISHER', options);
+  const o = fisherOptionsOf('FISHER', options);
   if (o.endIdx === undefined) {
     requireSeries('FISHER', 'prices.high', prices.high);
     requireSeries('FISHER', 'prices.low', prices.low);
@@ -801,8 +820,9 @@ export class FisherStream {
 
 /**
  * The outputs of one FISHER bar, as `update`, `peek` and `value` return them.
- * Passed back to one of them, it is filled and returned again, with no allocation;
- * it holds its values until the next call that writes it. A new one holds `NaN`.
+ * Passed back to one of them, it is filled and returned again, so no result object
+ * is created; it holds its values until the next call that writes it. A new one
+ * holds `NaN`.
  */
 export class FisherOut {
   /** Fisher Transform value. */
@@ -1244,14 +1264,15 @@ export function fisherOpenAndFillPositional(
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar.
- * @param options - The parameters and `core`; other keys are ignored. See
- *   {@link FisherOptions}.
+ * @param options - The parameters and `core`; the function's other option keys are
+ *   ignored. See {@link FisherOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `fisherLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range
- *   or histories of different lengths.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range or histories of different
+ *   lengths.
  *
  * @example
  * ```ts
@@ -1268,7 +1289,7 @@ export function fisherOpenAndFillPositional(
  */
 export function fisherOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherStream {
   requireArgument('FISHER open', 'prices', prices);
-  const o = optionsOf('FISHER open', options);
+  const o = fisherOptionsOf('FISHER open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('FISHER open', o.core);
   return fisherOpenPositional(prices.high, prices.low, optInTimePeriod, core);
@@ -1281,19 +1302,19 @@ export function fisherOpen(prices: { open?: ArrayLike<number> | undefined; high:
  * @param prices - Warm-up history. One series per price component this function
  *   reads, all of one length; other components may be present and are ignored.
  *   `high`: High price of each bar. `low`: Low price of each bar.
- * @param options - The parameters, `core` and output buffers; other keys are
- *   ignored. See {@link FisherOptions}.
+ * @param options - The parameters, `core` and output buffers; the function's other
+ *   option keys are ignored. See {@link FisherOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
  *   values over the history as {@link fisher} returns them; the range is the
  *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `fisherLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for options that are not an object, a `core` that is not a `Core`, an absent
- *   input, an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or a buffer too short, of the wrong type or
- *   starting where another buffer or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another buffer or a `Float64Array`
- *   input.
+ *   for options that are not a plain object, an option key the function does not
+ *   have, a `core` that is not a `Core`, an absent input, an integer parameter that
+ *   is not an int32, a parameter outside its range, histories of different lengths
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1314,7 +1335,7 @@ export function fisherOpen(prices: { open?: ArrayLike<number> | undefined; high:
  */
 export function fisherOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherResult & { stream: FisherStream } {
   requireArgument('FISHER openAndFill', 'prices', prices);
-  const o = optionsOf('FISHER openAndFill', options);
+  const o = fisherOptionsOf('FISHER openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
   const core = coreOf('FISHER openAndFill', o.core);
   const capacity = fillCapacity(fisherLookbackPositional(optInTimePeriod, core), prices.high, prices.low);

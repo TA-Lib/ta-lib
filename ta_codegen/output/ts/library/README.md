@@ -27,8 +27,8 @@ Jest needs its ESM mode.
 A library that depends on `ta-lib` should declare it a peer dependency, so that an application
 holds one copy: a call rejects a `Core` built by another copy.
 
-Versions 0.9.0 to 0.11.0 of this package name were an earlier package by another author, a
-native binding with a different API. This is the official TA-Lib library, with its own API;
+Versions 0.9.0 to 0.11.0 of this package name were an earlier package by another author,
+with a different API. This is the official TA-Lib library, with its own API;
 its version numbers follow the C library's, which is why they are lower.
 
 ## Quick start
@@ -83,9 +83,11 @@ const { begIdx, values } = ema(close, { timePeriod: 30, core });
 
 ## WebAssembly
 
-Each batch call runs in a WebAssembly engine or in TypeScript, chosen by function and series
-length, with the same results either way, bit for bit on finite inputs. That holds with or
-without your own output buffers, and through `ta-lib/abstract`.
+Each batch call runs in a WebAssembly engine or in TypeScript, chosen by function and by the
+number of bars the call reads, with the same results either way, bit for bit on finite inputs.
+That holds with or without your own output buffers, and through `ta-lib/abstract`. A call runs
+in TypeScript when it passes a `core` other than `Core.DEFAULT`, computes in place or can reach
+a transcendental function.
 
 Nothing to configure. In Node.js the engine loads on the first call that uses it; awaiting
 `ready()` first moves its one-time compile out of that call. In a browser, and in any bundle
@@ -103,11 +105,12 @@ a Content-Security-Policy forbids compiling WebAssembly (`'wasm-unsafe-eval'` in
 allows it), the package runs its TypeScript code with the same values; under such a policy, a
 page that calls `ready()` also gets the browser's CSP violation report. A bundler that splits
 code fetches the engine's bytes only when `ready()` is called; one that does not puts them in
-the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs with WebAssembly never
-loaded, for strict-CSP pages and size budgets. A build for the `workerd`, `edge-light` or
-`react-native` export condition gets entries with no engine, where every call runs in
-TypeScript. `getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is
-loaded, 0 otherwise.
+the main bundle. `ta-lib/js` and `ta-lib/js/abstract` are the same APIs without `ready`,
+with WebAssembly never loaded, for strict-CSP pages and size budgets. A build for the
+`workerd`, `edge-light` or `react-native` export condition gets entries with no engine,
+where every call runs in TypeScript.
+`getRuntimeInfo('wasm.engine')` from `ta-lib/abstract` is 1 once the engine is loaded, 0
+otherwise.
 
 Streams are TypeScript objects, one class in every entry.
 
@@ -124,6 +127,14 @@ const s = smaOpen(history, { timePeriod: 30 });
 
 const v = s.update(newClose);            // a closed bar: commits it
 const provisional = s.peek(formingClose); // the forming bar: commits nothing
+```
+
+On a price input, `update` and `peek` take one number per component the function reads, in the
+order of its inputs, each price input's components in the order open, high, low, close, volume:
+
+```ts
+const a = atrOpen({ high, low, close }, { timePeriod: 14 });
+a.update(h, l, c); // high, low, close
 ```
 
 A multi-output stream returns its outputs (`macdOpen(history).update(x).outMacd`); pass a

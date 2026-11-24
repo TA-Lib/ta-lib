@@ -176,14 +176,45 @@ public partial class Core
       if( optInTimePeriod == 1 ) {
          outIdx = 0;
          today = startIdx;
-         while( today <= endIdx ) {
-            tempHT = inHigh[today];
-            tempLT = inLow[today];
-            tempReal = inClose[today];
-            outBullPower[outIdx] = tempHT - tempReal;
-            outBearPower[outIdx] = tempLT - tempReal;
-            outIdx += 1;
-            today += 1;
+         if( today <= endIdx ) {
+            int _wn = endIdx - today + 1;
+            var _w1 = inHigh.Slice(today, _wn);
+            var _w2 = inLow.Slice(today, _w1.Length);
+            var _w0 = inClose.Slice(today, _w1.Length);
+            var _w4 = outBullPower.Slice(outIdx, _w1.Length);
+            var _w3 = outBearPower.Slice(outIdx, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               tempHT = _w1[_wk];
+               tempLT = _w2[_wk];
+               tempReal = _w0[_wk];
+               _w4[_wk] = tempHT - tempReal;
+               _w3[_wk] = tempLT - tempReal;
+               tempHT = _w1[_wk + 1];
+               tempLT = _w2[_wk + 1];
+               tempReal = _w0[_wk + 1];
+               _w4[_wk + 1] = tempHT - tempReal;
+               _w3[_wk + 1] = tempLT - tempReal;
+               tempHT = _w1[_wk + 2];
+               tempLT = _w2[_wk + 2];
+               tempReal = _w0[_wk + 2];
+               _w4[_wk + 2] = tempHT - tempReal;
+               _w3[_wk + 2] = tempLT - tempReal;
+               tempHT = _w1[_wk + 3];
+               tempLT = _w2[_wk + 3];
+               tempReal = _w0[_wk + 3];
+               _w4[_wk + 3] = tempHT - tempReal;
+               _w3[_wk + 3] = tempLT - tempReal;
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               tempHT = _w1[_wk];
+               tempLT = _w2[_wk];
+               tempReal = _w0[_wk];
+               _w4[_wk] = tempHT - tempReal;
+               _w3[_wk] = tempLT - tempReal;
+            }
+            outIdx += _wn;
+            today += _wn;
          }
          outBegIdx = startIdx;
          outNBElement = outIdx;
@@ -281,14 +312,45 @@ public partial class Core
       if( optInTimePeriod == 1 ) {
          outIdx = 0;
          today = startIdx;
-         while( today <= endIdx ) {
-            tempHT = (double)inHigh[today];
-            tempLT = (double)inLow[today];
-            tempReal = (double)inClose[today];
-            outBullPower[outIdx] = tempHT - tempReal;
-            outBearPower[outIdx] = tempLT - tempReal;
-            outIdx += 1;
-            today += 1;
+         if( today <= endIdx ) {
+            int _wn = endIdx - today + 1;
+            var _w1 = inHigh.Slice(today, _wn);
+            var _w2 = inLow.Slice(today, _w1.Length);
+            var _w0 = inClose.Slice(today, _w1.Length);
+            var _w4 = outBullPower.Slice(outIdx, _w1.Length);
+            var _w3 = outBearPower.Slice(outIdx, _w1.Length);
+            int _wk = 0;
+            for( ; _wk <= _w1.Length - 4; _wk += 4 ) {
+               tempHT = (double)_w1[_wk];
+               tempLT = (double)_w2[_wk];
+               tempReal = (double)_w0[_wk];
+               _w4[_wk] = tempHT - tempReal;
+               _w3[_wk] = tempLT - tempReal;
+               tempHT = (double)_w1[_wk + 1];
+               tempLT = (double)_w2[_wk + 1];
+               tempReal = (double)_w0[_wk + 1];
+               _w4[_wk + 1] = tempHT - tempReal;
+               _w3[_wk + 1] = tempLT - tempReal;
+               tempHT = (double)_w1[_wk + 2];
+               tempLT = (double)_w2[_wk + 2];
+               tempReal = (double)_w0[_wk + 2];
+               _w4[_wk + 2] = tempHT - tempReal;
+               _w3[_wk + 2] = tempLT - tempReal;
+               tempHT = (double)_w1[_wk + 3];
+               tempLT = (double)_w2[_wk + 3];
+               tempReal = (double)_w0[_wk + 3];
+               _w4[_wk + 3] = tempHT - tempReal;
+               _w3[_wk + 3] = tempLT - tempReal;
+            }
+            for( ; _wk < _w1.Length; _wk++ ) {
+               tempHT = (double)_w1[_wk];
+               tempLT = (double)_w2[_wk];
+               tempReal = (double)_w0[_wk];
+               _w4[_wk] = tempHT - tempReal;
+               _w3[_wk] = tempLT - tempReal;
+            }
+            outIdx += _wn;
+            today += _wn;
          }
          outBegIdx = startIdx;
          outNBElement = outIdx;

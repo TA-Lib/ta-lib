@@ -46,6 +46,12 @@
  * — never execute. Flat input does that to BOTH extrema indefinitely; a monotone
  * ramp pins only one, which is why it costs half as much.
  *
+ * THE GAP SHAPES exist for code that compares a bar with the PREVIOUS close, as
+ * true range does. The walk opens every bar on that close and gbm and trend-chop
+ * open it away from it, so there a branch on the gap is never taken or taken on
+ * most bars. gap-daily sits near a market that closes between bars, gap-intraday
+ * near one that does not.
+ *
  * `randwalk` is the default and its seed-42 series is pinned, so numbers taken
  * across releases stay comparable. Other shapes are opt-in via --shape=NAME.
  */
@@ -98,6 +104,8 @@ enum {
     BENCH_MONO_DOWN,        /* strictly decreasing — degenerate tail case        */
     BENCH_CONSTANT,         /* flat O=H=L=C — plateau, pins BOTH extrema         */
     BENCH_PEG,              /* excursions off a level, then long holds on it     */
+    BENCH_GAP_DAILY,        /* overnight gap, 15% of the bar's log variance      */
+    BENCH_GAP_INTRADAY,     /* near-continuous, 2% of the variance in the gap    */
     BENCH_NSHAPES
 };
 
@@ -108,7 +116,8 @@ enum {
     BENCH_GEN_TRENDCHOP,    /* alternating regimes, param = regime/period ratio  */
     BENCH_GEN_RAMP,         /* linear, param = +1 up / -1 down                   */
     BENCH_GEN_FLAT,         /* constant                                          */
-    BENCH_GEN_PEG           /* returns to 3.30 and holds; see the generator      */
+    BENCH_GEN_PEG,          /* returns to 3.30 and holds; see the generator      */
+    BENCH_GEN_GAP           /* jump + Brownian bar, param = jump variance share  */
 };
 
 /* What a shape is FOR. The rolling-extremum rescan rate depends only on the
@@ -134,7 +143,8 @@ enum {
     BENCH_GRP_CONTROL = 0,  /* rank-order preserving: same rescan rate as randwalk */
     BENCH_GRP_STRESS,       /* varies how often the window extremum is its oldest bar */
     BENCH_GRP_TAIL,         /* analytic degenerate cases, not the target class     */
-    BENCH_GRP_FLATRUN       /* long exact holds after moves: pegs, halted names    */
+    BENCH_GRP_FLATRUN,      /* long exact holds after moves: pegs, halted names    */
+    BENCH_GRP_GAP           /* realistic open/previous-close gap rate              */
 };
 
 typedef struct {
@@ -180,7 +190,11 @@ static const BenchShape BENCH_SHAPES[BENCH_NSHAPES] = {
     { "constant",         BENCH_GEN_FLAT,      0.00, BENCH_GRP_TAIL,
       "flat O=H=L=C: WORST case, pins both, 2*(period-1) per bar" },
     { "peg",              BENCH_GEN_PEG,       0.00, BENCH_GRP_FLATRUN,
-      "40 bars of cent steps off 3.30, then 360 bars back on it, repeated" }
+      "40 bars of cent steps off 3.30, then 360 bars back on it, repeated" },
+    { "gap-daily",        BENCH_GEN_GAP,       0.15, BENCH_GRP_GAP,
+      "a market that closes overnight: the gap carries 15% of the variance" },
+    { "gap-intraday",     BENCH_GEN_GAP,       0.02, BENCH_GRP_GAP,
+      "a market that does not close: the gap carries 2% of the variance" }
 };
 
 /* ---- PRNGs ---------------------------------------------------------------
@@ -285,12 +299,15 @@ static void bench_shape_list(void)
         "Useful for magnitude/conditioning questions, not for the rescan rate.",
         "Rescan-rate stressors -- vary how often the window extremum is its oldest bar.",
         "Degenerate tail -- analytic worst cases, not the class this corpus exists for.",
-        "Flat runs -- a price that keeps returning to one level and holding it."
+        "Flat runs -- a price that keeps returning to one level and holding it.",
+        "Open/previous-close gap -- for functions that compare a bar with the previous\n"
+        "close (true range). On every other shape that gap beats the bar's range\n"
+        "never or on most bars; these two sit between, as real bars do."
     };
     int g, i;
     printf("Benchmark input corpus (--shape=NAME, default %s):\n",
            BENCH_SHAPES[BENCH_RANDWALK].name);
-    for( g = BENCH_GRP_CONTROL; g <= BENCH_GRP_FLATRUN; g++ )
+    for( g = BENCH_GRP_CONTROL; g <= BENCH_GRP_GAP; g++ )
     {
         printf("\n%s\n", GROUP_HDR[g]);
         for( i = 0; i < BENCH_NSHAPES; i++ )
@@ -415,6 +432,41 @@ static void bench_corpus_gen(const BenchCorpusCfg *cfg, int n,
             v[i] = 1000000.0;
             oi[i] = 0.0;
             if( periods ) periods[i] = 14.0;
+        }
+        return;
+    }
+
+    if( sh->gen == BENCH_GEN_GAP )
+    {
+        /* Log price: a jump from the previous close to the open, then a
+         * Brownian bar from open to close whose high and low are drawn from the
+         * exact law of a bridge's extremes. High and low are drawn
+         * independently, which the joint law is not. */
+        const double sigma = 0.01;
+        double sj = sqrt(param) * sigma;
+        double s2 = (1.0 - param) * sigma * sigma;
+        double sd = sqrt(s2);
+        double logc = log(100.0);
+        for( i = 0; i < n; i++ ) {
+            double logo = logc + sj * bench_rng_normal(&rng);
+            double d = sd * bench_rng_normal(&rng);
+            double u1 = 1.0 - bench_sm_unit(&rng.s);
+            double u2 = 1.0 - bench_sm_unit(&rng.s);
+            double up = 0.5 * (d + sqrt(d * d - 2.0 * s2 * log(u1)));
+            double dn = 0.5 * (d - sqrt(d * d - 2.0 * s2 * log(u2)));
+            logc = logo + d;
+            o[i] = exp(logo);
+            c[i] = exp(logc);
+            h[i] = fmax(exp(logo + up), fmax(o[i], c[i]));
+            l[i] = fmin(exp(logo + dn), fmin(o[i], c[i]));
+            v[i] = 1000000.0 + 500000.0 * (bench_sm_unit(&rng.s) - 0.5);
+            oi[i] = 0.0;
+            if( periods ) {
+                period += (int)(bench_sm_next(&rng.s) % 7) - 3;
+                if( period < 2 ) period = 2;
+                if( period > 30 ) period = 30;
+                periods[i] = (double)period;
+            }
         }
         return;
     }

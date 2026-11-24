@@ -1,0 +1,51 @@
+# OpenSSF Scorecard over this repository (ossf/scorecard-action), published to
+# https://scorecard.dev/viewer/?uri=github.com/TA-Lib/ta-lib on every push to
+# main and weekly. The JSON result is also kept as a run artifact.
+#
+# The Scorecard API accepts a result only from a workflow with no write
+# permission at the top level, no workflow-level env or defaults, and in this
+# job only id-token: write, a GitHub-hosted runner, and the actions used below.
+#
+# The job runs with the workflow token alone, so a check that needs admin
+# access to the repository settings comes back unscored.
+
+name: Scorecard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "41 5 * * 2"
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write # the identity the published result is signed under
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run the analysis
+        uses: ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5 # v2.6.0
+        with:
+          results_file: scorecard.json
+          results_format: json
+          publish_results: true
+          fail_on_publish_error: true
+
+      - name: Keep the result
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard
+          path: scorecard.json
+          if-no-files-found: error
+          retention-days: 14

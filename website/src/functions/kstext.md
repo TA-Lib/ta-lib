@@ -77,7 +77,7 @@ MA_roc uses optInROCMAType, MA_signal uses optInSignalMAType
 | `optInROCMAType` | MAType | SMA (0) | any MAType | MA type smoothing the four legs |
 | `optInSignalMAType` | MAType | SMA (0) | any MAType | MA type for the signal line |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA · 13 RMA · 14 VIDYA · 15 ALMA*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA · 13 RMA · 14 VIDYA · 15 ALMA · 16 SSF*
 
 ## Properties
 

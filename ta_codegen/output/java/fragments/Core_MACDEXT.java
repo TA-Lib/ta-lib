@@ -14,6 +14,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -27,20 +28,20 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSignalPeriod Period of the signal-line MA (default 9; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int macdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -80,14 +81,25 @@
       }
       int tempInteger;
       int lookbackLargest;
-      /* Find the MA with the largest lookback */
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return -1 ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
-      /* Add to the largest MA lookback the signal line lookback */
-      return lookbackLargest + maLookback(optInSignalPeriod, optInSignalMAType) ;
+      tempInteger = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
+      return lookbackLargest + tempInteger ;
 
    }
    /**
@@ -100,20 +112,20 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSignalPeriod Period of the signal-line MA (default 9; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -222,12 +234,21 @@
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -365,11 +386,20 @@
          optInFastMAType = tempMAType;
       }
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -435,20 +465,20 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSignalPeriod Period of the signal-line MA (default 9; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
     *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -539,20 +569,20 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
     *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+    *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
     *        {@code MAType.DEFAULT} selects the default).
     * @param optInSignalPeriod Period of the signal-line MA (default 9; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-    *        {@code MAType.DEFAULT} selects the default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+    *        16=SSF; {@code MAType.DEFAULT} selects the default).
     * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
     *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
@@ -908,12 +938,21 @@
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.

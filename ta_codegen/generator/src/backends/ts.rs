@@ -102,6 +102,9 @@ pub struct TsNames {
     pub open_internal: String,
     /// `@internal` `(core, ins.., startIdx, opts.., outBegIdx, outNBElement, outs..) => <N>Stream`.
     pub open_and_fill_internal: String,
+    /// `@internal` `(funcName, options) => <N>Options`: the one options check
+    /// of every call that takes the object, the routed front's included.
+    pub options_of: String,
 }
 
 #[must_use]
@@ -127,6 +130,7 @@ pub fn ts_names(func_name: &str) -> TsNames {
         open_and_fill_positional: format!("{base}OpenAndFillPositional"),
         open_internal: format!("{base}OpenInternal"),
         open_and_fill_internal: format!("{base}OpenAndFillInternal"),
+        options_of: format!("{base}OptionsOf"),
     }
 }
 
@@ -323,9 +327,7 @@ pub fn api_inputs(func: &FuncDef) -> Vec<ApiInput<'_>> {
 /// When two collide: a parameter, a range key, `core` or a buffer key; or two
 /// outputs, `begIdx` or `stream` in the result.
 pub fn assert_unique_keys(func: &FuncDef) {
-    let mut keys: Vec<String> = func.optional_inputs.iter().map(|o| param_key(&o.name)).collect();
-    keys.extend(["startIdx", "endIdx", "core"].map(String::from));
-    keys.extend(func.outputs.iter().map(|o| buffer_key(func, o)));
+    let keys = options_keys(func);
     for (k, key) in keys.iter().enumerate() {
         assert!(!keys[..k].contains(key), "{}: options key `{key}` is not unique", func.name);
     }
@@ -334,6 +336,15 @@ pub fn assert_unique_keys(func: &FuncDef) {
     for (k, key) in results.iter().enumerate() {
         assert!(!results[..k].contains(key), "{}: result key `{key}` is not unique", func.name);
     }
+}
+
+/// The keys of `<N>Options`, in its declaration order.
+#[must_use]
+pub fn options_keys(func: &FuncDef) -> Vec<String> {
+    let mut keys: Vec<String> = func.optional_inputs.iter().map(|o| param_key(&o.name)).collect();
+    keys.extend(["startIdx", "endIdx", "core"].map(String::from));
+    keys.extend(func.outputs.iter().map(|o| buffer_key(func, o)));
+    keys
 }
 
 /// The module file stem of an indicator: its lowerCamel name.
@@ -400,6 +411,7 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("MInteger", "../runtime/mInteger.ts"),
     ("OutRange", "../runtime/outRange.ts"),
     ("fma", "../runtime/fma.ts"),
+    ("orderStepPick", "../runtime/bits.ts"),
     ("fmaSlow", "../runtime/fma.ts"),
     ("clampedStart", "../runtime/checks.ts"),
     ("failure", "../runtime/checks.ts"),
@@ -423,7 +435,10 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("overlapsPartly", "../runtime/checks.ts"),
     ("sharedMemory", "../runtime/checks.ts"),
     ("rejectedParams", "../runtime/checks.ts"),
-    ("optionsOf", "../runtime/checks.ts"),
+    ("NO_OPTIONS", "../runtime/checks.ts"),
+    ("isPlainOptions", "../runtime/checks.ts"),
+    ("notPlainOptions", "../runtime/checks.ts"),
+    ("unknownOption", "../runtime/checks.ts"),
     ("orDefault", "../runtime/checks.ts"),
     ("batchCapacity", "../runtime/checks.ts"),
     ("fillCapacity", "../runtime/checks.ts"),
@@ -530,6 +545,9 @@ pub(crate) struct TsCtx<'a> {
     fma_ref: Option<&'a FmaVarSets>,
     fma_inline: Cell<FmaInline>,
     loop_depth: Cell<usize>,
+    /// Set for a batch body: its outermost loops may run one counter
+    /// ([`TsStmt::windowed`]).
+    windows: Cell<bool>,
     /// Set while a `for` header renders, where a block cannot go.
     in_for_header: Cell<bool>,
     matype_map: HashMap<String, String>,
@@ -563,6 +581,7 @@ impl<'a> TsCtx<'a> {
             fma_ref: None,
             fma_inline: Cell::new(fma_inline),
             loop_depth: Cell::new(0),
+            windows: Cell::new(false),
             in_for_header: Cell::new(false),
             matype_map: build_matype_map(svc.enums),
             ret: CType::Int32,
@@ -596,6 +615,7 @@ impl<'a> TsCtx<'a> {
             fma_ref: Some(fma),
             fma_inline: Cell::new(fma_inline_mode(body, fma, FmaInline::InLoops)),
             loop_depth: Cell::new(0),
+            windows: Cell::new(false),
             in_for_header: Cell::new(false),
             matype_map: build_matype_map(svc.enums),
             ret: CType::Int32,
@@ -608,6 +628,14 @@ impl<'a> TsCtx<'a> {
 
     fn fma_sets(&self) -> Option<&FmaVarSets> {
         self.fma_ref.or(self.fma.as_ref())
+    }
+
+    /// This context for a peek frame: [`FmaVarSets::for_peek`].
+    pub(crate) fn for_peek(mut self) -> Self {
+        if let Some(f) = self.fma_ref.take() {
+            self.fma = Some(f.for_peek());
+        }
+        self
     }
 
     /// For a frame that runs once per bar as a whole, `body` being all of it:
@@ -1308,6 +1336,7 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
     let body: &[Statement] = &folded;
     let ctx = TsCtx::new(svc, body, &func.outputs, true);
     ctx.env.seed_signature(func);
+    ctx.windows.set(true);
 
     let mut out = String::new();
     let _ = writeln!(out, "\n/** @internal */\nexport function {name}(\n  {},\n): RetCode {{", impl_params(func, private).join(",\n  "));
@@ -1473,7 +1502,7 @@ pub(crate) fn api_prologue(func: &FuncDef, entry: &str, batch: bool) -> String {
     for a in inputs.iter().filter(|a| a.is_price) {
         let _ = writeln!(s, "  requireArgument('{entry}', '{0}', {0});", a.name);
     }
-    let _ = writeln!(s, "  const o = optionsOf('{entry}', options);");
+    let _ = writeln!(s, "  const o = {}('{entry}', options);", ts_names(&func.name).options_of);
     if batch && !inputs.is_empty() {
         s.push_str("  if (o.endIdx === undefined) {\n");
         for a in &inputs {
@@ -1543,6 +1572,7 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
         let _ = writeln!(s, "  {}?: {} | undefined;", buffer_key(func, out), public_array_ts_type(&out.param_type));
     }
     s.push_str("}\n");
+    s.push_str(&gen_options_of(func));
     let _ = write!(s, "\n{}export interface {} {{\n", super::ts_doc::result_docs(func), names.result_type);
     s.push_str(&super::ts_doc::member(super::ts_doc::BEG_IDX_FIELD));
     s.push_str("  begIdx: number;\n");
@@ -1552,6 +1582,21 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
     }
     s.push_str("}\n");
     s
+}
+
+/// The options check: keep the chain in the interface's order, so the common
+/// keys compare first.
+fn gen_options_of(func: &FuncDef) -> String {
+    let names = ts_names(&func.name);
+    let keys = options_keys(func);
+    let chain: Vec<String> = keys.iter().map(|k| format!("k !== '{k}'")).collect();
+    format!(
+        "\n/** @internal */\nexport function {}(funcName: string, options: {t} | undefined): {t} {{\n  if (options === undefined) {{\n    return NO_OPTIONS;\n  }}\n  if (!isPlainOptions(options)) {{\n    throw notPlainOptions(funcName, options);\n  }}\n  for (const k in options) {{\n    if ({}) {{\n      unknownOption(funcName, options, k, '{}');\n    }}\n  }}\n  return options;\n}}\n",
+        names.options_of,
+        chain.join(" && "),
+        keys.join(" "),
+        t = names.options_type,
+    )
 }
 
 fn gen_api_lookback(func: &FuncDef) -> String {
@@ -1564,10 +1609,11 @@ fn gen_api_lookback(func: &FuncDef) -> String {
         .collect();
     args.push(format!("coreOf('{entry}', o.core)"));
     format!(
-        "\n{}export function {}(options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        "\n{}export function {}(options?: {}): number {{\n  const o = {}('{entry}', options);\n  return {}({});\n}}\n",
         super::ts_doc::lookback_docs(func),
         names.lookback,
         names.options_type,
+        names.options_of,
         names.lookback_positional,
         args.join(", ")
     )
@@ -1585,10 +1631,11 @@ fn gen_api_display_shift(func: &FuncDef) -> String {
     args.push(idx.to_string());
     args.push(format!("coreOf('{entry}', o.core)"));
     format!(
-        "\n{}export function {}({idx}: number, options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        "\n{}export function {}({idx}: number, options?: {}): number {{\n  const o = {}('{entry}', options);\n  return {}({});\n}}\n",
         super::ts_doc::display_shift_docs(func),
         names.display_shift,
         names.options_type,
+        names.options_of,
         names.display_shift_positional,
         args.join(", ")
     )
@@ -1907,6 +1954,9 @@ impl StatementEmitter for TsStmt<'_> {
     }
 
     fn while_loop(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
+        if let Some(out) = self.windowed(None, condition, body, None, indent) {
+            return out;
+        }
         let pad = " ".repeat(indent);
         let (cond, hoisted) = self.c.hoist(condition);
         let mut out = render_hoisted_blocks(&hoisted, indent, self.c);
@@ -1947,6 +1997,18 @@ impl StatementEmitter for TsStmt<'_> {
         let c = self.c;
         if contains_alloc_err_return(then_body) {
             return String::new();
+        }
+        if cond_comments.is_empty() {
+            if let Some(step) = c.fma_sets().and_then(|s| super::select_rule::admitted_step(condition, then_body, else_body, s)) {
+                let target = Expr::Var(step.acc.to_string());
+                let arm = |(op, x): &(BinOp, &Expr)| c.num(&Expr::BinOp(Box::new(target.clone()), op.clone(), Box::new((*x).clone())));
+                let (acc, a, b) = (c.num(&target), c.num(step.a), c.num(step.b));
+                return format!(
+                    "{pad}orderStepPick[0] = {acc};\n{pad}orderStepPick[1] = {};\n{pad}orderStepPick[2] = {};\n{pad}{acc} = orderStepPick[+({a} < {b}) | (+({b} < {a}) << 1)];\n",
+                    arm(&step.below),
+                    arm(&step.above),
+                );
+            }
         }
         // V8 keeps a branch here, which mispredicts on every bar of an unordered
         // series; a boolean to number is a setcc. Integer only: a real counter
@@ -2039,6 +2101,9 @@ impl StatementEmitter for TsStmt<'_> {
     }
 
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], indent: usize) -> String {
+        if let Some(out) = self.windowed(Some(init), condition, body, Some(update), indent) {
+            return out;
+        }
         let pad = " ".repeat(indent);
         self.c.in_for_header.set(true);
         let init_str = render_forc_part(init, self.c);
@@ -2748,6 +2813,19 @@ pub fn render_index(funcs: &[FuncDef]) -> String {
     render_barrel(funcs, "./", &|f| format!("./func/{}.ts", module_stem(f)), "")
 }
 
+/// The names every entry re-exports from the runtime and the enums, with
+/// `runtime` the path from the entry to `src/`.
+#[must_use]
+pub fn runtime_exports(runtime: &str) -> String {
+    format!(
+        "export {{ TALibError, RetCode }} from '{runtime}runtime/errors.ts';\n\
+         export type {{ FailureRetCode, RetCodeName }} from '{runtime}runtime/errors.ts';\n\
+         export {{ OutRange }} from '{runtime}runtime/outRange.ts';\n\
+         export {{ Core, CoreBuilder, CandleSetting, CandleSettingType, RangeType }} from '{runtime}runtime/core.ts';\n\
+         export {{ MAType, FuncUnstId }} from '{runtime}enums.ts';\n"
+    )
+}
+
 /// A barrel over `funcs`: the shared runtime under `{runtime}runtime/`, each
 /// function's public names from `module_of(func)`, then `extra`. The `./js`
 /// barrel and the default entry's both render here, so their export lists
@@ -2757,11 +2835,7 @@ pub fn render_barrel(funcs: &[FuncDef], runtime: &str, module_of: &dyn Fn(&FuncD
     use std::fmt::Write as _;
     let mut s = ts_license();
     s.push_str("\n/* Generated by ta_codegen \u{2014} do not edit. */\n\n");
-    let _ = writeln!(s, "export {{ TALibError, RetCode }} from '{runtime}runtime/errors.ts';");
-    let _ = writeln!(s, "export type {{ FailureRetCode, RetCodeName }} from '{runtime}runtime/errors.ts';");
-    let _ = writeln!(s, "export {{ OutRange }} from '{runtime}runtime/outRange.ts';");
-    let _ = writeln!(s, "export {{ Core, CoreBuilder, CandleSetting, CandleSettingType, RangeType }} from '{runtime}runtime/core.ts';");
-    let _ = writeln!(s, "export {{ MAType, FuncUnstId }} from '{runtime}enums.ts';");
+    s.push_str(&runtime_exports(runtime));
     s.push_str(extra);
     let mut sorted: Vec<&FuncDef> = funcs.iter().collect();
     sorted.sort_by_key(|f| module_stem(f));
@@ -3129,3 +3203,175 @@ fn max_min_as_sum(expr: &Expr) -> Expr {
     }
 }
 
+
+/// TypeScript's windows ([`super::window`]) are base offsets into the arrays,
+/// as a `subarray` allocates a view on every call.
+const TS_WINDOWS: super::window::Policy =
+    super::window::Policy { counter_reads_bounded: false, checked: false, scalar_branches: false };
+
+impl TsStmt<'_> {
+    /// An outermost batch loop that moves several cursors in lockstep, whose
+    /// passes are only assignments, none carrying a scalar to the next pass, as
+    /// one counter from zero with each window's start held in a constant: V8
+    /// runs several cursors slower than one. Where
+    /// [`super::window::unroll_width`] allows, a trip runs that many passes and
+    /// a tail loop the rest. `None` renders the loop as written.
+    #[allow(clippy::too_many_lines)]
+    fn windowed(&self, init: Option<&Statement>, condition: &Expr, body: &[Statement], update: Option<&Statement>, indent: usize) -> Option<String> {
+        use super::lockstep::{as_step, carries_scalar, inline, Facts, Names};
+        use super::window::{marker_of, PASS, TRIP};
+        let c = self.c;
+        if !c.windows.get() || c.loop_depth.get() != 0 {
+            return None;
+        }
+        let mut pass = Vec::new();
+        let tail: Vec<&Statement> = match update {
+            Some(Statement::Block { body }) => body.iter().collect(),
+            Some(u) => vec![u],
+            None => vec![],
+        };
+        for s in body.iter().chain(tail) {
+            inline(s, &mut pass);
+        }
+        let index = |n: &str| c.ty(&Expr::Var(n.to_string())) == CType::Int32;
+        let usize_expr = |e: &Expr| c.ty(e) == CType::Int32;
+        let never = |_: &Expr| false;
+        let sliceable = |a: &str| c.ty(&Expr::Var(a.to_string())).is_pointer();
+        let same_len = |_: &str| false;
+        let ring_storage = |_: &str| None;
+        let names = Names { index: &index, usize_expr: &usize_expr, castable: &never, sliceable: &sliceable, same_len: &same_len, ring_storage: &ring_storage };
+        let plan = super::window::plan(condition, &pass, None, &names, &TS_WINDOWS)?;
+        if plan.reverse || plan.cond_step.is_some() || plan.checked || !plan.body.iter().all(|s| matches!(s, Statement::Assign { .. } | Statement::Comment(_))) {
+            return None;
+        }
+        let facts = Facts::of(&plan.body);
+        let steps = facts.induction();
+        if steps.keys().filter(|v| index(v)).count() < 2 || carries_scalar(&plan.body, &facts.other, &steps) {
+            return None;
+        }
+        let lane = |j: usize, d: i64| if d < 0 { format!("_w{j}m{}", -d) } else { format!("_w{j}_{d}") };
+        let mut lanes: Vec<(usize, i64)> = Vec::new();
+        for s in &plan.body {
+            crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                crate::streaming::walk_expr(top, &mut |e| {
+                    if let Expr::ArrayAccess(_, i) = e {
+                        if let Some(m) = marker_of(i) {
+                            if !lanes.contains(&m) {
+                                lanes.push(m);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        if lanes.is_empty() {
+            return None;
+        }
+        let own_step = |s: &Statement, v: &str| as_step(s).is_some_and(|(x, _)| x == v);
+        let moved: Vec<(&String, i64)> = steps
+            .iter()
+            .filter(|(v, _)| index(v))
+            .filter(|(v, _)| {
+                let mut read = false;
+                for s in plan.body.iter().filter(|s| !own_step(s, v)) {
+                    crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                        crate::streaming::walk_expr(top, &mut |e| read |= matches!(e, Expr::Var(n) if n == *v));
+                    });
+                }
+                !read
+            })
+            .map(|(v, d)| (v, *d))
+            .collect();
+        let kept: Vec<&Statement> = plan.body.iter().filter(|s| !moved.iter().any(|(v, _)| own_step(s, v))).collect();
+        // A fused site renders as fma's fast path with a call behind it, so
+        // its loop stays rolled, as a pass making a call does.
+        let fused = fma::EMIT_FMA
+            && c.fma_sets().is_some_and(|fs| {
+                let mut any = false;
+                for s in &kept {
+                    crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                        crate::streaming::walk_expr(top, &mut |x| {
+                            if let Expr::BinOp(l, op, r) = x {
+                                any |= fma::fuse_inexact_operands(l, op, r, &fs.view()).is_some();
+                            }
+                        });
+                    });
+                }
+                any
+            });
+        let width = super::window::unroll_width(&kept, &steps).filter(|_| !fused);
+        let copy = |e: i64| -> Vec<Statement> {
+            let subs: HashMap<String, Expr> = lanes
+                .iter()
+                .map(|&(j, d)| {
+                    let Expr::Var(m) = super::window::marker(j, d) else { unreachable!() };
+                    let at = Expr::BinOp(Box::new(Expr::Var(lane(j, d))), BinOp::Add, Box::new(Expr::Var(PASS.to_string())));
+                    let at = if e == 0 { at } else { Expr::BinOp(Box::new(at), BinOp::Add, Box::new(Expr::IntLiteral(e))) };
+                    // `| 0` lets V8 add in int32 with no overflow check.
+                    (m, if width.is_some() { Expr::BinOp(Box::new(at), BinOp::BitwiseOr, Box::new(Expr::IntLiteral(0))) } else { at })
+                })
+                .collect();
+            kept.iter()
+                .filter(|s| e == 0 || !matches!(s, Statement::Comment(_)))
+                .map(|s| match s {
+                    Statement::Assign { target, value, compound } => Statement::Assign {
+                        target: crate::helper_registry::substitute_expr(target, &subs),
+                        value: crate::helper_registry::substitute_expr(value, &subs),
+                        compound: *compound,
+                    },
+                    other => (*other).clone(),
+                })
+                .collect()
+        };
+        for n in [TRIP, PASS] {
+            c.env.declare(n, CType::Int32);
+        }
+        for &(j, d) in &lanes {
+            c.env.declare(&lane(j, d), CType::Int32);
+        }
+
+        let pad = " ".repeat(indent);
+        let mut out: String = match init {
+            Some(Statement::Block { body }) => body.iter().map(|s| self.walk_stmt(s, indent)).collect(),
+            Some(one) => self.walk_stmt(one, indent),
+            None => String::new(),
+        };
+        let _ = writeln!(out, "{pad}if ({}) {{", c.cond(&plan.guard));
+        let _ = writeln!(out, "{pad}  const {TRIP} = {};", c.value_for(CType::Int32, &plan.trip));
+        for &(j, d) in &lanes {
+            let start = match d {
+                0 => plan.windows[j].start.clone(),
+                d => Expr::BinOp(Box::new(plan.windows[j].start.clone()), BinOp::Add, Box::new(Expr::IntLiteral(d))),
+            };
+            let _ = writeln!(out, "{pad}  const {} = {};", lane(j, d), c.value_for(CType::Int32, &start));
+        }
+        let render = |copies: std::ops::Range<i64>, out: &mut String| {
+            c.in_loop(|| {
+                for s in copies.flat_map(copy) {
+                    out.push_str(&self.walk_stmt(&s, indent + 4));
+                }
+            });
+        };
+        match width {
+            Some(width) => {
+                assert!(width.is_power_of_two(), "a trip of {width} passes");
+                let whole = format!("{TRIP} & ~{}", width - 1);
+                let _ = writeln!(out, "{pad}  for (let {PASS} = 0; {PASS} < ({whole}); {PASS} = ({PASS} + {width}) | 0) {{");
+                render(0..i64::try_from(width).expect("a small width"), &mut out);
+                let _ = writeln!(out, "{pad}  }}");
+                let _ = writeln!(out, "{pad}  for (let {PASS} = {whole}; {PASS} < {TRIP}; {PASS} = ({PASS} + 1) | 0) {{");
+            }
+            None => {
+                let _ = writeln!(out, "{pad}  for (let {PASS} = 0; {PASS} < {TRIP}; {PASS}++) {{");
+            }
+        }
+        render(0..1, &mut out);
+        let _ = writeln!(out, "{pad}  }}");
+        for (v, d) in &moved {
+            let op = if *d > 0 { "+=" } else { "-=" };
+            let _ = writeln!(out, "{pad}  {} {op} {TRIP};", c.num(&Expr::Var((*v).clone())));
+        }
+        let _ = writeln!(out, "{pad}}}");
+        Some(out)
+    }
+}
