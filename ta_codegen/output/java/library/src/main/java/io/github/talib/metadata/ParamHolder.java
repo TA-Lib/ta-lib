@@ -74,6 +74,7 @@ public final class ParamHolder {
 
    private final FuncInfo info;
    private final Core core;
+   private final int route;   // the function's arm in Dispatch, -1 for a name it does not route
 
    /** Per input slot: a real series, an int series, or the six price components. */
    private final double[][] realInputs;
@@ -91,6 +92,7 @@ public final class ParamHolder {
    ParamHolder(FuncInfo info, Core core) {
       this.info = info;
       this.core = core;
+      this.route = Dispatch.route(info.name());
       int ni = info.inputs().size();
       int no = info.optInputs().size();
       int nout = info.outputs().size();
@@ -365,6 +367,7 @@ public final class ParamHolder {
    /* Accessors used by the generated Dispatch switch. */
 
    Core core() { return core; }
+   int route() { return route; }
    double[] realInput(int i) { return realInputs[i]; }
    int[] intInput(int i) { return intInputs[i]; }
    double[] price(int slot, int component) { return priceInputs[slot][component]; }
