@@ -92,7 +92,7 @@ use super::stmt_walk::StatementEmitter;
 pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
 /// Candle ranges one stream opener may inline wherever they stand. With more,
-/// those outside every loop become calls to `Core.candleRange`.
+/// those outside every loop of the body become calls to `Core.candleRange`.
 ///
 /// HotSpot never JIT-compiles a method over 8000 bytes of bytecode. An inlined
 /// range is about 100 bytes and the call about 30. CDLADVANCEBLOCK's two
@@ -100,11 +100,13 @@ pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverag
 /// largest, CDL3WHITESOLDIERS's sink frame, inlines 44 in 7989 and keeps them.
 /// `scripts/check_java_method_size.py` is the gate.
 ///
-/// Only straight-line code changes, which runs once per open. A range in a loop
-/// stays inline: with every range of CDLADVANCEBLOCK's sink frame as a call,
-/// open measured 41 ns per bar against 17 inlined, though C2 inlined the hot
-/// calls. Every site of `candleRange` shares one branch profile, where an
-/// inlined site has its own and its setting takes one arm.
+/// A range in a loop of the body stays inline: with every range of
+/// CDLADVANCEBLOCK's sink frame as a call, open measured 41 ns per bar against
+/// 17 inlined, though C2 inlined the hot calls. Every site of `candleRange`
+/// shares one branch profile, where an inlined site has its own and its setting
+/// takes one arm. The ring fills ahead of the body are not its loops and call
+/// it too: they run one averaging period per open, and inlining them costs long
+/// opens more than it saves short ones.
 pub(crate) const CANDLE_RANGE_INLINE_MAX: usize = 44;
 
 /// Text only an inlined candle range contains, which is how
@@ -112,7 +114,7 @@ pub(crate) const CANDLE_RANGE_INLINE_MAX: usize = 44;
 const CANDLE_RANGE_MARK: &str = " == 0) ? (Math.abs(";
 
 thread_local! {
-    /// Whether a candle range outside every loop renders as a call. The opener
+    /// Whether a candle range outside every loop of the body renders as a call. The opener
     /// emitters build their render contexts several layers below the frame
     /// that knows its size, so the choice is stashed here for the span of one
     /// frame.
