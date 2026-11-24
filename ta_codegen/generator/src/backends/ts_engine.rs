@@ -361,8 +361,8 @@ pub fn render_routed(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     b.push_str(route_check(route));
     b.push_str(engine_down);
     b.push_str(&same_lengths(&raw[1..]));
-    // After the table's check, so a call it leaves in TypeScript walks
-    // the keys only there.
+    // After the table's length check, so a call too short for the table
+    // walks the keys only in `./js`.
     let _ = writeln!(
         b,
         "  let o: {};\n  try {{\n    o = {}('{}', options);\n  }} catch {{\n    return fellThrough('options');\n  }}",

@@ -113,7 +113,7 @@ export type EngineReason = 'not-loaded' | 'unavailable' | 'compile' | 'instantia
 /**
  * Whether the WebAssembly engine is loaded; what {@link ready} resolves to. A
  * loaded engine runs the batch calls the routing table sends it, by function
- * and series length; every other call runs in TypeScript.
+ * and the number of bars a call reads; every other call runs in TypeScript.
  */
 export interface EngineStatus {
   /**
@@ -616,12 +616,26 @@ export function routedSeries(x: unknown): Float64Array | null {
   }
 }
 
+const TYPED_ARRAY = Object.getPrototypeOf(Float64Array.prototype) as object;
+function slotOf<T>(key: 'buffer' | 'byteOffset' | 'length'): (this: unknown) => T {
+  return Object.getOwnPropertyDescriptor(TYPED_ARRAY, key)?.get as (this: unknown) => T;
+}
+const bufferOf = slotOf<ArrayBufferLike>('buffer');
+const byteOffsetOf = slotOf<number>('byteOffset');
+const lengthOf = slotOf<number>('length');
+
 /**
- * @internal Bars `lo` to `lo + len - 1` of `x`, without a copy. Not `subarray`,
- * which looks up a species constructor and so may run caller code.
+ * @internal Bars `lo` to `lo + len - 1` of `x`, without a copy, located through
+ * the built-in accessors: `x.subarray`, `x.buffer`, `x.byteOffset` and
+ * `x.length` may run caller code, or name other bars than the ones `ta-lib/js`
+ * indexes. Throws, so the call falls through, when `x` holds fewer bars.
  */
 export function seriesBars(x: Float64Array, lo: number, len: number): Float64Array {
-  return lo === 0 && len === x.length ? x : new Float64Array(x.buffer, x.byteOffset + lo * 8, len);
+  const length = lengthOf.call(x);
+  if (lo + len > length) {
+    throw new RangeError('the series holds fewer bars than its length says');
+  }
+  return lo === 0 && len === length ? x : new Float64Array(bufferOf.call(x), byteOffsetOf.call(x) + lo * 8, len);
 }
 
 /**

@@ -418,6 +418,27 @@ test('a number[], a Float32Array, a Float64Array subclass and views over a Share
   ranInWasm(check('a SharedArrayBuffer output', () => ema(close, { outReal: out }), () => js.ema(close, { outReal: new Float64Array(N) })), 'a SharedArrayBuffer output');
 });
 
+test('a ranged call over a Float64Array whose buffer or byteOffset is overridden copies the bars ta-lib/js indexes; one whose length overstates its bars falls through', () => {
+  const range = { startIdx: N - 20 };
+  const other = Float64Array.from(close, (v) => -v);
+  const offset = Float64Array.from(close);
+  Object.defineProperty(offset, 'byteOffset', { value: 16 });
+  class Elsewhere extends Float64Array {
+    override get buffer(): ArrayBuffer {
+      return other.buffer;
+    }
+  }
+  for (const [where, input] of [['an own byteOffset', offset], ['a buffer getter', Elsewhere.from(close)]] as const) {
+    ranInWasm(check(where, () => ema(input, range), () => js.ema(input, range)), where);
+  }
+  const memory = new Float64Array(N + 8).fill(7);
+  memory.set(close);
+  const short = new Float64Array(memory.buffer, 0, N - 5);
+  Object.defineProperty(short, 'length', { value: N });
+  const r = check('an own length past its bars', () => ema(short, range), () => js.ema(short, range));
+  assert.deepEqual([r.ran, r.fellThrough, hooks.lastFallThrough()], [0, 1, 'threw']);
+});
+
 test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js rejects it', () => {
   assert.equal(MAType.MAMA, 7);
   const mama = check('maType 7', () => ma(close, { maType: MAType.MAMA }), () => js.ma(close, { maType: MAType.MAMA }));
