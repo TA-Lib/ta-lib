@@ -44,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092526 MF,CC  First version (issue #449).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -875,6 +876,9 @@ function percentbOpenImpl(
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
   let lagNb0 = 0;
   lookbackTotal = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
+  if (lookbackTotal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   firstIdx = startIdx;
   if (firstIdx < lookbackTotal) {
     firstIdx = lookbackTotal;

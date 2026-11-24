@@ -74,6 +74,7 @@
  *                by var.c's scale-relative reseed floor; the square root is
  *                unconditional. Bands no longer collapse on a fine tick.
  *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -135,6 +136,8 @@ impl Core {
         // under-reported those cases (outBegIdx > lookback) and broke streaming, whose
         // Open is tied to lookback+1. The middle band still begins at the MA's earlier
         // begIdx internally and is realigned to this later bar in bbands() below.
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
         maLookback = self.ma_lookback(optInTimePeriod, optInMAType)?;
         stddevLookback = self.stddev_lookback(optInTimePeriod, 1.0)?;
         return Ok((if maLookback > stddevLookback { maLookback } else { stddevLookback }) as usize);

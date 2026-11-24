@@ -103,6 +103,9 @@ func (c *Core) kdjImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 		return BadParam
 	}
 	lookbackTotal = c.kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
+	if lookbackTotal < 0 {
+		return BadParam
+	}
 	if lookbackTotal > endIdx {
 		*outBegIdx = 0
 		*outNBElement = 0
@@ -448,6 +451,9 @@ func (c *Core) kdjOpenImpl(sp *KDJStream, inHigh, inLow, inClose []float64, star
 		sc_outJ = make([]float64, historyLen)
 	}
 	lookbackTotal = c.kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
+	if lookbackTotal < 0 {
+		return BadParam
+	}
 	if lookbackTotal > endIdx {
 		*outBegIdx = 0
 		*outNBElement = 0

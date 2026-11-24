@@ -48,6 +48,7 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -94,7 +95,15 @@ export function stochrsiLookbackPositional(optInTimePeriod: number, optInFastK_P
     return -1;
   }
   let retValue = 0;
-  retValue = rsiLookbackPositional(optInTimePeriod, core) + stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  let stochfLookback = 0;
+  /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+   * range is narrower than this function's (SSF).
+   */
+  stochfLookback = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (stochfLookback < 0) {
+    return -1;
+  }
+  retValue = rsiLookbackPositional(optInTimePeriod, core) + stochfLookback;
   return retValue;
 }
 
@@ -185,10 +194,13 @@ export function stochrsiImpl(
    * the unsmoothed stoch RSI. If you do not care about the smoothing of
    * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
    */
-  outBegIdx.value = 0;
-  outNBElement.value = 0;
   /* Adjust startIdx to account for the lookback period. */
   lookbackSTOCHF = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackSTOCHF < 0) {
+    return RetCode.BAD_PARAM;
+  }
+  outBegIdx.value = 0;
+  outNBElement.value = 0;
   lookbackTotal = rsiLookbackPositional(optInTimePeriod, core) + lookbackSTOCHF;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
@@ -768,10 +780,13 @@ function stochrsiOpenImpl(
    * the unsmoothed stoch RSI. If you do not care about the smoothing of
    * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
    */
-  outBegIdx.value = 0;
-  outNBElement.value = 0;
   /* Adjust startIdx to account for the lookback period. */
   lookbackSTOCHF = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  if (lookbackSTOCHF < 0) {
+    return RetCode.BAD_PARAM;
+  }
+  outBegIdx.value = 0;
+  outNBElement.value = 0;
   lookbackTotal = rsiLookbackPositional(optInTimePeriod, core) + lookbackSTOCHF;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;

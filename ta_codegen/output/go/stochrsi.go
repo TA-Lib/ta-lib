@@ -57,7 +57,12 @@ func (c *Core) stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_P
 		return -1
 	}
 	var retValue int32
-	retValue = c.rsiLookback(optInTimePeriod) + c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+	var stochfLookback int32
+	stochfLookback = c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+	if stochfLookback < 0 {
+		return -1
+	}
+	retValue = c.rsiLookback(optInTimePeriod) + stochfLookback
 	return retValue
 }
 
@@ -97,9 +102,12 @@ func (c *Core) stochrsiImpl(startIdx, endIdx int32, inReal []float64, optInTimeP
 	if sameStart(outFastK, outFastD) {
 		return BadParam
 	}
+	lookbackSTOCHF = c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+	if lookbackSTOCHF < 0 {
+		return BadParam
+	}
 	*outBegIdx = 0
 	*outNBElement = 0
-	lookbackSTOCHF = c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
 	lookbackTotal = c.rsiLookback(optInTimePeriod) + lookbackSTOCHF
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
@@ -414,9 +422,12 @@ func (c *Core) stochrsiOpenImpl(sp *STOCHRSIStream, inReal []float64, startIdx, 
 	} else {
 		sc_outFastD = make([]float64, historyLen)
 	}
+	lookbackSTOCHF = c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+	if lookbackSTOCHF < 0 {
+		return BadParam
+	}
 	*outBegIdx = 0
 	*outNBElement = 0
-	lookbackSTOCHF = c.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)
 	lookbackTotal = c.rsiLookback(optInTimePeriod) + lookbackSTOCHF
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal

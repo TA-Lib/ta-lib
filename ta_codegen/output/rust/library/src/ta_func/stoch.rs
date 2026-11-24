@@ -66,6 +66,7 @@
  *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 // Import types from parent module
@@ -127,12 +128,15 @@ impl Core {
             optInSlowD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
+        let mut maLookback: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
-        // Add the smoothing being done for %K slow
-        retValue += self.ma_lookback(optInSlowK_Period, optInSlowK_MAType)?;
-        // Add the smoothing being done for %D slow.
-        retValue += self.ma_lookback(optInSlowD_Period, optInSlowD_MAType)?;
+        // Below 0 a callee lookback rejected its parameters: an MA type whose period
+        // range is narrower than this function's (SSF).
+        maLookback = self.ma_lookback(optInSlowK_Period, optInSlowK_MAType)?;
+        retValue += maLookback;
+        maLookback = self.ma_lookback(optInSlowD_Period, optInSlowD_MAType)?;
+        retValue += maLookback;
         return Ok(retValue);
     }
     /// Display shift of one output of [`Core::stoch`]: how many bars ahead (positive) or behind

@@ -55,6 +55,7 @@
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -181,6 +182,9 @@ export function mavpImpl(
    * to calculate at least one output.
    */
   lookbackTotal = maLookbackPositional(optInMaxPeriod, (optInMAType as MAType), core);
+  if (lookbackTotal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   /* Move up the start index if there is not
    * enough initial data.
    */

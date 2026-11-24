@@ -300,6 +300,9 @@ fn build_typing(func: &FuncDef, model: &StreamModel) -> Typing {
 /// the same statement population batch typing saw) and every arm model (for
 /// the extrema override union).
 fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]) -> Typing {
+    // Typed as rendered: a folded `x < 0` guard would otherwise make `x` signed.
+    let folded = super::ir_cleanup::drop_answered_lookback_guards(body);
+    let body = folded.as_slice();
     let mut index_vars = HashSet::new();
     let mut real_vars = HashSet::new();
     let mut vec_vars = HashSet::new();
@@ -2599,6 +2602,7 @@ fn fold_open_region(
         &admits,
         Some("Err(RetCode::InsufficientHistory)"),
     );
+    let folded = super::ir_cleanup::drop_answered_lookback_guards(&folded);
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers)
 }
@@ -5868,6 +5872,7 @@ fn emit_composed_region(
         &admits,
         Some("Err(RetCode::InsufficientHistory)"),
     );
+    let folded = super::ir_cleanup::drop_answered_lookback_guards(&folded);
     let folded = super::ir_cleanup::drop_deallocation(&folded);
     let folded = respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers);
     let body: &[Statement] = &folded;

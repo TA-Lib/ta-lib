@@ -48672,6 +48672,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -48679,7 +48680,6 @@ public class TaCodegenServe {
             cb = cb.UnstablePeriod((FuncUnstId)23, svK);
             cb = cb.UnstablePeriod((FuncUnstId)14, svK);
             cb = cb.UnstablePeriod((FuncUnstId)13, svK);
-            cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {

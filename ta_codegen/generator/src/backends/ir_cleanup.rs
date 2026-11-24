@@ -237,6 +237,51 @@ fn returns_code_var(v: &str, var: &str) -> bool {
             .is_some_and(|(_, inner)| inner == var)
 }
 
+/// Fold away `if( x < 0 )` after `x = <callee>_lookback(...)`, for a backend
+/// whose lookback call already answers the callee's rejection (Rust's `?`).
+/// There `x` is unsigned, so the test is not only dead but rejected by rustc's
+/// `unused_comparisons`. The scan is [`drop_answered_cross_call_guards`]': the
+/// guard must follow its assignment in the same statement list, with nothing
+/// between that mentions `x`.
+pub(crate) fn drop_answered_lookback_guards(body: &[Statement]) -> Vec<Statement> {
+    let mut out: Vec<Statement> =
+        body.iter().map(|s| recurse(s, &drop_answered_lookback_guards)).collect();
+    let mut targets: Vec<(usize, String)> = Vec::new();
+    for i in 0..out.len() {
+        if let Statement::Assign { target: Expr::Var(v), value: Expr::FuncCall(f, _), compound: false } = &out[i] {
+            if f.ends_with("_lookback") || f.ends_with("_Lookback") {
+                if let Some(j) = guard_index(&out, i + 1, v) {
+                    targets.push((j, v.clone()));
+                }
+            }
+        }
+    }
+    for (j, var) in targets {
+        let Statement::If { condition, then_body, else_body, .. } = &out[j] else {
+            continue;
+        };
+        let leaf = |e: &Expr| is_negative_test(e, &var).then_some(false);
+        match fold_cond(condition, &leaf) {
+            CondFold::Known(false) => out[j] = Statement::Block { body: else_body.clone() },
+            CondFold::Open { expr, changed: true } => {
+                out[j] = Statement::If {
+                    condition: expr,
+                    then_body: then_body.clone(),
+                    else_body: else_body.clone(),
+                    cond_comments: Vec::new(),
+                };
+            }
+            CondFold::Known(true) | CondFold::Open { .. } => {}
+        }
+    }
+    out
+}
+
+fn is_negative_test(e: &Expr, var: &str) -> bool {
+    matches!(e, Expr::BinOp(l, BinOp::Less, r)
+        if matches!(l.as_ref(), Expr::Var(n) if n == var) && matches!(r.as_ref(), Expr::IntLiteral(0)))
+}
+
 fn is_not_success(e: &Expr, var: &str) -> bool {
     let Expr::BinOp(l, BinOp::NotEq, r) = e else {
         return false;

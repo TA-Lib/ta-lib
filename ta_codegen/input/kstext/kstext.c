@@ -11,20 +11,38 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 int kstext_lookback(int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType)
 {
-   int legMax, leg;
+   int legMax, leg, maLookback;
 
-   legMax = optInROC1Period + ma_lookback( optInMA1Period, optInROCMAType );
-   leg = optInROC2Period + ma_lookback( optInMA2Period, optInROCMAType );
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF). */
+   maLookback = ma_lookback( optInMA1Period, optInROCMAType );
+   if( maLookback < 0 )
+      return -1;
+   legMax = optInROC1Period + maLookback;
+   maLookback = ma_lookback( optInMA2Period, optInROCMAType );
+   if( maLookback < 0 )
+      return -1;
+   leg = optInROC2Period + maLookback;
    if( leg > legMax ) legMax = leg;
-   leg = optInROC3Period + ma_lookback( optInMA3Period, optInROCMAType );
+   maLookback = ma_lookback( optInMA3Period, optInROCMAType );
+   if( maLookback < 0 )
+      return -1;
+   leg = optInROC3Period + maLookback;
    if( leg > legMax ) legMax = leg;
-   leg = optInROC4Period + ma_lookback( optInMA4Period, optInROCMAType );
+   maLookback = ma_lookback( optInMA4Period, optInROCMAType );
+   if( maLookback < 0 )
+      return -1;
+   leg = optInROC4Period + maLookback;
    if( leg > legMax ) legMax = leg;
-   return legMax + ma_lookback( optInSignalPeriod, optInSignalMAType );
+   maLookback = ma_lookback( optInSignalPeriod, optInSignalMAType );
+   if( maLookback < 0 )
+      return -1;
+   return legMax + maLookback;
 }
 
 TA_RetCode kstext(int startIdx, int endIdx,
@@ -58,15 +76,25 @@ TA_RetCode kstext(int startIdx, int endIdx,
     * its legs left to right. Changing either breaks the equality.
     */
 
-   *outBegIdx = 0;
-   *outNBElement = 0;
-
    /* lookbackTotal must stay kstext_lookback() of the same parameters. */
    lookbackSignal = ma_lookback( optInSignalPeriod, optInSignalMAType );
+   if( lookbackSignal < 0 )
+      return TA_BAD_PARAM;
    lookbackMA1 = ma_lookback( optInMA1Period, optInROCMAType );
+   if( lookbackMA1 < 0 )
+      return TA_BAD_PARAM;
    lookbackMA2 = ma_lookback( optInMA2Period, optInROCMAType );
+   if( lookbackMA2 < 0 )
+      return TA_BAD_PARAM;
    lookbackMA3 = ma_lookback( optInMA3Period, optInROCMAType );
+   if( lookbackMA3 < 0 )
+      return TA_BAD_PARAM;
    lookbackMA4 = ma_lookback( optInMA4Period, optInROCMAType );
+   if( lookbackMA4 < 0 )
+      return TA_BAD_PARAM;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
 
    lookbackTotal = optInROC1Period + lookbackMA1;
    tempInteger = optInROC2Period + lookbackMA2;

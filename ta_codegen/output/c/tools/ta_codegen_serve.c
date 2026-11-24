@@ -66655,6 +66655,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
+    TA_SetUnstablePeriod(21, (unsigned int)svK);
     TA_SetUnstablePeriod(37, (unsigned int)svK);
     TA_SetUnstablePeriod(29, (unsigned int)svK);
     TA_SetUnstablePeriod(24, (unsigned int)svK);
@@ -66662,13 +66663,13 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
     TA_SetUnstablePeriod(23, (unsigned int)svK);
     TA_SetUnstablePeriod(14, (unsigned int)svK);
     TA_SetUnstablePeriod(13, (unsigned int)svK);
-    TA_SetUnstablePeriod(21, (unsigned int)svK);
     rc = TA_STOCHRSI(0, svN - 1, sv_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &svBeg, &svNb, sv_b0, sv_b1);
     lb = TA_STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
     if( rc != TA_SUCCESS || svNb <= 0 ) {
         int openRejects = 0;
         { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(&st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
           if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHRSI_Close(st); }
+        TA_SetUnstablePeriod(21, 0);
         TA_SetUnstablePeriod(37, 0);
         TA_SetUnstablePeriod(29, 0);
         TA_SetUnstablePeriod(24, 0);
@@ -66676,7 +66677,6 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
         TA_SetUnstablePeriod(13, 0);
-        TA_SetUnstablePeriod(21, 0);
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
@@ -66932,6 +66932,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
           }
     }
     if( shortHistChecked && !shortHistOk ) allOk = 0;
+    TA_SetUnstablePeriod(21, 0);
     TA_SetUnstablePeriod(37, 0);
     TA_SetUnstablePeriod(29, 0);
     TA_SetUnstablePeriod(24, 0);
@@ -66939,7 +66940,6 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
     TA_SetUnstablePeriod(23, 0);
     TA_SetUnstablePeriod(14, 0);
     TA_SetUnstablePeriod(13, 0);
-    TA_SetUnstablePeriod(21, 0);
     if( fillChecked && !fillOk ) allOk = 0;
     if( stateChecked && !stateOk ) allOk = 0;
     if( cloneChecked && !cloneOk ) allOk = 0;

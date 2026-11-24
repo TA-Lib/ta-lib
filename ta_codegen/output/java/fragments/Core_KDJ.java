@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #365).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -155,6 +156,9 @@
          return RetCode.BAD_PARAM ;
       }
       lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
@@ -231,6 +235,9 @@
          return RetCode.BAD_PARAM ;
       }
       lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -726,6 +733,9 @@
       double[] sc_outD = outStride == 1 ? outD : new double[historyLen];
       double[] sc_outJ = outStride == 1 ? outJ : new double[historyLen];
       lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.

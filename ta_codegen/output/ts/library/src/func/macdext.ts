@@ -48,6 +48,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -111,14 +112,25 @@ export function macdextLookbackPositional(optInFastPeriod: number, optInFastMATy
   }
   let tempInteger = 0;
   let lookbackLargest = 0;
-  /* Find the MA with the largest lookback */
+  /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+   * range is narrower than this function's (SSF).
+   */
   lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  if (lookbackLargest < 0) {
+    return -1;
+  }
   tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  if (tempInteger < 0) {
+    return -1;
+  }
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
-  /* Add to the largest MA lookback the signal line lookback */
-  return lookbackLargest + maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  tempInteger = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (tempInteger < 0) {
+    return -1;
+  }
+  return lookbackLargest + tempInteger;
 }
 
 /** @internal */
@@ -234,12 +246,21 @@ export function macdextImpl(
   }
   /* Find the MA with the largest lookback */
   lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  if (lookbackLargest < 0) {
+    return RetCode.BAD_PARAM;
+  }
   tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  if (tempInteger < 0) {
+    return RetCode.BAD_PARAM;
+  }
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
   /* Add the lookback needed for the signal line */
   lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (lookbackSignal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackSignal + lookbackLargest;
   /* Move up the start index if there is not
    * enough initial data.
@@ -935,12 +956,21 @@ function macdextOpenImpl(
   }
   /* Find the MA with the largest lookback */
   lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  if (lookbackLargest < 0) {
+    return RetCode.BAD_PARAM;
+  }
   tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  if (tempInteger < 0) {
+    return RetCode.BAD_PARAM;
+  }
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
   /* Add the lookback needed for the signal line */
   lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  if (lookbackSignal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   lookbackTotal = lookbackSignal + lookbackLargest;
   /* Move up the start index if there is not
    * enough initial data.

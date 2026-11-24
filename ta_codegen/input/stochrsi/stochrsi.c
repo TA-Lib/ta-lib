@@ -14,13 +14,19 @@
  *  101103 PP   Initial creation of code.
  *  112603 MF   Add independent control to the RSI period.
  *  020605 AA   Fix #1117656. NULL pointer assignement.
+ *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
  */
 
 int stochrsi_lookback(int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType)
 {
-   int retValue;
+   int retValue, stochfLookback;
 
-   retValue = rsi_lookback( optInTimePeriod ) + stochf_lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF). */
+   stochfLookback = stochf_lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   if( stochfLookback < 0 )
+      return -1;
+   retValue = rsi_lookback( optInTimePeriod ) + stochfLookback;
 
    return retValue;
 }
@@ -68,11 +74,13 @@ TA_RetCode stochrsi(int startIdx, int endIdx,
     * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
     */
 
-   *outBegIdx = 0;
-   *outNBElement = 0;
-
    /* Adjust startIdx to account for the lookback period. */
    lookbackSTOCHF = stochf_lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   if( lookbackSTOCHF < 0 )
+      return TA_BAD_PARAM;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
    lookbackTotal = rsi_lookback( optInTimePeriod ) + lookbackSTOCHF;
 
    if( startIdx < lookbackTotal )

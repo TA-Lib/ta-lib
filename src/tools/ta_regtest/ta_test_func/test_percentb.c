@@ -2003,7 +2003,8 @@ static ErrorNumber test_pctb_lookback( void )
             lb  = TA_PERCENTB_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             lbB = TA_BBANDS_Lookback( ns[p], 2.5, 1.5, (TA_MAType)mt );
             g_pctbLookbackCmp++;
-            if( lb != lbB || lb < 0 )
+            /* SSF refuses a period past its own cap, through MA. */
+            if( lb != lbB || (lb < 0) != (mt == TA_MAType_SSF && ns[p] > 10000) )
             {
                printf( "PERCENTB lookback Fail [n=%d matype=%d unstable id %d = %u]: %d, "
                        "TA_BBANDS_Lookback %d\n", ns[p], mt, (int)ids[d], us[j], lb, lbB );

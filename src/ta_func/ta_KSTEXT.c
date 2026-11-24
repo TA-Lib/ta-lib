@@ -55,12 +55,14 @@
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_KSTEXT_Lookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType )
 {
    int legMax;
    int leg;
+   int maLookback;
    if( (int)optInROC1Period == TA_INTEGER_DEFAULT )
       optInROC1Period = 10;
    else if( (int)optInROC1Period < 1 || (int)optInROC1Period > 100000 )
@@ -105,23 +107,51 @@ TA_LIB_API int TA_KSTEXT_Lookback( int optInROC1Period, int optInROC2Period, int
       optInSignalMAType = 0;
    else if( (int)optInSignalMAType < TA_MATYPE_MIN || (int)optInSignalMAType > TA_MATYPE_MAX )
       return -1;
-   legMax = optInROC1Period + TA_MA_Lookback(optInMA1Period,optInROCMAType);
-   leg = optInROC2Period + TA_MA_Lookback(optInMA2Period,optInROCMAType);
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF).
+    */
+   maLookback = TA_MA_Lookback(optInMA1Period,optInROCMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   legMax = optInROC1Period + maLookback;
+   maLookback = TA_MA_Lookback(optInMA2Period,optInROCMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   leg = optInROC2Period + maLookback;
    if( leg > legMax )
    {
       legMax = leg;
    }
-   leg = optInROC3Period + TA_MA_Lookback(optInMA3Period,optInROCMAType);
+   maLookback = TA_MA_Lookback(optInMA3Period,optInROCMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   leg = optInROC3Period + maLookback;
    if( leg > legMax )
    {
       legMax = leg;
    }
-   leg = optInROC4Period + TA_MA_Lookback(optInMA4Period,optInROCMAType);
+   maLookback = TA_MA_Lookback(optInMA4Period,optInROCMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   leg = optInROC4Period + maLookback;
    if( leg > legMax )
    {
       legMax = leg;
    }
-   return legMax + TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   maLookback = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
+   return legMax + maLookback;
 }
 
 TA_LIB_API int TA_KSTEXT_DisplayShift( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int outputIdx )
@@ -236,14 +266,34 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
     * starts on the first bar the signal consumes, and the line accumulates
     * its legs left to right. Changing either breaks the equality.
     */
-   *outBegIdx= 0;
-   *outNBElement= 0;
    /* lookbackTotal must stay kstext_lookback() of the same parameters. */
    lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( lookbackSignal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackMA1 = TA_MA_Lookback(optInMA1Period,optInROCMAType);
+   if( lookbackMA1 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackMA2 = TA_MA_Lookback(optInMA2Period,optInROCMAType);
+   if( lookbackMA2 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackMA3 = TA_MA_Lookback(optInMA3Period,optInROCMAType);
+   if( lookbackMA3 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackMA4 = TA_MA_Lookback(optInMA4Period,optInROCMAType);
+   if( lookbackMA4 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = optInROC1Period + lookbackMA1;
    tempInteger = optInROC2Period + lookbackMA2;
    if( tempInteger > lookbackTotal )
@@ -479,13 +529,33 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
    if( outKST == outKSTSignal )
       return TA_BAD_PARAM;
 
+   lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+   if( lookbackSignal < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   lookbackMA1 = TA_MA_Lookback(optInMA1Period,optInROCMAType);
+   if( lookbackMA1 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   lookbackMA2 = TA_MA_Lookback(optInMA2Period,optInROCMAType);
+   if( lookbackMA2 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   lookbackMA3 = TA_MA_Lookback(optInMA3Period,optInROCMAType);
+   if( lookbackMA3 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
+   lookbackMA4 = TA_MA_Lookback(optInMA4Period,optInROCMAType);
+   if( lookbackMA4 < 0 )
+   {
+      return TA_BAD_PARAM;
+   }
    *outBegIdx= 0;
    *outNBElement= 0;
-   lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
-   lookbackMA1 = TA_MA_Lookback(optInMA1Period,optInROCMAType);
-   lookbackMA2 = TA_MA_Lookback(optInMA2Period,optInROCMAType);
-   lookbackMA3 = TA_MA_Lookback(optInMA3Period,optInROCMAType);
-   lookbackMA4 = TA_MA_Lookback(optInMA4Period,optInROCMAType);
    lookbackTotal = optInROC1Period + lookbackMA1;
    tempInteger = optInROC2Period + lookbackMA2;
    if( tempInteger > lookbackTotal )
@@ -840,14 +910,39 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      dummyBegIdx = 0;
-      dummyNBElement = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = TA_MA_Lookback(optInSignalPeriod,optInSignalMAType);
+      if( lookbackSignal < 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_BAD_PARAM;
+      }
       lookbackMA1 = TA_MA_Lookback(optInMA1Period,optInROCMAType);
+      if( lookbackMA1 < 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_BAD_PARAM;
+      }
       lookbackMA2 = TA_MA_Lookback(optInMA2Period,optInROCMAType);
+      if( lookbackMA2 < 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_BAD_PARAM;
+      }
       lookbackMA3 = TA_MA_Lookback(optInMA3Period,optInROCMAType);
+      if( lookbackMA3 < 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_BAD_PARAM;
+      }
       lookbackMA4 = TA_MA_Lookback(optInMA4Period,optInROCMAType);
+      if( lookbackMA4 < 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_BAD_PARAM;
+      }
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal )

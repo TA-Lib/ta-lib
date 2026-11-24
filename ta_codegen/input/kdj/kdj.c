@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #365).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 int kdj_lookback(int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType)
@@ -38,6 +39,8 @@ TA_RetCode kdj(int startIdx, int endIdx,
 
    lookbackTotal = kdj_lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType,
       optInSlowD_Period, optInSlowD_MAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
 
    /* Nothing to produce: the range ends before the lookback. Answering here
     * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where

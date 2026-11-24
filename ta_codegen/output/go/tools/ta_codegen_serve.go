@@ -83662,6 +83662,9 @@ func svSTOCHRSI(s *server, p params) string {
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
+		if c2.SetUnstablePeriod(talib.FuncUnstId(21), svK) != nil {
+			return `{"error":"unstablePeriod out of range"}`
+		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(37), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
@@ -83681,9 +83684,6 @@ func svSTOCHRSI(s *server, p params) string {
 			return `{"error":"unstablePeriod out of range"}`
 		}
 		if c2.SetUnstablePeriod(talib.FuncUnstId(13), svK) != nil {
-			return `{"error":"unstablePeriod out of range"}`
-		}
-		if c2.SetUnstablePeriod(talib.FuncUnstId(21), svK) != nil {
 			return `{"error":"unstablePeriod out of range"}`
 		}
 		rc := 0

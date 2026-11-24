@@ -21,6 +21,7 @@
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
  *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
@@ -71,6 +72,8 @@ TA_RetCode mavp(int startIdx, int endIdx,
     * to calculate at least one output.
     */
    lookbackTotal = ma_lookback(optInMaxPeriod,optInMAType);
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
 
    /* Move up the start index if there is not
     * enough initial data.

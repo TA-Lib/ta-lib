@@ -611,6 +611,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     let admits = |f: &str, args: &[Expr]| cross_call_split(f, args, registry).is_some();
     for body in [&mut elected.body, &mut elected.private_body] {
         *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
+        *body = ir_cleanup::drop_answered_lookback_guards(body);
         *body = ir_cleanup::drop_deallocation(body);
         *body = ir_cleanup::drop_inert_guards(body);
         *body = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
@@ -5230,6 +5231,8 @@ fn render_lookback_code(
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
+    let folded = ir_cleanup::drop_answered_lookback_guards(stmts);
+    let stmts = folded.as_slice();
     let empty_for_loop_vars: Vec<String> = Vec::new();
     let empty_var_inits: std::collections::HashMap<String, &Expr> =
         std::collections::HashMap::new();

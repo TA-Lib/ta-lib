@@ -61815,7 +61815,7 @@ function sv_STOCHRSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).unstablePeriod(21, svK).build(); }
+    try { c2 = Core.builder().unstablePeriod(21, svK).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCHRSI.stochrsiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }

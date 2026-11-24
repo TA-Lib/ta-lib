@@ -95,20 +95,41 @@ func (c *Core) kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period,
 	}
 	var legMax int32
 	var leg int32
-	legMax = optInROC1Period + c.maLookback(optInMA1Period, optInROCMAType)
-	leg = optInROC2Period + c.maLookback(optInMA2Period, optInROCMAType)
+	var maLookback int32
+	maLookback = c.maLookback(optInMA1Period, optInROCMAType)
+	if maLookback < 0 {
+		return -1
+	}
+	legMax = optInROC1Period + maLookback
+	maLookback = c.maLookback(optInMA2Period, optInROCMAType)
+	if maLookback < 0 {
+		return -1
+	}
+	leg = optInROC2Period + maLookback
 	if leg > legMax {
 		legMax = leg
 	}
-	leg = optInROC3Period + c.maLookback(optInMA3Period, optInROCMAType)
+	maLookback = c.maLookback(optInMA3Period, optInROCMAType)
+	if maLookback < 0 {
+		return -1
+	}
+	leg = optInROC3Period + maLookback
 	if leg > legMax {
 		legMax = leg
 	}
-	leg = optInROC4Period + c.maLookback(optInMA4Period, optInROCMAType)
+	maLookback = c.maLookback(optInMA4Period, optInROCMAType)
+	if maLookback < 0 {
+		return -1
+	}
+	leg = optInROC4Period + maLookback
 	if leg > legMax {
 		legMax = leg
 	}
-	return legMax + c.maLookback(optInSignalPeriod, optInSignalMAType)
+	maLookback = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if maLookback < 0 {
+		return -1
+	}
+	return legMax + maLookback
 }
 
 func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType int32, outBegIdx, outNBElement *int32, outKST, outKSTSignal []float64) RetCode {
@@ -191,13 +212,28 @@ func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Per
 	if sameStart(outKST, outKSTSignal) {
 		return BadParam
 	}
+	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if lookbackSignal < 0 {
+		return BadParam
+	}
+	lookbackMA1 = c.maLookback(optInMA1Period, optInROCMAType)
+	if lookbackMA1 < 0 {
+		return BadParam
+	}
+	lookbackMA2 = c.maLookback(optInMA2Period, optInROCMAType)
+	if lookbackMA2 < 0 {
+		return BadParam
+	}
+	lookbackMA3 = c.maLookback(optInMA3Period, optInROCMAType)
+	if lookbackMA3 < 0 {
+		return BadParam
+	}
+	lookbackMA4 = c.maLookback(optInMA4Period, optInROCMAType)
+	if lookbackMA4 < 0 {
+		return BadParam
+	}
 	*outBegIdx = 0
 	*outNBElement = 0
-	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
-	lookbackMA1 = c.maLookback(optInMA1Period, optInROCMAType)
-	lookbackMA2 = c.maLookback(optInMA2Period, optInROCMAType)
-	lookbackMA3 = c.maLookback(optInMA3Period, optInROCMAType)
-	lookbackMA4 = c.maLookback(optInMA4Period, optInROCMAType)
 	lookbackTotal = optInROC1Period + lookbackMA1
 	tempInteger = optInROC2Period + lookbackMA2
 	if tempInteger > lookbackTotal {
@@ -750,13 +786,28 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 	lagNb2 := int32(0)
 	lagNb3 := int32(0)
 	lagNb4 := int32(0)
+	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
+	if lookbackSignal < 0 {
+		return BadParam
+	}
+	lookbackMA1 = c.maLookback(optInMA1Period, optInROCMAType)
+	if lookbackMA1 < 0 {
+		return BadParam
+	}
+	lookbackMA2 = c.maLookback(optInMA2Period, optInROCMAType)
+	if lookbackMA2 < 0 {
+		return BadParam
+	}
+	lookbackMA3 = c.maLookback(optInMA3Period, optInROCMAType)
+	if lookbackMA3 < 0 {
+		return BadParam
+	}
+	lookbackMA4 = c.maLookback(optInMA4Period, optInROCMAType)
+	if lookbackMA4 < 0 {
+		return BadParam
+	}
 	*outBegIdx = 0
 	*outNBElement = 0
-	lookbackSignal = c.maLookback(optInSignalPeriod, optInSignalMAType)
-	lookbackMA1 = c.maLookback(optInMA1Period, optInROCMAType)
-	lookbackMA2 = c.maLookback(optInMA2Period, optInROCMAType)
-	lookbackMA3 = c.maLookback(optInMA3Period, optInROCMAType)
-	lookbackMA4 = c.maLookback(optInMA4Period, optInROCMAType)
 	lookbackTotal = optInROC1Period + lookbackMA1
 	tempInteger = optInROC2Period + lookbackMA2
 	if tempInteger > lookbackTotal {

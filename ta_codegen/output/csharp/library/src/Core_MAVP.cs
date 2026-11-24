@@ -65,6 +65,7 @@ public partial class Core
     *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
     *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
     *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Mavp</c> consumes before it can produce
@@ -219,6 +220,9 @@ public partial class Core
        * to calculate at least one output.
        */
       lookbackTotal = MaLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -535,6 +539,9 @@ public partial class Core
          return RetCode.BadParam ;
       }
       lookbackTotal = MaLookback(optInMaxPeriod, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BadParam ;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }

@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092526 MF,CC  First version (issue #449).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 /* Using percentb_ALT1 for TA_ALT={BATCH,JAVA} */
@@ -1038,6 +1039,9 @@
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       int lagNb0 = 0;
       lookbackTotal = percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      if( lookbackTotal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal ) {
          firstIdx = lookbackTotal;

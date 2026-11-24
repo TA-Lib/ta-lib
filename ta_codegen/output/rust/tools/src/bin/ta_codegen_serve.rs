@@ -86991,6 +86991,7 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(37usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(29usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
@@ -86998,7 +86999,6 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
-        if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),

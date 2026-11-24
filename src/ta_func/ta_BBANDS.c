@@ -76,6 +76,7 @@
  *                by var.c's scale-relative reseed floor; the square root is
  *                unconditional. Bands no longer collapse on a fine tick.
  *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
@@ -110,7 +111,14 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
     * Open is tied to lookback+1. The middle band still begins at the MA's earlier
     * begIdx internally and is realigned to this later bar in bbands() below.
     */
+   /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+    * range is narrower than this function's (SSF).
+    */
    maLookback = TA_MA_Lookback(optInTimePeriod,optInMAType);
+   if( maLookback < 0 )
+   {
+      return -1;
+   }
    stddevLookback = TA_STDDEV_Lookback(optInTimePeriod,1.0);
    return (maLookback > stddevLookback) ? maLookback : stddevLookback;
 }

@@ -55,6 +55,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  100126 MF,CC  First version (#491).
     *  101126 MF,CC  Each lookback is asked once per call (#522).
+    *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
     */
    /// <summary>
    /// Number of leading input bars <c>Kstext</c> consumes before it can produce
@@ -153,20 +154,44 @@ public partial class Core
       }
       int legMax = 0;
       int leg = 0;
-      legMax = optInROC1Period + MaLookback(optInMA1Period, optInROCMAType);
-      leg = optInROC2Period + MaLookback(optInMA2Period, optInROCMAType);
+      int maLookback = 0;
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
+      maLookback = MaLookback(optInMA1Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      legMax = optInROC1Period + maLookback;
+      maLookback = MaLookback(optInMA2Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC2Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC3Period + MaLookback(optInMA3Period, optInROCMAType);
+      maLookback = MaLookback(optInMA3Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC3Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      leg = optInROC4Period + MaLookback(optInMA4Period, optInROCMAType);
+      maLookback = MaLookback(optInMA4Period, optInROCMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      leg = optInROC4Period + maLookback;
       if( leg > legMax ) {
          legMax = leg;
       }
-      return legMax + MaLookback(optInSignalPeriod, optInSignalMAType) ;
+      maLookback = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( maLookback < 0 ) {
+         return -1 ;
+      }
+      return legMax + maLookback ;
 
    }
    /// <summary>
@@ -329,14 +354,29 @@ public partial class Core
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -579,13 +619,28 @@ public partial class Core
       }
       double[]? _rent_kstBuffer = null;
       double[]? _rent_tempBuffer = null;
+      lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
-      lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
-      lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
-      lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {
@@ -1322,14 +1377,29 @@ public partial class Core
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
        */
-      outBegIdx = 0;
-      outNBElement = 0;
       /* lookbackTotal must stay kstext_lookback() of the same parameters. */
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA1 = MaLookback(optInMA1Period, optInROCMAType);
+      if( lookbackMA1 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA2 = MaLookback(optInMA2Period, optInROCMAType);
+      if( lookbackMA2 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA3 = MaLookback(optInMA3Period, optInROCMAType);
+      if( lookbackMA3 < 0 ) {
+         return RetCode.BadParam ;
+      }
       lookbackMA4 = MaLookback(optInMA4Period, optInROCMAType);
+      if( lookbackMA4 < 0 ) {
+         return RetCode.BadParam ;
+      }
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = optInROC1Period + lookbackMA1;
       tempInteger = optInROC2Period + lookbackMA2;
       if( tempInteger > lookbackTotal ) {

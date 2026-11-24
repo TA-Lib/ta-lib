@@ -14,6 +14,7 @@
  *  070526 MF,CC  Speed optimization: delegate to the single-pass MACD
  *                when all three MA types are EMA (bit-exact).
  *  100226 MF,CC  #497. The consistency exit leaves the range untouched.
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
    /**
@@ -80,14 +81,25 @@
       }
       int tempInteger;
       int lookbackLargest;
-      /* Find the MA with the largest lookback */
+      /* Below 0 a callee lookback rejected its parameters: an MA type whose period
+       * range is narrower than this function's (SSF).
+       */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return -1 ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
-      /* Add to the largest MA lookback the signal line lookback */
-      return lookbackLargest + maLookback(optInSignalPeriod, optInSignalMAType) ;
+      tempInteger = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( tempInteger < 0 ) {
+         return -1 ;
+      }
+      return lookbackLargest + tempInteger ;
 
    }
    /**
@@ -222,12 +234,21 @@
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -365,11 +386,20 @@
          optInFastMAType = tempMAType;
       }
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -908,12 +938,21 @@
       }
       /* Find the MA with the largest lookback */
       lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      if( lookbackLargest < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
+      if( tempInteger < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
       lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
+      if( lookbackSignal < 0 ) {
+         return RetCode.BAD_PARAM ;
+      }
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.

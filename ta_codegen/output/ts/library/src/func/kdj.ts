@@ -44,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #365).
+ *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
  */
 
 import { MAType, MATypes } from '../enums.ts';
@@ -167,6 +168,9 @@ export function kdjImpl(
     return RetCode.BAD_PARAM;
   }
   lookbackTotal = kdjLookbackPositional(optInFastK_Period, optInSlowK_Period, (optInSlowK_MAType as MAType), optInSlowD_Period, (optInSlowD_MAType as MAType), core);
+  if (lookbackTotal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   /* Nothing to produce: the range ends before the lookback. Answering here
    * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
    * its own argument check would reject before any array is touched.
@@ -819,6 +823,9 @@ function kdjOpenImpl(
   const sc_outD = outStride === 1 ? outD : new Float64Array(historyLen);
   const sc_outJ = outStride === 1 ? outJ : new Float64Array(historyLen);
   lookbackTotal = kdjLookbackPositional(optInFastK_Period, optInSlowK_Period, (optInSlowK_MAType as MAType), optInSlowD_Period, (optInSlowD_MAType as MAType), core);
+  if (lookbackTotal < 0) {
+    return RetCode.BAD_PARAM;
+  }
   /* Nothing to produce: the range ends before the lookback. Answering here
    * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
    * its own argument check would reject before any array is touched.
