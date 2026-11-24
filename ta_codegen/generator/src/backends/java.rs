@@ -91,6 +91,71 @@ use super::stmt_walk::StatementEmitter;
 /// unconditionally before the `if`.
 pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
+/// Candle ranges one stream opener may inline wherever they stand. With more,
+/// those outside every loop of the body become calls to `Core.candleRange`.
+///
+/// HotSpot never JIT-compiles a method over 8000 bytes of bytecode. An inlined
+/// range is about 100 bytes and the call about 30. CDLADVANCEBLOCK's two
+/// openers inline 45 and 55 ranges and measured 8615 and 10098 bytes; the next
+/// largest, CDL3WHITESOLDIERS's sink frame, inlines 44 in 7989 and keeps them.
+/// `scripts/check_java_method_size.py` is the gate.
+///
+/// A range in a loop of the body stays inline: with every range of
+/// CDLADVANCEBLOCK's sink frame as a call, open measured 41 ns per bar against
+/// 17 inlined, though C2 inlined the hot calls. Every site of `candleRange`
+/// shares one branch profile, where an inlined site has its own and its setting
+/// takes one arm. The ring fills ahead of the body are not its loops and call
+/// it too: they run one averaging period per open, and inlining them costs long
+/// opens more than it saves short ones.
+pub(crate) const CANDLE_RANGE_INLINE_MAX: usize = 44;
+
+/// Text only an inlined candle range contains, which is how
+/// [`emit_inside_jit_limit`] counts them in a method it has written.
+const CANDLE_RANGE_MARK: &str = " == 0) ? (Math.abs(";
+
+thread_local! {
+    /// Whether a candle range outside every loop of the body renders as a call. The opener
+    /// emitters build their render contexts several layers below the frame
+    /// that knows its size, so the choice is stashed here for the span of one
+    /// frame.
+    static CANDLE_RANGE_CALLS: Cell<bool> = const { Cell::new(false) };
+
+    /// How many loop bodies enclose the statement being rendered.
+    static LOOP_DEPTH: Cell<usize> = const { Cell::new(0) };
+}
+
+/// Marks the statements rendered while it lives as a loop's body.
+struct LoopBody;
+
+impl LoopBody {
+    fn enter() -> LoopBody {
+        LOOP_DEPTH.with(|d| d.set(d.get() + 1));
+        LoopBody
+    }
+}
+
+impl Drop for LoopBody {
+    fn drop(&mut self) {
+        LOOP_DEPTH.with(|d| d.set(d.get() - 1));
+    }
+}
+
+/// Appends one method written by `emit`, which is run a second time with its
+/// straight-line candle ranges as calls if the first pass wrote more than
+/// [`CANDLE_RANGE_INLINE_MAX`] ranges. `counter` is rewound between the two so
+/// the second pass names its temporaries as the first did.
+pub(crate) fn emit_inside_jit_limit(o: &mut String, counter: &Cell<usize>, emit: impl Fn(&mut String)) {
+    let (at, temps) = (o.len(), counter.get());
+    emit(o);
+    if o[at..].matches(CANDLE_RANGE_MARK).count() > CANDLE_RANGE_INLINE_MAX {
+        o.truncate(at);
+        counter.set(temps);
+        CANDLE_RANGE_CALLS.with(|c| c.set(true));
+        emit(o);
+        CANDLE_RANGE_CALLS.with(|c| c.set(false));
+    }
+}
+
 /// Per-render state for the Java backend, mirroring `RustRenderCtx`/`CRenderCtx`.
 /// Bundles the loose per-render state (precision flag, address-of variable sets,
 /// float input params, and the inline-helper counter) threaded through the
@@ -1750,6 +1815,7 @@ impl StatementEmitter for JavaStmt<'_> {
     }
 
     fn while_loop(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
+        let _in_loop = LoopBody::enter();
         let pad = " ".repeat(indent);
         // Hoist multi-statement helpers from the condition expression
         let mut hoisted = Vec::new();
@@ -1776,6 +1842,7 @@ impl StatementEmitter for JavaStmt<'_> {
     }
 
     fn do_while(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
+        let _in_loop = LoopBody::enter();
         let pad = " ".repeat(indent);
         // Hoist multi-statement helpers from the condition expression.
         // For do-while, hoisted blocks go INSIDE the loop body (before the
@@ -1938,6 +2005,7 @@ impl StatementEmitter for JavaStmt<'_> {
     }
 
     fn for_loop(&self, var: &str, count: &Expr, body: &[Statement], indent: usize) -> String {
+        let _in_loop = LoopBody::enter();
         let pad = " ".repeat(indent);
         let mut out = format!(
             "{}for( {} = {}; {} > 0; {}-- ) {{\n",
@@ -1955,6 +2023,7 @@ impl StatementEmitter for JavaStmt<'_> {
     }
 
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], indent: usize) -> String {
+        let _in_loop = LoopBody::enter();
         let pad = " ".repeat(indent);
         let init_str = render_forc_part(init, self.ctx, self.enums, self.registry, self.helpers);
         let update_str = render_forc_part(update, self.ctx, self.enums, self.registry, self.helpers);
@@ -2419,6 +2488,28 @@ pub(crate) fn unst_variant_name(func_name: &str) -> String {
     func_name.strip_prefix("FUNC_UNST_").unwrap_or(func_name).to_string()
 }
 
+/// `TA_CANDLERANGE` over rendered operands, inline. Public for the suite that
+/// reads a `candleRange` call back as the range it stands for.
+#[must_use]
+pub fn candle_range_inline(rt: &str, open: &str, high: &str, low: &str, close: &str) -> String {
+    // The Shadows arm is upper + lower, NOT the algebraically equal
+    // (high - low) - |close - open|. It must match TA_CANDLERANGE in
+    // ta_utility.h term for term: the two forms differ by
+    // reassociation on any bar whose low sits below half its high,
+    // and C is the reference (#217). This spelling is hardcoded here
+    // rather than read from input/helpers/candlestick.c, so a fix to
+    // the helper alone does NOT reach Java -- csharp.rs carries the
+    // same duplicate, and so does `Core.candleRange`, in Core.java's
+    // scaffolding and in server_gen.rs.
+    format!(
+        "(({rt}{CANDLE_RANGE_MARK}{close} - {open})) \
+         : (({rt} == 1) ? ({high} - {low}) \
+         : (({rt} == 2) ? (({high} - ((({close}) >= ({open})) ? ({close}) : ({open}))) \
+         + (((({close}) >= ({open})) ? ({open}) : ({close})) - {low})) \
+         : 0.0)))"
+    )
+}
+
 /// Try to render a candle helper function call as an inline Java ternary chain.
 ///
 /// Converts `ta_candlerange(rangeType, open, high, low, close)` into a nested
@@ -2449,21 +2540,14 @@ fn try_render_candle_ternary(
             let high = r(&args[2]);
             let low = r(&args[3]);
             let close = r(&args[4]);
-            // The Shadows arm is upper + lower, NOT the algebraically equal
-            // (high - low) - |close - open|. It must match TA_CANDLERANGE in
-            // ta_utility.h term for term: the two forms differ by
-            // reassociation on any bar whose low sits below half its high,
-            // and C is the reference (#217). This spelling is hardcoded here
-            // rather than read from input/helpers/candlestick.c, so a fix to
-            // the helper alone does NOT reach Java -- csharp.rs carries the
-            // same duplicate.
-            Some(format!(
-                "(({rt} == 0) ? (Math.abs({close} - {open})) \
-                 : (({rt} == 1) ? ({high} - {low}) \
-                 : (({rt} == 2) ? (({high} - ((({close}) >= ({open})) ? ({close}) : ({open}))) \
-                 + (((({close}) >= ({open})) ? ({open}) : ({close})) - {low})) \
-                 : 0.0)))"
-            ))
+            if CANDLE_RANGE_CALLS.with(Cell::get) && LOOP_DEPTH.with(Cell::get) == 0 {
+                // `candleRange` takes doubles: a float body would subtract at
+                // the wrong width. Only the stream openers ask, and they are
+                // double.
+                assert!(!ctx.single_precision, "candleRange has no float overload");
+                return Some(format!("candleRange({rt}, {open}, {high}, {low}, {close})"));
+            }
+            Some(candle_range_inline(&rt, &open, &high, &low, &close))
         }
         "ta_candleaverage" if args.len() == 8 => {
             let rt = r(&args[0]);

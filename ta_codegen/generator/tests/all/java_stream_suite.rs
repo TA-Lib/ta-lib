@@ -706,6 +706,26 @@ fn candlestick_sections() -> Vec<(String, String)> {
         .collect()
 }
 
+/// `body` with every `candleRange(...)` call written as the range it stands
+/// for. An opener over the JIT limit calls it in straight-line code, so its
+/// sink frame's last pass and its opener's loop spell the same range two ways.
+fn candle_ranges_inlined(body: &str) -> String {
+    let call = "candleRange(";
+    let mut out = String::new();
+    let mut rest = body;
+    while let Some(i) = rest.find(call) {
+        let args = &rest[i + call.len()..];
+        let end = args.find(')').expect("candleRange call closes");
+        let a: Vec<&str> = args[..end].split(", ").collect();
+        assert_eq!(a.len(), 5, "candleRange takes a range type and four prices: {}", &args[..end]);
+        out.push_str(&rest[..i]);
+        out.push_str(&backends::java::candle_range_inline(a[0], a[1], a[2], a[3], a[4]));
+        rest = &args[end + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
 fn is_loop_head(line: &str) -> bool {
     let t = line.trim_start();
     t.starts_with("while(") || t.starts_with("for(") || t.starts_with("do {")
@@ -765,8 +785,8 @@ fn a_java_sink_frame_decides_only_the_last_bar() {
             continue;
         }
         framed += 1;
-        let sink = body_of(&s, &sink);
-        let fill = body_of(&s, &format!("private RetCode {base}OpenImpl("));
+        let sink = candle_ranges_inlined(&body_of(&s, &sink));
+        let fill = candle_ranges_inlined(&body_of(&s, &format!("private RetCode {base}OpenImpl(")));
         let found = common::history_loops(&common::squeezed_lines(&sink));
         let passes = common::fill_carried(&common::squeezed_lines(&fill), "outInteger");
         assert_eq!(

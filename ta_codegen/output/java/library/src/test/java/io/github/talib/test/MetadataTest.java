@@ -730,6 +730,32 @@ public class MetadataTest {
         }
     }
 
+    /**
+     * A record naming no function routes nowhere from every entry, and an equal
+     * name that is not the registry's own string routes like it.
+     */
+    static void aHolderRoutesByItsNameAlone() {
+        FuncInfo sma = Functions.byName("SMA");
+        for (String name : new String[] { "NOT_A_FUNCTION", "sma", null }) {
+            FuncInfo foreign = new FuncInfo(name, sma.group(), sma.hint(), sma.flags(),
+                sma.inputs(), sma.optInputs(), sma.outputs());
+            ParamHolder h = foreign.newCall().setInput(0, CLOSE).setOutput(0, new double[N]);
+            checkRetCode(RetCode.INVALID_HANDLE, () -> h.call(0, N - 1), name + ": call");
+            checkRetCode(RetCode.INVALID_HANDLE, h::lookback, name + ": lookback");
+            checkRetCode(RetCode.INVALID_HANDLE, () -> h.displayShift(0), name + ": displayShift");
+        }
+
+        FuncInfo copy = new FuncInfo(new String("SMA"), sma.group(), sma.hint(), sma.flags(),
+            sma.inputs(), sma.optInputs(), sma.outputs());
+        double[] got = new double[N];
+        double[] want = new double[N];
+        OutRange r = copy.newCall().setInput(0, CLOSE).setOptInput(0, 7).setOutput(0, got).call(0, N - 1);
+        OutRange w = new Core().sma(0, N - 1, CLOSE, 7, want);
+        check(r.equals(w) && java.util.Arrays.equals(got, want), "an equal name that is not the registry's string calls SMA");
+        check(copy.newCall().setOptInput(0, 7).lookback() == new Core().smaLookback(7),
+            "an equal name that is not the registry's string reaches SMA's lookback");
+    }
+
     /** Explicitly-set parameters must actually reach the function. */
     static void explicitParametersReachTheFunction() {
         double[] a = new double[N];
@@ -1163,6 +1189,7 @@ public class MetadataTest {
         anOutputOnItsInputAnswersTheSame();
         holderRejectsMisuse();
         aRejectedSetterLeavesTheHolderAsItFoundIt();
+        aHolderRoutesByItsNameAlone();
         explicitParametersReachTheFunction();
         choiceListSentinelMatchesTheDefault();
         holderLookbackMatchesTheTypedApi();

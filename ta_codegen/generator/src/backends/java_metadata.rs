@@ -1007,6 +1007,7 @@ public final class ParamHolder {
 
    private final FuncInfo info;
    private final Core core;
+   private final int route;   // the function's arm in Dispatch, -1 for a name it does not route
 
    /** Per input slot: a real series, an int series, or the six price components. */
    private final double[][] realInputs;
@@ -1024,6 +1025,7 @@ public final class ParamHolder {
    ParamHolder(FuncInfo info, Core core) {
       this.info = info;
       this.core = core;
+      this.route = Dispatch.route(info.name());
       int ni = info.inputs().size();
       int no = info.optInputs().size();
       int nout = info.outputs().size();
@@ -1298,6 +1300,7 @@ public final class ParamHolder {
    /* Accessors used by the generated Dispatch switch. */
 
    Core core() { return core; }
+   int route() { return route; }
    double[] realInput(int i) { return realInputs[i]; }
    int[] intInput(int i) { return intInputs[i]; }
    double[] price(int slot, int component) { return priceInputs[slot][component]; }
@@ -1348,16 +1351,14 @@ import io.github.talib.TALibArgumentException;
 final class Dispatch {
 
    private Dispatch() { }
-
-   static OutRange call(ParamHolder h, int startIdx, int endIdx) {
-      Core core = h.core();
-      switch (h.info().name()) {
 ",
     );
 
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
+    let rows = route_table(&mut s, rows);
+    let rows = rows.as_slice();
 
+    let call = DispatchEntry { doc: "", ret: "OutRange", name: "call", params: "ParamHolder h, int startIdx, int endIdx", pass: "h, startIdx, endIdx" };
+    dispatch_frames(&mut s, &call, rows, |f| {
         // Argument order comes STRAIGHT from the row the registry publishes:
         // a price bundle is one slot, and `signature_components` is the order
         // the typed method takes its arrays in. Do not re-fold `FuncDef` with a
@@ -1377,76 +1378,155 @@ final class Dispatch {
                 InputKind::Integer => args.push(format!("h.intInput({slot})")),
             }
         }
-        for (k, opt) in f.opt_inputs.iter().enumerate() {
-            match &opt.domain {
-                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
-                    args.push(format!("h.realOpt({k})"));
-                }
-                OptDomain::IntegerList { .. } => args.push(format!("h.maTypeOpt({k})")),
-                OptDomain::IntegerRange { .. } => args.push(format!("h.intOpt({k})")),
-            }
-        }
+        args.extend(opt_holder_args(f));
         for (k, out) in f.outputs.iter().enumerate() {
             match out.kind {
                 OutputKind::Integer => args.push(format!("h.intOutput({k})")),
                 OutputKind::Real => args.push(format!("h.realOutput({k})")),
             }
         }
+        format!("            return core.{}(\n               {});\n", super::common::camel_words(&f.name), args.join(", "))
+    });
 
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}(");
-        let _ = writeln!(s, "               {});", args.join(", "));
-    }
-
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-
-   /* The lookback tier. Separate from call() because it takes only the optional
+    let lookback = DispatchEntry {
+        doc: "   /* The lookback tier. Separate from call() because it takes only the optional
       parameters -- no inputs, no outputs, no range -- so a caller can size its
       output arrays before binding them, exactly as TA_GetLookback allows. */
-   static int lookback(ParamHolder h) {
-      Core core = h.core();
-      switch (h.info().name()) {
-"#,
-    );
+",
+        ret: "int",
+        name: "lookback",
+        params: "ParamHolder h",
+        pass: "h",
+    };
+    dispatch_frames(&mut s, &lookback, rows, |f| {
+        format!(
+            "            return core.{}Lookback({});\n",
+            super::common::camel_words(&f.name),
+            opt_holder_args(f).join(", ")
+        )
+    });
 
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
-        let args = opt_holder_args(f);
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
-    }
-
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-
-   static int displayShift(ParamHolder h, int outputIdx) {
-      Core core = h.core();
-      switch (h.info().name()) {
-"#,
-    );
-
-    for f in rows {
-        let camel = super::common::camel_words(&f.name);
+    let shift = DispatchEntry { doc: "", ret: "int", name: "displayShift", params: "ParamHolder h, int outputIdx", pass: "h, outputIdx" };
+    dispatch_frames(&mut s, &shift, rows, |f| {
         let mut args = opt_holder_args(f);
         args.push("outputIdx".into());
-        let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}DisplayShift({});", args.join(", "));
-    }
+        format!(
+            "            return core.{}DisplayShift({});\n",
+            super::common::camel_words(&f.name),
+            args.join(", ")
+        )
+    });
 
-    s.push_str(
-        r#"         default:
-            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
-      }
-   }
-}
-"#,
-    );
+    s.push_str("}\n");
     s
+}
+
+/// `Dispatch`'s name table and the lookup `ParamHolder` routes by, ahead of
+/// the entries. Returns the rows in table order: a row's index is its route.
+fn route_table<'a>(s: &mut String, rows: &'a [FuncRow]) -> Vec<&'a FuncRow> {
+    let mut rows: Vec<&FuncRow> = rows.iter().collect();
+    rows.sort_by(|a, b| a.name.cmp(&b.name));
+    assert!(rows.windows(2).all(|w| w[0].name != w[1].name), "Dispatch routes each name once");
+    // A quarter full, so a lookup almost always ends at its first probe.
+    let table = (rows.len() * 4).next_power_of_two();
+    assert!(rows.len() < usize::from(i16::MAX.unsigned_abs()), "a route + 1 fits a short");
+    s.push_str("\n   private static final String[] NAMES = {\n");
+    for chunk in rows.chunks(8) {
+        let names: Vec<String> = chunk.iter().map(|f| js(&f.name)).collect();
+        let _ = writeln!(s, "      {},", names.join(", "));
+    }
+    let _ = write!(
+        s,
+        r"   }};
+
+   /* A function's arm in every entry below is its index in NAMES. ParamHolder
+      looks it up once, so a call switches on an int and never on a string. The
+      lookup is open addressing on the cached hashCode(); a name from Functions
+      is the interned literal in NAMES, so its equals() is an identity check. */
+   private static final int MASK = {mask};
+   private static final short[] ROUTES = routes();
+
+   private static short[] routes() {{
+      short[] t = new short[MASK + 1];
+      for (int r = 0; r < NAMES.length; r++) {{
+         int i = spread(NAMES[r].hashCode());
+         while (t[i] != 0) {{
+            i = (i + 1) & MASK;
+         }}
+         t[i] = (short) (r + 1);
+      }}
+      return t;
+   }}
+
+   private static int spread(int h) {{
+      return (h ^ (h >>> 16)) & MASK;
+   }}
+
+   static int route(String name) {{
+      if (name == null) {{
+         return -1;
+      }}
+      for (int i = spread(name.hashCode()); ; i = (i + 1) & MASK) {{
+         int r = ROUTES[i] - 1;
+         if (r < 0 || NAMES[r].equals(name)) {{
+            return r;
+         }}
+      }}
+   }}
+",
+        mask = table - 1
+    );
+    rows
+}
+
+/// Functions one `Dispatch` frame routes. A power of two, so the entry picks
+/// the frame with a shift.
+///
+/// HotSpot never JIT-compiles a method over 8000 bytes of bytecode, and one
+/// `switch` over every function was 15284 bytes in `call` at 244 functions.
+/// `scripts/check_java_method_size.py` is the gate.
+const DISPATCH_FRAME_ARMS: usize = 64;
+const _: () = assert!(DISPATCH_FRAME_ARMS.is_power_of_two());
+
+/// One `Dispatch` entry point: the comment over it, its return type, name and
+/// parameter list, and that list as the arguments a frame passes on.
+#[derive(Clone, Copy)]
+struct DispatchEntry {
+    doc: &'static str,
+    ret: &'static str,
+    name: &'static str,
+    params: &'static str,
+    pass: &'static str,
+}
+
+/// One `Dispatch` entry point: a `switch` on the route's frame, then in that
+/// frame a `switch` on the route, so every function is the same two jumps away.
+/// `rows` are in `NAMES` order, which is what makes a row's index its route.
+fn dispatch_frames(s: &mut String, entry: &DispatchEntry, rows: &[&FuncRow], arm: impl Fn(&FuncRow) -> String) {
+    let DispatchEntry { doc, ret, name, params, pass } = *entry;
+    let reject = "            throw new TALibArgumentException(\"no such function: \" + h.info().name(), RetCode.INVALID_HANDLE);\n";
+    let shift = DISPATCH_FRAME_ARMS.trailing_zeros();
+    let frames: Vec<&[&FuncRow]> = rows.chunks(DISPATCH_FRAME_ARMS).collect();
+    s.push('\n');
+    s.push_str(doc);
+    let _ = writeln!(s, "   static {ret} {name}({params}) {{");
+    let _ = writeln!(s, "      switch (h.route() >>> {shift}) {{");
+    for k in 0..frames.len() {
+        let _ = writeln!(s, "         case {k}:\n            return {name}{k}({pass});");
+    }
+    s.push_str("         default:\n");
+    s.push_str(reject);
+    s.push_str("      }\n   }\n");
+    for (k, frame) in frames.iter().enumerate() {
+        s.push('\n');
+        let _ = writeln!(s, "   private static {ret} {name}{k}({params}) {{");
+        s.push_str("      Core core = h.core();\n      switch (h.route()) {\n");
+        for (j, f) in frame.iter().enumerate() {
+            let _ = writeln!(s, "         case {}: // {}", k * DISPATCH_FRAME_ARMS + j, f.name);
+            s.push_str(&arm(f));
+        }
+        s.push_str("         default:\n");
+        s.push_str(reject);
+        s.push_str("      }\n   }\n");
+    }
 }
