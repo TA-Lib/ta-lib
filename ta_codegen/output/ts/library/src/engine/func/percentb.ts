@@ -177,7 +177,7 @@ function percentbWasm(real: ArrayLike<number>, options: PercentbOptions | undefi
   const optInNbDevUp = optInNbDevUpArg === undefined ? Core.REAL_DEFAULT : optInNbDevUpArg;
   const optInNbDevDn = optInNbDevDnArg === undefined ? Core.REAL_DEFAULT : optInNbDevDnArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outReal = o.outReal;
@@ -262,7 +262,7 @@ function percentbPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayL
   if (!isInt32(optInTimePeriod) || !isReal(optInNbDevUp) || !isReal(optInNbDevDn) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outReal === undefined) {

@@ -26,14 +26,14 @@ enum FuncUnstId {
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
     RMA, HA, RVI, FRAMA, MCGD, VIDYA,
     STC, SWAK_GAUSS, SWAK_BUTTER, SWAK_HP, SWAK_2PHP, SWAK_BP,
-    FISHER,
+    FISHER, SSF,
     ALL;
-    static final int COUNT = 37;
+    static final int COUNT = 38;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
 enum MAType {
-    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA, VIDYA, ALMA;
+    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA, VIDYA, ALMA, SSF;
 }
 
 enum RangeType {
@@ -10622,8 +10622,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int apoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -10660,8 +10660,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -11137,8 +11137,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -11214,8 +11214,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, apoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -17123,8 +17123,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -17183,8 +17183,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -17760,8 +17760,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
         *        values, and never be empty: an empty array is an absent output.
@@ -17842,8 +17842,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
         *        values, and never be empty: an empty array is an absent output.
@@ -18381,8 +18381,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int bbwLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -18425,8 +18425,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -18955,8 +18955,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
@@ -19038,8 +19038,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
@@ -140082,14 +140082,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int kdjLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -140138,14 +140138,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -140343,14 +140343,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -140453,14 +140453,14 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the D signal line (default
         *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -142829,12 +142829,12 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int kstextLookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
@@ -142940,12 +142940,12 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -143395,12 +143395,12 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outKST Know Sure Thing line. Must hold at least
         *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -143513,12 +143513,12 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInROCMAType MA type smoothing the four legs (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outKST Know Sure Thing line. Must hold at least
         *        {@code endIdx - max(startIdx, kstextLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -152050,6 +152050,7 @@ class Core {
      *  092926 MF,CC Add VIDYA (issue #474).
      *  092926 MF,CC Add ALMA (issue #475).
      *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
+     *  112326 MF,CC Add SSF (issue #609).
      */
 
        /**
@@ -152064,7 +152065,7 @@ class Core {
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-        *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int maLookback( int optInTimePeriod, MAType optInMAType )
@@ -152128,6 +152129,9 @@ class Core {
           case ALMA:
              retValue = almaLookback(optInTimePeriod, 6.0, 0.85);
              break;
+          case SSF:
+             retValue = ssfLookback(optInTimePeriod);
+             break;
           default:
              retValue = 0;
              break;
@@ -152146,7 +152150,7 @@ class Core {
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-        *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -152323,6 +152327,12 @@ class Core {
              outNBElement.value = _xr13.count();
              retCode = RetCode.SUCCESS;
              break;
+          case SSF:
+             OutRange _xr14 = ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+             outBegIdx.value = _xr14.begIdx();
+             outNBElement.value = _xr14.count();
+             retCode = RetCode.SUCCESS;
+             break;
           default:
              retCode = RetCode.BAD_PARAM;
              break;
@@ -152458,6 +152468,12 @@ class Core {
              outNBElement.value = _xr13.count();
              retCode = RetCode.SUCCESS;
              break;
+          case SSF:
+             OutRange _xr14 = ssf(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+             outBegIdx.value = _xr14.begIdx();
+             outNBElement.value = _xr14.count();
+             retCode = RetCode.SUCCESS;
+             break;
           default:
              retCode = RetCode.BAD_PARAM;
              break;
@@ -152474,6 +152490,7 @@ class Core {
         * <ul>
         * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
         * <li>{@code TA_MAType_DISABLED} bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</li>
+        * <li>{@code TA_MAType_SSF} takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</li>
         * <li>{@code TA_MAType_DEFAULT} selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -152490,7 +152507,7 @@ class Core {
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-        *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -152521,6 +152538,7 @@ class Core {
         * @see Core#rma
         * @see Core#vidya
         * @see Core#alma
+        * @see Core#ssf
         */
        public OutRange ma( int startIdx,
                            int endIdx,
@@ -152554,6 +152572,7 @@ class Core {
         * <ul>
         * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
         * <li>{@code TA_MAType_DISABLED} bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</li>
+        * <li>{@code TA_MAType_SSF} takes a period up to SSF's own maximum, which is below this function's; a longer one is rejected.</li>
         * <li>{@code TA_MAType_DEFAULT} selects the documented default of the parameter it is passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts it.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -152573,7 +152592,7 @@ class Core {
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
         *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
-        *        15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -152604,6 +152623,7 @@ class Core {
         * @see Core#rma
         * @see Core#vidya
         * @see Core#alma
+        * @see Core#ssf
         */
        public OutRange ma( int startIdx,
                            int endIdx,
@@ -152744,6 +152764,9 @@ class Core {
                 case ALMA:
                    this.sub = new AlmaStream((AlmaStream) other.sub);
                    break;
+                case SSF:
+                   this.sub = new SsfStream((SsfStream) other.sub);
+                   break;
                 default:
                    throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
                 }
@@ -152840,6 +152863,9 @@ class Core {
              }
              case 13: {
                 return ((AlmaStream) sub).peek(inReal);
+             }
+             case 14: {
+                return ((SsfStream) sub).peek(inReal);
              }
              default:
                 throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -152946,6 +152972,10 @@ class Core {
           }
           case 13: {
              sp.cur_outReal = ((AlmaStream) sub).update(inReal);
+             return;
+          }
+          case 14: {
+             sp.cur_outReal = ((SsfStream) sub).update(inReal);
              return;
           }
           default:
@@ -153112,6 +153142,15 @@ class Core {
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
              sp.arm = 13;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
+          case SSF: {
+             SsfStream sub = ssfOpenInternal(inReal, startIdx, optInTimePeriod);
+             sp.outRangeBegIdx = sub.outRangeBegIdx;
+             sp.outRangeCount = sub.outRangeCount;
+             sp.sub = sub;
+             sp.arm = 14;
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
@@ -153287,6 +153326,15 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case SSF: {
+             SsfStream sub = ssfOpenAndFill(inReal, optInTimePeriod, outReal);
+             outBegIdx.value = sub.outRangeBegIdx;
+             outNBElement.value = sub.outRangeCount;
+             sp.sub = sub;
+             sp.arm = 14;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
           default:
              return RetCode.BAD_PARAM;
           }
@@ -153432,6 +153480,13 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case SSF: {
+             SsfStream sub = ssfOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+             sp.sub = sub;
+             sp.arm = 14;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
           default:
              return RetCode.BAD_PARAM;
           }
@@ -153573,6 +153628,8 @@ class Core {
              return vidyaStepTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           case 13:
              return almaStepTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case 14:
+             return ssfStepTape((SsfStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
           }
@@ -153622,6 +153679,8 @@ class Core {
              return vidyaPeekTape((VidyaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           case 13:
              return almaPeekTape((AlmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case 14:
+             return ssfPeekTape((SsfStream) sp.sub, tape, tapeBase, tapeMask, inReal);
           default:
              throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
           }
@@ -153658,6 +153717,8 @@ class Core {
              return vidyaTapeDetach((VidyaStream) sp.sub);
           case 13:
              return almaTapeDetach((AlmaStream) sp.sub);
+          case 14:
+             return ssfTapeDetach((SsfStream) sp.sub);
           default:
              return 0;
           }
@@ -154881,20 +154942,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int macdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -154954,20 +155015,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -155289,20 +155350,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -155393,20 +155454,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -158730,8 +158791,8 @@ class Core {
         *        lower band (default 10; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int maenvLookback( int optInTimePeriod, double optInPercentUp, double optInPercentDn, MAType optInMAType )
@@ -158774,8 +158835,8 @@ class Core {
         *        lower band (default 10; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -158948,8 +159009,8 @@ class Core {
         *        lower band (default 10; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand The moving average plus the upper percentage of
         *        it. Must hold at least
         *        {@code endIdx - max(startIdx, maenvLookback(...)) + 1} values, and never
@@ -159042,8 +159103,8 @@ class Core {
         *        lower band (default 10; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand The moving average plus the upper percentage of
         *        it. Must hold at least
         *        {@code endIdx - max(startIdx, maenvLookback(...)) + 1} values, and never
@@ -163529,7 +163590,7 @@ class Core {
         *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -163573,7 +163634,7 @@ class Core {
         *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
@@ -164053,7 +164114,7 @@ class Core {
         *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
@@ -164132,7 +164193,7 @@ class Core {
         *        range 1..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA, 16=SSF;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, and never be
@@ -182141,8 +182202,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int percentbLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -182185,8 +182246,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -182747,8 +182808,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
         *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, and
@@ -182828,8 +182889,8 @@ class Core {
         *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal Position of the input between the lower band (0) and the
         *        upper band (1) Must hold at least
         *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, and
@@ -187888,8 +187949,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int ppoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -187926,8 +187987,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -188527,8 +188588,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -188604,8 +188665,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -191445,8 +191506,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int pvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -191483,8 +191544,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -192085,8 +192146,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -192163,8 +192224,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
@@ -215076,6 +215137,828 @@ class Core {
           MInteger outNBElement = new MInteger();
           return sqzmomOpenAndFillInternal(inHigh, inLow, inClose, 0, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
        }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  112326 MF,CC  First version (issue #609).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#ssf} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Critical period: the wavelength that divides the
+        *        pass band and the reject band (default 10; range 1..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int ssfLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 10000 ) {
+             return -1;
+          }
+          int structural;
+          if( optInTimePeriod == 1 ) {
+             return this.unstableCount(FuncUnstId.SSF.ordinal(), 0, 0) ;
+          }
+          /* The seed occupies three bars, so the first output is a recursion step
+           * even at periods 2 and 3; from 4 up the lookback is EMA's P-1.
+           *
+           * Auto: the poles are a complex pair at radius exp(-1.414*3.14159/P), so an
+           * e-fold costs P/4.44221 bars, taken as 7P/31. Two output slots carry the
+           * seed, so the difference of two starts is R*r^k*cos(k*w + phi) with R and
+           * phi free; against the largest difference it ever shows, the worst phase
+           * leaves ln(R/S) at most 2.51 (P = 2), 1.39 at a long period. The fixed
+           * part 2 covers it at every period with the 7/31 rounding (rules_check.py).
+           */
+          structural = optInTimePeriod - 1;
+          if( structural < 3 ) {
+             structural = 3;
+          }
+          return structural + this.unstableCount(FuncUnstId.SSF.ordinal(), (7 * (10 + 2) * optInTimePeriod + 30) / 31, (7 * (19 + 2) * optInTimePeriod + 30) / 31) ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#ssf}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Critical period: the wavelength that divides the
+        *        pass band and the reject band (default 10; range 1..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int ssfDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( ssfLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode ssfImpl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double a1 = 0;
+          double s = 0;
+          double c1h = 0;
+          double c2 = 0;
+          double c3 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ssfLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* No smoothing at period 1: the output is a copy of the input, as MA gives
+           * for every MAType. The unstable period still delays the first output.
+           */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.SUCCESS ;
+          }
+          /* Ehlers' constants as he prints them: 1.414 and 3.14159 in the radius,
+           * and Cosine(1.414*180/P) in degrees, so a full-precision pi in the angle.
+           *
+           * Keep the cosine as 1 - 2*sin(w/2)^2: cos(w) is close to 1 at a long
+           * period, and a one-ULP libm difference in it moves c1 by about
+           * 5.6e-18*P^2 relative; the half angle does not.
+           */
+          a1 = Math.exp(-1.414 * 3.14159 / (double)optInTimePeriod);
+          s = Math.sin(1.414 * 3.141592653589793 / (2.0 * (double)optInTimePeriod));
+          c2 = 2.0 * a1 * (1.0 - 2.0 * s * s);
+          c3 = -(a1 * a1);
+          /* c1 = 1 - c2 - c3 makes the DC gain 1 whatever the constants. Halving it
+           * here is exact, so c1h*(x + x1) is c1*(x + x1)/2.
+           */
+          c1h = 0.5 * (1.0 - c2 - c3);
+          /* Ehlers' guard: the first three bars of the history are the price. The
+           * input slot is carried in a local and never re-read, because outReal may
+           * alias inReal.
+           */
+          today = startIdx - lookbackTotal;
+          y2 = inReal[today + 1];
+          y1 = inReal[today + 2];
+          x1 = y1;
+          today += 3;
+          /* Skip the rest of the lookback: run the recurrence, publish nothing. */
+          i = lookbackTotal - 3;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* c2*y1 stays the outermost term: y1 is the newest output, so that keeps
+              * the bar rate at one fused step.
+              */
+             x0 = inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode ssfImpl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double a1 = 0;
+          double s = 0;
+          double c1h = 0;
+          double c2 = 0;
+          double c3 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ssfLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.SUCCESS ;
+          }
+          a1 = Math.exp(-1.414 * 3.14159 / (double)optInTimePeriod);
+          s = Math.sin(1.414 * 3.141592653589793 / (2.0 * (double)optInTimePeriod));
+          c2 = 2.0 * a1 * (1.0 - 2.0 * s * s);
+          c3 = -(a1 * a1);
+          c1h = 0.5 * (1.0 - c2 - c3);
+          today = startIdx - lookbackTotal;
+          y2 = (double)inReal[today + 1];
+          y1 = (double)inReal[today + 2];
+          x1 = y1;
+          today += 3;
+          i = lookbackTotal - 3;
+          while( i != 0 ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * John Ehlers' SuperSmoother: a two-pole low-pass smoother with a zero at
+        * Nyquist, which he recommends for use instead of an EMA and builds most of
+        * his later indicators on. Read it as a smoothed price line with less lag
+        * than an EMA of comparable smoothness. Its DC gain is 1, so a flat market
+        * returns the price itself and the line sits on the chart with price. The
+        * critical period is the wavelength that divides the pass band from the
+        * reject band: cycles longer than it pass, shorter ones fall off at 12 dB
+        * per octave, and a two-bar alternation is removed entirely. The poles are a
+        * complex pair, which no EMA of an EMA and none of the {@code SWAK_*} rows
+        * can place.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/ssf">ta-lib.org/functions/ssf</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType.</li>
+        * <li>Ehlers' 2004 form averages no bars in the numerator ({@code c1 * x[i]}, no zero at Nyquist); he replaced it by 2013, and implementations still computing it differ from this function by up to a few percent.</li>
+        * <li>Implementations with an exact {@code sqrt(2)} and {@code pi} in place of Ehlers' constants differ from this function in about the fifth significant digit.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ssfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to smooth; Ehlers' examples use the close.
+        * @param optInTimePeriod Critical period: the wavelength that divides the
+        *        pass band and the reject band (default 10; range 1..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The smoothed line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, ssfLookback(...)) + 1} values,
+        *        and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#ema
+        * @see Core#swakButter
+        * @see Core#swakGauss
+        * @see Core#ma
+        */
+       public OutRange ssf( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("SSF", startIdx, endIdx);
+          int guardStart = clampedStart("SSF", startIdx, ssfLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SSF", "inReal", inReal, guardInLen);
+          requireLength("SSF", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ssfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SSF", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * John Ehlers' SuperSmoother: a two-pole low-pass smoother with a zero at
+        * Nyquist, which he recommends for use instead of an EMA and builds most of
+        * his later indicators on. Read it as a smoothed price line with less lag
+        * than an EMA of comparable smoothness. Its DC gain is 1, so a flat market
+        * returns the price itself and the line sits on the chart with price. The
+        * critical period is the wavelength that divides the pass band from the
+        * reject band: cycles longer than it pass, shorter ones fall off at 12 dB
+        * per octave, and a two-bar alternation is removed entirely. The poles are a
+        * complex pair, which no EMA of an EMA and none of the {@code SWAK_*} rows
+        * can place.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/ssf">ta-lib.org/functions/ssf</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType.</li>
+        * <li>Ehlers' 2004 form averages no bars in the numerator ({@code c1 * x[i]}, no zero at Nyquist); he replaced it by 2013, and implementations still computing it differ from this function by up to a few percent.</li>
+        * <li>Implementations with an exact {@code sqrt(2)} and {@code pi} in place of Ehlers' constants differ from this function in about the fifth significant digit.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#ssfLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to smooth; Ehlers' examples use the close.
+        * @param optInTimePeriod Critical period: the wavelength that divides the
+        *        pass band and the reject band (default 10; range 1..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The smoothed line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, ssfLookback(...)) + 1} values,
+        *        and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#ema
+        * @see Core#swakButter
+        * @see Core#swakGauss
+        * @see Core#ma
+        */
+       public OutRange ssf( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("SSF", startIdx, endIdx);
+          int guardStart = clampedStart("SSF", startIdx, ssfLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SSF", "inReal", inReal, guardInLen);
+          requireLength("SSF", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ssfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SSF", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SSF stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#ssf} over the same series.
+        * Open with {@link Core#ssfOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SsfStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double c1h;
+          private double c2;
+          private double c3;
+          private double x1;
+          private double y1;
+          private double y2;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SsfStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#ssf} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SSF advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SsfStream( SsfStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.c1h = other.c1h;
+             this.c2 = other.c2;
+             this.c3 = other.c3;
+             this.x1 = other.x1;
+             this.y1 = other.y1;
+             this.y2 = other.y2;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SSF update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SSF update", "inReal");
+             core.ssfStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SSF peek", "inReal");
+             SsfStream sp = this;
+             double x0 = 0.0;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double x1 = sp.x1;
+             double y1 = sp.y1;
+             double y2 = sp.y2;
+             if( sp.optInTimePeriod == 1 ) {
+                cur_outReal = inReal;
+                return cur_outReal ;
+             }
+             /* c2*y1 stays the outermost term: y1 is the newest output, so that keeps
+              * the bar rate at one fused step.
+              */
+             x0 = inReal;
+             y = Math.fma(sp.c2, y1, Math.fma(sp.c3, y2, sp.c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SsfStream clone() {
+             return new SsfStream(this);
+          }
+       }
+       private void ssfStepImpl( SsfStream sp, double inReal )
+       {
+          double x0 = 0.0;
+          double y = 0.0;
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
+          /* c2*y1 stays the outermost term: y1 is the newest output, so that keeps
+           * the bar rate at one fused step.
+           */
+          x0 = inReal;
+          y = Math.fma(sp.c2, sp.y1, Math.fma(sp.c3, sp.y2, sp.c1h * (x0 + sp.x1)));
+          sp.x1 = x0;
+          sp.y2 = sp.y1;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode ssfOpenImpl( SsfStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double a1 = 0;
+          double s = 0;
+          double c1h = 0;
+          double c2 = 0;
+          double c3 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx >= historyLen ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( optInTimePeriod == 1 ) {
+             int fillLb = ssfLookback(optInTimePeriod);
+             if( startIdx > fillLb ) fillLb = startIdx;
+             if( historyLen < fillLb + 1 ) {
+                return RetCode.INSUFFICIENT_HISTORY;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.c1h = 0.0;
+             sp.c2 = 0.0;
+             sp.c3 = 0.0;
+             sp.x1 = 0.0;
+             sp.y1 = 0.0;
+             sp.y2 = 0.0;
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
+             }
+             sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+             return RetCode.SUCCESS;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = ssfLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* Ehlers' constants as he prints them: 1.414 and 3.14159 in the radius,
+           * and Cosine(1.414*180/P) in degrees, so a full-precision pi in the angle.
+           *
+           * Keep the cosine as 1 - 2*sin(w/2)^2: cos(w) is close to 1 at a long
+           * period, and a one-ULP libm difference in it moves c1 by about
+           * 5.6e-18*P^2 relative; the half angle does not.
+           */
+          a1 = Math.exp(-1.414 * 3.14159 / (double)optInTimePeriod);
+          s = Math.sin(1.414 * 3.141592653589793 / (2.0 * (double)optInTimePeriod));
+          c2 = 2.0 * a1 * (1.0 - 2.0 * s * s);
+          c3 = -(a1 * a1);
+          /* c1 = 1 - c2 - c3 makes the DC gain 1 whatever the constants. Halving it
+           * here is exact, so c1h*(x + x1) is c1*(x + x1)/2.
+           */
+          c1h = 0.5 * (1.0 - c2 - c3);
+          /* Ehlers' guard: the first three bars of the history are the price. The
+           * input slot is carried in a local and never re-read, because outReal may
+           * alias inReal.
+           */
+          today = startIdx - lookbackTotal;
+          y2 = inReal[today + 1];
+          y1 = inReal[today + 2];
+          x1 = y1;
+          today += 3;
+          /* Skip the rest of the lookback: run the recurrence, publish nothing. */
+          i = lookbackTotal - 3;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* c2*y1 stays the outermost term: y1 is the newest output, so that keeps
+              * the bar rate at one fused step.
+              */
+             x0 = inReal[today];
+             y = Math.fma(c2, y1, Math.fma(c3, y2, c1h * (x0 + x1)));
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.c1h = c1h;
+          sp.c2 = c2;
+          sp.c3 = c3;
+          sp.x1 = x1;
+          sp.y1 = y1;
+          sp.y2 = y2;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* ssfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SsfStream ssfOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SsfStream sp = new SsfStream(this);
+          RetCode retCode = ssfOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SSF openAndFill", inReal.length, startIdx, ssfLookback(optInTimePeriod));
+          }
+          throw streamFailure("SSF openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind ssfOpen (composition seam). */
+       SsfStream ssfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          SsfStream sp = new SsfStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = ssfOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SSF open", inReal.length, startIdx, ssfLookback(optInTimePeriod));
+          }
+          throw streamFailure("SSF open", retCode);
+       }
+       /**
+        * Open a live SSF stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#ssf} at that bar.
+        * <p>The history must hold at least {@code ssfLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
+        */
+       public SsfStream ssfOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SSF open", "inReal", inReal);
+          requireHistory("SSF open", inReal.length);
+          return ssfOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#ssfOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#ssf} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SsfStream#outRange()}.
+        */
+       public SsfStream ssfOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SSF openAndFill", "inReal", inReal);
+          requireHistory("SSF openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SSF openAndFill", inReal.length, ssfLookback(optInTimePeriod));
+          requireLength("SSF openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SSF openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return ssfOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double ssfStepTape( SsfStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          ssfStepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double ssfPeekTape( SsfStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int ssfTapeDetach( SsfStream sp )
+       {
+          return 0;
+       }
     /* Schaff Trend Cycle, created by Doug Schaff (FX-Strategy.com), who released
      * its code in "Releasing the Code to the Schaff Trend Cycle", FXStreet.com,
      * February 15, 2008,
@@ -217850,15 +218733,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -217914,15 +218797,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -218354,15 +219237,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -218451,15 +219334,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -219268,7 +220151,7 @@ class Core {
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
-        *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        14=VIDYA, 15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int stochfLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -219311,7 +220194,7 @@ class Core {
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
-        *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        14=VIDYA, 15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -219706,7 +220589,7 @@ class Core {
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
-        *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        14=VIDYA, 15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -219792,7 +220675,7 @@ class Core {
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
         *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA,
-        *        14=VIDYA, 15=ALMA; {@code MAType.DEFAULT} selects the default).
+        *        14=VIDYA, 15=ALMA, 16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - max(startIdx, stochfLookback(...)) + 1} values, and never
         *        be empty: an empty array is an absent output.
@@ -220552,8 +221435,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int stochrsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -220599,8 +221482,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outputIdx Position of the output in the batch signature, from 0.
         * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
         *        out of range or the index names no output.
@@ -220835,8 +221718,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
@@ -220920,8 +221803,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
-        *        {@code MAType.DEFAULT} selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA,
+        *        16=SSF; {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
@@ -251021,7 +251904,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "b40d967c3b4812a7";
+    static final String SPLICED_GENCODE_DIGEST = "bc36fc47f7c0764c";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -251251,7 +252134,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1808) }));
         ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -251287,11 +252170,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BBW", new AbsFunc("BBW", "Volatility Indicators", "Bollinger BandWidth", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -251743,7 +252626,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("KDJ", new AbsFunc("KDJ", "Momentum Indicators", "KDJ Stochastic", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outK",1793), new AbsOut(0,"outD",1796), new AbsOut(0,"outJ",1793) }));
         ABSTRACT.put("KST", new AbsFunc("KST", "Momentum Indicators", "Know Sure Thing (Pring)", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251751,7 +252634,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outKST",1793), new AbsOut(0,"outKSTSignal",1796) }));
         ABSTRACT.put("KSTEXT", new AbsFunc("KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA1Period",0,"MA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA2Period",0,"MA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA3Period",0,"MA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA4Period",0,"MA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInROCMAType",0,"ROC MA","Type of Moving Average smoothing the four legs",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA1Period",0,"MA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA2Period",0,"MA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA3Period",0,"MA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA4Period",0,"MA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInROCMAType",0,"ROC MA","Type of Moving Average smoothing the four legs",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outKST",1793), new AbsOut(0,"outKSTSignal",1796) }));
         ABSTRACT.put("KURTOSIS", new AbsFunc("KURTOSIS", "Statistic Functions", "Rolling Excess Kurtosis", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251787,7 +252670,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251795,7 +252678,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMACD",1793), new AbsOut(0,"outMACDSignal",1796), new AbsOut(0,"outMACDHist",1808) }));
         ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outMACD",1793), new AbsOut(0,"outMACDSignal",1796), new AbsOut(0,"outMACDHist",1808) }));
         ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251807,7 +252690,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMACDV",1793), new AbsOut(0,"outMACDVSignal",1796), new AbsOut(0,"outMACDVHist",1808) }));
         ABSTRACT.put("MAENV", new AbsFunc("MAENV", "Overlap Studies", "Moving Average Envelope", 50331656,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInPercentUp",1048576,"Percent up","Percent of the moving average added to form the upper band",10.0, -3e37,3e37,2,0.5,20.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInPercentDn",1048576,"Percent down","Percent of the moving average subtracted to form the lower band",10.0, -3e37,3e37,2,0.5,20.0,0.5, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInPercentUp",1048576,"Percent up","Percent of the moving average added to form the upper band",10.0, -3e37,3e37,2,0.5,20.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInPercentDn",1048576,"Percent down","Percent of the moving average subtracted to form the lower band",10.0, -3e37,3e37,2,0.5,20.0,0.5, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("MAMA", new AbsFunc("MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 184549380,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251823,7 +252706,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",257) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,10000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,10000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,10000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,10000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251903,7 +252786,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("PERCENTB", new AbsFunc("PERCENTB", "Volatility Indicators", "Bollinger Bands %B", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("PERCENTILE", new AbsFunc("PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -251923,7 +252806,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1281) }));
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("PSO", new AbsFunc("PSO", "Momentum Indicators", "Premier Stochastic Oscillator", 33554436,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -251935,7 +252818,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1281) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("PVT", new AbsFunc("PVT", "Volume Indicators", "Price Volume Trend", 570425352,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -252033,6 +252916,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInBBPeriod",0,"BB Period","Period of the Bollinger Bands",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Deviation multiplier for both Bollinger Bands",2.0, 0.0,3e37,2,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(2,"optInKCPeriod",0,"KC Period","Period of the Keltner Channel, and of the momentum regression",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInFactorWide",0,"Wide Factor","Keltner width for the widest compression test",2.0, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNormal",0,"Normal Factor","Keltner width for the classic squeeze test",1.5, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNarrow",0,"Narrow Factor","Keltner width for the tightest compression test",1.0, 0.0,3e37,1,0.5,2.0,0.5, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outMomentum",1808), new AbsOut(1,"outSqueeze",1) }));
+        ABSTRACT.put("SSF", new AbsFunc("SSF", "Overlap Studies", "Ehlers SuperSmoother Filter", 184549381,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Critical period",10.0, 0,0,0,0,0,0, 1,10000,5,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STC", new AbsFunc("STC", "Momentum Indicators", "Schaff Trend Cycle", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast EMA",23.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow EMA",50.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInCyclePeriod",0,"Cycle Period","Window of both stochastic stages",10.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
@@ -252043,15 +252930,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outSlowK",1793), new AbsOut(0,"outSlowD",1796) }));
         ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1281), new AbsOut(0,"outFastD",1796) }));
         ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA;16=SSF") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1281), new AbsOut(0,"outFastD",1796) }));
         ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -252515,6 +253402,7 @@ public class TaCodegenServe {
         "TA_SORTINO",
         "TA_SQRT",
         "TA_SQZMOM",
+        "TA_SSF",
         "TA_STC",
         "TA_STDDEV",
         "TA_STOCH",
@@ -252766,43 +253654,44 @@ public class TaCodegenServe {
             case 205: return handle_SORTINO(json);
             case 206: return handle_SQRT(json);
             case 207: return handle_SQZMOM(json);
-            case 208: return handle_STC(json);
-            case 209: return handle_STDDEV(json);
-            case 210: return handle_STOCH(json);
-            case 211: return handle_STOCHF(json);
-            case 212: return handle_STOCHRSI(json);
-            case 213: return handle_SUB(json);
-            case 214: return handle_SUM(json);
-            case 215: return handle_SUPERTREND(json);
-            case 216: return handle_SWAK_2PHP(json);
-            case 217: return handle_SWAK_BP(json);
-            case 218: return handle_SWAK_BUTTER(json);
-            case 219: return handle_SWAK_GAUSS(json);
-            case 220: return handle_SWAK_HP(json);
-            case 221: return handle_T3(json);
-            case 222: return handle_TAN(json);
-            case 223: return handle_TANH(json);
-            case 224: return handle_TEMA(json);
-            case 225: return handle_TRANGE(json);
-            case 226: return handle_TRIMA(json);
-            case 227: return handle_TRIX(json);
-            case 228: return handle_TSF(json);
-            case 229: return handle_TSI(json);
-            case 230: return handle_TYPPRICE(json);
-            case 231: return handle_ULTOSC(json);
-            case 232: return handle_VAR(json);
-            case 233: return handle_VHF(json);
-            case 234: return handle_VIDYA(json);
-            case 235: return handle_VORTEX(json);
-            case 236: return handle_VWAP(json);
-            case 237: return handle_VWMA(json);
-            case 238: return handle_WAD(json);
-            case 239: return handle_WAVETREND(json);
-            case 240: return handle_WCLPRICE(json);
-            case 241: return handle_WILLR(json);
-            case 242: return handle_WMA(json);
-            case 243: return handle_ZIGZAG(json);
-            case 244: return handle_ZLEMA(json);
+            case 208: return handle_SSF(json);
+            case 209: return handle_STC(json);
+            case 210: return handle_STDDEV(json);
+            case 211: return handle_STOCH(json);
+            case 212: return handle_STOCHF(json);
+            case 213: return handle_STOCHRSI(json);
+            case 214: return handle_SUB(json);
+            case 215: return handle_SUM(json);
+            case 216: return handle_SUPERTREND(json);
+            case 217: return handle_SWAK_2PHP(json);
+            case 218: return handle_SWAK_BP(json);
+            case 219: return handle_SWAK_BUTTER(json);
+            case 220: return handle_SWAK_GAUSS(json);
+            case 221: return handle_SWAK_HP(json);
+            case 222: return handle_T3(json);
+            case 223: return handle_TAN(json);
+            case 224: return handle_TANH(json);
+            case 225: return handle_TEMA(json);
+            case 226: return handle_TRANGE(json);
+            case 227: return handle_TRIMA(json);
+            case 228: return handle_TRIX(json);
+            case 229: return handle_TSF(json);
+            case 230: return handle_TSI(json);
+            case 231: return handle_TYPPRICE(json);
+            case 232: return handle_ULTOSC(json);
+            case 233: return handle_VAR(json);
+            case 234: return handle_VHF(json);
+            case 235: return handle_VIDYA(json);
+            case 236: return handle_VORTEX(json);
+            case 237: return handle_VWAP(json);
+            case 238: return handle_VWMA(json);
+            case 239: return handle_WAD(json);
+            case 240: return handle_WAVETREND(json);
+            case 241: return handle_WCLPRICE(json);
+            case 242: return handle_WILLR(json);
+            case 243: return handle_WMA(json);
+            case 244: return handle_ZIGZAG(json);
+            case 245: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -285842,6 +286731,154 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_SSF(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[37] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.ssfLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        boolean _timed = bench_mode == 0 && jsonInt(json, "timed") != 0;
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (_timed) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.ssfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.ssf(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.ssfOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.SsfStream _wh = core.ssfOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.ssf(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
+            rideSsf(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSsf(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_STC(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -293926,6 +294963,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -295489,6 +296527,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -295722,6 +296761,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -315298,6 +316338,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -315753,6 +316794,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -317353,6 +318395,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -317778,6 +318821,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -318458,6 +319502,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -319223,6 +320268,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -322692,6 +323738,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -323564,6 +324611,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -324087,6 +325135,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -328378,6 +329427,178 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + ",\"round_mask\":" + roundMask + diag + "}";
     }
 
+    static String sv_SSF(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        int roundMask = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
+            RetCode rc;
+            try { rc = c2.ssfImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.ssfLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.ssfOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SsfStream _fh = c2.ssfOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.ssfOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SsfStream st;
+                try { st = c2.ssfOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++; roundMask |= 1 << rd;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SsfStream sA = c2.ssfOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SsfStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.ssfOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ssfOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SsfStream sD = c2.ssfOpen(fz_c, Integer.MIN_VALUE);
+                Core.SsfStream sE = c2.ssfOpen(fz_c, 10);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ssfImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SsfStream stA = c2.ssfOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + ",\"round_mask\":" + roundMask + diag + "}";
+    }
+
     static String sv_STC(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -328778,6 +329999,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -328992,6 +330214,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -329207,6 +330430,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
@@ -335190,6 +336414,7 @@ public class TaCodegenServe {
         case "TA_SORTINO": return sv_SORTINO(json);
         case "TA_SQRT": return sv_SQRT(json);
         case "TA_SQZMOM": return sv_SQZMOM(json);
+        case "TA_SSF": return sv_SSF(json);
         case "TA_STC": return sv_STC(json);
         case "TA_STDDEV": return sv_STDDEV(json);
         case "TA_STOCH": return sv_STOCH(json);
@@ -356337,6 +357562,103 @@ public class TaCodegenServe {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySsf(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.ssfLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SSF");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.ssf(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ssfOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ssfOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SsfStream st = core.ssfOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SsfStream st2 = core.ssfOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

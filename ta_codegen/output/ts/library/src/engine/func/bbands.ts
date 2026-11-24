@@ -175,7 +175,7 @@ function bbandsWasm(real: ArrayLike<number>, options: BbandsOptions | undefined)
   const optInNbDevUp = optInNbDevUpArg === undefined ? Core.REAL_DEFAULT : optInNbDevUpArg;
   const optInNbDevDn = optInNbDevDnArg === undefined ? Core.REAL_DEFAULT : optInNbDevDnArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outRealUpperBand = o.outUpperBand;
@@ -261,7 +261,7 @@ function bbandsPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLik
   if (!isInt32(optInTimePeriod) || !isReal(optInNbDevUp) || !isReal(optInNbDevDn) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outRealUpperBand === undefined || outRealMiddleBand === undefined || outRealLowerBand === undefined) {

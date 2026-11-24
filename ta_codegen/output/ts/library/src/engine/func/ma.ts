@@ -56,6 +56,8 @@ export * from '../../func/ma.ts';
  * - `MAType.DISABLED` bypasses smoothing explicitly, for any period: the output is
  *   a copy of the input with a lookback of 0. Every function that takes an MAType
  *   parameter accepts it.
+ * - `MAType.SSF` takes a period up to SSF's own maximum, which is below this
+ *   function's; a longer one is rejected.
  * - `MAType.DEFAULT` selects the documented default of the parameter it is passed
  *   to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType
  *   parameter accepts it.
@@ -101,6 +103,7 @@ export * from '../../func/ma.ts';
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`vidya`](https://ta-lib.org/functions/vidya)
  * @see [`alma`](https://ta-lib.org/functions/alma)
+ * @see [`ssf`](https://ta-lib.org/functions/ssf)
  */
 export function ma(real: ArrayLike<number>, options?: MaOptions): MaResult {
   if (engineRoute.mode !== 0) {
@@ -173,7 +176,7 @@ function maWasm(real: ArrayLike<number>, options: MaOptions | undefined): MaResu
   }
   const optInTimePeriod = optInTimePeriodArg === undefined ? Core.INTEGER_DEFAULT : optInTimePeriodArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outReal = o.outReal;
@@ -252,7 +255,7 @@ function maPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<nu
   if (!isInt32(optInTimePeriod) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outReal === undefined) {

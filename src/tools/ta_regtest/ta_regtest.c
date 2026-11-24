@@ -1090,6 +1090,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_composite2, "SMI,COPPOCK,ER" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_fisher,   "FISHER" );
+   DO_TEST( test_func_ssf,      "SSF" );
    DO_TEST( test_func_kvo, "KVO" );
    DO_TEST( test_func_ichimoku, "ICHIMOKU" );
    DO_TEST( test_func_alligator, "ALLIGATOR" );

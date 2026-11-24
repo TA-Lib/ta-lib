@@ -246,7 +246,7 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (37)
+//! ## Overlap Studies (38)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALLIGATOR`](Core::alligator) — Williams Alligator
@@ -274,6 +274,7 @@
 //! * [`SAR`](Core::sar) — Parabolic SAR
 //! * [`SAREXT`](Core::sarext) — Parabolic SAR - Extended
 //! * [`SMA`](Core::sma) — Simple Moving Average
+//! * [`SSF`](Core::ssf) — Ehlers SuperSmoother Filter
 //! * [`SUPERTREND`](Core::supertrend) — SuperTrend
 //! * [`SWAK_BUTTER`](Core::swak_butter) — Swiss Army Knife - Butterworth Filter
 //! * [`SWAK_GAUSS`](Core::swak_gauss) — Swiss Army Knife - Gaussian Filter

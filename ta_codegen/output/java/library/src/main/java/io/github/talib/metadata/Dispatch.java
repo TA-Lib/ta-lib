@@ -682,6 +682,9 @@ final class Dispatch {
          case "SQZMOM":
             return core.sqzmom(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.intOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOutput(0), h.intOutput(1));
+         case "SSF":
+            return core.ssf(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "STC":
             return core.stc(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
@@ -1220,6 +1223,8 @@ final class Dispatch {
             return core.sqrtLookback();
          case "SQZMOM":
             return core.sqzmomLookback(h.intOpt(0), h.realOpt(1), h.intOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5));
+         case "SSF":
+            return core.ssfLookback(h.intOpt(0));
          case "STC":
             return core.stcLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "STDDEV":
@@ -1718,6 +1723,8 @@ final class Dispatch {
             return core.sqrtDisplayShift(outputIdx);
          case "SQZMOM":
             return core.sqzmomDisplayShift(h.intOpt(0), h.realOpt(1), h.intOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), outputIdx);
+         case "SSF":
+            return core.ssfDisplayShift(h.intOpt(0), outputIdx);
          case "STC":
             return core.stcDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), outputIdx);
          case "STDDEV":

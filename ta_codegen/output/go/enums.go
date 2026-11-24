@@ -56,12 +56,13 @@ const (
 	MATypeRMA      MAType = 13
 	MATypeVIDYA    MAType = 14
 	MATypeALMA     MAType = 15
+	MATypeSSF      MAType = 16
 )
 
 // The range an MAType parameter accepts.
 const (
 	MATypeMin = 0
-	MATypeMax = 15
+	MATypeMax = 16
 )
 
 // FuncUnstId names a function whose unstable period can be set.
@@ -102,10 +103,11 @@ const (
 	FuncUnstIdSWAK_2PHP    FuncUnstId = 34
 	FuncUnstIdSWAK_BP      FuncUnstId = 35
 	FuncUnstIdFISHER       FuncUnstId = 36
+	FuncUnstIdSSF          FuncUnstId = 37
 	FuncUnstIdALL          FuncUnstId = 65535
 )
 
-const funcUnstCount = 37
+const funcUnstCount = 38
 
 // CandleSettingType names one candlestick threshold; C's order.
 type CandleSettingType int32

@@ -220,7 +220,7 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
   const optInSignalPeriod = optInSignalPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriodArg;
   const optInROCMAType = optInROCMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInROCMATypeArg;
   const optInSignalMAType = optInSignalMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInSignalMATypeArg;
-  if (optInROCMAType === 7 || optInROCMAType === 15 || optInSignalMAType === 7 || optInSignalMAType === 15) {
+  if (optInROCMAType === 7 || optInROCMAType === 15 || optInROCMAType === 16 || optInSignalMAType === 7 || optInSignalMAType === 15 || optInSignalMAType === 16) {
     return fellThrough('declined');
   }
   const outKST = o.outKst;
@@ -309,7 +309,7 @@ function kstextPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLik
   if (!isInt32(optInROC1Period) || !isInt32(optInROC2Period) || !isInt32(optInROC3Period) || !isInt32(optInROC4Period) || !isInt32(optInMA1Period) || !isInt32(optInMA2Period) || !isInt32(optInMA3Period) || !isInt32(optInMA4Period) || !isInt32(optInSignalPeriod) || !isInt32(optInROCMAType) || !isInt32(optInSignalMAType)) {
     return fellThrough('parameter');
   }
-  if (optInROCMAType === 7 || optInROCMAType === 15 || optInSignalMAType === 7 || optInSignalMAType === 15) {
+  if (optInROCMAType === 7 || optInROCMAType === 15 || optInROCMAType === 16 || optInSignalMAType === 7 || optInSignalMAType === 15 || optInSignalMAType === 16) {
     return fellThrough('declined');
   }
   if (outKST === undefined || outKSTSignal === undefined) {

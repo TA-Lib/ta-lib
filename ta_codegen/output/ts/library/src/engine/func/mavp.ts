@@ -175,7 +175,7 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
   const optInMinPeriod = optInMinPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInMinPeriodArg;
   const optInMaxPeriod = optInMaxPeriodArg === undefined ? Core.INTEGER_DEFAULT : optInMaxPeriodArg;
   const optInMAType = optInMATypeArg === undefined ? Core.INTEGER_DEFAULT : optInMATypeArg;
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   const outReal = o.outReal;
@@ -268,7 +268,7 @@ function mavpPositionalWasm(startIdx: number, endIdx: number, inReal: ArrayLike<
   if (!isInt32(optInMinPeriod) || !isInt32(optInMaxPeriod) || !isInt32(optInMAType)) {
     return fellThrough('parameter');
   }
-  if (optInMAType === 7 || optInMAType === 15) {
+  if (optInMAType === 7 || optInMAType === 15 || optInMAType === 16) {
     return fellThrough('declined');
   }
   if (outReal === undefined) {

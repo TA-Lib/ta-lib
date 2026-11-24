@@ -79,6 +79,8 @@ func (c *Core) maLookback(optInTimePeriod, optInMAType int32) int32 {
 		retValue = c.vidyaLookback(optInTimePeriod, (3*optInTimePeriod+2)/4)
 	case int32(MATypeALMA):
 		retValue = c.almaLookback(optInTimePeriod, 6.0, 0.85)
+	case int32(MATypeSSF):
+		retValue = c.ssfLookback(optInTimePeriod)
 	default:
 		retValue = 0
 	}
@@ -255,6 +257,14 @@ func (c *Core) maImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod,
 		}
 		*outBegIdx = int32(_X22.BegIdx)
 		*outNBElement = int32(_X22.NBElement)
+		retCode = Success
+	case int32(MATypeSSF):
+		_X23, _E23 := c.SSF(int(startIdx), int(endIdx), inReal, int(optInTimePeriod), outReal)
+		if _E23 != nil {
+			return _E23.(RetCode)
+		}
+		*outBegIdx = int32(_X23.BegIdx)
+		*outNBElement = int32(_X23.NBElement)
 		retCode = Success
 	default:
 		retCode = BadParam
@@ -491,6 +501,12 @@ func (sp *MAStream) Update(inReal float64) (float64, error) {
 			return 0, err
 		}
 		sp.cur_outReal = v0
+	case 14:
+		v0, err := sp.sub.(*SSFStream).Update(inReal)
+		if err != nil {
+			return 0, err
+		}
+		sp.cur_outReal = v0
 	}
 	sp.outRangeCount++
 	return sp.cur_outReal, nil
@@ -534,6 +550,8 @@ func (sp *MAStream) Peek(inReal float64) (float64, error) {
 		return sp.sub.(*VIDYAStream).Peek(inReal)
 	case 13:
 		return sp.sub.(*ALMAStream).Peek(inReal)
+	case 14:
+		return sp.sub.(*SSFStream).Peek(inReal)
 	default:
 		return 0, InternalError
 	}
@@ -564,6 +582,8 @@ func (sp *MAStream) Clone() *MAStream {
 	case *RMAStream:
 		cl.sub = sub.Clone()
 	case *SMAStream:
+		cl.sub = sub.Clone()
+	case *SSFStream:
 		cl.sub = sub.Clone()
 	case *T3Stream:
 		cl.sub = sub.Clone()
@@ -757,6 +777,16 @@ func (c *Core) maOpenImpl(sp *MAStream, inReal []float64, startIdx, optInTimePer
 		sp.sub = sub
 		sp.arm = 13
 		sp.cur_outReal = sub.cur_outReal
+	case int32(MATypeSSF):
+		sub, err := c.ssfOpenInternal(inReal, startIdx, optInTimePeriod)
+		if err != nil {
+			return err.(RetCode)
+		}
+		sp.outRangeBegIdx = sub.outRangeBegIdx
+		sp.outRangeCount = sub.outRangeCount
+		sp.sub = sub
+		sp.arm = 14
+		sp.cur_outReal = sub.cur_outReal
 	default:
 		return BadParam
 	}
@@ -944,6 +974,16 @@ func (c *Core) maOpenAndFillImpl(sp *MAStream, inReal []float64, optInTimePeriod
 		sp.sub = sub
 		sp.arm = 13
 		sp.cur_outReal = sub.cur_outReal
+	case int32(MATypeSSF):
+		sub, r, err := c.SSFOpenAndFill(inReal, int(optInTimePeriod), outReal)
+		if err != nil {
+			return err.(RetCode)
+		}
+		*outBegIdx = int32(r.BegIdx)
+		*outNBElement = int32(r.NBElement)
+		sp.sub = sub
+		sp.arm = 14
+		sp.cur_outReal = sub.cur_outReal
 	default:
 		return BadParam
 	}
@@ -1103,6 +1143,14 @@ func (c *Core) maOpenAndFillInternalImpl(sp *MAStream, inReal []float64, startId
 		sp.sub = sub
 		sp.arm = 13
 		sp.cur_outReal = sub.cur_outReal
+	case int32(MATypeSSF):
+		sub, err := c.ssfOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)
+		if err != nil {
+			return err.(RetCode)
+		}
+		sp.sub = sub
+		sp.arm = 14
+		sp.cur_outReal = sub.cur_outReal
 	default:
 		return BadParam
 	}
@@ -1224,6 +1272,8 @@ func maStepTape(sp *MAStream, tape []float64, tapeBase, tapeMask int32, inReal f
 		sp.cur_outReal = vidyaStepTape(sp.sub.(*VIDYAStream), tape, tapeBase, tapeMask, inReal)
 	case 13:
 		sp.cur_outReal = almaStepTape(sp.sub.(*ALMAStream), tape, tapeBase, tapeMask, inReal)
+	case 14:
+		sp.cur_outReal = ssfStepTape(sp.sub.(*SSFStream), tape, tapeBase, tapeMask, inReal)
 	}
 	sp.outRangeCount++
 	return sp.cur_outReal
@@ -1262,6 +1312,8 @@ func maPeekTape(sp *MAStream, tape []float64, tapeBase, tapeMask int32, inReal f
 		return vidyaPeekTape(sp.sub.(*VIDYAStream), tape, tapeBase, tapeMask, inReal)
 	case 13:
 		return almaPeekTape(sp.sub.(*ALMAStream), tape, tapeBase, tapeMask, inReal)
+	case 14:
+		return ssfPeekTape(sp.sub.(*SSFStream), tape, tapeBase, tapeMask, inReal)
 	}
 	return 0, InternalError
 }
@@ -1296,6 +1348,8 @@ func maTapeDetach(sp *MAStream) int32 {
 		return vidyaTapeDetach(sp.sub.(*VIDYAStream))
 	case 13:
 		return almaTapeDetach(sp.sub.(*ALMAStream))
+	case 14:
+		return ssfTapeDetach(sp.sub.(*SSFStream))
 	}
 	return 0
 }

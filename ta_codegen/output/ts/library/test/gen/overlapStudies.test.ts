@@ -49,13 +49,13 @@ import {
   mavpOpenAndFill, mcgd, mcgdOpen, mcgdOpenAndFill, midpoint, midpointOpen,
   midpointOpenAndFill, midprice, midpriceOpen, midpriceOpenAndFill, rma,
   rmaOpen, rmaOpenAndFill, sar, sarOpen, sarOpenAndFill, sarext, sarextOpen,
-  sarextOpenAndFill, sma, smaOpen, smaOpenAndFill, supertrend, supertrendOpen,
-  supertrendOpenAndFill, swakButter, swakButterOpen, swakButterOpenAndFill,
-  swakGauss, swakGaussOpen, swakGaussOpenAndFill, t3, t3Open, t3OpenAndFill,
-  tema, temaOpen, temaOpenAndFill, trima, trimaOpen, trimaOpenAndFill, vidya,
-  vidyaOpen, vidyaOpenAndFill, vwma, vwmaOpen, vwmaOpenAndFill, wma, wmaOpen,
-  wmaOpenAndFill, zigzag, zigzagOpen, zigzagOpenAndFill, zlema, zlemaOpen,
-  zlemaOpenAndFill
+  sarextOpenAndFill, sma, smaOpen, smaOpenAndFill, ssf, ssfOpen, ssfOpenAndFill,
+  supertrend, supertrendOpen, supertrendOpenAndFill, swakButter, swakButterOpen,
+  swakButterOpenAndFill, swakGauss, swakGaussOpen, swakGaussOpenAndFill, t3,
+  t3Open, t3OpenAndFill, tema, temaOpen, temaOpenAndFill, trima, trimaOpen,
+  trimaOpenAndFill, vidya, vidyaOpen, vidyaOpenAndFill, vwma, vwmaOpen,
+  vwmaOpenAndFill, wma, wmaOpen, wmaOpenAndFill, zigzag, zigzagOpen,
+  zigzagOpenAndFill, zlema, zlemaOpen, zlemaOpenAndFill
 } from 'ta-lib';
 
 test('ACCBANDS: accbands example', () => {
@@ -1586,6 +1586,48 @@ test('SMA: smaOpenAndFill example', () => {
 
   const range = stream.outRange();
   const batch = sma(series, { timePeriod: 30 });
+  assert.deepEqual([begIdx, values.length], [range.begIdx, range.count]);
+  assert.deepEqual([begIdx, values.length], [batch.begIdx, batch.values.length]);
+  assert.ok(values.length > 0);
+  for (let k = 0; k < values.length; k++) {
+    assert.ok(Object.is(values[k], batch.values[k]));
+  }
+});
+
+test('SSF: ssf example', () => {
+  const series = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
+
+  const { begIdx, values } = ssf(series, { timePeriod: 10 });
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+
+  const count = values.length;
+  assert.ok(count > 2);
+  assert.equal(begIdx + count, series.length);
+  assert.ok(values.every(Number.isFinite));
+});
+
+test('SSF: ssfOpen example', () => {
+  const series = Float64Array.from({ length: 252 }, (_, i) =>
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+  const stream = ssfOpen(series, { timePeriod: 10 });
+  const peeked = stream.peek(100.9); // a forming bar: commits nothing
+  const updated = stream.update(100.9); // the bar closes
+
+  assert.ok(Object.is(peeked, updated));
+  assert.ok(Object.is(stream.value(), updated));
+  const range = stream.outRange();
+  assert.equal(range.begIdx + range.count, series.length + 1);
+});
+
+test('SSF: ssfOpenAndFill example', () => {
+  const series = Float64Array.from({ length: 252 }, (_, i) =>
+    90 + (i % 40 - 20) * (i % 40 - 20) / 20.0);
+  const { stream, begIdx, values } = ssfOpenAndFill(series, { timePeriod: 10 });
+  // values[k] is the value at bar begIdx + k
+
+  const range = stream.outRange();
+  const batch = ssf(series, { timePeriod: 10 });
   assert.deepEqual([begIdx, values.length], [range.begIdx, range.count]);
   assert.deepEqual([begIdx, values.length], [batch.begIdx, batch.values.length]);
   assert.ok(values.length > 0);

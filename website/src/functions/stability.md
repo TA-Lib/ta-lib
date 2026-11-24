@@ -37,6 +37,7 @@ Some functions take an MA-type parameter selecting how their moving average is c
 | [RMA](/functions/rma.md) | 13 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via RMA's own unstable period. |
 | [VIDYA](/functions/vidya.md) | 14 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via VIDYA's own unstable period. |
 | [ALMA](/functions/alma.md) | 15 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
+| [SSF](/functions/ssf.md) | 16 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via SSF's own unstable period. |
 
 ## If Path-Dependent, then... {#path-dependent}
 
