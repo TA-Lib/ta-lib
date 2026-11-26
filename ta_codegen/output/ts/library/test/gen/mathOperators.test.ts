@@ -52,7 +52,7 @@ test('ADD: add example', () => {
   for (let i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = add(series0, series1);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -98,7 +98,7 @@ test('CUMSUM: cumsum example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = cumsum(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -142,7 +142,7 @@ test('DIV: div example', () => {
   for (let i = 0; i < 252; i++) series1[i] = 1 + 5 * i / 251.0;
 
   const { begIdx, values } = div(series0, series1);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -186,7 +186,7 @@ test('MAX: max example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = max(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -277,7 +277,7 @@ test('MIN: min example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = min(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -369,8 +369,8 @@ test('MINMAX: minmax example', () => {
 
   const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
   console.log(outMin.length + ' values from bar ' + begIdx + ':');
-  console.log('outMin = [' + outMin[0].toFixed(4) + ', ..., ' + outMin[outMin.length - 1].toFixed(4) + ']');
-  console.log('outMax = [' + outMax[0].toFixed(4) + ', ..., ' + outMax[outMax.length - 1].toFixed(4) + ']');
+  console.log('outMin = [' + outMin[0]?.toFixed(4) + ', ..., ' + outMin[outMin.length - 1]?.toFixed(4) + ']');
+  console.log('outMax = [' + outMax[0]?.toFixed(4) + ', ..., ' + outMax[outMax.length - 1]?.toFixed(4) + ']');
 
   const count = outMin.length;
   assert.ok(count > 2);
@@ -482,7 +482,7 @@ test('MULT: mult example', () => {
   for (let i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = mult(series0, series1);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -530,7 +530,7 @@ test('SUB: sub example', () => {
   for (let i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = sub(series0, series1);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -576,7 +576,7 @@ test('SUM: sum example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = sum(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

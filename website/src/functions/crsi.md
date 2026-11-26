@@ -171,7 +171,7 @@ const { begIdx, values } = crsi(series, {
   streakPeriod: 2,
   rankPeriod: 100,
 });
-console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

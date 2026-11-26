@@ -586,7 +586,7 @@ export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): numb
  *   maxPeriod: 30,
  *   maType: MAType.SMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`sma`](https://ta-lib.org/functions/sma)

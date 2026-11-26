@@ -49,7 +49,7 @@ test('HT_DCPERIOD: htDcperiod example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htDcperiod(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -91,7 +91,7 @@ test('HT_DCPHASE: htDcphase example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htDcphase(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -134,8 +134,8 @@ test('HT_PHASOR: htPhasor example', () => {
 
   const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
   console.log(outInPhase.length + ' values from bar ' + begIdx + ':');
-  console.log('outInPhase = [' + outInPhase[0].toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1].toFixed(4) + ']');
-  console.log('outQuadrature = [' + outQuadrature[0].toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1].toFixed(4) + ']');
+  console.log('outInPhase = [' + outInPhase[0]?.toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1]?.toFixed(4) + ']');
+  console.log('outQuadrature = [' + outQuadrature[0]?.toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1]?.toFixed(4) + ']');
 
   const count = outInPhase.length;
   assert.ok(count > 2);
@@ -185,8 +185,8 @@ test('HT_SINE: htSine example', () => {
 
   const { begIdx, outSine, outLeadSine } = htSine(series);
   console.log(outSine.length + ' values from bar ' + begIdx + ':');
-  console.log('outSine = [' + outSine[0].toFixed(4) + ', ..., ' + outSine[outSine.length - 1].toFixed(4) + ']');
-  console.log('outLeadSine = [' + outLeadSine[0].toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1].toFixed(4) + ']');
+  console.log('outSine = [' + outSine[0]?.toFixed(4) + ', ..., ' + outSine[outSine.length - 1]?.toFixed(4) + ']');
+  console.log('outLeadSine = [' + outLeadSine[0]?.toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1]?.toFixed(4) + ']');
 
   const count = outSine.length;
   assert.ok(count > 2);
@@ -278,7 +278,7 @@ test('SWAK_2PHP: swak2php example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swak2php(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -322,7 +322,7 @@ test('SWAK_BP: swakBp example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakBp(series, { timePeriod: 20, delta: 0.1 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -367,7 +367,7 @@ test('SWAK_HP: swakHp example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakHp(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

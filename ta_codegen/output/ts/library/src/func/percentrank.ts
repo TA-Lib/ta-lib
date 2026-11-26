@@ -330,7 +330,7 @@ export function percentrankDisplayShift(outputIdx: number, options?: Percentrank
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = percentrank(series, { timePeriod: 100 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`willr`](https://ta-lib.org/functions/willr)

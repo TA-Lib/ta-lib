@@ -403,7 +403,7 @@ export function efiDisplayShift(outputIdx: number, options?: EfiOptions): number
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = efi({ close, volume }, { timePeriod: 13 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`ema`](https://ta-lib.org/functions/ema)

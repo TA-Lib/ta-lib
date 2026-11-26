@@ -902,7 +902,7 @@ export function t3DisplayShift(outputIdx: number, options?: T3Options): number {
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = t3(series, { timePeriod: 5, vFactor: 0.7 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`dema`](https://ta-lib.org/functions/dema)

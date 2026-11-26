@@ -192,8 +192,8 @@ const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
   slowDMaType: MAType.SMA,
 });
 console.log(outSlowK.length + ' values from bar ' + begIdx + ':');
-console.log('outSlowK = [' + outSlowK[0].toFixed(4) + ', ..., ' + outSlowK[outSlowK.length - 1].toFixed(4) + ']');
-console.log('outSlowD = [' + outSlowD[0].toFixed(4) + ', ..., ' + outSlowD[outSlowD.length - 1].toFixed(4) + ']');
+console.log('outSlowK = [' + outSlowK[0]?.toFixed(4) + ', ..., ' + outSlowK[outSlowK.length - 1]?.toFixed(4) + ']');
+console.log('outSlowD = [' + outSlowD[0]?.toFixed(4) + ', ..., ' + outSlowD[outSlowD.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

@@ -542,7 +542,7 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  *   fastPeriod: 9,
  *   slowPeriod: 25,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`cvi`](https://ta-lib.org/functions/cvi)
  * @see [`atr`](https://ta-lib.org/functions/atr)

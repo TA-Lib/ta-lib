@@ -872,8 +872,8 @@ export function mamaDisplayShift(outputIdx: number, options?: MamaOptions): numb
  *   slowLimit: 0.05,
  * });
  * console.log(outMama.length + ' values from bar ' + begIdx + ':');
- * console.log('outMama = [' + outMama[0].toFixed(4) + ', ..., ' + outMama[outMama.length - 1].toFixed(4) + ']');
- * console.log('outFama = [' + outFama[0].toFixed(4) + ', ..., ' + outFama[outFama.length - 1].toFixed(4) + ']');
+ * console.log('outMama = [' + outMama[0]?.toFixed(4) + ', ..., ' + outMama[outMama.length - 1]?.toFixed(4) + ']');
+ * console.log('outFama = [' + outFama[0]?.toFixed(4) + ', ..., ' + outFama[outFama.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`wma`](https://ta-lib.org/functions/wma)

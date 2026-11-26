@@ -605,7 +605,7 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  *   fastKPeriod: 8,
  *   emaPeriod: 5,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stoch`](https://ta-lib.org/functions/stoch)

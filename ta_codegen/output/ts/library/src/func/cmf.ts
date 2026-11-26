@@ -469,7 +469,7 @@ export function cmfDisplayShift(outputIdx: number, options?: CmfOptions): number
  * const { begIdx, values } = cmf({ high, low, close, volume }, {
  *   timePeriod: 20,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`adosc`](https://ta-lib.org/functions/adosc)

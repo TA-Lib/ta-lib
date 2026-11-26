@@ -494,7 +494,7 @@ export function rogerssatchellDisplayShift(outputIdx: number, options?: Rogerssa
  *   timePeriod: 10,
  *   annualization: 252,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`natr`](https://ta-lib.org/functions/natr)

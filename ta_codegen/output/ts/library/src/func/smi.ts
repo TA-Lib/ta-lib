@@ -831,8 +831,8 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  *   signalPeriod: 9,
  * });
  * console.log(outSmi.length + ' values from bar ' + begIdx + ':');
- * console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
- * console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
+ * console.log('outSmi = [' + outSmi[0]?.toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1]?.toFixed(4) + ']');
+ * console.log('outSmiSignal = [' + outSmiSignal[0]?.toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)

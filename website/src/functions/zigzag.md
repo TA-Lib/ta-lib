@@ -207,7 +207,7 @@ const {
   outPivotIdx,
 } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
 console.log(outZigZag.length + ' values from bar ' + begIdx + ':');
-console.log('outZigZag = [' + outZigZag[0].toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1].toFixed(4) + ']');
+console.log('outZigZag = [' + outZigZag[0]?.toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1]?.toFixed(4) + ']');
 console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
 console.log('outPivotIdx = [' + outPivotIdx[0] + ', ..., ' + outPivotIdx[outPivotIdx.length - 1] + ']');
 ```

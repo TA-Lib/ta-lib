@@ -572,7 +572,7 @@ export function bbwDisplayShift(outputIdx: number, options?: BbwOptions): number
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`percentb`](https://ta-lib.org/functions/percentb)

@@ -5,6 +5,8 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "skipLibCheck": false,
     "types": [],
     "noEmit": true

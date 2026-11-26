@@ -293,7 +293,7 @@ export function bopDisplayShift(outputIdx: number, options?: BopOptions): number
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = bop({ open, high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  */
 export function bop(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: BopOptions): BopResult {

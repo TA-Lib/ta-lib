@@ -1073,7 +1073,8 @@ pub fn batch_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option
     // Concatenation, not a template literal: `${` reads as TeX to the doc gate.
     let ends = examples::Ends::of(func);
     let list = |out: &Output, var: &str| {
-        let fixed = if out.param_type == ParamType::Integer { "" } else { ".toFixed(4)" };
+        // `?.`: under `noUncheckedIndexedAccess`, which `tsc --init` sets, an indexed element is `number | undefined`.
+        let fixed = if out.param_type == ParamType::Integer { "" } else { "?.toFixed(4)" };
         ends.list(&format!("' + {var}[0]{fixed} + '"), &format!("' + {var}[{var}.length - 1]{fixed} + '"))
     };
     let head = format!("{}.length + ' values from bar ' + begIdx + ':", outs[0]);

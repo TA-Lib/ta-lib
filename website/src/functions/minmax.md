@@ -158,8 +158,8 @@ const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
 console.log(outMin.length + ' values from bar ' + begIdx + ':');
-console.log('outMin = [' + outMin[0].toFixed(4) + ', ..., ' + outMin[outMin.length - 1].toFixed(4) + ']');
-console.log('outMax = [' + outMax[0].toFixed(4) + ', ..., ' + outMax[outMax.length - 1].toFixed(4) + ']');
+console.log('outMin = [' + outMin[0]?.toFixed(4) + ', ..., ' + outMin[outMin.length - 1]?.toFixed(4) + ']');
+console.log('outMax = [' + outMax[0]?.toFixed(4) + ', ..., ' + outMax[outMax.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

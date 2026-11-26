@@ -34,5 +34,5 @@ const engineInfo: number = getRuntimeInfo('wasm.engine');
 import('ta-lib/js/abstract').then((m) => m.ready());
 const cs = Core.DEFAULT.candleSetting(CandleSettingType.NEAR);
 Core.builder().candleSetting(cs.settingType, cs.rangeType, cs.avgPeriod, cs.factor);
-const holderRange = callHolder(JsFunctions.all()[0].newCall());
+const holderRange = callHolder(JsFunctions.all()[0]!.newCall());
 export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf, status, sameCore, jsValues, names, jsNames, abstractStatus, engineInfo, holderRange };

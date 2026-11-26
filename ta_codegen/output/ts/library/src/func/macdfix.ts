@@ -636,9 +636,9 @@ export function macdfixDisplayShift(outputIdx: number, options?: MacdfixOptions)
  *   outMacdHist,
  * } = macdfix(series, { signalPeriod: 9 });
  * console.log(outMacd.length + ' values from bar ' + begIdx + ':');
- * console.log('outMacd = [' + outMacd[0].toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1].toFixed(4) + ']');
- * console.log('outMacdSignal = [' + outMacdSignal[0].toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1].toFixed(4) + ']');
- * console.log('outMacdHist = [' + outMacdHist[0].toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1].toFixed(4) + ']');
+ * console.log('outMacd = [' + outMacd[0]?.toFixed(4) + ', ..., ' + outMacd[outMacd.length - 1]?.toFixed(4) + ']');
+ * console.log('outMacdSignal = [' + outMacdSignal[0]?.toFixed(4) + ', ..., ' + outMacdSignal[outMacdSignal.length - 1]?.toFixed(4) + ']');
+ * console.log('outMacdHist = [' + outMacdHist[0]?.toFixed(4) + ', ..., ' + outMacdHist[outMacdHist.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdext`](https://ta-lib.org/functions/macdext)

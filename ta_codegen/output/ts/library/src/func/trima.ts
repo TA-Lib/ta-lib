@@ -543,7 +543,7 @@ export function trimaDisplayShift(outputIdx: number, options?: TrimaOptions): nu
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = trima(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`wma`](https://ta-lib.org/functions/wma)

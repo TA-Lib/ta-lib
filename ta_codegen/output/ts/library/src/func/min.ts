@@ -395,7 +395,7 @@ export function minDisplayShift(outputIdx: number, options?: MinOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = min(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`max`](https://ta-lib.org/functions/max)
  * @see [`minindex`](https://ta-lib.org/functions/minindex)

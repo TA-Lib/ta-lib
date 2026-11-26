@@ -377,7 +377,7 @@ export function choptrDisplayShift(outputIdx: number, options?: ChoptrOptions): 
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = choptr({ high, low, close }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`chop`](https://ta-lib.org/functions/chop)
  * @see [`vhf`](https://ta-lib.org/functions/vhf)

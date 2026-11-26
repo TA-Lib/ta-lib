@@ -189,8 +189,8 @@ const { begIdx, outHighStop, outLowStop } = cksp({ high, low, close }, {
   stopPeriod: 9,
 });
 console.log(outHighStop.length + ' values from bar ' + begIdx + ':');
-console.log('outHighStop = [' + outHighStop[0].toFixed(4) + ', ..., ' + outHighStop[outHighStop.length - 1].toFixed(4) + ']');
-console.log('outLowStop = [' + outLowStop[0].toFixed(4) + ', ..., ' + outLowStop[outLowStop.length - 1].toFixed(4) + ']');
+console.log('outHighStop = [' + outHighStop[0]?.toFixed(4) + ', ..., ' + outHighStop[outHighStop.length - 1]?.toFixed(4) + ']');
+console.log('outLowStop = [' + outLowStop[0]?.toFixed(4) + ', ..., ' + outLowStop[outLowStop.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

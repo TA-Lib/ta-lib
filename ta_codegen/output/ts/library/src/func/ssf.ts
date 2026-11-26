@@ -469,7 +469,7 @@ export function ssfDisplayShift(outputIdx: number, options?: SsfOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = ssf(series, { timePeriod: 10 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`swakButter`](https://ta-lib.org/functions/swak_butter)

@@ -386,7 +386,7 @@ export function adrDisplayShift(outputIdx: number, options?: AdrOptions): number
  * const low = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = adr({ high, low }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`donchian`](https://ta-lib.org/functions/donchian)

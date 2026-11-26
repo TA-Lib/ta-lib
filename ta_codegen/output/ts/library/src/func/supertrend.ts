@@ -558,7 +558,7 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  *   multiplier: 3,
  * });
  * console.log(outSupertrend.length + ' values from bar ' + begIdx + ':');
- * console.log('outSupertrend = [' + outSupertrend[0].toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1].toFixed(4) + ']');
+ * console.log('outSupertrend = [' + outSupertrend[0]?.toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1]?.toFixed(4) + ']');
  * console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)

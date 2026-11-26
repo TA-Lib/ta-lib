@@ -503,9 +503,9 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  *   slowDMaType: MAType.RMA,
  * });
  * console.log(outK.length + ' values from bar ' + begIdx + ':');
- * console.log('outK = [' + outK[0].toFixed(4) + ', ..., ' + outK[outK.length - 1].toFixed(4) + ']');
- * console.log('outD = [' + outD[0].toFixed(4) + ', ..., ' + outD[outD.length - 1].toFixed(4) + ']');
- * console.log('outJ = [' + outJ[0].toFixed(4) + ', ..., ' + outJ[outJ.length - 1].toFixed(4) + ']');
+ * console.log('outK = [' + outK[0]?.toFixed(4) + ', ..., ' + outK[outK.length - 1]?.toFixed(4) + ']');
+ * console.log('outD = [' + outD[0]?.toFixed(4) + ', ..., ' + outD[outD.length - 1]?.toFixed(4) + ']');
+ * console.log('outJ = [' + outJ[0]?.toFixed(4) + ', ..., ' + outJ[outJ.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)

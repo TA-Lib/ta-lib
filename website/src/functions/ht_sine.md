@@ -147,8 +147,8 @@ const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, outSine, outLeadSine } = htSine(series);
 console.log(outSine.length + ' values from bar ' + begIdx + ':');
-console.log('outSine = [' + outSine[0].toFixed(4) + ', ..., ' + outSine[outSine.length - 1].toFixed(4) + ']');
-console.log('outLeadSine = [' + outLeadSine[0].toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1].toFixed(4) + ']');
+console.log('outSine = [' + outSine[0]?.toFixed(4) + ', ..., ' + outSine[outSine.length - 1]?.toFixed(4) + ']');
+console.log('outLeadSine = [' + outLeadSine[0]?.toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

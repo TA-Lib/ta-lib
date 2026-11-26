@@ -406,8 +406,8 @@ export function aroonDisplayShift(outputIdx: number, options?: AroonOptions): nu
  *   timePeriod: 14,
  * });
  * console.log(outAroonDown.length + ' values from bar ' + begIdx + ':');
- * console.log('outAroonDown = [' + outAroonDown[0].toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1].toFixed(4) + ']');
- * console.log('outAroonUp = [' + outAroonUp[0].toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1].toFixed(4) + ']');
+ * console.log('outAroonDown = [' + outAroonDown[0]?.toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1]?.toFixed(4) + ']');
+ * console.log('outAroonUp = [' + outAroonUp[0]?.toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`aroonosc`](https://ta-lib.org/functions/aroonosc)
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)

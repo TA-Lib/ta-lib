@@ -48,7 +48,7 @@ test('AVGDEV: avgdev example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = avgdev(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -98,7 +98,7 @@ test('AVGPRICE: avgprice example', () => {
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = avgprice({ open, high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -165,10 +165,10 @@ test('HA: ha example', () => {
     outHaClose,
   } = ha({ open, high, low, close });
   console.log(outHaOpen.length + ' values from bar ' + begIdx + ':');
-  console.log('outHaOpen = [' + outHaOpen[0].toFixed(4) + ', ..., ' + outHaOpen[outHaOpen.length - 1].toFixed(4) + ']');
-  console.log('outHaHigh = [' + outHaHigh[0].toFixed(4) + ', ..., ' + outHaHigh[outHaHigh.length - 1].toFixed(4) + ']');
-  console.log('outHaLow = [' + outHaLow[0].toFixed(4) + ', ..., ' + outHaLow[outHaLow.length - 1].toFixed(4) + ']');
-  console.log('outHaClose = [' + outHaClose[0].toFixed(4) + ', ..., ' + outHaClose[outHaClose.length - 1].toFixed(4) + ']');
+  console.log('outHaOpen = [' + outHaOpen[0]?.toFixed(4) + ', ..., ' + outHaOpen[outHaOpen.length - 1]?.toFixed(4) + ']');
+  console.log('outHaHigh = [' + outHaHigh[0]?.toFixed(4) + ', ..., ' + outHaHigh[outHaHigh.length - 1]?.toFixed(4) + ']');
+  console.log('outHaLow = [' + outHaLow[0]?.toFixed(4) + ', ..., ' + outHaLow[outHaLow.length - 1]?.toFixed(4) + ']');
+  console.log('outHaClose = [' + outHaClose[0]?.toFixed(4) + ', ..., ' + outHaClose[outHaClose.length - 1]?.toFixed(4) + ']');
 
   const count = outHaOpen.length;
   assert.ok(count > 2);
@@ -239,7 +239,7 @@ test('MEDPRICE: medprice example', () => {
   for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = medprice({ high, low });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -289,7 +289,7 @@ test('TYPPRICE: typprice example', () => {
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = typprice({ high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -343,7 +343,7 @@ test('WCLPRICE: wclprice example', () => {
   for (let i = 0; i < 252; i++) close[i] = 88.4 + ((i % 40 - 20) * (i % 40 - 20) + 4 * (i % 9 - 4) * (i % 9 - 4)) / 20.0;
 
   const { begIdx, values } = wclprice({ high, low, close });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

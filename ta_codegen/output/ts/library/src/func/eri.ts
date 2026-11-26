@@ -463,8 +463,8 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  *   timePeriod: 13,
  * });
  * console.log(outBullPower.length + ' values from bar ' + begIdx + ':');
- * console.log('outBullPower = [' + outBullPower[0].toFixed(4) + ', ..., ' + outBullPower[outBullPower.length - 1].toFixed(4) + ']');
- * console.log('outBearPower = [' + outBearPower[0].toFixed(4) + ', ..., ' + outBearPower[outBearPower.length - 1].toFixed(4) + ']');
+ * console.log('outBullPower = [' + outBullPower[0]?.toFixed(4) + ', ..., ' + outBullPower[outBullPower.length - 1]?.toFixed(4) + ']');
+ * console.log('outBearPower = [' + outBearPower[0]?.toFixed(4) + ', ..., ' + outBearPower[outBearPower.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`efi`](https://ta-lib.org/functions/efi)

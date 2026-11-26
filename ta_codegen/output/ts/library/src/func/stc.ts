@@ -902,7 +902,7 @@ export function stcDisplayShift(outputIdx: number, options?: StcOptions): number
  *   slowPeriod: 50,
  *   cyclePeriod: 10,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)

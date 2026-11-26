@@ -176,8 +176,8 @@ const { begIdx, outFastK, outFastD } = stochrsi(series, {
   fastDMaType: MAType.SMA,
 });
 console.log(outFastK.length + ' values from bar ' + begIdx + ':');
-console.log('outFastK = [' + outFastK[0].toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1].toFixed(4) + ']');
-console.log('outFastD = [' + outFastD[0].toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1].toFixed(4) + ']');
+console.log('outFastK = [' + outFastK[0]?.toFixed(4) + ', ..., ' + outFastK[outFastK.length - 1]?.toFixed(4) + ']');
+console.log('outFastD = [' + outFastD[0]?.toFixed(4) + ', ..., ' + outFastD[outFastD.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

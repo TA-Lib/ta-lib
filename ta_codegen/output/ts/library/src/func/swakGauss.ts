@@ -433,7 +433,7 @@ export function swakGaussDisplayShift(outputIdx: number, options?: SwakGaussOpti
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = swakGauss(series, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`swakButter`](https://ta-lib.org/functions/swak_butter)
  * @see [`ema`](https://ta-lib.org/functions/ema)

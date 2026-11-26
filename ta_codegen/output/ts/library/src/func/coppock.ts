@@ -519,7 +519,7 @@ export function coppockDisplayShift(outputIdx: number, options?: CoppockOptions)
  *   roc1Period: 11,
  *   roc2Period: 14,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  */
 export function coppock(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult {

@@ -57,7 +57,7 @@ test('AD: ad example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = ad({ high, low, close, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -120,7 +120,7 @@ test('ADOSC: adosc example', () => {
     fastPeriod: 3,
     slowPeriod: 10,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -191,7 +191,7 @@ test('CMF: cmf example', () => {
   const { begIdx, values } = cmf({ high, low, close, volume }, {
     timePeriod: 20,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -249,7 +249,7 @@ test('EFI: efi example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = efi({ close, volume }, { timePeriod: 13 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -304,7 +304,7 @@ test('EMV: emv example', () => {
     timePeriod: 14,
     volumeDivisor: 10000,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -374,8 +374,8 @@ test('KVO: kvo example', () => {
     signalPeriod: 13,
   });
   console.log(outKvo.length + ' values from bar ' + begIdx + ':');
-  console.log('outKvo = [' + outKvo[0].toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1].toFixed(4) + ']');
-  console.log('outKvoSignal = [' + outKvoSignal[0].toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1].toFixed(4) + ']');
+  console.log('outKvo = [' + outKvo[0]?.toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1]?.toFixed(4) + ']');
+  console.log('outKvoSignal = [' + outKvoSignal[0]?.toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1]?.toFixed(4) + ']');
 
   const count = outKvo.length;
   assert.ok(count > 2);
@@ -452,7 +452,7 @@ test('MARKETFI: marketfi example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = marketfi({ high, low, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -504,7 +504,7 @@ test('NVI: nvi example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = nvi({ close, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -552,7 +552,7 @@ test('OBV: obv example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = obv(series, { volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -600,7 +600,7 @@ test('PVI: pvi example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = pvi({ close, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -650,7 +650,7 @@ test('PVO: pvo example', () => {
     slowPeriod: 26,
     maType: MAType.EMA,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -706,7 +706,7 @@ test('PVT: pvt example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = pvt({ close, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -752,7 +752,7 @@ test('RVOL: rvol example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -802,7 +802,7 @@ test('VWAP: vwap example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = vwap({ high, low, close, volume });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

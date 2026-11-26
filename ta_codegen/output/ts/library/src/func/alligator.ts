@@ -585,9 +585,9 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  *   lipsShift: 3,
  * });
  * console.log(outJaw.length + ' values from bar ' + begIdx + ':');
- * console.log('outJaw = [' + outJaw[0].toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1].toFixed(4) + ']');
- * console.log('outTeeth = [' + outTeeth[0].toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1].toFixed(4) + ']');
- * console.log('outLips = [' + outLips[0].toFixed(4) + ', ..., ' + outLips[outLips.length - 1].toFixed(4) + ']');
+ * console.log('outJaw = [' + outJaw[0]?.toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1]?.toFixed(4) + ']');
+ * console.log('outTeeth = [' + outTeeth[0]?.toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1]?.toFixed(4) + ']');
+ * console.log('outLips = [' + outLips[0]?.toFixed(4) + ', ..., ' + outLips[outLips.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

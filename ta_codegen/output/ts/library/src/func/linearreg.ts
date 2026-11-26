@@ -468,7 +468,7 @@ export function linearregDisplayShift(outputIdx: number, options?: LinearregOpti
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = linearreg(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
  * @see [`linearregAngle`](https://ta-lib.org/functions/linearreg_angle)

@@ -479,7 +479,7 @@ export function minusDmDisplayShift(outputIdx: number, options?: MinusDmOptions)
  * const low = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = minusDm({ high, low }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
  * @see [`minusDi`](https://ta-lib.org/functions/minus_di)

@@ -73,9 +73,9 @@ test('ACCBANDS: accbands example', () => {
     outLowerBand,
   } = accbands({ high, low, close }, { timePeriod: 20 });
   console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-  console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-  console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-  console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+  console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+  console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+  console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 
   const count = outUpperBand.length;
   assert.ok(count > 2);
@@ -146,9 +146,9 @@ test('ALLIGATOR: alligator example', () => {
     lipsShift: 3,
   });
   console.log(outJaw.length + ' values from bar ' + begIdx + ':');
-  console.log('outJaw = [' + outJaw[0].toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1].toFixed(4) + ']');
-  console.log('outTeeth = [' + outTeeth[0].toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1].toFixed(4) + ']');
-  console.log('outLips = [' + outLips[0].toFixed(4) + ', ..., ' + outLips[outLips.length - 1].toFixed(4) + ']');
+  console.log('outJaw = [' + outJaw[0]?.toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1]?.toFixed(4) + ']');
+  console.log('outTeeth = [' + outTeeth[0]?.toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1]?.toFixed(4) + ']');
+  console.log('outLips = [' + outLips[0]?.toFixed(4) + ', ..., ' + outLips[outLips.length - 1]?.toFixed(4) + ']');
 
   const count = outJaw.length;
   assert.ok(count > 2);
@@ -230,7 +230,7 @@ test('ALMA: alma example', () => {
     sigma: 6,
     offset: 0.85,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -287,9 +287,9 @@ test('BBANDS: bbands example', () => {
     maType: MAType.SMA,
   });
   console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-  console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-  console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-  console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+  console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+  console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+  console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 
   const count = outUpperBand.length;
   assert.ok(count > 2);
@@ -365,8 +365,8 @@ test('CE: ce example', () => {
     multiplier: 3,
   });
   console.log(outLong.length + ' values from bar ' + begIdx + ':');
-  console.log('outLong = [' + outLong[0].toFixed(4) + ', ..., ' + outLong[outLong.length - 1].toFixed(4) + ']');
-  console.log('outShort = [' + outShort[0].toFixed(4) + ', ..., ' + outShort[outShort.length - 1].toFixed(4) + ']');
+  console.log('outLong = [' + outLong[0]?.toFixed(4) + ', ..., ' + outLong[outLong.length - 1]?.toFixed(4) + ']');
+  console.log('outShort = [' + outShort[0]?.toFixed(4) + ', ..., ' + outShort[outShort.length - 1]?.toFixed(4) + ']');
 
   const count = outLong.length;
   assert.ok(count > 2);
@@ -430,8 +430,8 @@ test('CKSP: cksp example', () => {
     stopPeriod: 9,
   });
   console.log(outHighStop.length + ' values from bar ' + begIdx + ':');
-  console.log('outHighStop = [' + outHighStop[0].toFixed(4) + ', ..., ' + outHighStop[outHighStop.length - 1].toFixed(4) + ']');
-  console.log('outLowStop = [' + outLowStop[0].toFixed(4) + ', ..., ' + outLowStop[outLowStop.length - 1].toFixed(4) + ']');
+  console.log('outHighStop = [' + outHighStop[0]?.toFixed(4) + ', ..., ' + outHighStop[outHighStop.length - 1]?.toFixed(4) + ']');
+  console.log('outLowStop = [' + outLowStop[0]?.toFixed(4) + ', ..., ' + outLowStop[outLowStop.length - 1]?.toFixed(4) + ']');
 
   const count = outHighStop.length;
   assert.ok(count > 2);
@@ -500,7 +500,7 @@ test('DEMA: dema example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = dema(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -550,9 +550,9 @@ test('DONCHIAN: donchian example', () => {
     outLowerBand,
   } = donchian({ high, low }, { timePeriod: 20 });
   console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-  console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-  console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-  console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+  console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+  console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+  console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 
   const count = outUpperBand.length;
   assert.ok(count > 2);
@@ -609,7 +609,7 @@ test('EMA: ema example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ema(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -653,7 +653,7 @@ test('FRAMA: frama example', () => {
   for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = frama({ high, low }, { timePeriod: 16 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -701,7 +701,7 @@ test('HMA: hma example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = hma(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -743,7 +743,7 @@ test('HT_TRENDLINE: htTrendline example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = htTrendline(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -798,10 +798,10 @@ test('ICHIMOKU: ichimoku example', () => {
     senkouBPeriod: 52,
   });
   console.log(outTenkanSen.length + ' values from bar ' + begIdx + ':');
-  console.log('outTenkanSen = [' + outTenkanSen[0].toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1].toFixed(4) + ']');
-  console.log('outKijunSen = [' + outKijunSen[0].toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1].toFixed(4) + ']');
-  console.log('outSenkouSpanA = [' + outSenkouSpanA[0].toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1].toFixed(4) + ']');
-  console.log('outSenkouSpanB = [' + outSenkouSpanB[0].toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1].toFixed(4) + ']');
+  console.log('outTenkanSen = [' + outTenkanSen[0]?.toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1]?.toFixed(4) + ']');
+  console.log('outKijunSen = [' + outKijunSen[0]?.toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1]?.toFixed(4) + ']');
+  console.log('outSenkouSpanA = [' + outSenkouSpanA[0]?.toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1]?.toFixed(4) + ']');
+  console.log('outSenkouSpanB = [' + outSenkouSpanB[0]?.toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1]?.toFixed(4) + ']');
 
   const count = outTenkanSen.length;
   assert.ok(count > 2);
@@ -874,7 +874,7 @@ test('KAMA: kama example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = kama(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -926,9 +926,9 @@ test('KC: kc example', () => {
     outLowerBand,
   } = kc({ high, low, close }, { timePeriod: 20, atrPeriod: 10, nbDev: 2 });
   console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-  console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-  console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-  console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+  console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+  console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+  console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 
   const count = outUpperBand.length;
   assert.ok(count > 2);
@@ -1001,7 +1001,7 @@ test('MA: ma example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ma(series, { timePeriod: 30, maType: MAType.SMA });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1057,9 +1057,9 @@ test('MAENV: maenv example', () => {
     maType: MAType.SMA,
   });
   console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-  console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-  console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-  console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+  console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+  console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+  console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 
   const count = outUpperBand.length;
   assert.ok(count > 2);
@@ -1131,8 +1131,8 @@ test('MAMA: mama example', () => {
     slowLimit: 0.05,
   });
   console.log(outMama.length + ' values from bar ' + begIdx + ':');
-  console.log('outMama = [' + outMama[0].toFixed(4) + ', ..., ' + outMama[outMama.length - 1].toFixed(4) + ']');
-  console.log('outFama = [' + outFama[0].toFixed(4) + ', ..., ' + outFama[outFama.length - 1].toFixed(4) + ']');
+  console.log('outMama = [' + outMama[0]?.toFixed(4) + ', ..., ' + outMama[outMama.length - 1]?.toFixed(4) + ']');
+  console.log('outFama = [' + outFama[0]?.toFixed(4) + ', ..., ' + outFama[outFama.length - 1]?.toFixed(4) + ']');
 
   const count = outMama.length;
   assert.ok(count > 2);
@@ -1185,7 +1185,7 @@ test('MAVP: mavp example', () => {
     maxPeriod: 30,
     maType: MAType.SMA,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1241,7 +1241,7 @@ test('MCGD: mcgd example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = mcgd(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1283,7 +1283,7 @@ test('MIDPOINT: midpoint example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = midpoint(series, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1329,7 +1329,7 @@ test('MIDPRICE: midprice example', () => {
   for (let i = 0; i < 252; i++) low[i] = 88 + ((i % 40 - 20) * (i % 40 - 20) - (i % 13 - 6) * (i % 13 - 6)) / 20.0;
 
   const { begIdx, values } = midprice({ high, low }, { timePeriod: 14 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1377,7 +1377,7 @@ test('RMA: rma example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = rma(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1424,7 +1424,7 @@ test('SAR: sar example', () => {
     acceleration: 0.02,
     maximum: 0.2,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1484,7 +1484,7 @@ test('SAREXT: sarext example', () => {
     accelerationShort: 0.02,
     accelerationMaxShort: 0.2,
   });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1557,7 +1557,7 @@ test('SMA: sma example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = sma(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1599,7 +1599,7 @@ test('SSF: ssf example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = ssf(series, { timePeriod: 10 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1649,7 +1649,7 @@ test('SUPERTREND: supertrend example', () => {
     multiplier: 3,
   });
   console.log(outSupertrend.length + ' values from bar ' + begIdx + ':');
-  console.log('outSupertrend = [' + outSupertrend[0].toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1].toFixed(4) + ']');
+  console.log('outSupertrend = [' + outSupertrend[0]?.toFixed(4) + ', ..., ' + outSupertrend[outSupertrend.length - 1]?.toFixed(4) + ']');
   console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
 
   const count = outSupertrend.length;
@@ -1718,7 +1718,7 @@ test('SWAK_BUTTER: swakButter example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakButter(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1762,7 +1762,7 @@ test('SWAK_GAUSS: swakGauss example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = swakGauss(series, { timePeriod: 20 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1806,7 +1806,7 @@ test('T3: t3 example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = t3(series, { timePeriod: 5, vFactor: 0.7 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1851,7 +1851,7 @@ test('TEMA: tema example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = tema(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1893,7 +1893,7 @@ test('TRIMA: trima example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = trima(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1935,7 +1935,7 @@ test('VIDYA: vidya example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = vidya(series, { timePeriod: 12, cmoPeriod: 9 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -1982,7 +1982,7 @@ test('VWMA: vwma example', () => {
   for (let i = 0; i < 252; i++) volume[i] = 10000 + 100 * i + 30 * (i % 20 - 10) * (i % 20 - 10);
 
   const { begIdx, values } = vwma(series, { volume }, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -2030,7 +2030,7 @@ test('WMA: wma example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = wma(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -2080,7 +2080,7 @@ test('ZIGZAG: zigzag example', () => {
     outPivotIdx,
   } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
   console.log(outZigZag.length + ' values from bar ' + begIdx + ':');
-  console.log('outZigZag = [' + outZigZag[0].toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1].toFixed(4) + ']');
+  console.log('outZigZag = [' + outZigZag[0]?.toFixed(4) + ', ..., ' + outZigZag[outZigZag.length - 1]?.toFixed(4) + ']');
   console.log('outTrend = [' + outTrend[0] + ', ..., ' + outTrend[outTrend.length - 1] + ']');
   console.log('outPivotIdx = [' + outPivotIdx[0] + ', ..., ' + outPivotIdx[outPivotIdx.length - 1] + ']');
 
@@ -2146,7 +2146,7 @@ test('ZLEMA: zlema example', () => {
   for (let i = 0; i < 252; i++) series[i] = 90 + (i % 40 - 20) * (i % 40 - 20) / 20.0;
 
   const { begIdx, values } = zlema(series, { timePeriod: 30 });
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

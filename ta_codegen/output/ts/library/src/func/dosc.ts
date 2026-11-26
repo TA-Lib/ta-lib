@@ -662,7 +662,7 @@ export function doscDisplayShift(outputIdx: number, options?: DoscOptions): numb
  *   secondPeriod: 3,
  *   signalPeriod: 9,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)

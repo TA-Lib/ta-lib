@@ -51,7 +51,7 @@ test('ACOS: acos example', () => {
   for (let i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
 
   const { begIdx, values } = acos(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -91,7 +91,7 @@ test('ASIN: asin example', () => {
   for (let i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
 
   const { begIdx, values } = asin(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -131,7 +131,7 @@ test('ATAN: atan example', () => {
   for (let i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = atan(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -173,7 +173,7 @@ test('CEIL: ceil example', () => {
   for (let i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
 
   const { begIdx, values } = ceil(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -213,7 +213,7 @@ test('COS: cos example', () => {
   for (let i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
 
   const { begIdx, values } = cos(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -255,7 +255,7 @@ test('COSH: cosh example', () => {
   for (let i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = cosh(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -297,7 +297,7 @@ test('EXP: exp example', () => {
   for (let i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = exp(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -339,7 +339,7 @@ test('FLOOR: floor example', () => {
   for (let i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
 
   const { begIdx, values } = floor(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -379,7 +379,7 @@ test('LN: ln example', () => {
   for (let i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
 
   const { begIdx, values } = ln(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -421,7 +421,7 @@ test('LOG10: log10 example', () => {
   for (let i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
 
   const { begIdx, values } = log10(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -463,7 +463,7 @@ test('SIN: sin example', () => {
   for (let i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
 
   const { begIdx, values } = sin(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -505,7 +505,7 @@ test('SINH: sinh example', () => {
   for (let i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
 
   const { begIdx, values } = sinh(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -547,7 +547,7 @@ test('SQRT: sqrt example', () => {
   for (let i = 0; i < 252; i++) series[i] = 100 * i / 251.0;
 
   const { begIdx, values } = sqrt(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -587,7 +587,7 @@ test('TAN: tan example', () => {
   for (let i = 0; i < 252; i++) series[i] = -1.2 + 2.4 * i / 251.0;
 
   const { begIdx, values } = tan(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);
@@ -629,7 +629,7 @@ test('TANH: tanh example', () => {
   for (let i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
 
   const { begIdx, values } = tanh(series);
-  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+  console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 
   const count = values.length;
   assert.ok(count > 2);

@@ -184,8 +184,8 @@ const { begIdx, outLong, outShort } = ce({ high, low, close }, {
   multiplier: 3,
 });
 console.log(outLong.length + ' values from bar ' + begIdx + ':');
-console.log('outLong = [' + outLong[0].toFixed(4) + ', ..., ' + outLong[outLong.length - 1].toFixed(4) + ']');
-console.log('outShort = [' + outShort[0].toFixed(4) + ', ..., ' + outShort[outShort.length - 1].toFixed(4) + ']');
+console.log('outLong = [' + outLong[0]?.toFixed(4) + ', ..., ' + outLong[outLong.length - 1]?.toFixed(4) + ']');
+console.log('outShort = [' + outShort[0]?.toFixed(4) + ', ..., ' + outShort[outShort.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

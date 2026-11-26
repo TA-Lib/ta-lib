@@ -470,7 +470,7 @@ export function swakBpDisplayShift(outputIdx: number, options?: SwakBpOptions): 
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = swakBp(series, { timePeriod: 20, delta: 0.1 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`swakHp`](https://ta-lib.org/functions/swak_hp)
  * @see [`swak2php`](https://ta-lib.org/functions/swak_2php)

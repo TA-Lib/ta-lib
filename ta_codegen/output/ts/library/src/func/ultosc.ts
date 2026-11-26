@@ -677,7 +677,7 @@ export function ultoscDisplayShift(outputIdx: number, options?: UltoscOptions): 
  *   timePeriod2: 14,
  *   timePeriod3: 28,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`trange`](https://ta-lib.org/functions/trange)

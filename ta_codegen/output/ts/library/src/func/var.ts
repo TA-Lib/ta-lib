@@ -441,7 +441,7 @@ export function varDisplayShift(outputIdx: number, options?: VarOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = var_(series, { timePeriod: 5, nbDev: 1 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */

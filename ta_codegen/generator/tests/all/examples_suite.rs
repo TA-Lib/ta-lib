@@ -219,7 +219,7 @@ fn every_tab_names_the_inputs_and_prints_first_and_last() {
                 let spec = match *title {
                     "Rust" => "{:.4}",
                     "C\\#" => ":F4",
-                    "TypeScript" => ".toFixed(4)",
+                    "TypeScript" => "?.toFixed(4)",
                     _ => "%.4f",
                 };
                 assert!(text.contains(spec), "{} {title}: no `{spec}`:\n{text}", func.name);

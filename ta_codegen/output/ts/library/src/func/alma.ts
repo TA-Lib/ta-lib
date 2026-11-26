@@ -456,7 +456,7 @@ export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): numb
  *   sigma: 6,
  *   offset: 0.85,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`wma`](https://ta-lib.org/functions/wma)
  * @see [`sma`](https://ta-lib.org/functions/sma)

@@ -483,7 +483,7 @@ export function skewDisplayShift(outputIdx: number, options?: SkewOptions): numb
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = skew(series, { timePeriod: 30 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`kurtosis`](https://ta-lib.org/functions/kurtosis)
  * @see [`var_`](https://ta-lib.org/functions/var)

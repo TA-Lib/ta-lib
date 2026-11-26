@@ -465,7 +465,7 @@ export function tsfDisplayShift(outputIdx: number, options?: TsfOptions): number
  * const series = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = tsf(series, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
  * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)

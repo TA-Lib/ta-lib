@@ -973,9 +973,9 @@ export function macdvDisplayShift(outputIdx: number, options?: MacdvOptions): nu
  *   signalPeriod: 9,
  * });
  * console.log(outMacdv.length + ' values from bar ' + begIdx + ':');
- * console.log('outMacdv = [' + outMacdv[0].toFixed(4) + ', ..., ' + outMacdv[outMacdv.length - 1].toFixed(4) + ']');
- * console.log('outMacdvSignal = [' + outMacdvSignal[0].toFixed(4) + ', ..., ' + outMacdvSignal[outMacdvSignal.length - 1].toFixed(4) + ']');
- * console.log('outMacdvHist = [' + outMacdvHist[0].toFixed(4) + ', ..., ' + outMacdvHist[outMacdvHist.length - 1].toFixed(4) + ']');
+ * console.log('outMacdv = [' + outMacdv[0]?.toFixed(4) + ', ..., ' + outMacdv[outMacdv.length - 1]?.toFixed(4) + ']');
+ * console.log('outMacdvSignal = [' + outMacdvSignal[0]?.toFixed(4) + ', ..., ' + outMacdvSignal[outMacdvSignal.length - 1]?.toFixed(4) + ']');
+ * console.log('outMacdvHist = [' + outMacdvHist[0]?.toFixed(4) + ', ..., ' + outMacdvHist[outMacdvHist.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`atr`](https://ta-lib.org/functions/atr)

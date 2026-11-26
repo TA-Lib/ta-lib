@@ -1024,7 +1024,7 @@ export function percentileDisplayShift(outputIdx: number, options?: PercentileOp
  *   timePeriod: 100,
  *   percentile: 50,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)

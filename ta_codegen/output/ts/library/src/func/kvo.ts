@@ -675,8 +675,8 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  *   signalPeriod: 13,
  * });
  * console.log(outKvo.length + ' values from bar ' + begIdx + ':');
- * console.log('outKvo = [' + outKvo[0].toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1].toFixed(4) + ']');
- * console.log('outKvoSignal = [' + outKvoSignal[0].toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1].toFixed(4) + ']');
+ * console.log('outKvo = [' + outKvo[0]?.toFixed(4) + ', ..., ' + outKvo[outKvo.length - 1]?.toFixed(4) + ']');
+ * console.log('outKvoSignal = [' + outKvoSignal[0]?.toFixed(4) + ', ..., ' + outKvoSignal[outKvoSignal.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)

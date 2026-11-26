@@ -360,7 +360,7 @@ export function rvolDisplayShift(outputIdx: number, options?: RvolOptions): numb
  * const volume = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`pvo`](https://ta-lib.org/functions/pvo)

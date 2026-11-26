@@ -29,7 +29,8 @@
 
   3. Consumer. scripts/ts_consumer_check/ installs the tarball into a throwaway
      project, type-checks a TypeScript caller against the packed declarations
-     (skipLibCheck off), and loads every subpath by import and by require(),
+     (skipLibCheck off, and the two checks `tsc --init` adds to `strict`),
+     and loads every subpath by import and by require(),
      which fails on a top-level await anywhere in the graph. Both must export
      the same names and compute the same SMA. Then engine.mjs: in strict mode a
      call through the default entry must run in WASM, with the bits of

@@ -505,7 +505,7 @@ export function framaDisplayShift(outputIdx: number, options?: FramaOptions): nu
  * const low = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = frama({ high, low }, { timePeriod: 16 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`kama`](https://ta-lib.org/functions/kama)
  * @see [`mama`](https://ta-lib.org/functions/mama)

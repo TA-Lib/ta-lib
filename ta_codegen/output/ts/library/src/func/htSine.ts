@@ -826,8 +826,8 @@ export function htSineDisplayShift(outputIdx: number, options?: HtSineOptions): 
  *
  * const { begIdx, outSine, outLeadSine } = htSine(series);
  * console.log(outSine.length + ' values from bar ' + begIdx + ':');
- * console.log('outSine = [' + outSine[0].toFixed(4) + ', ..., ' + outSine[outSine.length - 1].toFixed(4) + ']');
- * console.log('outLeadSine = [' + outLeadSine[0].toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1].toFixed(4) + ']');
+ * console.log('outSine = [' + outSine[0]?.toFixed(4) + ', ..., ' + outSine[outSine.length - 1]?.toFixed(4) + ']');
+ * console.log('outLeadSine = [' + outLeadSine[0]?.toFixed(4) + ', ..., ' + outLeadSine[outLeadSine.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
  * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)

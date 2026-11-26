@@ -164,8 +164,8 @@ const { begIdx, outMama, outFama } = mama(series, {
   slowLimit: 0.05,
 });
 console.log(outMama.length + ' values from bar ' + begIdx + ':');
-console.log('outMama = [' + outMama[0].toFixed(4) + ', ..., ' + outMama[outMama.length - 1].toFixed(4) + ']');
-console.log('outFama = [' + outFama[0].toFixed(4) + ', ..., ' + outFama[outFama.length - 1].toFixed(4) + ']');
+console.log('outMama = [' + outMama[0]?.toFixed(4) + ', ..., ' + outMama[outMama.length - 1]?.toFixed(4) + ']');
+console.log('outFama = [' + outFama[0]?.toFixed(4) + ', ..., ' + outFama[outFama.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

@@ -212,7 +212,7 @@ const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
   factorNarrow: 1,
 });
 console.log(outMomentum.length + ' values from bar ' + begIdx + ':');
-console.log('outMomentum = [' + outMomentum[0].toFixed(4) + ', ..., ' + outMomentum[outMomentum.length - 1].toFixed(4) + ']');
+console.log('outMomentum = [' + outMomentum[0]?.toFixed(4) + ', ..., ' + outMomentum[outMomentum.length - 1]?.toFixed(4) + ']');
 console.log('outSqueeze = [' + outSqueeze[0] + ', ..., ' + outSqueeze[outSqueeze.length - 1] + ']');
 ```
 

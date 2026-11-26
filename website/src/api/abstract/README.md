@@ -139,7 +139,7 @@ const f = Functions.byName('SMA')!;   // name, group, hint, flags, inputs, optIn
 
 const overlay = f.hasFlags(FuncFlags.OVERLAP_STUDY);   // true: drawn over the price chart
 
-const opt = f.optInputs[0];   // paramName 'optInTimePeriod'
+const opt = f.optInputs[0]!;   // paramName 'optInTimePeriod'
 if (opt.type === OptInputType.INTEGER_RANGE) {
   console.log(opt.min, opt.max, opt.defaultValue);   // 1 100000 30
 }

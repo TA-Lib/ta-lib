@@ -606,7 +606,7 @@ export function sarDisplayShift(outputIdx: number, options?: SarOptions): number
  *   acceleration: 0.02,
  *   maximum: 0.2,
  * });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`sarext`](https://ta-lib.org/functions/sarext)
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)

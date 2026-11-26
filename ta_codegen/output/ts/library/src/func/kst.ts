@@ -808,8 +808,8 @@ export function kstDisplayShift(outputIdx: number, options?: KstOptions): number
  *   signalPeriod: 9,
  * });
  * console.log(outKst.length + ' values from bar ' + begIdx + ':');
- * console.log('outKst = [' + outKst[0].toFixed(4) + ', ..., ' + outKst[outKst.length - 1].toFixed(4) + ']');
- * console.log('outKstSignal = [' + outKstSignal[0].toFixed(4) + ', ..., ' + outKstSignal[outKstSignal.length - 1].toFixed(4) + ']');
+ * console.log('outKst = [' + outKst[0]?.toFixed(4) + ', ..., ' + outKst[outKst.length - 1]?.toFixed(4) + ']');
+ * console.log('outKstSignal = [' + outKstSignal[0]?.toFixed(4) + ', ..., ' + outKstSignal[outKstSignal.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`kstext`](https://ta-lib.org/functions/kstext)
  * @see [`roc`](https://ta-lib.org/functions/roc)

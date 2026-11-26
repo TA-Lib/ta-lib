@@ -445,7 +445,7 @@ export function atrDisplayShift(outputIdx: number, options?: AtrOptions): number
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = atr({ high, low, close }, { timePeriod: 14 });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`natr`](https://ta-lib.org/functions/natr)

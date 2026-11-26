@@ -344,7 +344,7 @@ export function wadDisplayShift(outputIdx: number, options?: WadOptions): number
  * const close = new Float64Array(252); // your data, oldest first
  *
  * const { begIdx, values } = wad({ high, low, close });
- * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+ * console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`adosc`](https://ta-lib.org/functions/adosc)

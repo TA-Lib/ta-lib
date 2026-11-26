@@ -732,8 +732,8 @@ export function htPhasorDisplayShift(outputIdx: number, options?: HtPhasorOption
  *
  * const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
  * console.log(outInPhase.length + ' values from bar ' + begIdx + ':');
- * console.log('outInPhase = [' + outInPhase[0].toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1].toFixed(4) + ']');
- * console.log('outQuadrature = [' + outQuadrature[0].toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1].toFixed(4) + ']');
+ * console.log('outInPhase = [' + outInPhase[0]?.toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1]?.toFixed(4) + ']');
+ * console.log('outQuadrature = [' + outQuadrature[0]?.toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1]?.toFixed(4) + ']');
  * ```
  * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
  * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
