@@ -43,8 +43,8 @@ with no values, not an error. Invalid arguments throw.
 
 ## Configuration
 
-`Core` is immutable. The value-affecting settings, the unstable period and the candlestick
-thresholds, are chosen up front and then frozen, so one `Core` can be shared across threads:
+`Core` is immutable. The value-affecting settings, the unstable period, the candlestick
+thresholds and the EMA variation, are chosen up front and then frozen, so one `Core` can be shared across threads:
 
 ```csharp
 Core tuned = Core.Builder()

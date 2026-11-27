@@ -42,7 +42,7 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePer
 - The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks `chaikvolat` signature. Implementations that expose a single length are the special case where both are set to the same value.
 - Some vendors default the rate-of-change length to 12 rather than to Achelis's recommendation, which is the same for both lengths.
 - A window whose bars are all exactly flat, high equal to low, leaves the lagged average at zero. CVI reports 0 there. Tulip Indicators and pandas-ta-classic leave the division unguarded and emit NaN; trading-signals returns 0, as here.
-- Implementations disagree on how the inner EMA is seeded. TA-Lib uses its own EMA convention, the simple average of the first `optInTimePeriod` spreads, where Tulip Indicators and trading-signals seed from a single raw spread and converge to these values only after many bars.
+- Implementations disagree on how the inner EMA is seeded. TA-Lib uses its own EMA convention, the simple average of the first `optInTimePeriod` spreads, where Tulip Indicators and trading-signals seed from a single raw spread and converge to these values only after many bars. Under the [EMA variation](/spec/settings-threads/#ema-variation) `FIRST_BAR_SEED`, TA-Lib seeds it with the first spread instead.
 - CVI inherits EMA's unstable period rather than owning one: `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` moves CVI's first output too.
 
 ## Inputs

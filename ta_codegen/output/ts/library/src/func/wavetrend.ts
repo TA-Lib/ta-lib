@@ -779,7 +779,9 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  *   inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage
  *   before it publishes. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)`
  *   discards more of that warm-up, and it counts three times because there are
- *   three exponential stages.
+ *   three exponential stages. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - The difference the author also plots is `sub(outWt1, outWt2)`.
  *
  * `outWt1[k]` is the value at input bar `begIdx + k`; every output is exactly as

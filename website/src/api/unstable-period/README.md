@@ -60,7 +60,7 @@ Some indicators have "memory". Each output depends on the previous one, seeded f
 <figcaption id="uf-cap">Three 20-bar EMAs of the same prices, each fed from a different starting bar. From bar 65 on they differ by less than a thousandth of the price, too little to see at this scale. Auto-Stabilization waits longer: it discards 100 bars for this EMA at <code>PREC_4</code>.</figcaption>
 </figure>
 
-This is inherent to the algorithms, not something specific to TA-Lib: every implementation has to seed the recursion somewhere.
+This is inherent to the algorithms, not something specific to TA-Lib: every implementation has to seed the recursion somewhere. How the EMA family seeds it is a setting of its own: [EMA variation](/spec/settings-threads/#ema-variation).
 
 ## What to do
 
@@ -310,7 +310,7 @@ another indicator uses it internally. The EMA id therefore affects EMA itself an
 every indicator built on one, such as MACD and DEMA, which can drop a different
 number of bars than EMA.
 
-In C, the unstable period and the candle settings are process-wide. Change them
+In C, the unstable period, the candle settings and the EMA variation are process-wide. Change them
 only while no TA function is running and no stream is open
 ([specification](/spec/settings-threads/#idle-settings)). Python raises
 `RuntimeError` on a change while a call runs or a stream object is alive. In Go,

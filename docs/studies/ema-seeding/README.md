@@ -1,8 +1,8 @@
 # EMA seeding evaluation
 
 **Question.** `TA_EMA` seeds its recursion with an SMA of the first `period`
-samples. TradingView `ta.ema`, Tulip and TradeStation `XAverage` seed with the
-**first sample**. Which seed carries the smaller error?
+samples. Tulip, pandas `ewm(adjust=False)` and TradeStation `XAverage` seed with
+the **first sample**. Which seed carries the smaller error?
 
 **Verdict.** Keep the SMA seed — but the defensible claim is *"every value the
 library publishes is one it stands behind"*, **not** *"the SMA seed is more
@@ -41,14 +41,17 @@ different seed.
 
 | | seed | first published bar | ships it |
 |---|---|---|---|
-| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib, R `TTR::EMA` |
-| **rule T** | `x[t0]` | `0` | TradingView `ta.ema`, Tulip, TradeStation `XAverage` |
+| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib, R `TTR::EMA`, TradingView `ta.ema` |
+| **rule T** | `x[t0]` | `0` | Tulip, pandas `ewm(adjust=False)`, TradeStation `XAverage` |
 
 R `TTR` is the closest independent analogue of what we ship: *"The EMA result is
 initialized with the n-period sample average at period n."* TradingView's
-`ta.ema` is `na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])` — note that
-Pine's `ta.rma` **does** use an SMA seed, so this is a per-function choice there,
-not a house style.
+`ta.ema` is rule S too: seeded with the SMA of the first `length` values and
+published from bar `length-1`, with the step `y + a*(x - y)`, checked bit for bit
+against 131 rows of TradingView chart exports in the PyneCore repository's test
+data. Pine's reference text, `na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])`,
+describes a first-value form, but no `ta.ema` value is published before bar
+`length-1`.
 
 ## 3. The question reduces to one scalar
 
@@ -155,15 +158,18 @@ reaches any given tolerance slightly sooner — for SMI(13,25,2), 67 bars agains
 76 to hold rms under 1 SMI point.
 
 If accuracy at the lookback bar were the *only* criterion, the optimum is
-**neither shipped arm**: seed with the first sample **and** keep TA-Lib's
+**neither arm of §2**: seed with the first sample **and** keep TA-Lib's
 lookback. For SMI(13,25,2) that is rms 8.06 at bar 37, against 14.0 for TA-Lib
-and 52.0 for Tulip/TradingView. That combination is a library-wide change to
-`TA_EMA` and the six functions that inline it, breaking 25 years of published
-values for every function in §8. **Not proposed.** It is recorded here so it is
-not discovered later as a surprise, and so that "TA-Lib's seed is the accurate
-one" is not repeated as if it were established.
+and 52.0 for Tulip. TA-Lib ships that combination as a setting, with rule S
+the default (§12). §11 measures it on chained stages. It is recorded here so
+that "TA-Lib's seed is the accurate one" is not repeated as if it were
+established.
 
 ## 8. Scope — what a change here would touch
+
+The functions the setting of §12 moves are listed on the
+[EMA variation](https://ta-lib.org/spec/settings-threads/#rt18) page; this table
+is the study's own census.
 
 | how it uses the EMA seed | functions |
 |---|---|
@@ -234,11 +240,51 @@ full-history EMA, EMA(10), basis points of price):
 
 Nothing here argues for the compensator over rule S.
 
+## 11. Chained stages under the first-value seed
+
+§7's combination, applied per stage, is **rule N**: the first stage is seeded with
+`x[t0]` and run from bar 0; each later stage is seeded with the value the stage
+before it takes on the bar where it first publishes; every stage publishes on rule
+S's schedule, so the lookback is rule S's. Error against the converged chain, rms
+over every data-start offset from 500 on, both corpora, p in 5, 12, 26 and 30
+(MACD at 12, 26, 9); the EMAs of a chain as a percentage of the series sd, DEMA,
+TEMA and TRIX of the converged output's sd, MACD of its line's sd. Part F
+of `results.txt`; its F0 line reproduces §5's p=30 row with §5's harness.
+
+| at the first output bar | rms S / rms N, gData | IBM |
+|---|---|---|
+| single EMA | 1.650 to 2.149 | 1.670 to 1.925 |
+| 2nd EMA of a chain | 1.251 to 1.427 | 1.288 to 1.512 |
+| 3rd EMA of a chain | 1.008 to 1.090 | 1.059 to 1.215 |
+| DEMA | 1.303 to 1.569 | 1.338 to 1.592 |
+| TEMA | 1.213 to 1.275 | 1.254 to 1.431 |
+| TRIX | 1.368 to 1.600 | 0.996 to 1.126 |
+| MACD(12,26,9) line, signal, histogram | 1.961, 2.088, 2.155 | 1.945, 2.094, 2.268 |
+
+* Rule N's first published value has the smaller rms error in every row but
+  TRIX(5) on IBM, where the two are even (0.996). The ratio runs up to 2.27 and
+  narrows with depth: 1.65-2.15 for one EMA, 1.01-1.22 for the 3rd of a chain.
+* The single-EMA rows are §5's result: rule N at its first bar is rule T at the
+  common bar.
+* **Rule S keeps the smaller bias** at the first output bar in every row except
+  TRIX on gData at every period, TRIX on IBM at p=5 and 12, and EMA(26) on gData.
+* Seeding every stage on bar 0 (rule T read at the same bar) is smaller again on
+  every chained row, but rule N is what the setting of §12 computes.
+
+## 12. What TA-Lib ships
+
+The [EMA variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+setting selects the seed. `SMA_SEED`, the default, is rule S. `FIRST_BAR_SEED`
+is §7's combination, rule N on chained stages (§11): the first-value seed, with
+the output held until bar `p-1`. The functions it moves are on that page, which
+supersedes the census of §8.
+
 ## Reproduce
 
 ```bash
 cd docs/studies/ema-seeding
-python3 seed_study.py            # ~3 s, writes results.txt (checked in)
+python3 seed_study.py            # writes results.txt (checked in), Parts 0-F
+python3 seed_study.py --chain    # Part F alone, into chain_results.txt
 python3 compensator_sim.py       # §10, synthetic, prints its tables
 
 # optional: pin rule S against the shipped library
@@ -255,6 +301,8 @@ the only dependency; no network.
 
 - [R `TTR` moving averages](https://search.r-project.org/CRAN/refmans/TTR/html/MovingAverages.html) — "initialized with the n-period sample average at period n"
 - [Pine `ta.ema` reference](https://pineify.app/pine-script-ta-ema) — `na(sum[1]) ? src : …`
+- [PyneCore](https://github.com/PyneSys/pynecore): its `ta.ema` and the TradingView chart exports in its test data
+- [pandas `ewm`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.ewm.html): `adjust=False` starts the recursion on the first value
 - [TradeStation `XAverage`](https://help.tradestation.com/10_00/eng/tsdevhelp/elword/function/xaverage_function_.htm) — "the effects of the first price will never be completely removed"
 - Tulip `beta/smi.c`, in `ta-lib-oracles/tulip_serve/vendor/tulipindicators`
 - `ta_codegen/input/{ema,dema,tema,trix,macd,efi,t3}/*.c` — the shipped seeds

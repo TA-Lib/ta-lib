@@ -942,8 +942,10 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  *   inputs, the same seeding TA-Lib's EMA uses, so the first published values
  *   converge toward an unlimited-history result rather than reproducing it
  *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
- *   that warm-up. Implementations seeding from a single first sample — Tulip and
- *   TradingView among them — differ over the transient and agree once it decays.
+ *   that warm-up. Implementations seeding from a single first sample — Tulip among
+ *   them — differ over the transient and agree once it decays. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - One output range covers both outputs, so the SMI values consumed by the signal
  *   line's own warm-up are not published.
  *

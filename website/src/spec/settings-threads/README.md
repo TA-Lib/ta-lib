@@ -1,11 +1,11 @@
 ---
 title: Settings and Threads
-description: "Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across threads with no synchronization in Rust, Java and C#, or in a Go Core configured before goroutines share it, C's initialization and process-wide settings and when they may change, setting validation, and the caller's rules across threads."
+description: "Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across threads with no synchronization in Rust, Java and C#, or in a Go Core configured before goroutines share it, C's initialization and process-wide settings and when they may change, setting validation, the caller's rules across threads, and the EMA variation: how the EMA family is seeded."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods, candle settings and the EMA variation) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods, candle settings and the EMA variation) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults), [EMA variation](/spec/settings-threads/#ema-variation). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -44,3 +44,38 @@ The rows hold for every setter and getter in every language, except where a note
 ## Threads in C
 
 <a id="rt11"></a>**rT11** Between setting changes, C calls made from several threads at once, each on its own stream handles and parameter holders, return what a single thread returns. On one handle with no writer running, `Peek`, `Value`, `OutRange` and `Clone` may run from several threads at once.
+
+## EMA variation {#ema-variation}
+
+The EMA variation selects how the EMA family seeds its recursion: `SMA_SEED`, the default, or `FIRST_BAR_SEED`.
+
+| Language | Select `FIRST_BAR_SEED` | Read |
+|---|---|---|
+| C | `TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED)` | `TA_GetEMAVariation()` |
+| Rust | `Core::builder().ema_variation(EMAVariation::FIRST_BAR_SEED)` | `core.ema_variation()` |
+| Java | `Core.builder().emaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.emaVariation()` |
+| C# | `Core.Builder().EmaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.EmaVariation()` |
+| TypeScript | `Core.builder().emaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.emaVariation()` |
+| Go | `core.SetEMAVariation(talib.EMAVariationFIRST_BAR_SEED)` | `core.EMAVariation()` |
+
+<a id="rt13"></a>**rT13** A stage is an exponential average with factor `2 / (period + 1)` that `SMA_SEED` seeds with the simple average of its first `period` inputs, other than T3's, or one of MACDFIX's two fixed-factor legs. It counts whether the function computes it itself or reaches it through a call or an MA type. `FIRST_BAR_SEED` changes the seed of every stage and nothing else: each step is the one `SMA_SEED` takes.
+
+<a id="rt14"></a>**rT14** Under `FIRST_BAR_SEED`, a stage is seeded with one value:
+
+- A stage fed by the function's input, or by a per-bar transform of it (EFI's force, CVI's high-low spread, ZLEMA's de-lagged price), takes the first value of that series in the caller's array: bar 0, or the first bar where the transform exists. It runs from there to the requested start, whatever `startIdx` is. Stages of different periods fed by the same series start on that same bar.
+- A stage fed by anything else, such as another stage or DOSC's RSI, takes the first value of its feeder that the call uses: the one on the bar where `SMA_SEED` starts the window it averages.
+
+<a id="rt15"></a>**rT15** The EMA variation changes no lookback ([rL5](/spec/lookback/#rl5)), so no first output bar and no count ([rW1](/spec/inputs-outputs/#rw1)).
+
+<a id="rt16"></a>**rT16** Under `FIRST_BAR_SEED`, a stage fed by the input is stepped from its seed bar to the requested start, so a call reads bars before `max(startIdx, lookback) - lookback`, which [rL1](/spec/lookback/#rl1) otherwise excludes, and its cost grows with `startIdx`. A stream's `Open` steps through the whole history it is given.
+
+<a id="rt17"></a>**rT17** Under `FIRST_BAR_SEED`, the value a stage fed by the input takes at a bar does not depend on `startIdx`, up to rounding, so a function built from such stages alone, such as EMA or MACD's line, writes the same values for every `startIdx`. The seed bar of a stage fed by anything else moves with `startIdx`: a call to DEMA, TEMA, TRIX, MACD's signal and histogram, and the like, starting past the lookback writes different values from a call starting at 0.
+
+<a id="rt18"></a>**rT18** The EMA variation moves exactly the functions with a stage ([rT13](/spec/settings-threads/#rt13)):
+
+- `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `MACDFIX`, `MACDV`, `TSI`, `DOSC`, `CVI`, `SMI`, `EFI`, `ERI`, `MASSI`, `STC` (its MACD line), `WAVETREND`, `PSO`, `ZLEMA`, `KC` (its centre line);
+- with an `EMA`, `DEMA`, `TEMA` or `ZLEMA` MA type: `APO`, `PPO` and `PVO` (whose default is `EMA`), `MA`, `MAVP`, `MACDEXT`, `BBANDS`, `BBW`, `PERCENTB`, `MAENV`, `KSTEXT`, `STOCH`, `STOCHF`, `STOCHRSI`, `KDJ`.
+
+It does not move `T3` (also as an MA type), `ADOSC` and `KVO` (whose averages start on their first value under both), Wilder smoothing (`RSI`, `ATR`, the `ADX` family, `RMA`), the adaptive averages, STC's two 0.5 smoothers, or any other function.
+
+<a id="metastock"></a>**From TA-Lib 0.7.1 and earlier.** For `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `MACDFIX`, and the `EMA`, `DEMA` and `TEMA` MA types inside `MA`, `MAVP`, `MACDEXT`, `APO`, `PPO`, `BBANDS`, `STOCH` and `STOCHF`, a call with `startIdx` 0 under `FIRST_BAR_SEED` writes, within rounding, what `TA_SetCompatibility(TA_COMPATIBILITY_METASTOCK)` wrote. That mode also changed `RSI` and `CMO`, which no setting reproduces. `TA_SetCompatibility` and `TA_GetCompatibility` select nothing.

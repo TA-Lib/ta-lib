@@ -6,7 +6,7 @@ Exponential moving average that weights recent prices more heavily via a recursi
 
 ## Formula
 
-k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
+k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars; under the [EMA variation](/spec/settings-threads/#ema-variation) `FIRST_BAR_SEED`, EMA = the price at bar 0, stepped from bar 1.
 
 ## Notes
 

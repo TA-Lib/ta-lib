@@ -39,7 +39,7 @@ The Java library is a native port of TA-Lib in the `io.github.talib` package: no
 The **Core API** provides:
 
 - The [`Core`](#direct_call) type and the builder that configures it.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Multiple `Core` instances can safely co-exist (say for different settings).
+- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/spec/settings-threads/#ema-variation). Multiple `Core` instances can safely co-exist (say for different settings).
 - Every TA function, each processing a whole array of data at once.
 - An optional [Abstract API](#abstract) for calling those functions dynamically.
 
@@ -197,7 +197,7 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]`. The `f
 
 **`Core` is immutable**, so one instance is safe to share across any number of threads with no synchronization.
 
-Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
+Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`, the EMA variation with `core.emaVariation()`.
 
 ## 5.0 Documentation {#docs}
 

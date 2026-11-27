@@ -576,7 +576,9 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  *   inputs, where Tulip Indicators, ta4j and trading-signals seed from a single
  *   raw value and converge to these values only after many bars. Published sample
  *   vectors, including the one in Achelis, are seeded that way and match only in
- *   the tail.
+ *   the tail. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - MASSI inherits EMA's unstable period rather than owning one, and inherits it
  *   twice: when `FuncUnstId.EMA`, set to a count or to an Auto level, discards `u`
  *   bars from an EMA of `fastPeriod`, MASSI's first output moves by 2u.

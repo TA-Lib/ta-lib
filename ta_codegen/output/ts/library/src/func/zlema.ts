@@ -395,7 +395,9 @@ export function zlemaDisplayShift(outputIdx: number, options?: ZlemaOptions): nu
  * - Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own
  *   EMA convention (the simple average of the first `n` de-lagged values), where
  *   Tulip Indicators seeds from a single raw price and so emits its first value
- *   earlier and converges to these values only after many bars.
+ *   earlier and converges to these values only after many bars. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, TA-Lib seeds it with the first de-lagged value instead.
  * - ZLEMA inherits EMA's unstable period rather than owning one:
  *   `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` moves ZLEMA's first output
  *   too.

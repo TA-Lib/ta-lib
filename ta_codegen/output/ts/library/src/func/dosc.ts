@@ -703,7 +703,9 @@ export function doscDisplayShift(outputIdx: number, options?: DoscOptions): numb
  *   `FuncUnstId.EMA` discards more of that warm-up, and the EMA setting counts
  *   twice because there are two exponential stages. Implementations seeding each
  *   stage from a single first sample differ over the transient and agree once it
- *   decays.
+ *   decays. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - The degenerate reading is whatever `rsi` answers when neither a gain nor a
  *   loss has been seen since the seed. Some other implementations answer 100 there
  *   and will disagree over that stretch.

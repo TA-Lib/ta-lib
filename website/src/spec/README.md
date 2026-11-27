@@ -73,7 +73,7 @@ In Rust, Java, C# and Go, a function's calls are methods of a `Core`. In TypeScr
 | settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` | `NewCore()`, then its setters |
 | output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange{BegIdx, NBElement}` |
 
-Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
+Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/), [EMA variation](/spec/settings-threads/#ema-variation). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
 
 Enum types drop C's `TA_`. Members:
 
@@ -84,6 +84,7 @@ Enum types drop C's `TA_`. Members:
 | `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RangeTypeRealBody` |
 | `MAType` | `TA_MAType_SMA` | `SMA` | `SMA` | `MATypeSMA` |
 | `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` | `HT_DCPERIOD` | `FuncUnstIdHT_DCPERIOD` |
+| `EMAVariation` | `TA_EMAVariation_FIRST_BAR_SEED` | `FIRST_BAR_SEED` | `FIRST_BAR_SEED` | `EMAVariationFIRST_BAR_SEED` |
 
 Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold them on `Core`, C# in UpperCamel (`Core.IndexMax`); Go in the package, in UpperCamel (`talib.IndexMax`).
 

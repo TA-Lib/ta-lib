@@ -643,6 +643,9 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  *   first publishes. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards
  *   more of that warm-up, through both passes. Implementations seeding each pass
  *   from a single first sample differ over the transient and agree once it decays.
+ *   Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - Leibfarth parameterises the smoothing as the square root of a longer period,
  *   25 in his article. The length is taken here directly, as an integer, because
  *   the sources that follow the square root disagree over how to round it.

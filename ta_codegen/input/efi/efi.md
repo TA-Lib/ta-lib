@@ -10,7 +10,7 @@ Elder reads two settings — 2 for the short term, which he pairs with a 22-peri
 
 force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
 
-The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
+The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values, or under the [EMA variation](/spec/settings-threads/#ema-variation) `FIRST_BAR_SEED` with the first force value. A period of 1 leaves the raw one-bar Force Index.
 
 ## Inputs
 

@@ -909,7 +909,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The smoothing factor is fixed at 0.5, as in Schaff's published code.</description></item>
-   /// <item><description>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</description></item>
+   /// <item><description>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data. Under the <see href="https://ta-lib.org/spec/settings-threads/#ema-variation">EMA variation</see> <c>FIRST_BAR_SEED</c>, both are seeded with the first bar.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// <item><description>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</description></item>
    /// </list>
@@ -996,7 +996,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The smoothing factor is fixed at 0.5, as in Schaff's published code.</description></item>
-   /// <item><description>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</description></item>
+   /// <item><description>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data. Under the <see href="https://ta-lib.org/spec/settings-threads/#ema-variation">EMA variation</see> <c>FIRST_BAR_SEED</c>, both are seeded with the first bar.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// <item><description>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</description></item>
    /// </list>

@@ -71,8 +71,8 @@ try {
 
 ## Configuration
 
-`Core` is immutable. The value-affecting settings, the unstable period and the candlestick
-thresholds, are chosen up front and passed as the `core` option:
+`Core` is immutable. The value-affecting settings, the unstable period, the candlestick
+thresholds and the EMA variation, are chosen up front and passed as the `core` option:
 
 ```ts
 import { CoreBuilder, ema, FuncUnstId } from 'ta-lib';

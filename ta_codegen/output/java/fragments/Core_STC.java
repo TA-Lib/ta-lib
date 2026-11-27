@@ -947,7 +947,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The smoothing factor is fixed at 0.5, as in Schaff's published code.</li>
-    * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</li>
+    * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data. Under the <a href="https://ta-lib.org/spec/settings-threads/#ema-variation">EMA variation</a> {@code FIRST_BAR_SEED}, both are seeded with the first bar.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * <li>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</li>
     * </ul>
@@ -1018,7 +1018,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The smoothing factor is fixed at 0.5, as in Schaff's published code.</li>
-    * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data.</li>
+    * <li>The MACD line is TA-Lib's: both EMAs are seeded with a simple average over windows ending on the same bar. The published code runs the EMAs from the first bar of the data. Under the <a href="https://ta-lib.org/spec/settings-threads/#ema-variation">EMA variation</a> {@code FIRST_BAR_SEED}, both are seeded with the first bar.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * <li>Being recursive, an output depends on how much history precedes it. The unstable period warms the two smoothers; the EMA unstable period warms the MACD line.</li>
     * </ul>

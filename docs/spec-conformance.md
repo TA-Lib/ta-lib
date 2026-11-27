@@ -170,6 +170,11 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — | — |  |
 | rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — | — | — |
 | rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ | ⚠️<br>[30] |  |
+| rT14 | [the first-bar seed](https://ta-lib.org/spec/settings-threads/#rt14) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| rT15 | [no lookback moves](https://ta-lib.org/spec/settings-threads/#rt15) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| rT16 | [reads before the window](https://ta-lib.org/spec/settings-threads/#rt16) |  |  |  |  |  |  |
+| rT17 | [start independence](https://ta-lib.org/spec/settings-threads/#rt17) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| rT18 | [scope](https://ta-lib.org/spec/settings-threads/#rt18) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.
@@ -534,6 +539,15 @@ rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
 (`test_internals.c`) changes the settings and initializes over them. rT2 to rT8,
 and rT12 for a count and a candle setting, in TypeScript: `runtime.test.ts`.
+
+rT14, rT15, rT17 and rT18: `test_ema_variation.c` (tag `EMAVARIATION`) holds C to
+them: the set of functions that move under `FIRST_BAR_SEED` against its declared
+lists, lookback and range unchanged on every call, start independence of the
+input-fed stages with the chained ones shown to move, and goldens written from
+the seed rule; the `--ref` leg holds the 0.6.4 MetaStock mode against it
+(the migration paragraph). `--codegen`, `--xlang-hash` and `stream_verify` run
+every port under the setting bitwise against C, each with a floor on calls that
+moved. rT16 is a cost statement and has no test.
 
 `TA_Initialize` and `TA_Shutdown` are idempotent (ruled 2026-10-02): a repeated
 call of either answers `TA_SUCCESS` and leaves every setting at its default,

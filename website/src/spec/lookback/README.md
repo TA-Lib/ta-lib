@@ -10,11 +10,11 @@ The lookback call tells a program, before any series exists, whether a call acce
 ## The caller must {#caller}
 
 - <a id="ask"></a>**Ask for the lookback, never compute it.** Call the function's lookback call with the batch call's parameters, under the same settings ([rL5](/spec/lookback/#rl5)). A formula written from a function's description goes wrong as soon as an unstable period or an MA type enters ([rL6](/spec/lookback/#rl6)).
-- <a id="start"></a>**Not compare values from different starts bit for bit.** Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. Each [function page](/functions/) names its [numerical stability](/functions/stability) category. A stream opened later in a series: [rH2](/spec/streaming/#rh2).
+- <a id="start"></a>**Not compare values from different starts bit for bit.** Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0, except as [rT17](/spec/settings-threads/#rt17) states. Each [function page](/functions/) names its [numerical stability](/functions/stability) category. A stream opened later in a series: [rH2](/spec/streaming/#rh2).
 
 ## Definition {#definition}
 
-<a id="rl1"></a>**rL1** The lookback is the number of input bars a function consumes before its first output (SMA at period 10 has lookback 9). A batch call reads no bar before `max(startIdx, lookback) - lookback`: changing an earlier bar changes nothing the call writes. Where a batch call's output starts, and how many values it writes: [rW1](/spec/inputs-outputs/#rw1), [rW2](/spec/inputs-outputs/#rw2). How much history a stream needs: [rS7](/spec/streaming/#rs7).
+<a id="rl1"></a>**rL1** The lookback is the number of input bars a function consumes before its first output (SMA at period 10 has lookback 9). A batch call reads no bar before `max(startIdx, lookback) - lookback`: changing an earlier bar changes nothing the call writes. Exception: a stage the [EMA variation](/spec/settings-threads/#ema-variation) seeds on the first bar ([rT16](/spec/settings-threads/#rt16)). Where a batch call's output starts, and how many values it writes: [rW1](/spec/inputs-outputs/#rw1), [rW2](/spec/inputs-outputs/#rw2). How much history a stream needs: [rS7](/spec/streaming/#rs7).
 
 ## Lookback calls {#calls}
 

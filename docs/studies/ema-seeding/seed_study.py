@@ -2,7 +2,7 @@
 """EMA seeding study for TA_SMI (ta-lib-proposal-drafts#59).
 
 Question: TA-Lib seeds every EMA with an SMA of the first `period` samples;
-TradingView's `ta.ema` and Tulip's `ti_smi` seed with the first sample itself
+Tulip's `ti_smi` seeds with the first sample itself
 (for the SMI denominator that first sample is the initial `HH-LL` range, hence
 "the H-L seed").  Which seed carries the smaller error?
 
@@ -27,7 +27,7 @@ Four parts:
 
   D. The issue's own 252-bar table, reproduced (validation), then repeated on a
      252-bar window that HAS pre-history so the arm-to-arm gap can be split
-     into "how wrong is TA-Lib" and "how wrong is TradingView/Tulip".
+     into "how wrong is TA-Lib" and "how wrong is Tulip".
 
 Corpora (all real daily OHLC, no synthetic data):
   * gData      -- 10000 bars, src/tools/ta_regtest/ta_gData{High,Low,Close}.c
@@ -45,7 +45,7 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+REPO = os.environ.get("TA_REPO") or os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 
 OUT = []
 
@@ -125,7 +125,7 @@ def ema_full(x, p, first):
 
 
 def ema_block_T(win, p):
-    """TradingView `ta.ema` / Tulip rule, vectorised over rows.
+    """Tulip rule, vectorised over rows.
 
     win: (rows, K); column 0 is each row's first available sample.
     Seed = win[:,0]; output starts at column 0.
@@ -248,9 +248,9 @@ def part_a():
     say("The decay factor depends on alpha only -- it is the SAME for both rules.")
     say("So the seeding question is entirely 'how big is (seed - y*(t0))?'.")
     say("")
-    say("Rule T (TradingView ta.ema / Tulip): seed = x[t0], t0 = first data bar.")
-    say("Rule S (TA-Lib / R TTR):             seed = SMA(x[t0-p+1..t0]), t0 = bar p-1,")
-    say("                                     summed sequentially, as TA_EMA does.")
+    say("Rule T (Tulip / pandas ewm(adjust=False)):     seed = x[t0], t0 = first data bar.")
+    say("Rule S (TA-Lib / R TTR / TradingView ta.ema):  seed = SMA(x[t0-p+1..t0]), t0 = bar p-1,")
+    say("                                               summed sequentially, as TA_EMA does.")
     say("")
     say("Rule T seeds p-1 bars earlier, so by rule S's first output bar its error has")
     say("already been damped by (1-alpha)^(p-1).  The 'common' column credits it with")
@@ -591,23 +591,210 @@ def part_zero():
     say("  on gData close, so the first-published-value row below is not a curiosity:")
     say("  it is what any narrow-range TA-Lib call returns.")
     say("")
-    say("rule T == Tulip ti_smi / TradingView ta.ema.  beta/smi.c seeds")
+    say("rule T == Tulip ti_smi.  beta/smi.c seeds")
     say("  ema_r_num = ema_s_num = num[q-1] and ema_r_den = ema_s_den = den[q-1];")
-    say("  Pine's ta.ema is `na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])`.")
     say("  Part D reproduces, to every printed digit, the arm-vs-Tulip table in issue")
     say("  #59 -- which was itself measured against a compiled ti_smi.")
+    say("")
+
+
+
+# --------------------------------------------------------------------------
+# Part F -- rule N: first-value seed per stage, published on S's schedule
+# --------------------------------------------------------------------------
+
+def stages_N(win, p, n):
+    """Rule N: stage 1 seeded with win[:,0] and run from column 0; stage j+1
+    seeded with stage j's value at column j*(p-1) and run from there; stage j
+    publishes from column j*(p-1).  Returns the list of published stages."""
+    out, y = [], win
+    for j in range(1, n + 1):
+        start = (j - 1) * (p - 1)
+        z = np.full(y.shape, np.nan)
+        z[:, start:] = ema_block_T(y[:, start:], p)
+        pub = z.copy()
+        pub[:, :j * (p - 1)] = np.nan
+        out.append(pub)
+        y = z
+    return out
+
+
+def stages_S(win, p, n):
+    out, y, off = [], win, 0
+    for _ in range(n):
+        z = np.full(y.shape, np.nan)
+        z[:, off:] = ema_block_S(y[:, off:], p)
+        out.append(z)
+        y = z
+        off += p - 1
+    return out
+
+
+def stages_T(win, p, n):
+    out, y = [], win
+    for _ in range(n):
+        y = ema_block_T(y, p)
+        out.append(y)
+    return out
+
+
+def stages_full(x, p, n):
+    out, y = [], x
+    for _ in range(n):
+        y = ema_full(y, p, 0)
+        out.append(y)
+    return out
+
+
+def _err(v, tr, k, sd):
+    d = v[:, k] - tr[:, k]
+    d = d[~np.isnan(d)]
+    return (float(np.sqrt(np.mean(d ** 2))) / sd * 100, float(np.mean(d)) / sd * 100, len(d))
+
+
+COMBOS = [("DEMA", 2, lambda e, t: 2.0 * e[0][:, t] - e[1][:, t], 2),
+          ("TEMA", 3, lambda e, t: 3.0 * e[0][:, t] - 3.0 * e[1][:, t] + e[2][:, t], 3),
+          ("TRIX", 3, lambda e, t: 100.0 * (e[2][:, t] / e[2][:, t - 1] - 1.0), 3)]
+
+
+def part_f(corpora, lo=500):
+    say("=" * 78)
+    say("PART F -- rule N (first-value seed per stage, S's publishing schedule)")
+    say("=" * 78)
+    say("")
+    say("S: stage j seeded with the SMA of its first p published inputs, publishes")
+    say("   from bar j*(p-1).  N: stage 1 seeded with x[0]; stage j+1 seeded with")
+    say("   stage j's value at bar j*(p-1); stage j publishes from bar j*(p-1).")
+    say("   T: every stage seeded at bar 0 and run from there, read at the same bar.")
+    say("Error vs the converged chain, rms (and mean = bias) over every data-start")
+    say("offset >= %d, as %% of the sd named per block." % lo)
+    say("")
+    for cname, c in corpora:
+        x = c["close"]
+        nb, sd = len(x), x.std()
+        # F1: cascades
+        say("-- F1 %s / close (sd = %.4f): n-th EMA of the chain, %% of series sd" % (cname, sd))
+        say("   n  p   bar     | rms S    rms N    rms T    | S/N    | bias S    bias N    bias T   | offsets")
+        for n in (1, 2, 3):
+            for p in (5, 12, 26, 30):
+                b0 = n * (p - 1)
+                K = b0 + 3 * p + 2
+                starts = np.arange(lo, nb - K)
+                base = starts[:, None] + np.arange(K)[None, :]
+                win = x[base]
+                tr = stages_full(x, p, n)[-1][base]
+                eS, eN, eT = stages_S(win, p, n)[-1], stages_N(win, p, n)[-1], stages_T(win, p, n)[-1]
+                for tag, k in (("first", b0), ("+p", b0 + p), ("+3p", b0 + 3 * p)):
+                    rS, bS, m = _err(eS, tr, k, sd)
+                    rN, bN, _ = _err(eN, tr, k, sd)
+                    rT, bT, _ = _err(eT, tr, k, sd)
+                    say("   %d %3d %4d %-5s| %7.3f%% %7.3f%% %7.3f%% | %6.3f | %8.4f%% %8.4f%% %8.4f%% | %d"
+                        % (n, p, k, tag, rS, rN, rT, rS / rN, bS, bN, bT, m))
+        say("")
+        # F2: combinations
+        say("-- F2 %s / close: DEMA, TEMA, TRIX, %% of the converged OUTPUT's sd" % cname)
+        say("   func p   bar     | rms S    rms N    rms T    | S/N    | bias S    bias N    bias T   | sd(out)")
+        for fname, n, fn, mult in COMBOS:
+            for p in (5, 12, 26, 30):
+                b0 = mult * (p - 1) + (1 if fname == "TRIX" else 0)
+                K = b0 + 3 * p + 2
+                starts = np.arange(lo, nb - K)
+                base = starts[:, None] + np.arange(K)[None, :]
+                win = x[base]
+                full = stages_full(x, p, n)
+                trfull = None
+                allidx = np.arange(1, nb)
+                trout = fn([f[None, :] for f in full], allidx)[0][lo:]
+                osd = float(np.std(trout))
+                trs = [f[base] for f in full]
+                for tag, k in (("first", b0), ("+p", b0 + p), ("+3p", b0 + 3 * p)):
+                    tr = fn(trs, k)
+                    res = []
+                    for st in (stages_S(win, p, n), stages_N(win, p, n), stages_T(win, p, n)):
+                        d = fn(st, k) - tr
+                        d = d[~np.isnan(d)]
+                        res.append((float(np.sqrt(np.mean(d ** 2))) / osd * 100, float(np.mean(d)) / osd * 100))
+                    (rS, bS), (rN, bN), (rT, bT) = res
+                    say("   %-4s %3d %4d %-5s| %7.3f%% %7.3f%% %7.3f%% | %6.3f | %8.4f%% %8.4f%% %8.4f%% | %.4g"
+                        % (fname, p, k, tag, rS, rN, rT, rS / rN, bS, bN, bT, osd))
+        say("")
+        # F3: MACD(12,26,9)
+        say("-- F3 %s / close: MACD(12,26,9), %% of the converged line's sd" % cname)
+        fa, sa, ga = 12, 26, 9
+        fullF, fullS = ema_full(x, fa, 0), ema_full(x, sa, 0)
+        line_t = fullF - fullS
+        sig_t = ema_full(line_t, ga, 0)
+        hist_t = line_t - sig_t
+        lsd = float(np.std(line_t[lo:]))
+        K = 33 + 78 + 2
+        starts = np.arange(lo, nb - K)
+        base = starts[:, None] + np.arange(K)[None, :]
+        win = x[base]
+        # S as TA-Lib ships it
+        slowS = ema_block_S(win, sa)                       # seed mean(0..25) at 25
+        fastS = np.full(win.shape, np.nan)
+        fastS[:, sa - fa:] = ema_block_S(win[:, sa - fa:], fa)   # seed mean(14..25) at 25
+        lineS = fastS - slowS
+        sigS = np.full(win.shape, np.nan)
+        sigS[:, sa - 1:] = ema_block_S(lineS[:, sa - 1:], ga)    # seed mean(line[25..33]) at 33
+        # N
+        lineN = ema_block_T(win, fa) - ema_block_T(win, sa)
+        lineN[:, :sa - 1] = np.nan
+        sigN = np.full(win.shape, np.nan)
+        sigN[:, sa - 1:] = ema_block_T(lineN[:, sa - 1:], ga)    # seed line[25] at 25
+        # T (everything from bar 0), read at the same bars
+        lineT = ema_block_T(win, fa) - ema_block_T(win, sa)
+        sigT = ema_block_T(lineT, ga)
+        outs = {"S": (lineS, sigS, lineS - sigS), "N": (lineN, sigN, lineN - sigN),
+                "T": (lineT, sigT, lineT - sigT)}
+        truth = (line_t[base], sig_t[base], hist_t[base])
+        say("   sd(line) = %.4f, %d offsets" % (lsd, len(starts)))
+        say("   out    bar     | rms S    rms N    rms T    | S/N    | bias S    bias N    bias T")
+        for oi, oname in enumerate(("line", "signal", "hist")):
+            for tag, k in (("first", 33), ("+26", 59), ("+78", 111)):
+                r = {}
+                for rule in "SNT":
+                    r[rule] = _err(outs[rule][oi], truth[oi], k, lsd)
+                say("   %-6s %4d %-5s| %7.3f%% %7.3f%% %7.3f%% | %6.3f | %8.4f%% %8.4f%% %8.4f%%"
+                    % (oname, k, tag, r["S"][0], r["N"][0], r["T"][0], r["S"][0] / r["N"][0],
+                       r["S"][1], r["N"][1], r["T"][1]))
+        say("")
+
+
+def part_f_sanity(gdata):
+    say("-- F0 sanity: n=1, gData close, p=30, README section 5 harness (offsets 400.., K=p+2)")
+    x = gdata["close"]
+    p, K = 30, 32
+    sd = x.std()
+    starts = np.arange(400, len(x) - K)
+    base = starts[:, None] + np.arange(K)[None, :]
+    win, tr = x[base], ema_full(x, p, 0)[base]
+    eS = rms(stages_S(win, p, 1)[0][:, p - 1] - tr[:, p - 1]) / sd * 100
+    eN = rms(stages_N(win, p, 1)[0][:, p - 1] - tr[:, p - 1]) / sd * 100
+    eT = rms(ema_block_T(win, p)[:, p - 1] - tr[:, p - 1]) / sd * 100
+    say("   e_S first out %.3f%% (README 3.293%%)   e_T @common %.3f%% (README 1.756%%)"
+        "   ratio %.3f (README 1.875)   e_N first out %.3f%% (must equal e_T @common)"
+        % (eS, eT, eS / eT, eN))
     say("")
 
 
 def main():
     gdata = corpus_gdata()
     corpora = [("gData 10000", gdata), ("IBM 6741", corpus_ibm())]
+    if "--chain" in sys.argv:
+        part_f_sanity(gdata)
+        part_f(corpora)
+        with open(os.path.join(HERE, "chain_results.txt"), "w") as f:
+            f.write("\n".join(OUT) + "\n")
+        return 0
     part_zero()
     part_a()
     part_b(corpora)
     part_c(corpora)
     part_d(gdata)
     part_e(corpora)
+    part_f_sanity(gdata)
+    part_f(corpora)
     with open(os.path.join(HERE, "results.txt"), "w") as f:
         f.write("\n".join(OUT) + "\n")
     say("wrote %s" % os.path.join(HERE, "results.txt"))

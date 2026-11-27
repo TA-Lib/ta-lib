@@ -653,7 +653,9 @@ export function tsiDisplayShift(outputIdx: number, options?: TsiOptions): number
  *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
  *   that warm-up. Implementations seeding from a single first sample —
  *   trading-signals among them — differ over the transient and agree once it
- *   decays.
+ *   decays. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
  * - The parameters are named by the order they are applied in, not fast and slow.
  *   Blau's published pair applies the longer average first, the inverse of the
  *   differenced fast/slow pairs elsewhere in the library, so swapping them

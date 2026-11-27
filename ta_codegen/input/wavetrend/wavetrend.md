@@ -23,7 +23,7 @@ WT2 = SMA(WT1, signalPeriod)
 - The middle stage is an exponential CCI, not `TA_CCI`: CCI averages with a simple moving average and takes the mean deviation around that window's own average, where this uses two exponential averages.
 - On a market that has stopped moving, the exponential average stops moving too — once its step falls under half an ulp it freezes, a few ulps away from the price. That frozen gap is a real non-zero distance, so dividing by its own average walks the oscillator to ±66.67, an extreme reading produced by nothing but rounding. This answers 0 instead, by taking the distance as zero whenever the price and its average both repeat. Implementations without that test drift to the extreme on flat data, at a bar that depends on their arithmetic.
 - A zero divisor is tested on the scaled deviation, the quantity the division actually uses, and answers the neutral 0 rather than dividing.
-- Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that warm-up, and it counts three times because there are three exponential stages.
+- Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that warm-up, and it counts three times because there are three exponential stages. Under the [EMA variation](/spec/settings-threads/#ema-variation) `FIRST_BAR_SEED`, each is seeded with the first value it is fed instead.
 - The difference the author also plots is `TA_SUB(outWT1, outWT2)`.
 
 ## Inputs

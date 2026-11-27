@@ -2,7 +2,7 @@
 
 Supporting measurement for [#238](https://github.com/TA-Lib/ta-lib/issues/238).
 
-Issue #238 recommended arm A (`TA_EMA`, SMA-seeded) over arm B (Tulip/TradingView,
+Issue #238 recommended arm A (`TA_EMA`, SMA-seeded) over arm B (Tulip,
 seeded with the first sample) on the grounds of *consistency with the rest of the
 library*. It never measures which arm is more **accurate**, because it only ever
 tabulates `|A - B|` — the gap between two arms, with no third party to say which
@@ -25,8 +25,8 @@ common bar, and the write-up says so.
 
 | | seed | first published bar | who ships it |
 |---|---|---|---|
-| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib `TA_EMA`, R `TTR::EMA` |
-| **rule T** | `x[t0]` — for the SMI denominator that first sample is `HH-LL`, the "H-L seed" | `0` | TradingView `ta.ema`, Tulip `ti_smi`, TradeStation `XAverage` |
+| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib `TA_EMA`, R `TTR::EMA`, TradingView `ta.ema` |
+| **rule T** | `x[t0]` — for the SMI denominator that first sample is `HH-LL`, the "H-L seed" | `0` | Tulip `ti_smi`, TradeStation `XAverage` |
 
 Neither seed is the truth. The truth is the **converged EMA** — what an
 implementation with unlimited history would print at that bar. Both rules are
@@ -72,12 +72,12 @@ the separate `TA_SREF_*_daily_ref_0_PRIV` arrays are different data).
 | Blau, "Stochastic Momentum", *TASC* v11:1 (Jan 1993); *Momentum, Direction and Divergence* (Wiley 1995) | States the EMA as the bare recursion `EMA(k) = EMA(k-1) + 2/(n+1) * (price(k) - EMA(k-1))`. **No initial condition, no warm-up guidance, no discard rule.** The formula defines the filter's steady state and is silent on the boot. |
 | TradeStation `XAverage` — the platform Blau wrote in (his book is EasyLanguage-based) | `XAverage = XAverage[1] + SmoothingFactor * (Price - XAverage[1])`, seeded on the first computable bar from the price itself — **rule T**. *Secondary evidence:* the seeding line comes from EasyLanguage references rather than from TradeStation's own function page, which only goes as far as *"the effects of the first price will never be completely removed, but its weight will continuously shrink"* (true of an SMA seed too, so that sentence alone does not settle it). |
 | R `TTR::EMA` — the only independent library implementation of `SMI()`, and the source of the 13/25/2/9 defaults #238 proposes | *"The EMA result is initialized with the n-period sample average at period n."* This is **rule S**, exactly TA-Lib's. TTR also warns that EMA-family indicators are *"unstable in the short-term"* because they use their own previous values. |
-| TradingView `ta.ema` | `sum := na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])` — **rule T**. (Pine's `ta.rma` seeds with an SMA; `ta.ema` does not. TradingView's built-in SMI is `200 * emaEma(relativeRange, lengthD) / emaEma(highestLowestRange, lengthD)` with defaults %K=10, %D=3, and `emaEma` is `ta.ema(ta.ema(src,len),len)`.) |
+| TradingView `ta.ema` | **Rule S**: seeded with the SMA of the first `length` values and published from bar `length-1`, with the step `y + a*(x - y)`; checked bit for bit against 131 rows of TradingView chart exports in the PyneCore repository's test data. Pine's reference text, `na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])`, describes a first-value form, but no `ta.ema` value is published before bar `length-1`. TradingView's built-in SMI is `200 * emaEma(relativeRange, lengthD) / emaEma(highestLowestRange, lengthD)` with defaults %K=10, %D=3, and `emaEma` is `ta.ema(ta.ema(src,len),len)`. |
 | Tulip `beta/smi.c` | **rule T**, as above. |
 
 So provenance does **not** favour us: Blau said nothing, and the platform he
 authored on used the first-sample rule. The only independent *library*
-implementation of SMI uses ours. Precedent is split 3-1 against, on a question
+implementation of SMI uses ours. Precedent is split two and two, on a question
 its author never ruled on — which is precisely why it has to be decided on
 measurement.
 
@@ -139,7 +139,7 @@ The single most telling line is one that needs no statistics:
 > **Rule T's first published value is not a double-smoothed SMI at all. It is the
 > raw, unsmoothed `100*num/(0.5*den)` — max difference 0, exactly, at every
 > offset in both corpora.** At bar `q-1` all four of its EMAs still equal their
-> own inputs, so TradingView and Tulip print the bare stochastic momentum under
+> own inputs, so Tulip prints the bare stochastic momentum under
 > the SMI label, at full ±100 amplitude, with no marker that it is not the
 > indicator. Rule S's first published value is a genuinely smoothed object of
 > roughly the right span — which is why its amplitude ratio is 1.06 rather than
@@ -225,4 +225,5 @@ dependency, no network.
 - [R `TTR` moving averages](https://search.r-project.org/CRAN/refmans/TTR/html/MovingAverages.html) — "initialized with the n-period sample average at period n"
 - [TradingView: Stochastic Momentum Index](https://www.tradingview.com/support/solutions/43000707882-stochastic-momentum-index-smi/) — built-in formula and defaults
 - [Pine `ta.ema` reference](https://pineify.app/pine-script-ta-ema) — `na(sum[1]) ? src : ...`
+- [PyneCore](https://github.com/PyneSys/pynecore): its `ta.ema` and the TradingView chart exports in its test data
 - Tulip `beta/smi.c` (in `ta-lib-oracles/tulip_serve/vendor/tulipindicators`)

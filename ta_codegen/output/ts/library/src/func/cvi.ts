@@ -402,7 +402,9 @@ export function cviDisplayShift(outputIdx: number, options?: CviOptions): number
  * - Implementations disagree on how the inner EMA is seeded. TA-Lib uses its own
  *   EMA convention, the simple average of the first `timePeriod` spreads, where
  *   Tulip Indicators and trading-signals seed from a single raw spread and
- *   converge to these values only after many bars.
+ *   converge to these values only after many bars. Under the [EMA
+ *   variation](https://ta-lib.org/spec/settings-threads/#ema-variation)
+ *   `FIRST_BAR_SEED`, TA-Lib seeds it with the first spread instead.
  * - CVI inherits EMA's unstable period rather than owning one:
  *   `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` moves CVI's first output
  *   too.

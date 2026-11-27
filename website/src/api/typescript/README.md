@@ -45,7 +45,7 @@ The TypeScript library is a native port of TA-Lib: TypeScript compiled to standa
 The **Core API** provides:
 
 - The [`Core`](#candle_settings) type and the `CoreBuilder` that configures it.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
+- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/spec/settings-threads/#ema-variation). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
 - Every TA function, each processing a whole array of data at once.
 - An optional [Abstract API](#abstract) for calling those functions dynamically.
 
@@ -259,7 +259,7 @@ You can pass the same `Float64Array` as an input and as an output buffer to comp
 
 ### 4.6 Changing Settings {#settings}
 
-**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
+**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`, the EMA variation with `core.emaVariation()`.
 
 ## 5.0 Documentation {#docs}
 

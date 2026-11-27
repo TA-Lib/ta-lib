@@ -33,7 +33,7 @@ toc: false
 <p>The <b>Core API</b> provides:</p>
 <ul>
   <li>The lifecycle of the library (<a href="#init">TA_Initialize / TA_Shutdown</a>).</li>
-  <li>The global settings (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>).</li>
+  <li>The global settings (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>, <a href="/spec/settings-threads/#ema-variation">TA_SetEMAVariation</a>).</li>
   <li>Every <a href="#ta_func">TA function</a> in batch form, processing a whole array of data at once.</li>
   <li>Every TA function in <a href="/api/stream/">streaming form</a>, processing a live feed one bar at a time without recomputing the history.</li>
   <li>An optional <a href="#abstract">Abstract API</a> for calling those functions dynamically.</li>
@@ -283,11 +283,12 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 
-<p>One important caveat: the unstable period and the candle settings are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Shutdown counts as a change. The calls that change them:</p>
+<p>One important caveat: the unstable period, the candle settings and the EMA variation are process-wide. Change them only while no TA function is running and no stream is open; the effect of a change made otherwise is undefined. TA_Shutdown counts as a change. The calls that change them:</p>
 <ul>
   <li><a href="#init">TA_Shutdown</a></li>
   <li><a href="/api/unstable-period/">TA_SetUnstablePeriod</a></li>
   <li><a href="/api/candle-settings/">TA_SetCandleSettings, TA_RestoreCandleDefaultSettings</a></li>
+  <li><a href="/spec/settings-threads/#ema-variation">TA_SetEMAVariation</a></li>
 </ul>
 
 <p>Between changes, the application can call the rest of the API from multiple threads (including the ta_abstract.h interface). In the specification: <a href="/spec/settings-threads/#idle-settings">when a C setting may change</a>.</p>
