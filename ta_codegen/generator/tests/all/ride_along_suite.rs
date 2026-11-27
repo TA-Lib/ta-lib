@@ -209,8 +209,9 @@ fn every_backend_keys_the_dedup_cache_by_function_identity() {
 /// same way.
 #[test]
 fn every_ambient_mutation_invalidates_the_ride_cache() {
-    const MUTATORS: [&str; 3] = [
+    const MUTATORS: [&str; 4] = [
         "set_unstable_period",
+        "set_ema_variation",
         "set_candle_settings",
         "restore_candle_default_settings",
     ];

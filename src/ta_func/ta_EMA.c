@@ -57,6 +57,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  *  081026 MF,CC Fold the internal variant into EMA (issue #183).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_NOINLINE TA_LIB_API int TA_EMA_Lookback( int optInTimePeriod )
@@ -167,14 +168,22 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
    }
    *outBegIdx= startIdx;
    /* Do the EMA calculation using tight loops. */
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   /* The first-bar seed does not move with startIdx. */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inReal[today++];
+      prevMA = inReal[0];
+      today = 1;
+   } else 
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
@@ -254,14 +263,21 @@ TA_RetCode TA_S_EMA( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += (double)inReal[today++];
+      prevMA = (double)inReal[0];
+      today = 1;
+   } else 
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += (double)inReal[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevMA = fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
@@ -412,14 +428,22 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **str
       }
       *outBegIdx= startIdx;
       /* Do the EMA calculation using tight loops. */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
+      /* The first-bar seed does not move with startIdx. */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         tempReal += inReal[today++];
+         prevMA = inReal[0];
+         today = 1;
+      } else 
+      {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx )
       {
          prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);

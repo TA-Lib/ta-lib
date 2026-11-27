@@ -982,6 +982,16 @@ public class TaCodegenServe {
                 }
                 return "{\"error\":\"Invalid id\"}";
             }
+            else if (method == "set_ema_variation") {
+                rideGen++;
+                int value = GetInt(p, "value", -1);
+                try {
+                    core = core.ToBuilder().EmaVariation((EMAVariation)value).Build();
+                } catch (ArgumentOutOfRangeException) {
+                    return "{\"error\":\"Invalid EMA variation\"}";
+                }
+                return "{\"status\":\"ok\"}";
+            }
             else if (method == "set_candle_settings") {
                 rideGen++;
                 int settingType = GetInt(p, "settingType", -1);

@@ -109,6 +109,10 @@ typedef struct
    /* For handling the candlestick global settings */
    TA_CandleSetting candleSettings[TA_NB_CANDLE_SETTING];
 
+   /* Zero is TA_EMAVariation_SMA_SEED, so the memset in TA_Initialize and
+    * TA_Shutdown restores the default. */
+   TA_EMAVariation emaVariation;
+
 } TA_LibcPriv;
 
 /* The following global is used all over the place 

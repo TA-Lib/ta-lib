@@ -1256,6 +1256,18 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        }\n");
     s.push_str("    }\n");
 
+    // set_ema_variation — {"method":"set_ema_variation","params":{"value":1}}. Like
+    // set_candle_settings below, the library's own setter decides.
+    s.push_str("#ifndef TA_REF_SERVE\n");
+    s.push_str("    else if ( methodLen == 17 && strncmp(method, \"set_ema_variation\", 17) == 0 ) {\n");
+    s.push_str("        int value = json_find_int(json, \"value\");\n");
+    s.push_str("        if( TA_SetEMAVariation((TA_EMAVariation)value) == TA_SUCCESS )\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
+    s.push_str("        else\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"error\\\":\\\"Invalid EMA variation\\\"}\");\n");
+    s.push_str("    }\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n");
+
     // set_candle_settings method (#215) —
     // {"method":"set_candle_settings","params":{"settingType":6,"rangeType":2,"avgPeriod":10,"factorBits":"3ff0000000000000"}}
     //
@@ -1483,6 +1495,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("}\n\n");
 
+    if let Some(ev) = enums.get("EMAVariation") {
+        let names: Vec<&str> = ev.variants.iter().map(|v| v.name.as_str()).collect();
+        s.push_str(&format!("enum EMAVariation {{\n    {};\n}}\n\n", names.join(", ")));
+    }
+
     // RangeType — mirrors the shipped enum (REAL_BODY=0, HIGH_LOW=1, SHADOWS=2) so the
     // canonical candle access (`rangeType.ordinal()`) compiles here as in Core.java.
     s.push_str("enum RangeType {\n");
@@ -1530,6 +1547,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
+    s.push_str("    EMAVariation emaVariation = EMAVariation.SMA_SEED;\n");
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
     s.push_str("    static final CandleSetting[] DEFAULT_CANDLE_SETTINGS = {\n");
@@ -1940,6 +1958,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
     s.push_str("            }\n");
     s.push_str("            return \"{\\\"error\\\":\\\"Invalid id\\\"}\"; \n");
+    s.push_str("        }\n");
+
+    s.push_str("        else if (json.contains(\"\\\"set_ema_variation\\\"\")) {\n");
+    s.push_str("            rideGen++;\n");
+    s.push_str("            int value = jsonInt(json, \"value\");\n");
+    s.push_str("            if (value < 0 || value >= EMAVariation.values().length) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid EMA variation\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            core.emaVariation = EMAVariation.values()[value];\n");
+    s.push_str("            return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("        }\n");
 
     // set_candle_settings (#215). The C server delegates to the library and just
@@ -2897,6 +2925,17 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid id\\\"}\";\n");
     s.push_str("            }\n");
 
+    s.push_str("            else if (method == \"set_ema_variation\") {\n");
+    s.push_str("                rideGen++;\n");
+    s.push_str("                int value = GetInt(p, \"value\", -1);\n");
+    s.push_str("                try {\n");
+    s.push_str("                    core = core.ToBuilder().EmaVariation((EMAVariation)value).Build();\n");
+    s.push_str("                } catch (ArgumentOutOfRangeException) {\n");
+    s.push_str("                    return \"{\\\"error\\\":\\\"Invalid EMA variation\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("            }\n");
+
     // set_candle_settings (#215). Unlike the unstable period above, this does NOT
     // reach into core's fields: it goes through the shipped CoreBuilder, so the
     // validation being compared across languages is the library's own and not a
@@ -3630,7 +3669,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use serde_json::{self, Value};\n");
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
-    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
+    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, EMAVariation};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettingType, RangeType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n");
     // The enum types the handlers convert wire ints into, from what the
@@ -4368,6 +4407,18 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str(
         "                Err(msg) => format!(\"{{\\\"error\\\":\\\"{msg}\\\"}}\"),\n",
     );
+    s.push_str("            }\n");
+    s.push_str("        }\n");
+
+    s.push_str("        \"set_ema_variation\" => {\n");
+    s.push_str("            RIDE_GEN.with(|g| g.set(g.get().wrapping_add(1)));\n");
+    s.push_str("            let value = params[\"value\"].as_i64().unwrap_or(-1);\n");
+    s.push_str("            match i32::try_from(value).ok().and_then(|v| EMAVariation::try_from(v).ok()) {\n");
+    s.push_str("                Some(v) => {\n");
+    s.push_str("                    *core = core.to_builder().ema_variation(v).build().expect(\"a built Core rebuilds\");\n");
+    s.push_str("                    \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n");
+    s.push_str("                }\n");
+    s.push_str("                None => \"{\\\"error\\\":\\\"Invalid EMA variation\\\"}\".to_string(),\n");
     s.push_str("            }\n");
     s.push_str("        }\n");
 
@@ -5486,6 +5537,15 @@ function setUnstablePeriod(p: Params): string {
   return OK;
 }
 
+function setEmaVariation(p: Params): string {
+  try {
+    core = core.toBuilder().emaVariation(int(p, 'value', -1) as EMAVariation).build();
+  } catch (e) {
+    return settingError(e);
+  }
+  return OK;
+}
+
 function setCandleSettings(p: Params): string {
   try {
     core = core.toBuilder()
@@ -5950,7 +6010,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         .collect();
     enum_types.sort_unstable();
     enum_types.dedup();
-    let mut enum_imports = vec!["FuncUnstId".to_string()];
+    let mut enum_imports = vec!["FuncUnstId".to_string(), "type EMAVariation".to_string()];
     enum_imports.extend(enum_types.iter().map(|e| (*e).to_string()));
     let _ = writeln!(s, "import {{ {} }} from '../library/src/enums.ts';", enum_imports.join(", "));
     for func in funcs {
@@ -6055,6 +6115,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         ("load_data", "loadData(p)", false),
         ("list_functions", "FUNCTION_LIST", false),
         ("set_unstable_period", "setUnstablePeriod(p)", true),
+        ("set_ema_variation", "setEmaVariation(p)", true),
         ("set_candle_settings", "setCandleSettings(p)", true),
         ("restore_candle_default_settings", "restoreCandleDefaultSettings(p)", true),
         ("eval_predicate", "evalPredicate(p)", false),
@@ -6819,6 +6880,13 @@ func (s *server) setUnstablePeriod(p params) string {
 	return `{"status":"ok"}`
 }
 
+func (s *server) setEMAVariation(p params) string {
+	if s.core.SetEMAVariation(talib.EMAVariation(p.i32("value", -1))) != nil {
+		return errorReply("Invalid EMA variation")
+	}
+	return `{"status":"ok"}`
+}
+
 func (s *server) setCandleSettings(p params) string {
 	st, rt, ap := p.i32("settingType", -1), p.i32("rangeType", -1), p.i32("avgPeriod", 0)
 	if s.core.SetCandleSetting(talib.CandleSettingType(st),
@@ -7273,6 +7341,7 @@ pub fn generate_go_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         ("load_data", "s.loadData(p)", false),
         ("list_functions", "functionList", false),
         ("set_unstable_period", "s.setUnstablePeriod(p)", true),
+        ("set_ema_variation", "s.setEMAVariation(p)", true),
         ("set_candle_settings", "s.setCandleSettings(p)", true),
         ("restore_candle_default_settings", "s.restoreCandleDefaultSettings(p)", true),
         ("eval_predicate", "evalPredicate(p)", false),

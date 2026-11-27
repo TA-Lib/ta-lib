@@ -2852,6 +2852,7 @@ fn render_func_call(
                 let [c] = args else { panic!("UNLIKELY takes one condition") };
                 format!("TA_UNLIKELY({})", render_expr(c, ctx, registry, helpers))
             }
+            SpecialBuiltin::EmaVariation => "TA_GLOBALS_EMA_VARIATION".to_string(),
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {

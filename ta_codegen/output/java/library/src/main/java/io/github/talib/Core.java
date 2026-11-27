@@ -47,6 +47,7 @@
  *                2. add SetCompatibility and GetCompatibility
  *                3. add SetUnstablePeriod, GetUnstablePeriod
  *  072526 MF,CC  Immutable Core + CoreBuilder; compatibility removed.
+ *  112726 MF,CC  emaVariation (#622).
  */
 
 package io.github.talib;
@@ -81,6 +82,8 @@ public final class Core {
 
    private final CandleSetting[] candleSettings;
 
+   private final EMAVariation emaVariation;
+
    /**
     * Creates a {@code Core} with TA-Lib's default settings — the equivalent of
     * {@link #DEFAULT}, which is preferred when a shared instance will do.
@@ -97,6 +100,7 @@ public final class Core {
    Core(CoreBuilder builder) {
       this.unstablePeriod = builder.snapshotUnstablePeriod();
       this.candleSettings = builder.snapshotCandleSettings();
+      this.emaVariation = builder.emaVariation();
    }
 
    /** A builder seeded with TA-Lib's defaults. */
@@ -109,7 +113,7 @@ public final class Core {
     * clone-and-modify: {@code core.toBuilder().unstablePeriod(...).build()}.
     */
    public CoreBuilder toBuilder() {
-      return new CoreBuilder(unstablePeriod, candleSettings);
+      return new CoreBuilder(unstablePeriod, candleSettings, emaVariation);
    }
 
    /**
@@ -594,6 +598,15 @@ public final class Core {
             id + " is a wildcard, not a function with an unstable period");
       }
       return unstablePeriod[id.ordinal()];
+   }
+
+   /**
+    * How every EMA-family stage is seeded. Set it with
+    * {@link CoreBuilder#emaVariation(EMAVariation)}.
+    */
+   public EMAVariation emaVariation()
+   {
+      return emaVariation;
    }
 
    /**
@@ -110323,6 +110336,7 @@ public final class Core {
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  *  081026 MF,CC Fold the internal variant into EMA (issue #183).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -110451,13 +110465,19 @@ public final class Core {
       }
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
+      /* The first-bar seed does not move with startIdx. */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevMA = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
@@ -110522,13 +110542,18 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevMA = (double)inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
       }
@@ -110917,13 +110942,19 @@ public final class Core {
       }
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
+      /* The first-bar seed does not move with startIdx. */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevMA = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }

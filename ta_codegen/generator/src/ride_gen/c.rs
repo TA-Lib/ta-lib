@@ -68,6 +68,10 @@ static unsigned long long sr_ambient(unsigned long long h)
     }
     for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         h = fuzz_hash_bytes(h, &TA_Globals->candleSettings[i], sizeof(TA_CandleSetting));
+    {
+        TA_EMAVariation v = TA_GetEMAVariation();
+        h = fuzz_hash_bytes(h, &v, sizeof(v));
+    }
     return h;
 }
 

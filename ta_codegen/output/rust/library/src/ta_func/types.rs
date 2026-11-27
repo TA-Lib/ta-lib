@@ -1,3 +1,5 @@
+use super::EMAVariation;
+
 /// Return codes for TA-Lib function calls. Each value is C's `TA_RetCode`
 /// number for the same condition.
 ///
@@ -343,6 +345,8 @@ pub struct Core {
     pub(crate) unstable_period: [i32; FuncUnstId::COUNT],
     /// Candlestick pattern settings.
     pub(crate) candle_settings: CandleSettings,
+    /// How every EMA-family stage is seeded.
+    pub(crate) ema_variation: EMAVariation,
 }
 
 impl Core {
@@ -408,6 +412,7 @@ impl Core {
         Self {
             unstable_period: [0; FuncUnstId::COUNT],
             candle_settings: CandleSettings::default_settings(),
+            ema_variation: EMAVariation::SMA_SEED,
         }
     }
 
@@ -429,6 +434,7 @@ impl Core {
         CoreBuilder {
             unstable_period: self.unstable_period,
             candle_settings: self.candle_settings,
+            ema_variation: self.ema_variation,
             err: None,
         }
     }
@@ -454,6 +460,11 @@ impl Core {
         // (a count in `0..=INDEX_MAX`, or an Auto level), so the conversion
         // cannot fail.
         Ok(self.unstable_period[id as usize] as u32)
+    }
+
+    /// How every EMA-family stage is seeded; set with [`CoreBuilder::ema_variation`].
+    pub fn ema_variation(&self) -> EMAVariation {
+        self.ema_variation
     }
 
     /// Get one candlestick setting.
@@ -511,6 +522,7 @@ impl Default for Core {
 pub struct CoreBuilder {
     unstable_period: [i32; FuncUnstId::COUNT],
     candle_settings: CandleSettings,
+    ema_variation: EMAVariation,
     /// The first rejection seen by any setter, surfaced by [`CoreBuilder::build`].
     ///
     /// Setters stay infallible and chainable, so a rejection has nowhere to go at
@@ -527,6 +539,7 @@ impl CoreBuilder {
         Self {
             unstable_period: [0; FuncUnstId::COUNT],
             candle_settings: CandleSettings::default_settings(),
+            ema_variation: EMAVariation::SMA_SEED,
             err: None,
         }
     }
@@ -583,6 +596,14 @@ impl CoreBuilder {
         } else {
             return self.reject(RetCode::BadParam);
         }
+        self
+    }
+
+    /// Select how every EMA-family stage is seeded (mirrors the C
+    /// `TA_SetEMAVariation`). A stream reads it when it opens.
+    #[must_use]
+    pub fn ema_variation(mut self, variation: EMAVariation) -> Self {
+        self.ema_variation = variation;
         self
     }
 
@@ -718,6 +739,7 @@ impl CoreBuilder {
         Ok(Core {
             unstable_period: self.unstable_period,
             candle_settings: self.candle_settings,
+            ema_variation: self.ema_variation,
         })
     }
 }
@@ -780,6 +802,15 @@ mod tests {
             assert_eq!(core.candle_settings.body_doji.avg_period, 10);
             assert_eq!(core.candle_settings.body_doji.factor, 0.1);
         }
+    }
+
+    #[test]
+    fn the_ema_variation_defaults_and_survives_to_builder() {
+        assert_eq!(Core::new().ema_variation(), EMAVariation::SMA_SEED);
+        let core = Core::builder().ema_variation(EMAVariation::FIRST_BAR_SEED).build().unwrap();
+        assert_eq!(core.ema_variation(), EMAVariation::FIRST_BAR_SEED);
+        assert_eq!(core.to_builder().build().unwrap().ema_variation(), EMAVariation::FIRST_BAR_SEED);
+        assert_eq!(EMAVariation::try_from(2), Err(RetCode::BadParam));
     }
 
     #[test]

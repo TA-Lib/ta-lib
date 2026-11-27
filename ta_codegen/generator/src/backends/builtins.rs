@@ -104,6 +104,10 @@ pub enum SpecialBuiltin {
     /// `TA_UNSTABLE_AUTO(id, offset)`: `offset` under an Auto level of an id the function
     /// inherits, 0 under a count.
     UnstableAuto,
+    /// `TA_GetEMAVariation()`: the stored `EMAVariation`, read at run time. Legal in a
+    /// batch body and in the code an Open runs once; refused in a step, a lookback and
+    /// a display shift.
+    EmaVariation,
     IsZero,
     IsZeroScaled,
     IsZeroOrNeg,
@@ -120,6 +124,7 @@ impl SpecialBuiltin {
         Some(match name {
             "UNSTABLE_PERIOD" => Self::UnstablePeriod,
             "UNSTABLE_AUTO" => Self::UnstableAuto,
+            EMA_VARIATION => Self::EmaVariation,
             "IS_ZERO" => Self::IsZero,
             "IS_ZERO_SCALED" => Self::IsZeroScaled,
             "IS_ZERO_OR_NEG" => Self::IsZeroOrNeg,
@@ -131,6 +136,9 @@ impl SpecialBuiltin {
         })
     }
 }
+
+/// The IR name of [`SpecialBuiltin::EmaVariation`].
+pub const EMA_VARIATION: &str = "EMA_VARIATION";
 
 /// The input spelling of [`SpecialBuiltin::Unlikely`].
 pub const UNLIKELY: &str = "UNLIKELY";

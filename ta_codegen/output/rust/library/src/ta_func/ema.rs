@@ -55,6 +55,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  *  081026 MF,CC Fold the internal variant into EMA (issue #183).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -229,13 +230,19 @@ impl Core {
         }
         *outBegIdx = startIdx;
         // Do the EMA calculation using tight loops.
-        today = startIdx - lookbackTotal;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
+        // The first-bar seed does not move with startIdx.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevMA = inReal[0];
+            today = 1;
+        } else {
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
             prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
@@ -501,13 +508,19 @@ impl Core {
         }
         *outBegIdx = startIdx;
         // Do the EMA calculation using tight loops.
-        today = startIdx - lookbackTotal;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
+        // The first-bar seed does not move with startIdx.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevMA = inReal[0];
+            today = 1;
+        } else {
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
             prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }

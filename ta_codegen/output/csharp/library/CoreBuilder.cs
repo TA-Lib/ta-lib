@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  081026 MF,CC  First Version -- the unstable-period builder (#186).
  *  100226 MF,CC  A candle factor is finite and not negative (#497).
+ *  112726 MF,CC  EmaVariation (#622).
  *
  * ta_codegen never opens this file: it is hand-written scaffolding living one
  * level above library/src/, which is the generated tree.
@@ -79,6 +80,8 @@ public sealed class CoreBuilder
     /* In CandleSettingType order; the AllCandleSettings wildcard gets no slot. */
     private readonly CandleSetting[] _candleSettings;
 
+    internal EMAVariation Variation { get; private set; }
+
     /// <summary>A builder seeded with TA-Lib's defaults.</summary>
     public CoreBuilder()
     {
@@ -88,10 +91,28 @@ public sealed class CoreBuilder
     }
 
     /* Seeded from an existing Core's settings (see Core.ToBuilder). */
-    internal CoreBuilder(int[] seedPeriods, CandleSetting[] seedCandles)
+    internal CoreBuilder(int[] seedPeriods, CandleSetting[] seedCandles, EMAVariation seedVariation)
     {
         _unstablePeriod = (int[])seedPeriods.Clone();
         _candleSettings = (CandleSetting[])seedCandles.Clone();
+        Variation = seedVariation;
+    }
+
+    /// <summary>Selects how every EMA-family stage is seeded, mirroring C's
+    /// <c>TA_SetEMAVariation</c>. A stream reads it when it opens.</summary>
+    /// <param name="variation">The seeding rule.</param>
+    /// <returns>This builder, for chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="variation"/>
+    /// names no <see cref="EMAVariation"/> member; nothing is changed.</exception>
+    public CoreBuilder EmaVariation(EMAVariation variation)
+    {
+        if (variation != EMAVariation.SMA_SEED && variation != EMAVariation.FIRST_BAR_SEED)
+        {
+            throw new ArgumentOutOfRangeException(nameof(variation), variation,
+                "not an EMAVariation member");
+        }
+        Variation = variation;
+        return this;
     }
 
     /// <summary>Sets the unstable period for one function, or for every

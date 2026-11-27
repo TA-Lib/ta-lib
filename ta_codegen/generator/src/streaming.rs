@@ -1800,6 +1800,7 @@ fn is_stateful_call(name: &str) -> bool {
     // rule: streams read settings exactly where batch reads them).
     lower.contains("lookback")
         || lower.contains("unstable")
+        || name == crate::backends::builtins::EMA_VARIATION
         || lower.starts_with("array_")
         || lower.starts_with("circbuf")
         || name == "TA_Malloc"

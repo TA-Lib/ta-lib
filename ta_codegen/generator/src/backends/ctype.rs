@@ -398,7 +398,9 @@ impl<'a> TypeEnv<'a> {
                 SpecialBuiltin::IsZero | SpecialBuiltin::IsZeroScaled | SpecialBuiltin::IsZeroOrNeg | SpecialBuiltin::IsFinite => {
                     CType::Bool
                 }
-                SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => CType::Int32,
+                SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto | SpecialBuiltin::EmaVariation => {
+                    CType::Int32
+                }
                 SpecialBuiltin::PerToK => CType::Real,
                 SpecialBuiltin::Unlikely => self.type_of(&args[0]),
                 SpecialBuiltin::ArrayCopy => panic!("C type pass: ARRAY_COPY has no value"),

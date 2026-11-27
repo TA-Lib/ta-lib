@@ -92,6 +92,8 @@
    ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? (int)TA_Globals->unstablePeriod[x] \
    : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )
 
+#define TA_GLOBALS_EMA_VARIATION (TA_Globals->emaVariation)
+
 #if defined(__GNUC__)
    #define TA_COLD __attribute__((cold,noinline))
 #elif defined(_MSC_VER)

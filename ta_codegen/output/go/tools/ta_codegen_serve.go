@@ -435,6 +435,13 @@ func (s *server) setUnstablePeriod(p params) string {
 	return `{"status":"ok"}`
 }
 
+func (s *server) setEMAVariation(p params) string {
+	if s.core.SetEMAVariation(talib.EMAVariation(p.i32("value", -1))) != nil {
+		return errorReply("Invalid EMA variation")
+	}
+	return `{"status":"ok"}`
+}
+
 func (s *server) setCandleSettings(p params) string {
 	st, rt, ap := p.i32("settingType", -1), p.i32("rangeType", -1), p.i32("avgPeriod", 0)
 	if s.core.SetCandleSetting(talib.CandleSettingType(st),
@@ -875,6 +882,9 @@ func (s *server) dispatch(method string, p params) string {
 	case "set_unstable_period":
 		rideGen++
 		return s.setUnstablePeriod(p)
+	case "set_ema_variation":
+		rideGen++
+		return s.setEMAVariation(p)
 	case "set_candle_settings":
 		rideGen++
 		return s.setCandleSettings(p)

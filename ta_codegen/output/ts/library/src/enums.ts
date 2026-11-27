@@ -161,3 +161,13 @@ export const FuncUnstIds = Object.freeze({
   /** Size of the unstable-period table; mirrors C's `TA_FUNC_UNST_COUNT`. */
   Count: 38,
 } as const);
+
+/** How every EMA-family stage is seeded: a setting, not a parameter, and no lookback depends on it. Set with {@link CoreBuilder.emaVariation}. */
+export const EMAVariation = Object.freeze({
+  /** The default: each stage starts from the simple average of its first period inputs. */
+  SMA_SEED: 0,
+  /** Each stage fed by the input starts from the first value of the series in the caller's array, and each later stage from the first value the stage before it publishes: TA-Lib's MetaStock mode up to 0.7.1. */
+  FIRST_BAR_SEED: 1,
+} as const);
+/** A member of {@link EMAVariation}. */
+export type EMAVariation = (typeof EMAVariation)[keyof typeof EMAVariation];

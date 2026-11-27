@@ -46,6 +46,7 @@
  *  072526 MF,CC  First Version — builder for the immutable Core.
  *  081126 KL,MF,CC Bound avgPeriod above and refuse a NaN factor (#185).
  *  100226 MF,CC  A candle factor is finite and not negative (#497).
+ *  112726 MF,CC  emaVariation (#622).
  */
 
 package io.github.talib;
@@ -72,6 +73,8 @@ public final class CoreBuilder {
 
    private final CandleSetting[] candleSettings;
 
+   private EMAVariation emaVariation = EMAVariation.SMA_SEED;
+
    /** A builder seeded with TA-Lib's defaults. */
    public CoreBuilder() {
       this.unstablePeriod = new int[FuncUnstId.COUNT];
@@ -80,9 +83,10 @@ public final class CoreBuilder {
    }
 
    /** A builder seeded from an existing {@code Core}'s settings (see {@link Core#toBuilder()}). */
-   CoreBuilder(int[] unstablePeriod, CandleSetting[] candleSettings) {
+   CoreBuilder(int[] unstablePeriod, CandleSetting[] candleSettings, EMAVariation emaVariation) {
       this.unstablePeriod = unstablePeriod.clone();
       this.candleSettings = candleSettings.clone();
+      this.emaVariation = emaVariation;
    }
 
    /**
@@ -120,6 +124,20 @@ public final class CoreBuilder {
       } else {
          unstablePeriod[id.ordinal()] = period;
       }
+      return this;
+   }
+
+   /**
+    * Selects how every EMA-family stage is seeded, mirroring the C
+    * {@code TA_SetEMAVariation}. A stream reads it when it opens.
+    *
+    * @throws NullPointerException if {@code variation} is null
+    */
+   public CoreBuilder emaVariation(EMAVariation variation) {
+      if (variation == null) {
+         throw new NullPointerException("variation");
+      }
+      emaVariation = variation;
       return this;
    }
 
@@ -199,5 +217,9 @@ public final class CoreBuilder {
 
    CandleSetting[] snapshotCandleSettings() {
       return candleSettings.clone();
+   }
+
+   EMAVariation emaVariation() {
+      return emaVariation;
    }
 }

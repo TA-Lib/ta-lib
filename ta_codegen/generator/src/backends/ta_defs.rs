@@ -78,9 +78,9 @@ pub fn render_enum_limits(def: &EnumDef, type_name: &str) -> String {
 /// Render the SECTION 1 body (between, not including, the marker lines) and splice
 /// it into `ta_defs_path`, preserving everything outside the markers.
 ///
-/// SECTION 1 owns two enums that are pure functions of `enums.yaml`: `TA_MAType`
-/// and `TA_FuncUnstId` (the `TA_FUNC_UNST_ALL` / `_NONE` sentinels are structural
-/// and appended here). Everything else in `ta_defs.h` is hand-written.
+/// SECTION 1 owns the enums that are pure functions of `enums.yaml`: `TA_MAType`,
+/// `TA_FuncUnstId` (the `TA_FUNC_UNST_ALL` / `_NONE` sentinels are structural
+/// and appended here) and `TA_EMAVariation`. Everything else in `ta_defs.h` is hand-written.
 ///
 /// `funcs` decides only which enums also get value-limit macros: the ones some
 /// optional parameter is declared with. See [`render_enum_limits`].
@@ -143,7 +143,10 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, ta_defs_pat
     } else {
         String::new()
     };
-    let block = format!("\n{}{ma_limits}\n{}", render_enum(ma, "TA_MAType"), fu_block);
+    let ema_variation = enums
+        .get("EMAVariation")
+        .map_or_else(String::new, |e| format!("\n{}", render_enum(e, "TA_EMAVariation")));
+    let block = format!("\n{}{ma_limits}\n{}{ema_variation}", render_enum(ma, "TA_MAType"), fu_block);
 
     let existing = std::fs::read_to_string(ta_defs_path)
         .unwrap_or_else(|e| panic!("reading {}: {e}", ta_defs_path.display()));

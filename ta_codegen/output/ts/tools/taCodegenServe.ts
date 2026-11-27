@@ -10,7 +10,7 @@ import { Functions as RoutedFunctions, getRuntimeInfo } from '../library/src/abs
 import type { OutRange } from '../library/src/runtime/outRange.ts';
 import { BUDGET, engineStatus, fallThroughCount, lastFallThrough, moduleCalls, ready, setEngineMode } from '../library/src/runtime/wasm.ts';
 import * as ENGINE from '../library/src/engine/index.ts';
-import { FuncUnstId, MAType } from '../library/src/enums.ts';
+import { FuncUnstId, type EMAVariation, MAType } from '../library/src/enums.ts';
 import * as AC from '../library/src/func/ac.ts';
 import * as ACCBANDS from '../library/src/func/accbands.ts';
 import * as ACOS from '../library/src/func/acos.ts';
@@ -407,6 +407,15 @@ function settingError(e: unknown): string {
 function setUnstablePeriod(p: Params): string {
   try {
     core = core.toBuilder().unstablePeriod(int(p, 'id', -1) as FuncUnstId, int(p, 'period', 0)).build();
+  } catch (e) {
+    return settingError(e);
+  }
+  return OK;
+}
+
+function setEmaVariation(p: Params): string {
+  try {
+    core = core.toBuilder().emaVariation(int(p, 'value', -1) as EMAVariation).build();
   } catch (e) {
     return settingError(e);
   }
@@ -25628,6 +25637,7 @@ function handleRequest(line: string): string {
     case 'load_data': return loadData(p);
     case 'list_functions': return FUNCTION_LIST;
     case 'set_unstable_period': rideGen++; return setUnstablePeriod(p);
+    case 'set_ema_variation': rideGen++; return setEmaVariation(p);
     case 'set_candle_settings': rideGen++; return setCandleSettings(p);
     case 'restore_candle_default_settings': rideGen++; return restoreCandleDefaultSettings(p);
     case 'eval_predicate': return evalPredicate(p);

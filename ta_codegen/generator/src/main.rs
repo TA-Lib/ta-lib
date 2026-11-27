@@ -773,6 +773,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
         backends::java_enums::generate_matype(&enums, &java_pkg.join("MAType.java"));
+        backends::java_enums::generate_ema_variation(&enums, &java_pkg.join("EMAVariation.java"));
         // Core.java's GENCODE section splices ALL indicators into a single file,
         // so only regenerate on a full (unfiltered) run — a --func subset would
         // drop every other indicator's methods.
@@ -809,6 +810,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         std::fs::create_dir_all(&csharp_src).unwrap();
         backends::csharp_enums::generate(&enums, &csharp_src.join("FuncUnstId.cs"));
         backends::csharp_enums::generate_matype(all_funcs, &enums, &csharp_src.join("MAType.cs"));
+        backends::csharp_enums::generate_ema_variation(&enums, &csharp_src.join("EMAVariation.cs"));
         // The catalogue IS whole-corpus, so it renders `all_funcs` rather than
         // the filtered set — the same source `rust_abstract` uses. Java's
         // registry instead SKIPS under `--func` because its Core.java splice
@@ -4089,6 +4091,7 @@ pub(crate) use c_math::*;
     // lands in an already-generated file -- see that module for why it carries
     // no `#[repr]` and why `#[non_exhaustive]` is load-bearing.
     mod_rs.push_str(&backends::rust_enums::render_matype(enums));
+    mod_rs.push_str(&backends::rust_enums::render_ema_variation(enums));
 
     // Hand-written test-only modules (not generated; see templates/rust/).
     if !RUST_TEST_ONLY_MODULES.is_empty() {

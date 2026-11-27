@@ -3203,6 +3203,19 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \n\
          TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
          \n\
+         /* How every EMA-family stage is seeded: TA_EMAVariation_SMA_SEED (the\n\
+         \x20* default) with the simple average of its first period inputs, or\n\
+         \x20* TA_EMAVariation_FIRST_BAR_SEED with the first value of the series\n\
+         \x20* it reads. Process-wide like the unstable period, and read once per\n\
+         \x20* call, or at Open for a stream. No lookback depends on it.\n\
+         \x20*\n\
+         \x20* Returns TA_BAD_PARAM, and changes nothing, for a value that is not\n\
+         \x20* a TA_EMAVariation member.\n\
+         \x20*/\n\
+         TA_LIB_API TA_RetCode TA_SetEMAVariation( TA_EMAVariation value );\n\
+         \n\
+         TA_LIB_API TA_EMAVariation TA_GetEMAVariation( void );\n\
+         \n\
          /* DEPRECATED: the MetaStock variant was removed in 0.8.1, so\n\
          \x20* TA_SetCompatibility does nothing and TA_GetCompatibility always\n\
          \x20* answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing\n\

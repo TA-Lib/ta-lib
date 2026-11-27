@@ -92,6 +92,38 @@ impl TryFrom<i32> for MAType {
     }
 }
 
+/// How every EMA-family stage is seeded: a setting, not a parameter, and no lookback depends on it.
+///
+/// Set with [`CoreBuilder::ema_variation`]. The values are pinned ABI, shared
+/// with C's `TA_EMAVariation`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[non_exhaustive]
+#[allow(non_camel_case_types)]
+pub enum EMAVariation {
+    /// The default: each stage starts from the simple average of its first period inputs.
+    #[default]
+    SMA_SEED = 0,
+    /// Each stage fed by the input starts from the first value of the series in the caller's array, and each later stage from the first value the stage before it publishes: TA-Lib's MetaStock mode up to 0.7.1.
+    FIRST_BAR_SEED = 1,
+}
+
+impl TryFrom<i32> for EMAVariation {
+    type Error = RetCode;
+
+    /// Convert C's integer value.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if the value names no member.
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => Self::SMA_SEED,
+            1 => Self::FIRST_BAR_SEED,
+            _ => return Err(RetCode::BadParam),
+        })
+    }
+}
+
 // Hand-written test-only modules (not generated; see templates/rust/).
 #[cfg(test)]
 mod div_zero;

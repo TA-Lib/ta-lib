@@ -252,6 +252,11 @@ typedef enum {
  */
 #define TA_FUNC_UNST_COUNT 38
 
+typedef enum {
+    TA_EMAVariation_SMA_SEED       =  0,
+    TA_EMAVariation_FIRST_BAR_SEED =  1
+} TA_EMAVariation;
+
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 
 /* The TA_RangeType enum specifies the types of range that can be considered

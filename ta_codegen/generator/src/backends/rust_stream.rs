@@ -291,15 +291,20 @@ impl Typing {
     }
 }
 
-fn build_typing(func: &FuncDef, model: &StreamModel) -> Typing {
-    build_typing_from(func, model.body, &[model])
+fn build_typing(func: &FuncDef, model: &StreamModel, enums: &HashMap<String, EnumDef>) -> Typing {
+    build_typing_from(func, model.body, &[model], enums)
 }
 
 /// [`build_typing`] over an explicit body region (dual-mode:
 /// the concatenated `prologue ++ arm(s) ++ epilogue`, so the inference sees
 /// the same statement population batch typing saw) and every arm model (for
 /// the extrema override union).
-fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]) -> Typing {
+fn build_typing_from(
+    func: &FuncDef,
+    body: &[Statement],
+    models: &[&StreamModel],
+    enums: &HashMap<String, EnumDef>,
+) -> Typing {
     // Typed as rendered: a folded `x < 0` guard would otherwise make `x` signed.
     let folded = super::ir_cleanup::drop_answered_lookback_guards(body);
     let body = folded.as_slice();
@@ -361,9 +366,8 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             signed_query: false,
             sentinel_vars,
             result_error_returns: true,
-            // Stream bodies dispatch MA-type structurally (case labels /
-            // sub-opens), never via `== TA_MAType_*`, so no map is needed.
-            matype_map: HashMap::new(),
+            // An Open transcribes the batch prefix, which may compare a setting.
+            matype_map: build_matype_map(enums),
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
             circbuf_len_of: HashMap::new(),
@@ -768,7 +772,7 @@ fn emit_loop(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    let mut typing = build_typing(func, model);
+    let mut typing = build_typing(func, model, enums);
     typing.ctx.one_path_open = one_path_open;
     let fields = state_fields(func, model, &typing);
     let split = StateSplit::of(func, &fields, &[model]);
@@ -3922,7 +3926,7 @@ fn emit_dual_mode(
     tbody.extend_from_slice(ma.body);
     tbody.extend_from_slice(mb.body);
     tbody.extend_from_slice(dmp.epilogue);
-    let typing = build_typing_from(func, &tbody, &[ma, mb]);
+    let typing = build_typing_from(func, &tbody, &[ma, mb], enums);
 
     let union_scalars = dual_scalar_union(func, ma, mb);
     // The struct carries the UNION of both modes' state: shared fields once
@@ -5984,8 +5988,7 @@ fn emit_composed(
         .chain(cp.tail.iter().cloned())
         .collect();
     let models: Vec<&StreamModel> = cp.producer.iter().collect();
-    let mut typing = build_typing_from(func, &combined, &models);
-    typing.ctx.matype_map = crate::backends::rust_lang::build_matype_map(enums);
+    let mut typing = build_typing_from(func, &combined, &models, enums);
     for out in &outputs {
         // `vec_vars` is about the scratch being a Vec and holds for both element
         // types; `real_array_vars` is about the ELEMENT, so an integer output's

@@ -90,3 +90,44 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
     );
     s
 }
+
+/// Render the `EMAVariation` enum plus its `TryFrom<i32>`, or nothing when the
+/// enum is absent.
+#[allow(clippy::implicit_hasher)]
+#[must_use]
+pub fn render_ema_variation(enums: &HashMap<String, EnumDef>) -> String {
+    let Some(ev) = enums.get("EMAVariation") else {
+        return String::new();
+    };
+    let mut s = format!(
+        "\n/// {}\n///\n\
+         /// Set with [`CoreBuilder::ema_variation`]. The values are pinned ABI, shared\n\
+         /// with C's `TA_EMAVariation`.\n\
+         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]\n\
+         #[non_exhaustive]\n\
+         #[allow(non_camel_case_types)]\n\
+         pub enum EMAVariation {{\n",
+        super::common::EMA_VARIATION_DOC
+    );
+    for v in &ev.variants {
+        s.push_str(&format!("    /// {}\n", super::common::ema_variation_member_doc(&v.name)));
+        if v.value == 0 {
+            s.push_str("    #[default]\n");
+        }
+        s.push_str(&format!("    {} = {},\n", v.name, v.value));
+    }
+    s.push_str(
+        "}\n\nimpl TryFrom<i32> for EMAVariation {\n    \
+         type Error = RetCode;\n\n    \
+         /// Convert C's integer value.\n    ///\n    \
+         /// # Errors\n    ///\n    \
+         /// [`RetCode::BadParam`] if the value names no member.\n    \
+         fn try_from(value: i32) -> Result<Self, Self::Error> {\n        \
+         Ok(match value {\n",
+    );
+    for v in &ev.variants {
+        s.push_str(&format!("            {} => Self::{},\n", v.value, v.name));
+    }
+    s.push_str("            _ => return Err(RetCode::BadParam),\n        })\n    }\n}\n");
+    s
+}

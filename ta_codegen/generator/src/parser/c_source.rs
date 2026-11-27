@@ -3697,6 +3697,9 @@ fn transform_func_name(name: &str) -> String {
     if name == "TA_GetUnstablePeriod" || name == "TA_UNSTABLE" || name == "UNSTABLE" {
         return "UNSTABLE_PERIOD".to_string();
     }
+    if name == "TA_GetEMAVariation" {
+        return "EMA_VARIATION".to_string();
+    }
     if let Some(rest) = name.strip_prefix("TA_") {
         return rest.to_string();
     }
@@ -6484,6 +6487,7 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
     fn test_transform_func_name() {
         assert_eq!(transform_func_name("TA_GetUnstablePeriod"), "UNSTABLE_PERIOD");
         assert_eq!(transform_func_name("TA_UNSTABLE"), "UNSTABLE_PERIOD");
+        assert_eq!(transform_func_name("TA_GetEMAVariation"), "EMA_VARIATION");
         assert_eq!(transform_func_name("UNSTABLE"), "UNSTABLE_PERIOD");
         assert_eq!(transform_func_name("TA_SMA"), "SMA");
         assert_eq!(transform_func_name("plain_func"), "plain_func");

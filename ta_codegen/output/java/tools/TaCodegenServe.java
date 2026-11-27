@@ -36,6 +36,10 @@ enum MAType {
     SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA, VIDYA, ALMA, SSF;
 }
 
+enum EMAVariation {
+    SMA_SEED, FIRST_BAR_SEED;
+}
+
 enum RangeType {
     REAL_BODY, HIGH_LOW, SHADOWS;
 }
@@ -68,6 +72,7 @@ class Core {
         return stored <= INDEX_MAX ? stored : stored == UNSTABLE_AUTO_PREC_4 ? prec4 : prec8;
     }
     int[] unstablePeriod = new int[FuncUnstId.COUNT];
+    EMAVariation emaVariation = EMAVariation.SMA_SEED;
     static final CandleSetting[] DEFAULT_CANDLE_SETTINGS = {
         new CandleSetting(RangeType.REAL_BODY, 10, 1.0),   // BodyLong
         new CandleSetting(RangeType.REAL_BODY, 10, 3.0),   // BodyVeryLong
@@ -109941,6 +109946,7 @@ class Core {
      *  052603 MF   Adapt code to compile with .NET Managed C++
      *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
      *  081026 MF,CC Fold the internal variant into EMA (issue #183).
+     *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
      */
 
        /**
@@ -110069,13 +110075,19 @@ class Core {
           }
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
-          today = startIdx - lookbackTotal;
-          i = optInTimePeriod;
-          tempReal = 0.0;
-          while( i-- > 0 ) {
-             tempReal += inReal[today++];
+          /* The first-bar seed does not move with startIdx. */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             prevMA = inReal[0];
+             today = 1;
+          } else {
+             today = startIdx - lookbackTotal;
+             i = optInTimePeriod;
+             tempReal = 0.0;
+             while( i-- > 0 ) {
+                tempReal += inReal[today++];
+             }
+             prevMA = tempReal / optInTimePeriod;
           }
-          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
           }
@@ -110140,13 +110152,18 @@ class Core {
              return RetCode.SUCCESS ;
           }
           outBegIdx.value = startIdx;
-          today = startIdx - lookbackTotal;
-          i = optInTimePeriod;
-          tempReal = 0.0;
-          while( i-- > 0 ) {
-             tempReal += (double)inReal[today++];
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             prevMA = (double)inReal[0];
+             today = 1;
+          } else {
+             today = startIdx - lookbackTotal;
+             i = optInTimePeriod;
+             tempReal = 0.0;
+             while( i-- > 0 ) {
+                tempReal += (double)inReal[today++];
+             }
+             prevMA = tempReal / optInTimePeriod;
           }
-          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
           }
@@ -110535,13 +110552,19 @@ class Core {
           }
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
-          today = startIdx - lookbackTotal;
-          i = optInTimePeriod;
-          tempReal = 0.0;
-          while( i-- > 0 ) {
-             tempReal += inReal[today++];
+          /* The first-bar seed does not move with startIdx. */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             prevMA = inReal[0];
+             today = 1;
+          } else {
+             today = startIdx - lookbackTotal;
+             i = optInTimePeriod;
+             tempReal = 0.0;
+             while( i-- > 0 ) {
+                tempReal += inReal[today++];
+             }
+             prevMA = tempReal / optInTimePeriod;
           }
-          prevMA = tempReal / optInTimePeriod;
           while( today <= startIdx ) {
              prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
           }
@@ -252112,7 +252135,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "cbe1f55580d1e4b8";
+    static final String SPLICED_GENCODE_DIGEST = "ff6d057d582d9652";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -253958,6 +253981,15 @@ public class TaCodegenServe {
                 return "{\"status\":\"ok\"}"; 
             }
             return "{\"error\":\"Invalid id\"}"; 
+        }
+        else if (json.contains("\"set_ema_variation\"")) {
+            rideGen++;
+            int value = jsonInt(json, "value");
+            if (value < 0 || value >= EMAVariation.values().length) {
+                return "{\"error\":\"Invalid EMA variation\"}";
+            }
+            core.emaVariation = EMAVariation.values()[value];
+            return "{\"status\":\"ok\"}";
         }
         else if (json.contains("\"set_candle_settings\"")) {
             rideGen++;

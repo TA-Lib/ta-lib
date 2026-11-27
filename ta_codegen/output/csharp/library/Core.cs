@@ -139,6 +139,8 @@ public sealed partial class Core
     /* In CandleSettingType order. */
     internal readonly CandleSetting[] _candleSettings;
 
+    internal readonly EMAVariation _emaVariation;
+
     /// <summary>A shared <c>Core</c> with every setting at its documented
     /// default.</summary>
     /// <remarks>Prefer it to <c>new Core()</c> whenever a shared instance will
@@ -161,6 +163,7 @@ public sealed partial class Core
     {
         _unstablePeriod = builder.SnapshotUnstablePeriod();
         _candleSettings = builder.SnapshotCandleSettings();
+        _emaVariation = builder.Variation;
     }
 
     /// <summary>Start building a <c>Core</c> with non-default settings.</summary>
@@ -175,7 +178,7 @@ public sealed partial class Core
     /// <returns>A builder carrying this instance's current settings.</returns>
     public CoreBuilder ToBuilder()
     {
-        return new CoreBuilder(_unstablePeriod, _candleSettings);
+        return new CoreBuilder(_unstablePeriod, _candleSettings, _emaVariation);
     }
 
     /// <summary>Reads one candlestick threshold.</summary>
@@ -194,6 +197,13 @@ public sealed partial class Core
                 "not a single candlestick setting");
         }
         return _candleSettings[slot];
+    }
+
+    /// <summary>Reads how every EMA-family stage is seeded.</summary>
+    /// <returns>The value set with <see cref="CoreBuilder.EmaVariation"/>.</returns>
+    public EMAVariation EmaVariation()
+    {
+        return _emaVariation;
     }
 
     /// <summary>Reads the unstable period configured for one function.</summary>

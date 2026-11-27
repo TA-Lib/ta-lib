@@ -41,6 +41,14 @@ MAType:
     - { name: ALMA,     value: 15 }
     - { name: SSF,      value: 16 }
 
+# EMAVariation: how an EMA-family stage is seeded, a library setting rather than
+# a parameter (TA_SetEMAVariation in C, emaVariation on each port's builder).
+EMAVariation:
+  c_prefix: TA_EMAVariation_
+  variants:
+    - { name: SMA_SEED,       value: 0 }
+    - { name: FIRST_BAR_SEED, value: 1 }
+
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h
 # (ta_codegen takes over gen_code's last role there). Order = ascending `value`,

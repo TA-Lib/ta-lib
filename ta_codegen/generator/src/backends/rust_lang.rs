@@ -232,22 +232,16 @@ pub(crate) fn opt_param_type(t: &ParamType) -> String {
     }
 }
 
-/// Build the `TA_MAType_*` → qualified-member map the [`ExprEmitter::var`] hook
-/// uses to render `optInMAType == TA_MAType_SMA` comparisons in the batch
-/// functions. Derived from the `MAType` enum in `enums.yaml`, so a new
-/// `TA_MAType_X` row needs no generator edit.
+/// Build the map from every `enums.yaml` constant (`TA_MAType_SMA`) to its
+/// qualified member that the [`ExprEmitter::var`] hook uses for
+/// `optInMAType == TA_MAType_SMA` and setting comparisons.
 pub(crate) fn build_matype_map(
     enums: &HashMap<String, EnumDef>,
 ) -> std::collections::HashMap<String, String> {
     enums
-        .get("MAType")
-        .map(|e| {
-            e.variants
-                .iter()
-                .map(|v| (v.c_name.clone(), format!("{}::{}", e.name, v.name)))
-                .collect()
-        })
-        .unwrap_or_default()
+        .values()
+        .flat_map(|e| e.variants.iter().map(move |v| (v.c_name.clone(), format!("{}::{}", e.name, v.name))))
+        .collect()
 }
 
 impl RustRenderCtx {
@@ -5498,6 +5492,7 @@ fn render_func_call(
                 let [c] = args else { panic!("UNLIKELY takes one condition") };
                 format!("({})", render_expr(c, ctx, opt_real_params, registry, helpers))
             }
+            SpecialBuiltin::EmaVariation => "self.ema_variation".to_string(),
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let base = func_name

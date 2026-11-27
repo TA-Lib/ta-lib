@@ -181,20 +181,15 @@ pub(crate) struct JavaRenderCtx<'a> {
     pub(crate) key_slots: Option<&'a HashSet<String>>,
 }
 
-/// Build the `TA_MAType_*` → `MAType.<Pascal>` map the [`ExprEmitter::var`] hook
-/// uses for `optInMAType == TA_MAType_SMA` comparisons. Derived from the `MAType`
-/// enum in `enums.yaml`, so a new `TA_MAType_X` row needs no generator edit.
+/// Build the map from every `enums.yaml` constant (`TA_MAType_SMA`) to its Java,
+/// C# and TS spelling (`MAType.SMA`) that the [`ExprEmitter::var`] hook uses for
+/// `optInMAType == TA_MAType_SMA` and setting comparisons.
 #[allow(clippy::implicit_hasher)]
 pub(crate) fn build_matype_map(enums: &HashMap<String, EnumDef>) -> HashMap<String, String> {
     enums
-        .get("MAType")
-        .map(|e| {
-            e.variants
-                .iter()
-                .map(|v| (v.c_name.clone(), format!("MAType.{}", v.name)))
-                .collect()
-        })
-        .unwrap_or_default()
+        .values()
+        .flat_map(|e| e.variants.iter().map(move |v| (v.c_name.clone(), format!("{}.{}", e.name, v.name))))
+        .collect()
 }
 
 /// Check if an expression renders to a boolean result in Java.
@@ -2630,6 +2625,7 @@ fn render_func_call(
                 let [c] = args else { panic!("UNLIKELY takes one condition") };
                 format!("({})", render_expr(c, ctx, registry, helpers))
             }
+            SpecialBuiltin::EmaVariation => "this.emaVariation".to_string(),
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {

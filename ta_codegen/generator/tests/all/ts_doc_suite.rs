@@ -239,7 +239,7 @@ fn sweep_all() -> Sweep {
         sweep_module(&module, &src, &public, &mut sweep);
     }
     let enums_src = backends::ts_enums::render(&funcs, &enums);
-    let public: BTreeSet<String> = ["MAType", "FuncUnstId"].iter().map(|s| (*s).to_string()).collect();
+    let public: BTreeSet<String> = ["MAType", "FuncUnstId", "EMAVariation"].iter().map(|s| (*s).to_string()).collect();
     // `const` and `type` each, under one name.
     expected.insert("enums".to_string(), 2 * public.len());
     sweep_module("enums", &enums_src, &public, &mut sweep);

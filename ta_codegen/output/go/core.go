@@ -60,8 +60,8 @@ type CandleSetting struct {
 	Factor      float64
 }
 
-// Core holds the settings every call reads: the unstable periods and the
-// candlestick settings. The zero value is ready to use and holds C's defaults,
+// Core holds the settings every call reads: the unstable periods, the
+// candlestick settings and the EMA variation. The zero value is ready to use and holds C's defaults,
 // as [NewCore] does. A Core is safe to share between goroutines once configured:
 // call its setters only while no other goroutine uses it and no stream opened
 // on it is in use.
@@ -70,6 +70,7 @@ type Core struct {
 	// Read only while candleCustom is set, so the zero value reads the defaults.
 	candleSettings [candleSettingCount]CandleSetting
 	candleCustom   bool
+	emaVariation   EMAVariation
 }
 
 // NewCore returns a Core with C's defaults: no unstable period and the
@@ -112,6 +113,22 @@ func (c *Core) UnstablePeriod(id FuncUnstId) (int, error) {
 		return 0, BadParam
 	}
 	return int(c.unstablePeriod[id]), nil
+}
+
+// SetEMAVariation selects how every EMA-family stage is seeded; a stream reads
+// it when it opens. A value that names no EMAVariation returns BadParam and
+// changes nothing.
+func (c *Core) SetEMAVariation(variation EMAVariation) error {
+	if variation != EMAVariationSMA_SEED && variation != EMAVariationFIRST_BAR_SEED {
+		return BadParam
+	}
+	c.emaVariation = variation
+	return nil
+}
+
+// EMAVariation returns how every EMA-family stage is seeded.
+func (c *Core) EMAVariation() EMAVariation {
+	return c.emaVariation
 }
 
 // SetCandleSetting overrides one candlestick setting. avgPeriod is in 0 to

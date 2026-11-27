@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3240
+function-count 3242
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -35,6 +35,9 @@ enum TA_CandleSettingType TA_AllCandleSettings = 11
 enum TA_Compatibility sizeof=4
 enum TA_Compatibility TA_COMPATIBILITY_DEFAULT = 0
 enum TA_Compatibility TA_COMPATIBILITY_METASTOCK = 1
+enum TA_EMAVariation sizeof=4
+enum TA_EMAVariation TA_EMAVariation_SMA_SEED = 0
+enum TA_EMAVariation TA_EMAVariation_FIRST_BAR_SEED = 1
 enum TA_FuncUnstId sizeof=4
 enum TA_FuncUnstId TA_FUNC_UNST_ADX = 0
 enum TA_FuncUnstId TA_FUNC_UNST_UNUSED_1 = 1
@@ -198,6 +201,7 @@ typedef UInt32 sizeof=4 signed=0 float=0
 typedef UInt64 sizeof=8 signed=0 float=0
 callback void (*TA_CallForEachFunc)(const TA_FuncInfo *, void *)
 function TA_Compatibility TA_GetCompatibility(void)
+function TA_EMAVariation TA_GetEMAVariation(void)
 function TA_RetCode TA_AC(int, int, const double *, const double *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_ACCBANDS(int, int, const double *, const double *, const double *, int, int *, int *, double *, double *, double *)
 function TA_RetCode TA_ACCBANDS_Advance(TA_ACCBANDS_Stream *)
@@ -2685,6 +2689,7 @@ function TA_RetCode TA_S_ZIGZAG(int, int, const float *, const float *, double, 
 function TA_RetCode TA_S_ZLEMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_SetCandleSettings(TA_CandleSettingType, TA_RangeType, int, double)
 function TA_RetCode TA_SetCompatibility(TA_Compatibility)
+function TA_RetCode TA_SetEMAVariation(TA_EMAVariation)
 function TA_RetCode TA_SetInputParamIntegerPtr(TA_ParamHolder *, unsigned int, const TA_Integer *)
 function TA_RetCode TA_SetInputParamPricePtr(TA_ParamHolder *, unsigned int, const TA_Real *, const TA_Real *, const TA_Real *, const TA_Real *, const TA_Real *, const TA_Real *)
 function TA_RetCode TA_SetInputParamRealPtr(TA_ParamHolder *, unsigned int, const TA_Real *)

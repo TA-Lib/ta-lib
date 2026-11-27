@@ -4,7 +4,7 @@
 use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
-use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};
+use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, EMAVariation};
 use ta_lib::{CandleSetting, CandleSettingType, RangeType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
 use ta_lib::MAType;
@@ -1518,6 +1518,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             match apply_unstable_period(core, id, period) {
                 Ok(()) => "{\"status\":\"ok\"}".to_string(),
                 Err(msg) => format!("{{\"error\":\"{msg}\"}}"),
+            }
+        }
+        "set_ema_variation" => {
+            RIDE_GEN.with(|g| g.set(g.get().wrapping_add(1)));
+            let value = params["value"].as_i64().unwrap_or(-1);
+            match i32::try_from(value).ok().and_then(|v| EMAVariation::try_from(v).ok()) {
+                Some(v) => {
+                    *core = core.to_builder().ema_variation(v).build().expect("a built Core rebuilds");
+                    "{\"status\":\"ok\"}".to_string()
+                }
+                None => "{\"error\":\"Invalid EMA variation\"}".to_string(),
             }
         }
         "set_candle_settings" => {

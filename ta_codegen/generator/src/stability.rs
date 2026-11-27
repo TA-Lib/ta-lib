@@ -441,6 +441,30 @@ fn validate_auto_offsets(funcs: &[FuncDef], helpers: &crate::helper_registry::He
     errors
 }
 
+/// Refuse an EMA-variation read in a lookback, a display shift or a helper (which a
+/// lookback may call): the setting may change values, never which bar is first.
+fn validate_ema_variation_reads(funcs: &[FuncDef], helpers: &crate::helper_registry::HelperRegistry) -> Vec<String> {
+    // Counted in the debug text for the reason `validate_unstable_reads` gives.
+    fn count<T: std::fmt::Debug>(tree: &T) -> usize {
+        format!("{tree:?}").matches(&format!("FuncCall(\"{}\"", crate::backends::builtins::EMA_VARIATION)).count()
+    }
+    let mut errors = Vec::new();
+    for f in funcs {
+        let name = f.name.to_uppercase();
+        for (place, n) in [("the lookback", count(&f.lookback)), ("the display shift", count(&f.display_shift))] {
+            if n > 0 {
+                errors.push(format!("{name}: {place} reads the EMA variation; no lookback or shift may depend on it"));
+            }
+        }
+    }
+    for helper in helpers.iter() {
+        if count(&helper.body) > 0 {
+            errors.push(format!("helpers/{}: reads the EMA variation; only a function body may", helper.name));
+        }
+    }
+    errors
+}
+
 /// Refuse an unstable-period read anywhere but the lookback of the function that owns
 /// the id.
 ///
@@ -480,6 +504,7 @@ pub fn validate_unstable_reads<S: std::hash::BuildHasher>(
     }
 
     let mut errors = validate_auto_offsets(funcs, helpers);
+    errors.extend(validate_ema_variation_reads(funcs, helpers));
     let mut read_by_owner = BTreeSet::new();
     for f in funcs {
         let name = f.name.to_uppercase();

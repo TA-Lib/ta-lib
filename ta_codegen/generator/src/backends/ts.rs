@@ -445,6 +445,7 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("MAType", "../enums.ts"),
     ("MATypes", "../enums.ts"),
     ("FuncUnstId", "../enums.ts"),
+    ("EMAVariation", "../enums.ts"),
 ];
 
 fn mentions(text: &str, word: &str) -> bool {
@@ -2490,6 +2491,7 @@ fn render_func_call(fname: &str, args: &[Expr], ctx: &TsCtx) -> String {
                 let [c] = args else { panic!("UNLIKELY takes one condition") };
                 format!("({})", ctx.expr(c))
             }
+            SpecialBuiltin::EmaVariation => "core.emaVariationSetting".to_string(),
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 let Some(Expr::Var(id)) = args.first() else { panic!("an unstable-period read takes an id and a count") };
                 let variant = unst_variant_name(id);
@@ -2822,7 +2824,7 @@ pub fn runtime_exports(runtime: &str) -> String {
          export type {{ FailureRetCode, RetCodeName }} from '{runtime}runtime/errors.ts';\n\
          export {{ OutRange }} from '{runtime}runtime/outRange.ts';\n\
          export {{ Core, CoreBuilder, CandleSetting, CandleSettingType, RangeType }} from '{runtime}runtime/core.ts';\n\
-         export {{ MAType, FuncUnstId }} from '{runtime}enums.ts';\n"
+         export {{ MAType, FuncUnstId, EMAVariation }} from '{runtime}enums.ts';\n"
     )
 }
 

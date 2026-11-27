@@ -123,19 +123,24 @@ func (c *Core) emaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeriod
 		return Success
 	}
 	*outBegIdx = startIdx
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C9 := i > 0
-		i--
-		if !_C9 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevMA = inReal[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C9 := i > 0
+			i--
+			if !_C9 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		tempReal += inReal[today]
-		today++
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	if _n10 := int(startIdx) - int(today) + 1; _n10 > 0 {
 		_r12 := inReal[today:][:_n10]
 		for _k11 := range _r12 {
@@ -418,19 +423,24 @@ func (c *Core) emaOpenImpl(sp *EMAStream, inReal []float64, startIdx, optInTimeP
 		return InsufficientHistory
 	}
 	*outBegIdx = startIdx
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevMA = inReal[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		tempReal += inReal[today]
-		today++
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	for today <= startIdx {
 		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*inReal[today]))
 		today++

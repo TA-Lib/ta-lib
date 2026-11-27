@@ -1700,6 +1700,7 @@ static ErrorNumber ds_under_settings( const char *funcName,
     static const char *const axisName[2] = { "an unstable period", "a candle setting" };
     TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
     unsigned int savedUnst[TA_FUNC_UNST_COUNT];
+    TA_EMAVariation savedEmaVariation = TA_Globals->emaVariation;
     TA_Integer shift0[DS_MAX_OUTPUT];
     TA_Integer lookback0 = -1;
     unsigned int k, o;
@@ -1790,6 +1791,7 @@ static ErrorNumber ds_under_settings( const char *funcName,
         }
         memcpy(TA_Globals->candleSettings, savedCandle, sizeof(savedCandle));
         memcpy(TA_Globals->unstablePeriod, savedUnst, sizeof(savedUnst));
+        TA_Globals->emaVariation = savedEmaVariation;
         if( pushed )
             eRestore = ds_server_push_settings(funcName, axis);
         if( e != TA_TEST_PASS )
@@ -2010,6 +2012,7 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
 {
     TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
     unsigned int savedUnst[TA_FUNC_UNST_COUNT];
+    TA_EMAVariation savedEmaVariation = TA_Globals->emaVariation;
     TA_Integer base = -1, got = -1;
     const char *bad = NULL;
     int isCdl = (funcInfo->flags & TA_FUNC_FLG_CANDLESTICK) != 0;
@@ -2098,6 +2101,7 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
     }
     memcpy(TA_Globals->candleSettings, savedCandle, sizeof(savedCandle));
     memcpy(TA_Globals->unstablePeriod, savedUnst, sizeof(savedUnst));
+    TA_Globals->emaVariation = savedEmaVariation;
 
     if( bad )
     {

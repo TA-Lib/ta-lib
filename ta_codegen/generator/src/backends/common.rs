@@ -116,6 +116,25 @@ pub(crate) fn ma_pseudo_member_doc(variant: &str) -> Option<&'static str> {
     }
 }
 
+/// What `EMAVariation` selects, for every backend's doc comment on the type.
+pub(crate) const EMA_VARIATION_DOC: &str =
+    "How every EMA-family stage is seeded: a setting, not a parameter, and no lookback \
+     depends on it.";
+
+/// The doc of one `EMAVariation` member. A member with no entry fails generation.
+#[must_use]
+pub(crate) fn ema_variation_member_doc(variant: &str) -> &'static str {
+    match variant {
+        "SMA_SEED" => "The default: each stage starts from the simple average of its first period inputs.",
+        "FIRST_BAR_SEED" => {
+            "Each stage fed by the input starts from the first value of the series in the \
+             caller's array, and each later stage from the first value the stage before it \
+             publishes: TA-Lib's MetaStock mode up to 0.7.1."
+        }
+        other => panic!("EMAVariation member {other} has no doc"),
+    }
+}
+
 /// The enum types some function declares an optional parameter with.
 ///
 /// Those are the only enums that get generated limit constants, because they are

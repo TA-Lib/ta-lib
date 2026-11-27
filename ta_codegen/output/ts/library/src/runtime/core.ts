@@ -43,9 +43,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  110126 MF,CC  First Version
+ *  112726 MF,CC  emaVariation (#622)
  */
 
-import { FuncUnstId, FuncUnstIds } from '../enums.ts';
+import { EMAVariation, FuncUnstId, FuncUnstIds } from '../enums.ts';
 import { RetCode, TALibError } from './errors.ts';
 
 /** The candle attribute a {@link CandleSetting} describes; C's order. */
@@ -154,6 +155,17 @@ export class CoreBuilder {
   readonly unstablePeriods: Int32Array = new Int32Array(FUNC_UNST_COUNT);
   /** @internal */
   readonly candleSettings: CandleSetting[] = DEFAULT_CANDLE_SETTINGS.slice();
+  /** @internal */
+  emaVariationSetting: EMAVariation = EMAVariation.SMA_SEED;
+
+  /** How every EMA-family stage is seeded. A stream reads it when it opens. */
+  emaVariation(variation: EMAVariation): this {
+    if (variation !== EMAVariation.SMA_SEED && variation !== EMAVariation.FIRST_BAR_SEED) {
+      throw badParam(`emaVariation: ${variation} is not an EMAVariation`);
+    }
+    this.emaVariationSetting = variation;
+    return this;
+  }
 
   /**
    * Extra warm-up bars for one function, or for every function given
@@ -262,6 +274,8 @@ export class Core {
   readonly unstablePeriods: readonly number[];
   /** @internal Indexed by `CandleSettingType`. */
   readonly candleSettings: readonly CandleSetting[];
+  /** @internal */
+  readonly emaVariationSetting: EMAVariation;
 
   /**
    * `new Core(b)` is `b.build()`; `new Core()` has the defaults of {@link Core.DEFAULT}.
@@ -276,6 +290,7 @@ export class Core {
     // cannot be frozen.
     this.unstablePeriods = Object.freeze(Array.from(builder.unstablePeriods));
     this.candleSettings = Object.freeze(builder.candleSettings.slice());
+    this.emaVariationSetting = builder.emaVariationSetting;
     Object.freeze(this);
   }
 
@@ -291,7 +306,13 @@ export class Core {
     for (let i = 0; i < CANDLE_SETTING_COUNT; i++) {
       builder.candleSettings[i] = this.candleSettings[i];
     }
+    builder.emaVariationSetting = this.emaVariationSetting;
     return builder;
+  }
+
+  /** How every EMA-family stage is seeded. */
+  emaVariation(): EMAVariation {
+    return this.emaVariationSetting;
   }
 
   /** The unstable period set for one function. */

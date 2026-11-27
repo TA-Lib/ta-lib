@@ -4102,3 +4102,45 @@ fn composed_extrema_read_bound_rewritten_by_the_tail_is_refused() {
     let err = err.to_string();
     assert!(err.contains("not proved") && err.contains("inClose[j]"), "{err}");
 }
+
+/// The EMA-variation read is legal where EMA has it, before the steady loop, and
+/// refused inside the step: a stream reads its settings once, at Open.
+#[test]
+fn ema_variation_read_is_refused_in_the_step() {
+    use ta_codegen_lib::backends::builtins::EMA_VARIATION;
+    use ta_codegen_lib::ir::{BinOp, Expr, Statement};
+    let f = load("ema");
+    assert!(
+        format!("{:?}", f.body).contains(&format!("FuncCall(\"{EMA_VARIATION}\"")),
+        "EMA no longer reads the setting: the legal half of this test is vacuous"
+    );
+    streaming::validate_streamable(&f, lookup()).expect("EMA, reading the setting at Open, streams");
+
+    let mut g = f.clone();
+    let steady = g
+        .body
+        .iter_mut()
+        .rev()
+        .find_map(|s| match s {
+            Statement::While { body, .. } => Some(body),
+            _ => None,
+        })
+        .expect("EMA ends on its steady loop");
+    steady.insert(
+        0,
+        Statement::Assign {
+            target: Expr::Var("prevMA".into()),
+            value: Expr::BinOp(
+                Box::new(Expr::Var("prevMA".into())),
+                BinOp::Add,
+                Box::new(Expr::FuncCall(EMA_VARIATION.into(), vec![])),
+            ),
+            compound: false,
+        },
+    );
+    assert!(
+        matches!(streaming::analyze(&g), Err(StreamError::UnsupportedCall(ref n)) if n == EMA_VARIATION),
+        "a read in the step was not refused: {:?}",
+        streaming::analyze(&g).err()
+    );
+}

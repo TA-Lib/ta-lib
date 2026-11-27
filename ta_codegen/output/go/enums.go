@@ -109,6 +109,16 @@ const (
 
 const funcUnstCount = 38
 
+// EMAVariation selects how every EMA-family stage is seeded; see
+// [Core.SetEMAVariation].
+type EMAVariation int32
+
+// The EMAVariation members.
+const (
+	EMAVariationSMA_SEED       EMAVariation = 0
+	EMAVariationFIRST_BAR_SEED EMAVariation = 1
+)
+
 // CandleSettingType names one candlestick threshold; C's order.
 type CandleSettingType int32
 

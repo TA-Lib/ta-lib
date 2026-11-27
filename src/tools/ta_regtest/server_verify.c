@@ -200,6 +200,9 @@ static const PriceComponent PRICE_COMPONENTS[] = {
 static unsigned int g_lastUnstPeriods[SV_MAX_PIPES][TA_FUNC_UNST_COUNT];
 static int          g_unstInitialized[SV_MAX_PIPES];
 
+/* The EMA variation each server holds, per pipe; -1 until the first sync. */
+static int          g_lastEmaVariation[SV_MAX_PIPES];
+
 /* Cached candle settings, per pipe, same reasoning as the periods above (#215).
  * Read from TA_Globals->candleSettings[] rather than from a copy the tests hand
  * us: the property being verified is "the server computed under the settings the
@@ -250,6 +253,7 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         {
             g_unstInitialized[p] = 0;
             g_candleInitialized[p] = 0;
+            g_lastEmaVariation[p] = -1;
         }
         g_candleSyncs = 0;
         g_comparisons = 0;
@@ -268,6 +272,7 @@ void server_verify_shutdown(void)
     {
         g_unstInitialized[p] = 0;
         g_candleInitialized[p] = 0;
+        g_lastEmaVariation[p] = -1;
         g_pipeLang[p] = NULL;
     }
 }
@@ -376,6 +381,28 @@ static ErrorNumber sync_unstable_periods(int pipeIdx)
             g_lastUnstPeriods[pipeIdx][id] = curPeriod;
         }
     }
+    return TA_TEST_PASS;
+}
+
+static ErrorNumber sync_ema_variation(int pipeIdx)
+{
+    char syncReq[128];
+    char syncResp[256];
+    int cur = (int)TA_GetEMAVariation();
+
+    if( cur == g_lastEmaVariation[pipeIdx] )
+        return TA_TEST_PASS;
+    snprintf(syncReq, sizeof(syncReq),
+             "{\"method\":\"set_ema_variation\",\"params\":{\"value\":%d}}", cur);
+    ErrorNumber err = codegen_pipe_call(g_pipes[pipeIdx], syncReq, syncResp, sizeof(syncResp));
+    if( err != TA_TEST_PASS )
+        return err;
+    if( sv_json_is_error(syncResp) )
+    {
+        printf("  SV WARN: set_ema_variation rejected by server: %s\n", syncResp);
+        return TA_SV_RETCODE_MISMATCH;
+    }
+    g_lastEmaVariation[pipeIdx] = cur;
     return TA_TEST_PASS;
 }
 
@@ -821,11 +848,13 @@ ErrorNumber server_verify(
         if( g_svFloat && !codegen_lang_serves_float(lang) )
             continue;
 
-        /* Sync global state (unstable periods + candle settings) */
+        /* Sync global state (unstable periods, EMA variation, candle settings) */
         ErrorNumber err = sync_unstable_periods(p);
+        if( err == TA_TEST_PASS )
+            err = sync_ema_variation(p);
         if( err != TA_TEST_PASS )
         {
-            printf("  SV WARN [%s]: failed to sync unstable periods\n", funcName);
+            printf("  SV WARN [%s]: failed to sync unstable periods or the EMA variation\n", funcName);
             continue;
         }
         err = sync_candle_settings(p);
@@ -970,9 +999,11 @@ ErrorNumber server_verify_lookback_parity(
         const char *lang = g_pipeLang[p];
 
         ErrorNumber err = sync_unstable_periods(p);
+        if( err == TA_TEST_PASS )
+            err = sync_ema_variation(p);
         if( err != TA_TEST_PASS )
         {
-            printf("  SV WARN [%s]: lookback-parity: failed to sync unstable periods\n", funcName);
+            printf("  SV WARN [%s]: lookback-parity: failed to sync unstable periods or the EMA variation\n", funcName);
             continue;
         }
         err = sync_candle_settings(p);
@@ -1080,6 +1111,8 @@ ErrorNumber server_verify_lookback_value(
 
         g_curPipe = p;
         err = sync_unstable_periods(p);
+        if( err == TA_TEST_PASS )
+            err = sync_ema_variation(p);
         if( err == TA_TEST_PASS )
             err = sync_candle_settings(p);
         if( err != TA_TEST_PASS )

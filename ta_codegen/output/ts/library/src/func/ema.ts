@@ -47,9 +47,10 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  *  081026 MF,CC Fold the internal variant into EMA (issue #183).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { FuncUnstId } from '../enums.ts';
+import { EMAVariation, FuncUnstId } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -175,13 +176,19 @@ export function emaImpl(
   }
   outBegIdx.value = startIdx;
   /* Do the EMA calculation using tight loops. */
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
+  /* The first-bar seed does not move with startIdx. */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevMA = inReal[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   while (today <= startIdx) {
     prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
   }
@@ -629,13 +636,19 @@ function emaOpenImpl(
   }
   outBegIdx.value = startIdx;
   /* Do the EMA calculation using tight loops. */
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
+  /* The first-bar seed does not move with startIdx. */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevMA = inReal[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   while (today <= startIdx) {
     prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
   }

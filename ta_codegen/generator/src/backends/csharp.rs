@@ -3122,6 +3122,7 @@ fn render_func_call(
                 let [c] = args else { panic!("UNLIKELY takes one condition") };
                 format!("({})", render_expr(c, ctx, registry, helpers))
             }
+            SpecialBuiltin::EmaVariation => "this._emaVariation".to_string(),
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // C# enums cast to int; there is no ordinal().
                 if let Some(Expr::Var(func_name)) = args.first() {

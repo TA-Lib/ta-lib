@@ -1027,6 +1027,7 @@ impl<'a> Ctx<'a> {
                     self.lower(c, sc)
                 }
                 SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => self.unstable(b, args, sc),
+                SpecialBuiltin::EmaVariation => (GExpr::name("int32(c.emaVariation)"), CType::Int32),
                 SpecialBuiltin::IsZero | SpecialBuiltin::IsZeroOrNeg | SpecialBuiltin::IsFinite => {
                     let f = match b {
                         SpecialBuiltin::IsZero => "isZero",

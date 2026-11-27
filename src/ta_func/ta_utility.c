@@ -47,6 +47,7 @@
  *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
  *  072726 MF,CC  Bound TA_Set/GetUnstablePeriod below as well as above (#144)
  *  072826 MF,CC  Range-check against TA_FUNC_UNST_COUNT; ALL is now INT_MAX
+ *  112726 MF,CC  TA_SetEMAVariation / TA_GetEMAVariation (#622)
  *
  */
 
@@ -109,6 +110,21 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 	   return 0;
 
    return TA_Globals->unstablePeriod[id];
+}
+
+TA_RetCode TA_SetEMAVariation( TA_EMAVariation value )
+{
+   /* Unsigned, for the reason TA_SetUnstablePeriod gives. */
+   if( (unsigned int)value > (unsigned int)TA_EMAVariation_FIRST_BAR_SEED )
+      return TA_BAD_PARAM;
+
+   TA_Globals->emaVariation = value;
+   return TA_SUCCESS;
+}
+
+TA_EMAVariation TA_GetEMAVariation( void )
+{
+   return TA_Globals->emaVariation;
 }
 
 /* DEPRECATED and inert since 0.8.1: there is no compatibility state left to

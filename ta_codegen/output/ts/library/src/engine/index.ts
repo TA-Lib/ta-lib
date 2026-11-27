@@ -38,7 +38,7 @@ export { TALibError, RetCode } from '../runtime/errors.ts';
 export type { FailureRetCode, RetCodeName } from '../runtime/errors.ts';
 export { OutRange } from '../runtime/outRange.ts';
 export { Core, CoreBuilder, CandleSetting, CandleSettingType, RangeType } from '../runtime/core.ts';
-export { MAType, FuncUnstId } from '../enums.ts';
+export { MAType, FuncUnstId, EMAVariation } from '../enums.ts';
 export { ready } from '../runtime/wasm.ts';
 export type { EngineReason, EngineStatus } from '../runtime/wasm.ts';
 export { ac, acLookback, acDisplayShift, acOpen, acOpenAndFill, AcStream } from './func/ac.ts';

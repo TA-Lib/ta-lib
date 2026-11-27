@@ -76019,6 +76019,10 @@ static unsigned long long sr_ambient(unsigned long long h)
     }
     for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         h = fuzz_hash_bytes(h, &TA_Globals->candleSettings[i], sizeof(TA_CandleSetting));
+    {
+        TA_EMAVariation v = TA_GetEMAVariation();
+        h = fuzz_hash_bytes(h, &v, sizeof(v));
+    }
     return h;
 }
 
@@ -133063,6 +133067,15 @@ static void handle_request(const char *json, char *resp, int resp_size) {
               snprintf(resp, resp_size, "{\"error\":\"Invalid unstable period id or value\"}");
         }
     }
+#ifndef TA_REF_SERVE
+    else if ( methodLen == 17 && strncmp(method, "set_ema_variation", 17) == 0 ) {
+        int value = json_find_int(json, "value");
+        if( TA_SetEMAVariation((TA_EMAVariation)value) == TA_SUCCESS )
+           snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+        else
+           snprintf(resp, resp_size, "{\"error\":\"Invalid EMA variation\"}");
+    }
+#endif /* TA_REF_SERVE */
     else if ( methodLen == 19 && strncmp(method, "set_candle_settings", 19) == 0 ) {
         int settingType = json_find_int(json, "settingType");
         int rangeType   = json_find_int(json, "rangeType");

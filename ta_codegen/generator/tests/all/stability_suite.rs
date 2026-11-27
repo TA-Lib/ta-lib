@@ -463,3 +463,48 @@ fn unstable_read_gate_refuses_each_misplaced_read() {
         assert!(errs.iter().any(|e| e.contains(needle)), "{errs:#?}");
     }
 }
+
+/// The EMA-variation read: accepted in EMA's body (the corpus passes, above), refused
+/// in a lookback, a display shift and a helper, each the only error reported.
+#[test]
+fn ema_variation_read_gate_refuses_a_lookback_a_shift_and_a_helper() {
+    use ta_codegen_lib::backends::builtins::EMA_VARIATION;
+    use ta_codegen_lib::ir::{Expr, LookbackExpr, Statement};
+    let corpus = load();
+    let at = |n: &str| corpus.iter().position(|f| f.name == n).expect(n);
+    let (ema, sma) = (at("EMA"), at("SMA"));
+    assert!(
+        format!("{:?}", corpus[ema].body).contains(&format!("FuncCall(\"{EMA_VARIATION}\"")),
+        "EMA's body no longer reads the setting: the accepted half is vacuous"
+    );
+    let read = vec![Statement::Return { value: Some(Expr::FuncCall(EMA_VARIATION.into(), vec![])) }];
+    let only = |errs: Vec<String>, needle: &str| {
+        assert_eq!(errs.len(), 1, "expected one error containing {needle:?}, got {errs:#?}");
+        assert!(errs[0].contains(needle), "{:?} lacks {needle:?}", errs[0]);
+    };
+    let mutated = |edit: &dyn Fn(&mut Vec<FuncDef>)| {
+        let mut funcs = corpus.clone();
+        edit(&mut funcs);
+        unstable_read_gate(&funcs)
+    };
+
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[sma]);
+            stmts.splice(0..0, read.clone());
+            f[sma].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "SMA: the lookback reads the EMA variation",
+    );
+    only(mutated(&|f| f[sma].display_shift = Some(read.clone())), "SMA: the display shift reads the EMA variation");
+    let helper = ta_codegen_lib::ir::HelperDef {
+        name: "ta_probe".into(),
+        return_type: ta_codegen_lib::ir::VarType::Integer,
+        params: Vec::new(),
+        body: read.clone(),
+    };
+    only(
+        unstable_read_gate_with(&corpus, &ta_codegen_lib::helper_registry::HelperRegistry::from_defs(vec![helper])),
+        "helpers/ta_probe: reads the EMA variation",
+    );
+}

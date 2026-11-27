@@ -82,6 +82,19 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     s.push_str("  /** Size of the unstable-period table; mirrors C's `TA_FUNC_UNST_COUNT`. */\n");
     let _ = writeln!(s, "  Count: {},", fu.variants.len());
     s.push_str("} as const);\n");
+    if let Some(ev) = enums.get("EMAVariation") {
+        let _ = write!(
+            s,
+            "\n/** {} Set with {{@link CoreBuilder.emaVariation}}. */\nexport const EMAVariation = Object.freeze({{\n",
+            super::common::EMA_VARIATION_DOC
+        );
+        for v in &ev.variants {
+            let _ = writeln!(s, "  /** {} */\n  {}: {},", super::common::ema_variation_member_doc(&v.name), v.name, v.value);
+        }
+        s.push_str("} as const);\n");
+        s.push_str("/** A member of {@link EMAVariation}. */\n");
+        s.push_str("export type EMAVariation = (typeof EMAVariation)[keyof typeof EMAVariation];\n");
+    }
     s
 }
 

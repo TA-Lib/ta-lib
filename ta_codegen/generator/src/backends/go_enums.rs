@@ -40,6 +40,14 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     s.push_str(&const_block("FuncUnstId", members.into_iter()));
     s.push_str(")\n");
     let _ = write!(s, "\nconst funcUnstCount = {}\n", fu.variants.len());
+    if let Some(ev) = enums.get("EMAVariation") {
+        let _ = write!(
+            s,
+            "\n// EMAVariation selects how every EMA-family stage is seeded; see\n// [Core.SetEMAVariation].\ntype EMAVariation int32\n\n// The EMAVariation members.\nconst (\n"
+        );
+        s.push_str(&const_block("EMAVariation", ev.variants.iter().map(|v| (v.name.as_str(), v.value))));
+        s.push_str(")\n");
+    }
     s.push_str(&candle_settings());
     s
 }
