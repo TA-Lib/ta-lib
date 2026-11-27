@@ -65,7 +65,7 @@
  *        default; both are counted, so the probe is shown to see a start.
  *     4. MACD's line is TA_EMA(fast) - TA_EMA(slow) from bar 0, bit for bit.
  *     5. Goldens from the seed rule for the functions no frozen release
- *        reproduces. Each reference below is written from the rule in plain
+ *        reproduces, TRIX past its lookback among them. Each reference below is written from the rule in plain
  *        loops, not from the bodies and not from an outside product; stages
  *        the setting does not touch (ATR, RSI, VAR, non-EMA MA types) come
  *        from the library at the window the function hands them. Routed
@@ -94,9 +94,9 @@
 #define EV_LATE   100
 
 /* Of the output's range over the call, floored at 1, against the rule's plain
- * loops: 3x the worst measured over the cases below, 1.2e-14 (MACDV's
- * histogram, the ATR-scaled line less its signal). */
-#define EV_GOLD_TOL 4e-14
+ * loops: 3x the worst measured over the cases below, 2.2e-14 (TRIX(30), a
+ * one-bar rate of change of its third stage). */
+#define EV_GOLD_TOL 7e-14
 
 typedef struct
 {
@@ -369,39 +369,72 @@ static ErrorNumber ev_scope_cell( const TA_FuncInfo *fi, const double *opt )
    return TA_TEST_PASS;
 }
 
-/* Leg 2 off the defaults: each integer range at its minimum, one above, and
- * a little past the default. */
+static ErrorNumber ev_off_call( const TA_FuncInfo *fi, const double *opt )
+{
+   ev_call_under( fi, opt, 0, TA_EMAVariation_SMA_SEED, &g_evA );
+   ev_call_under( fi, opt, 0, TA_EMAVariation_FIRST_BAR_SEED, &g_evB );
+   g_evOffDefault++;
+   return ev_check_shape( fi, opt, 0, &g_evA, &g_evB );
+}
+
+/* Leg 2 off the defaults: each integer range over its minimum, one above, 3,
+ * 7, its default and the default plus 5, every pair of values when the
+ * function has at most two ranges, else one range at a time. */
 static ErrorNumber ev_off_default( const TA_FuncInfo *fi, const double *dflt )
 {
    double opt[EV_MAXOPT];
+   long grid[EV_MAXOPT][6];
+   int at[EV_MAXOPT], nGrid[EV_MAXOPT], nInt = 0, j, g, h;
    unsigned int i;
-   int c;
-   ErrorNumber e;
+   ErrorNumber e = TA_TEST_PASS;
 
    for( i = 0; i < fi->nbOptInput; i++ )
    {
       const TA_OptInputParameterInfo *oi;
       const TA_IntegerRange *r;
+      long cand[6];
+      int c;
       TA_GetOptInputParameterInfo( fi->handle, i, &oi );
       if( oi->type != TA_OptInput_IntegerRange || !oi->dataSet )
          continue;
       r = (const TA_IntegerRange *)oi->dataSet;
-      for( c = 0; c < 3; c++ )
+      cand[0] = r->min; cand[1] = (long)r->min + 1; cand[2] = 3; cand[3] = 7;
+      cand[4] = (long)oi->defaultValue; cand[5] = (long)oi->defaultValue + 5;
+      at[nInt] = (int)i;
+      nGrid[nInt] = 0;
+      for( c = 0; c < 6; c++ )
       {
-         long v = c == 0 ? (long)r->min : c == 1 ? (long)r->min + 1 : (long)oi->defaultValue + 5;
-         if( v > (long)r->max || v == (long)oi->defaultValue )
+         if( cand[c] < (long)r->min || cand[c] > (long)r->max )
             continue;
-         memcpy( opt, dflt, sizeof(opt) );
-         opt[i] = (double)v;
-         ev_call_under( fi, opt, 0, TA_EMAVariation_SMA_SEED, &g_evA );
-         ev_call_under( fi, opt, 0, TA_EMAVariation_FIRST_BAR_SEED, &g_evB );
-         e = ev_check_shape( fi, opt, 0, &g_evA, &g_evB );
-         if( e != TA_TEST_PASS )
-            return e;
-         g_evOffDefault++;
+         for( g = 0; g < nGrid[nInt] && grid[nInt][g] != cand[c]; g++ ) {}
+         if( g == nGrid[nInt] )
+            grid[nInt][nGrid[nInt]++] = cand[c];
       }
+      nInt++;
    }
-   return TA_TEST_PASS;
+   if( nInt <= 2 )
+   {
+      for( g = 0; nInt > 0 && g < nGrid[0] && e == TA_TEST_PASS; g++ )
+         for( h = 0; h < (nInt == 2 ? nGrid[1] : 1) && e == TA_TEST_PASS; h++ )
+         {
+            memcpy( opt, dflt, sizeof(opt) );
+            opt[at[0]] = (double)grid[0][g];
+            if( nInt == 2 )
+               opt[at[1]] = (double)grid[1][h];
+            if( memcmp( opt, dflt, sizeof(opt) ) != 0 )
+               e = ev_off_call( fi, opt );
+         }
+      return e;
+   }
+   for( j = 0; j < nInt && e == TA_TEST_PASS; j++ )
+      for( g = 0; g < nGrid[j] && e == TA_TEST_PASS; g++ )
+      {
+         memcpy( opt, dflt, sizeof(opt) );
+         opt[at[j]] = (double)grid[j][g];
+         if( memcmp( opt, dflt, sizeof(opt) ) != 0 )
+            e = ev_off_call( fi, opt );
+      }
+   return e;
 }
 
 typedef struct { ErrorNumber err; } EvScopeCtx;
@@ -518,6 +551,8 @@ static const EvIndep evIndep[] = {
    { "MASSI",     -1,               -1, 1 },
    { "SMI",       -1,               -1, 1 },
    { "MA",        TA_MAType_DEMA,   -1, 1 },
+   { "STOCH",     TA_MAType_EMA,    -1, 1 },  /* seeded on the call's first Fast-K (rT14) */
+   { "STOCHF",    TA_MAType_EMA,    -1, 1 },
 };
 
 /* 1 when every compared bar of the late call equals the full call's. */
@@ -760,6 +795,12 @@ typedef struct
 } EvGold;
 
 static const EvGold evGold[] = {
+   { "TRIX",   { 30 }, 0 },
+   { "TRIX",   { 9 }, 0 },
+   { "ERI",    { 13 }, 0 },
+   { "ERI",    { 3 }, 0 },
+   { "PVO",    { 12, 26, TA_MAType_EMA }, 0 },
+   { "PVO",    { 26, 5, TA_MAType_EMA }, 0 },
    { "EFI",    { 13 }, 0 },
    { "EFI",    { 2 }, 0 },
    { "CVI",    { 10, 10 }, 0 },
@@ -802,6 +843,31 @@ static int ev_model( const EvGold *k, int s0, int L )
    if( s > EV_N - 1 )
       return -1;
    memset( g_evO, 0, sizeof(g_evO) );
+   if( EV_IS("TRIX") )
+   {
+      int b3 = s - 1 - ev_lbE( p[0] ), b2 = b3 - ev_lbE( p[0] );
+      double kk = 2.0 / (p[0] + 1.0);
+      ev_ema_from( c, 0, p[0], e1 );
+      e2[b2] = e1[b2];
+      for( t = b2 + 1; t < EV_N; t++ ) e2[t] = kk * e1[t] + (1.0 - kk) * e2[t - 1];
+      e3[b3] = e2[b3];
+      for( t = b3 + 1; t < EV_N; t++ ) e3[t] = kk * e2[t] + (1.0 - kk) * e3[t - 1];
+      for( t = s; t < EV_N; t++ ) g_evO[0][t - s] = e3[t - 1] != 0.0 ? (e3[t] / e3[t - 1] - 1.0) * 100.0 : 0.0;
+      return s;
+   }
+   if( EV_IS("ERI") )
+   {
+      ev_ema_from( c, 0, p[0], e1 );
+      for( t = s; t < EV_N; t++ ) { g_evO[0][t - s] = h[t] - e1[t]; g_evO[1][t - s] = l[t] - e1[t]; }
+      return s;
+   }
+   if( EV_IS("PVO") )
+   {
+      ev_ema_from( vol, 0, p[0] < p[1] ? p[0] : p[1], e1 );
+      ev_ema_from( vol, 0, p[0] < p[1] ? p[1] : p[0], e2 );
+      for( t = s; t < EV_N; t++ ) g_evO[0][t - s] = e2[t] != 0.0 ? (e1[t] - e2[t]) / e2[t] * 100.0 : 0.0;
+      return s;
+   }
    if( EV_IS("EFI") )
    {
       if( p[0] == 1 ) return -1;

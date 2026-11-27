@@ -468,19 +468,88 @@ pub(super) fn classify_plan(cp: &ComposedPlan, lookup: &dyn CalleeLookup) -> Res
     }
 }
 
-/// `plan` serves `other`'s setting too: the same series and lines, and each edge of
-/// the same class, or presumed same-bar where `other` proves it.
+/// `plan` serves `other`'s setting too: the same series and lines, each edge of the
+/// same class or presumed same-bar where `other` proves it, and the same Open
+/// actions but for those presumptions' checks and snapshots.
 fn covers(plan: &Classified, other: &Classified) -> bool {
     let same = |a: &dyn std::fmt::Debug, b: &dyn std::fmt::Debug| format!("{a:?}") == format!("{b:?}");
-    same(&plan.alias_keys, &other.alias_keys)
-        && same(&plan.defs, &other.defs)
-        && same(&plan.lines, &other.lines)
-        && plan.edges.len() == other.edges.len()
-        && plan.edges.iter().zip(&other.edges).all(|(p, o)| {
+    let mut relaxed = BTreeSet::new();
+    let edges = plan.edges.len() == other.edges.len()
+        && plan.edges.iter().zip(&other.edges).enumerate().all(|(e, (p, o))| {
             p.def == o.def
                 && p.consumer == o.consumer
-                && (p.class == o.class || (matches!(p.class, EdgeClass::ZeroPresumed { .. }) && o.class == EdgeClass::Zero))
-        })
+                && (p.class == o.class
+                    || (matches!(p.class, EdgeClass::ZeroPresumed { .. })
+                        && o.class == EdgeClass::Zero
+                        && relaxed.insert(e)))
+        });
+    if !(edges
+        && same(&plan.alias_keys, &other.alias_keys)
+        && same(&plan.defs, &other.defs)
+        && same(&plan.lines, &other.lines))
+    {
+        return false;
+    }
+    let presumed_defs: BTreeSet<usize> = relaxed.iter().map(|&e| plan.edges[e].def).collect();
+    let extra: BTreeSet<usize> =
+        plan.snapshots.iter().copied().filter(|d| !other.snapshots.contains(d)).collect();
+    if !extra.is_subset(&presumed_defs)
+        || plan.snapshots.iter().filter(|d| !extra.contains(d)).ne(other.snapshots.iter())
+    {
+        return false;
+    }
+    let plan_acts: Vec<(Option<OpenAt>, &OpenAction)> = plan.open_actions.iter().map(|(at, a)| (Some(*at), a)).collect();
+    let other_acts: Vec<(Option<OpenAt>, &OpenAction)> = other.open_actions.iter().map(|(at, a)| (Some(*at), a)).collect();
+    actions_cover(&plan_acts, &other_acts, &|a| presumption_only(a, &relaxed, &extra), &same)
+}
+
+/// Whether Open runs `a` only for a presumption on a `relaxed` edge.
+fn presumption_only(a: &OpenAction, relaxed: &BTreeSet<usize>, extra: &BTreeSet<usize>) -> bool {
+    match a {
+        OpenAction::Presume { edge } => relaxed.contains(edge),
+        OpenAction::Snapshot { def } => extra.contains(def),
+        OpenAction::EmptyGuard { .. } => !relaxed.is_empty(),
+        OpenAction::Mirror { then_, else_, .. } => then_.iter().chain(else_).all(|x| presumption_only(x, relaxed, extra)),
+        OpenAction::Capture { .. } | OpenAction::Seed { .. } => false,
+    }
+}
+
+/// `plan` is `other` with only `droppable` actions added, a mirrored arm compared
+/// the same way.
+/// A mirrored arm's actions, which carry no place of their own.
+fn arm(v: &[OpenAction]) -> Vec<(Option<OpenAt>, &OpenAction)> {
+    v.iter().map(|a| (None, a)).collect()
+}
+
+fn actions_cover(
+    plan: &[(Option<OpenAt>, &OpenAction)],
+    other: &[(Option<OpenAt>, &OpenAction)],
+    droppable: &dyn Fn(&OpenAction) -> bool,
+    same: &dyn Fn(&dyn std::fmt::Debug, &dyn std::fmt::Debug) -> bool,
+) -> bool {
+    let mut rest = other.iter().peekable();
+    for (at, a) in plan {
+        let matched = rest.peek().is_some_and(|(o_at, o)| {
+            o_at == at
+                && match (a, o) {
+                    (
+                        OpenAction::Mirror { cond, then_, else_ },
+                        OpenAction::Mirror { cond: o_cond, then_: o_then, else_: o_else },
+                    ) => {
+                        same(cond, o_cond)
+                            && actions_cover(&arm(then_), &arm(o_then), droppable, same)
+                            && actions_cover(&arm(else_), &arm(o_else), droppable, same)
+                    }
+                    _ => same(a, o),
+                }
+        });
+        if matched {
+            rest.next();
+        } else if !droppable(a) {
+            return false;
+        }
+    }
+    rest.next().is_none()
 }
 
 fn classify_in(cp: &ComposedPlan, lookup: &dyn CalleeLookup, ema_world: Option<bool>) -> Result<Classified, StreamError> {
@@ -1436,5 +1505,42 @@ impl Cx<'_, '_> {
             snapshots,
             open_actions: top.into_iter().map(|(at, _, a)| (at, a)).collect(),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn plan(class: EdgeClass, snapshots: Vec<usize>, open_actions: Vec<(OpenAt, OpenAction)>) -> Classified {
+        Classified {
+            alias_keys: BTreeMap::new(),
+            defs: Vec::new(),
+            edges: vec![Edge { def: 0, consumer: Consumer::Return { output: "outReal".into() }, class }],
+            lines: Vec::new(),
+            snapshots,
+            open_actions,
+        }
+    }
+
+    #[test]
+    fn a_plan_serves_another_only_with_the_same_open_actions_but_its_presumptions() {
+        let at = OpenAt::BeforeStmt(0);
+        let presumed = EdgeClass::ZeroPresumed { key: "k".into() };
+        let seed = (at, OpenAction::Seed { line: 0 });
+        let zero = plan(EdgeClass::Zero, vec![], vec![seed.clone()]);
+        assert!(covers(&zero, &zero));
+        assert!(!covers(&zero, &plan(EdgeClass::Zero, vec![], vec![(OpenAt::Epilogue, OpenAction::Seed { line: 0 })])));
+        assert!(!covers(&zero, &plan(EdgeClass::Zero, vec![0], vec![seed.clone()])));
+        let guard = (at, OpenAction::EmptyGuard { count: Expr::Var("n".into()), floor: 1 });
+        assert!(!covers(&plan(EdgeClass::Zero, vec![], vec![guard.clone(), seed.clone()]), &zero));
+
+        let checks = vec![(at, OpenAction::Snapshot { def: 0 }), guard, (at, OpenAction::Presume { edge: 0 }), seed];
+        let presuming = plan(presumed.clone(), vec![0], checks.clone());
+        assert!(covers(&presuming, &zero));
+        assert!(!covers(&zero, &presuming));
+        let mut other_seed = checks;
+        other_seed[3] = (at, OpenAction::Seed { line: 1 });
+        assert!(!covers(&plan(presumed, vec![0], other_seed), &zero));
     }
 }

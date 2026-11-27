@@ -71,8 +71,8 @@ TA_RetCode kc(int startIdx, int endIdx,
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
-   /* Each leg is entered at its OWN lookback, so each is the shipped function
-    * over this range and nothing here over-warms the shorter one: a caller who
+   /* Each leg is the shipped function over this range, so nothing here
+    * over-warms the shorter one: a caller who
     * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
     * calling TA_ATR directly. The typical price is a derived input, so it is
     * materialized only over the window the moving average reads.
@@ -134,8 +134,8 @@ TA_RetCode kc(int startIdx, int endIdx,
       return retCode;
    }
 
-   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-    * own lookback puts its first output on startIdx, where the ATR's already is.
+   /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+    * either seed: the moving average's first output lands where the ATR's is.
     */
    retCode = ema( emaLookback, endIdx-tpStartIdx, tempTP,
       optInTimePeriod,

@@ -140,6 +140,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         s.push_str("  const rounds = candleLegs !== 0 ? 5 : 1;\n");
     } else {
         s.push_str("  const rounds = 1;\n");
+        s.push_str("  let svEv = -1;\n  let svHash = 0n;\n");
     }
     s.push_str("  for (let rd = 0; rd < rounds; rd++) {\n");
 
@@ -212,6 +213,16 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     }
     s.push_str("    }\n");
 
+    // The batch's digest and the Core's EMA variation, which the driver holds
+    // to in-process C under the same setting.
+    if !candle {
+        s.push_str("    svEv = c2.emaVariation();\n    svHash = fuzzHashInit();\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let f = if *is_int { "fuzzHashI32" } else { "fuzzHashF64" };
+            let _ = writeln!(s, "    svHash = {f}(svHash, b{i}, nb.value);");
+        }
+        s.push_str("    svHash = fuzzHashFin(svHash);\n");
+    }
     // OpenAndFill leg + aliasing probes.
     s.push_str("    fillChecked = 1;\n    try {\n");
     s.push_str(&fdecls);
@@ -530,7 +541,8 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     s.push_str("  }\n");
     let _ = writeln!(
         s,
-        "  return `{{\"retCode\":0,\"beg\":${{beg.value}},\"nb\":${{nb.value}},\"legs\":${{legs}},\"fill_checked\":${{fillChecked}},\"fill_ok\":${{fillOk ? 1 : 0}},\"range_checked\":${{rangeChecked}},\"range_legs\":${{rangeLegs}},\"range_sites\":${{rangeSites}},\"range_sites_all\":{SV_RANGE_MASK_TS},\"range_ok\":${{rangeOk ? 1 : 0}},\"step_ok\":${{allOk ? 1 : 0}},\"ok\":${{allOk && fillOk && rangeOk ? 1 : 0}},\"peek_ok\":${{peekAll ? 1 : 0}},\"peek_reps\":${{peekReps}},\"peek_rep_ok\":${{peekRepAll ? 1 : 0}},\"peek_rejects\":${{peekRejects}},\"benign\":${{zsign[0]}},\"round_mask\":${{roundMask}}${{diag}}}}`;"
+        "  return `{{\"retCode\":0,\"beg\":${{beg.value}},\"nb\":${{nb.value}},\"legs\":${{legs}},\"fill_checked\":${{fillChecked}},\"fill_ok\":${{fillOk ? 1 : 0}},\"range_checked\":${{rangeChecked}},\"range_legs\":${{rangeLegs}},\"range_sites\":${{rangeSites}},\"range_sites_all\":{SV_RANGE_MASK_TS},\"range_ok\":${{rangeOk ? 1 : 0}},\"step_ok\":${{allOk ? 1 : 0}},\"ok\":${{allOk && fillOk && rangeOk ? 1 : 0}},\"peek_ok\":${{peekAll ? 1 : 0}},\"peek_reps\":${{peekReps}},\"peek_rep_ok\":${{peekRepAll ? 1 : 0}},\"peek_rejects\":${{peekRejects}},\"benign\":${{zsign[0]}},\"round_mask\":${{roundMask}}${{diag}}{}}}`;",
+        if candle { "" } else { "${svDigest(svEv, beg.value, nb.value, svHash)}" }
     );
     s.push_str("}\n\n");
     s
@@ -565,6 +577,10 @@ const SV_TS_SUPPORT: &str = r"// ---- stream_verify: TS stream vs TS batch, bitw
 
 const SV_F64 = new Float64Array(2);
 const SV_U32 = new Uint32Array(SV_F64.buffer);
+
+function svDigest(ev: number, beg: number, nb: number, h: bigint): string {
+  return `,\x22ema_variation\x22:${ev},\x22batch_beg\x22:${beg},\x22batch_nb\x22:${nb},\x22batch_hash\x22:\x22${BigInt.asUintN(64, h).toString(16).padStart(16, '0')}\x22`;
+}
 
 function svBne(a: number, b: number): boolean {
   SV_F64[0] = a;

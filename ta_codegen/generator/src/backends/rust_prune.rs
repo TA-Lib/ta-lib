@@ -529,6 +529,10 @@ fn chain_overwrite(lines: &[String], store: usize, next: usize, end: usize, name
         }
         let arm_end = arms.get(i + 1).copied().unwrap_or(close);
         let Some(&first) = uses_in(lines, arm + 1, arm_end, name).first() else {
+            // A `return` may leave: nothing reads the local after it.
+            if !(arm + 1..arm_end).all(|k| jumps_stay_before(lines, k, arm_end)) {
+                return None;
+            }
             passes = true;
             continue;
         };
@@ -1370,6 +1374,23 @@ mod tests {
         assert!(kept(&src(over, "", "")), "no else arm");
         assert!(kept(&src(over, " else {\n        k();\n    }", "    h(t);\n")), "read after the chain");
         assert!(kept(&src("        if a > 0 {\n            t = 2;\n        }\n        h(t);\n", " else {\n        t = 3;\n    }", "")), "overwritten on one path of the arm only");
+    }
+
+    #[test]
+    fn an_arm_leaving_the_local_alone_may_not_jump_past_the_overwrite() {
+        let kept = |s: &str| tidy(s).contains("t = a + 1;");
+        let loops = [
+            ("    loop {\n", "            break;\n", "    h(t);\n"),
+            ("    while p {\n        h(t);\n", "            continue;\n", ""),
+            ("    for i in 0..n {\n", "            if q {\n                break;\n            }\n", "    h(t);\n"),
+            ("    'b: {\n", "            break 'b;\n", "    h(t);\n"),
+        ];
+        for (open, jump, after) in loops {
+            let src = format!("fn f(a: i32, c: bool) -> i32 {{\n    let mut t: i32 = 0;\n{open}        t = a + 1;\n        if c {{\n{jump}        }} else {{\n            t = 3;\n            h(t);\n        }}\n        t = 5;\n        h(t);\n    }}\n{after}    return 0;\n}}\n");
+            assert!(kept(&src), "{src}");
+        }
+        let src = "fn f(a: i32, c: bool) -> i32 {\n    let mut t: i32 = 0;\n    t = a + 1;\n    if c {\n        return 1;\n    } else {\n        t = 3;\n        h(t);\n    }\n    t = 5;\n    h(t);\n    return 0;\n}\n";
+        assert!(!kept(src), "a return reads nothing after it");
     }
 
     #[test]

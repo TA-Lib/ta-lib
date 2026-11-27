@@ -170,8 +170,8 @@ public class CoreApiTest {
     }
 
     /** TA_SetEMAVariation's per-Core form. A refused value leaves the builder as
-     * it was; two Cores answer by their own setting; a stream keeps the one it
-     * opened under whatever the builder does next. */
+     * it was; two Cores answer by their own setting; a stream a FIRST_BAR_SEED
+     * Core opens equals that Core's batch. */
     static void emaVariationIsPerCoreAndFixedAtOpen() {
         check(Core.DEFAULT.emaVariation() == EMAVariation.SMA_SEED, "Core.DEFAULT is SMA_SEED");
         check(Core.builder().build().emaVariation() == EMAVariation.SMA_SEED,
@@ -210,7 +210,7 @@ public class CoreApiTest {
                 same = false;
             }
         }
-        check(same, "an open stream keeps FIRST_BAR_SEED, bar for bar with the batch");
+        check(same, "the stream equals the FIRST_BAR_SEED batch, bar for bar");
     }
 
     /** A candle setting must actually change a pattern's verdict. */

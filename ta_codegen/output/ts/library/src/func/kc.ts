@@ -174,8 +174,8 @@ export function kcImpl(
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
-  /* Each leg is entered at its OWN lookback, so each is the shipped function
-   * over this range and nothing here over-warms the shorter one: a caller who
+  /* Each leg is the shipped function over this range, so nothing here
+   * over-warms the shorter one: a caller who
    * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
    * calling TA_ATR directly. The typical price is a derived input, so it is
    * materialized only over the window the moving average reads.
@@ -202,8 +202,8 @@ export function kcImpl(
   tempBegIdx.value = _xr1.begIdx;
   tempNbElement.value = _xr1.count;
   retCode = RetCode.SUCCESS;
-  /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-   * own lookback puts its first output on startIdx, where the ATR's already is.
+  /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+   * either seed: the moving average's first output lands where the ATR's is.
    */
   const _xr2 = emaPositional(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand, core);
   outBegIdx.value = _xr2.begIdx;
@@ -843,8 +843,8 @@ function kcOpenImpl(
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
-  /* Each leg is entered at its OWN lookback, so each is the shipped function
-   * over this range and nothing here over-warms the shorter one: a caller who
+  /* Each leg is the shipped function over this range, so nothing here
+   * over-warms the shorter one: a caller who
    * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
    * calling TA_ATR directly. The typical price is a derived input, so it is
    * materialized only over the window the moving average reads.
@@ -867,8 +867,8 @@ function kcOpenImpl(
    */
   const sub1 = atrOpenAndFillInternal(core, inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
   lagNb1 = tempNbElement.value;
-  /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-   * own lookback puts its first output on startIdx, where the ATR's already is.
+  /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+   * either seed: the moving average's first output lands where the ATR's is.
    */
   const sub2 = emaOpenAndFillInternal(core, tempTP.slice(0, (endIdx - tpStartIdx) + 1), emaLookback, optInTimePeriod, outBegIdx, outNBElement, sc_outRealMiddleBand);
   if (lagNb0 - 1 - (endIdx - tpStartIdx) !== 0) {

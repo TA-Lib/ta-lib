@@ -316,6 +316,7 @@ fn emit_csharp_sv_func(
         s.push_str("        int rounds = (candleLegs != 0) ? 5 : 1;\n");
     } else {
         s.push_str("        int rounds = 1;\n");
+        s.push_str("        int svEv = -1;\n        ulong svHash = 0UL;\n");
     }
     s.push_str("        for (int rd = 0; rd < rounds; rd++) {\n");
 
@@ -401,6 +402,16 @@ fn emit_csharp_sv_func(
     }
     s.push_str("            }\n");
 
+    // The batch's digest and the Core's EMA variation, which the driver holds
+    // to in-process C under the same setting.
+    if !candle {
+        s.push_str("            svEv = (int)c2.EmaVariation();\n            svHash = SvHashInit();\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let f = if *is_int { "SvHashI32" } else { "SvHashF64" };
+            let _ = writeln!(s, "            svHash = {f}(svHash, b{i}, nb);");
+        }
+        s.push_str("            svHash = SvHashFin(svHash);\n");
+    }
     // ---- OpenAndFill leg: the filled array == batch(0, n-1), bitwise ----
     s.push_str("            fillChecked = 1;\n            try {\n");
     s.push_str(&fdecls.replace("            ", "                "));
@@ -1094,7 +1105,11 @@ fn emit_csharp_sv_func(
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + \",\\\"round_mask\\\":\" + roundMask + extra + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + \",\\\"round_mask\\\":\" + roundMask + extra + diag");
+    if !candle {
+        s.push_str(" + SvDigest(svEv, beg, nb, svHash)");
+    }
+    s.push_str(" + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -1110,6 +1125,8 @@ pub(crate) fn generate_csharp_stream_verify(
     use std::fmt::Write as _;
     let mut s = String::new();
     s.push_str("    // ---- stream_verify: C# stream vs C# batch, bitwise ----\n\n");
+
+    s.push_str("    static string SvDigest(int ev, int beg, int nb, ulong h) =>\n        \",\\\"ema_variation\\\":\" + ev + \",\\\"batch_beg\\\":\" + beg + \",\\\"batch_nb\\\":\" + nb + \",\\\"batch_hash\\\":\\\"\" + h.ToString(\"x16\") + \"\\\"\";\n\n");
 
     // Strict, same-tier comparator.
     s.push_str("    /* Strict comparator for SAME-TIER legs: peek vs update, Value vs update,\n");

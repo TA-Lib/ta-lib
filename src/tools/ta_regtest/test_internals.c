@@ -1593,8 +1593,8 @@ static ErrorNumber testCompatibilityIsInert( void )
               (int)retCode, nbDefault );
       return TA_INTERNAL_COMPAT_NOOP_FAIL_0;
    }
-   /* The EMA leg: MetaStock seeded EMA on the first bar, which is now
-    * TA_SetEMAVariation's job, never this setter's. */
+   /* The EMA leg: the first-bar seed is TA_SetEMAVariation's, never this
+    * setter's. */
    retCode = TA_EMA( 0, nbBar-1, closes, 10, &emaBeg, &emaNb, emaDefault );
    if( retCode != TA_SUCCESS || emaNb <= 0 )
       return TA_INTERNAL_COMPAT_NOOP_FAIL_0;
@@ -1660,6 +1660,7 @@ static ErrorNumber testEmaVariationSetter( void )
    if( TA_GetEMAVariation() != TA_EMAVariation_SMA_SEED )
    {
       printf( "\nFailed: a fresh library answers EMA variation %d\n", (int)TA_GetEMAVariation() );
+      TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
       return TA_INTERNAL_EMAV_SETTER_FAIL_0;
    }
    for( start = 0; start < 2; start++ )
@@ -1668,6 +1669,7 @@ static ErrorNumber testEmaVariationSetter( void )
       if( TA_SetEMAVariation( held ) != TA_SUCCESS || TA_GetEMAVariation() != held )
       {
          printf( "\nFailed: TA_SetEMAVariation(%d) did not round-trip\n", (int)held );
+         TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
          return TA_INTERNAL_EMAV_SETTER_FAIL_1;
       }
       for( i = 0; i < (int)(sizeof(bad)/sizeof(bad[0])); i++ )

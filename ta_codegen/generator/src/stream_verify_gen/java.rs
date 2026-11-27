@@ -200,6 +200,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("        int rounds = (candleLegs != 0) ? 5 : 1;\n");
     } else {
         s.push_str("        int rounds = 1;\n");
+        s.push_str("        int svEv = -1;\n        long svHash = 0L;\n");
     }
     s.push_str("        for (int rd = 0; rd < rounds; rd++) {\n");
 
@@ -265,6 +266,16 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     s.push_str("            }\n");
 
+    // The batch's digest and the Core's EMA variation, which the driver holds
+    // to in-process C under the same setting.
+    if !candle {
+        s.push_str("            svEv = c2.emaVariation.ordinal();\n            svHash = svHashInit();\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let f = if *is_int { "svHashI32" } else { "svHashF64" };
+            let _ = writeln!(s, "            svHash = {f}(svHash, b{i}, nb.value);");
+        }
+        s.push_str("            svHash = svHashFin(svHash);\n");
+    }
     // OpenAndFill leg (fill == batch arrays, bitwise) + aliasing probes.
     s.push_str("            fillChecked = 1;\n            try {\n");
     s.push_str(&fdecls.replace("            ", "                "));
@@ -699,7 +710,11 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + \",\\\"round_mask\\\":\" + roundMask + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + \",\\\"round_mask\\\":\" + roundMask + diag");
+    if !candle {
+        s.push_str(" + svDigest(svEv, beg.value, nb.value, svHash)");
+    }
+    s.push_str(" + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -716,6 +731,7 @@ pub(crate) fn generate_java_stream_verify(
     let mut s = String::new();
     s.push_str("    // ---- stream_verify: Java stream vs Java batch, bitwise ----\n\n");
     s.push_str("    static boolean svBne(double a, double b) {\n        return Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b);\n    }\n\n");
+    s.push_str("    static String svDigest(int ev, int beg, int nb, long h) {\n        return \",\\\"ema_variation\\\":\" + ev + \",\\\"batch_beg\\\":\" + beg + \",\\\"batch_nb\\\":\" + nb + \",\\\"batch_hash\\\":\\\"\" + String.format(\"%016x\", h) + \"\\\"\";\n    }\n\n");
     // Cross-tier compare — see the C emitter for the rule. Differing bits that
     // compare equal are +0.0 vs -0.0 (issue #147): counted, never a mismatch.
     // peek/value()/copy-vs-copy stay on svBne — one code path, no licence to differ.

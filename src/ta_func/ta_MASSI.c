@@ -170,9 +170,9 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
    /* Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
     * their ratio summed over a trailing window.
     *
-    * Each stage seeds the way ema.c does -- a simple average of that stage's
-    * first optInFastPeriod inputs -- and its boundary below is the callee
-    * LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
+    * Each stage seeds the way ema.c does -- by default a simple average of that
+    * stage's first optInFastPeriod inputs -- and its boundary below is the
+    * callee LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
     * unstable period 0, which is where every cross-language gate runs, so
     * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
     * is warmed. The seed sums accumulate from 0.0 in production order; do not
@@ -709,9 +709,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream *
       /* Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
        * their ratio summed over a trailing window.
        *
-       * Each stage seeds the way ema.c does -- a simple average of that stage's
-       * first optInFastPeriod inputs -- and its boundary below is the callee
-       * LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
+       * Each stage seeds the way ema.c does -- by default a simple average of that
+       * stage's first optInFastPeriod inputs -- and its boundary below is the
+       * callee LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
        * unstable period 0, which is where every cross-language gate runs, so
        * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
        * is warmed. The seed sums accumulate from 0.0 in production order; do not

@@ -316,7 +316,7 @@ test('candleSetting reads back what the builder stored, and rejects the wildcard
   assertBadParam(() => Core.DEFAULT.candleSetting(1.5 as OneSetting));
 });
 
-test('emaVariation: refused values change nothing, each Core answers by its own, a stream keeps the one it opened under', () => {
+test('emaVariation: refused values change nothing, each Core answers by its own, a FIRST_BAR_SEED stream equals its batch', () => {
   assert.equal(Core.DEFAULT.emaVariation(), EMAVariation.SMA_SEED);
   assert.equal(new CoreBuilder().build().emaVariation(), EMAVariation.SMA_SEED);
 

@@ -103910,7 +103910,7 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
        *
@@ -104461,7 +104461,7 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
        *
@@ -139997,8 +139997,8 @@ public final class Core {
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Each leg is entered at its OWN lookback, so each is the shipped function
-       * over this range and nothing here over-warms the shorter one: a caller who
+      /* Each leg is the shipped function over this range, so nothing here
+       * over-warms the shorter one: a caller who
        * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
@@ -140025,8 +140025,8 @@ public final class Core {
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-       * own lookback puts its first output on startIdx, where the ATR's already is.
+      /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+       * either seed: the moving average's first output lands where the ATR's is.
        */
       OutRange _xr2 = ema(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx.value = _xr2.begIdx();
@@ -140606,8 +140606,8 @@ public final class Core {
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Each leg is entered at its OWN lookback, so each is the shipped function
-       * over this range and nothing here over-warms the shorter one: a caller who
+      /* Each leg is the shipped function over this range, so nothing here
+       * over-warms the shorter one: a caller who
        * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
@@ -140636,8 +140636,8 @@ public final class Core {
       AtrStream sub1 = atrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
       retCode = RetCode.SUCCESS;
       lagNb1 = tempNbElement.value;
-      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-       * own lookback puts its first output on startIdx, where the ATR's already is.
+      /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+       * either seed: the moving average's first output lands where the ATR's is.
        */
       /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -154789,9 +154789,9 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
-       *    the period. The signal EMA is seeded the same way from the
+       *    the period. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -155594,9 +155594,9 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
-       *    the period. The signal EMA is seeded the same way from the
+       *    the period. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -157105,10 +157105,10 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    same bar. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -157819,10 +157819,10 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    same bar. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -158262,9 +158262,9 @@ public final class Core {
        *  - True Range: start from high-low, then compare/replace with the two
        *    previous-close distances, in that order; Wilder smoothing in ONE
        *    statement.
-       *  - Each recursion is seeded with the sum of its first 'period' inputs,
+       *  - Each recursion's default seed is the sum of its first 'period' inputs,
        *    accumulated from 0.0 in input order, divided by the period. The
-       *    signal EMA is seeded the same way from the first 'signal period'
+       *    signal EMA's is formed the same way from the first 'signal period'
        *    line values.
        *  - The line is the spread divided by the Average True Range, then
        *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
@@ -158274,11 +158274,11 @@ public final class Core {
        * read, and the previous close is re-read from the input one bar back,
        * which no output store has reached.
        */
-      /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
-       * first MACD-V line bar, so each is the shipped function entered at that
-       * bar and nothing here over-warms the shorter one: a caller who wants a
-       * leg converged sets that function's unstable period, exactly as when
-       * calling it directly.
+      /* Each leg is seeded where the shipped function seeds it and warmed up to
+       * lineIdx, the first MACD-V line bar, so each is the shipped function
+       * entered at that bar and nothing here over-warms the shorter one: a caller
+       * who wants a leg converged sets that function's unstable period, exactly
+       * as when calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
       /* The first-bar seed does not move with startIdx: both EMA start on
@@ -159445,9 +159445,9 @@ public final class Core {
        *  - True Range: start from high-low, then compare/replace with the two
        *    previous-close distances, in that order; Wilder smoothing in ONE
        *    statement.
-       *  - Each recursion is seeded with the sum of its first 'period' inputs,
+       *  - Each recursion's default seed is the sum of its first 'period' inputs,
        *    accumulated from 0.0 in input order, divided by the period. The
-       *    signal EMA is seeded the same way from the first 'signal period'
+       *    signal EMA's is formed the same way from the first 'signal period'
        *    line values.
        *  - The line is the spread divided by the Average True Range, then
        *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
@@ -159457,11 +159457,11 @@ public final class Core {
        * read, and the previous close is re-read from the input one bar back,
        * which no output store has reached.
        */
-      /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
-       * first MACD-V line bar, so each is the shipped function entered at that
-       * bar and nothing here over-warms the shorter one: a caller who wants a
-       * leg converged sets that function's unstable period, exactly as when
-       * calling it directly.
+      /* Each leg is seeded where the shipped function seeds it and warmed up to
+       * lineIdx, the first MACD-V line bar, so each is the shipped function
+       * entered at that bar and nothing here over-warms the shorter one: a caller
+       * who wants a leg converged sets that function's unstable period, exactly
+       * as when calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
       /* The first-bar seed does not move with startIdx: both EMA start on
@@ -163703,9 +163703,9 @@ public final class Core {
       /* Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
        * their ratio summed over a trailing window.
        *
-       * Each stage seeds the way ema.c does -- a simple average of that stage's
-       * first optInFastPeriod inputs -- and its boundary below is the callee
-       * LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
+       * Each stage seeds the way ema.c does -- by default a simple average of that
+       * stage's first optInFastPeriod inputs -- and its boundary below is the
+       * callee LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
        * unstable period 0, which is where every cross-language gate runs, so
        * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
@@ -164458,9 +164458,9 @@ public final class Core {
       /* Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,
        * their ratio summed over a trailing window.
        *
-       * Each stage seeds the way ema.c does -- a simple average of that stage's
-       * first optInFastPeriod inputs -- and its boundary below is the callee
-       * LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
+       * Each stage seeds the way ema.c does -- by default a simple average of that
+       * stage's first optInFastPeriod inputs -- and its boundary below is the
+       * callee LOOKBACK, never (optInFastPeriod - 1). The two coincide exactly at
        * unstable period 0, which is where every cross-language gate runs, so
        * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
@@ -191904,9 +191904,9 @@ public final class Core {
        * to 6.0e-16 absolute in doubles, which no golden at a sane tolerance can
        * see; only the composite gate against TA_STOCHF + TA_EMA + TA_EMA can.
        *
-       * Each pass seeds the way ema.c does -- a simple average of that pass's
-       * first optInEMAPeriod inputs, summed from 0.0 in production order -- so
-       * the result is bit-identical to that composed chain. The stage boundary
+       * Each pass seeds the way ema.c does -- by default a simple average of that
+       * pass's first optInEMAPeriod inputs, summed from 0.0 in production order --
+       * so the result is bit-identical to that composed chain. The stage boundary
        * below is the callee LOOKBACK, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second pass then
        * seeds from the values the first would have published, exactly as the
@@ -211931,10 +211931,10 @@ public final class Core {
        * (streaming.rs:2076) and SMI has two, the numerator and the denominator,
        * which must be smoothed separately before they are divided.
        *
-       * Each of the three stages seeds the way ema.c does -- a simple average of
-       * that stage's first 'period' inputs -- so the result is bit-identical to
-       * TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
-       * are the callee LOOKBACKS, not (period-1), so that a warm
+       * Each of the three stages seeds the way ema.c does -- by default a simple
+       * average of that stage's first 'period' inputs -- so the result is
+       * bit-identical to TA_MAX + TA_MIN followed by four TA_EMA calls. The stage
+       * boundaries below are the callee LOOKBACKS, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
@@ -213220,10 +213220,10 @@ public final class Core {
        * (streaming.rs:2076) and SMI has two, the numerator and the denominator,
        * which must be smoothed separately before they are divided.
        *
-       * Each of the three stages seeds the way ema.c does -- a simple average of
-       * that stage's first 'period' inputs -- so the result is bit-identical to
-       * TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
-       * are the callee LOOKBACKS, not (period-1), so that a warm
+       * Each of the three stages seeds the way ema.c does -- by default a simple
+       * average of that stage's first 'period' inputs -- so the result is
+       * bit-identical to TA_MAX + TA_MIN followed by four TA_EMA calls. The stage
+       * boundaries below are the callee LOOKBACKS, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
@@ -232159,7 +232159,7 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
        *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
@@ -232765,7 +232765,7 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
        *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
@@ -237229,9 +237229,9 @@ public final class Core {
       /* Blau's double smoothing in one pass: the signed momentum and its
        * magnitude are carried through the same two EMA stages, then divided.
        *
-       * Each stage seeds the way ema.c does -- a simple average of that stage's
-       * first 'period' inputs -- so the result is bit-identical to TA_MOM(1)
-       * followed by two TA_EMA calls on each chain. The stage boundary below is
+       * Each stage seeds the way ema.c does -- by default a simple average of that
+       * stage's first 'period' inputs -- so the result is bit-identical to
+       * TA_MOM(1) followed by two TA_EMA calls on each chain. The stage boundary below is
        * the callee LOOKBACK, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
@@ -237967,9 +237967,9 @@ public final class Core {
       /* Blau's double smoothing in one pass: the signed momentum and its
        * magnitude are carried through the same two EMA stages, then divided.
        *
-       * Each stage seeds the way ema.c does -- a simple average of that stage's
-       * first 'period' inputs -- so the result is bit-identical to TA_MOM(1)
-       * followed by two TA_EMA calls on each chain. The stage boundary below is
+       * Each stage seeds the way ema.c does -- by default a simple average of that
+       * stage's first 'period' inputs -- so the result is bit-identical to
+       * TA_MOM(1) followed by two TA_EMA calls on each chain. The stage boundary below is
        * the callee LOOKBACK, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums

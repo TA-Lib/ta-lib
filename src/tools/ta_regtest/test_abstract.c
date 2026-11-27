@@ -3940,6 +3940,10 @@ static double ioAliasOut[IO_ALIAS_MAX_OUT][IO_ALIAS_SIZE];
 static int    ioAliasRefOutInt[IO_ALIAS_MAX_OUT][IO_ALIAS_SIZE];
 static int    ioAliasOutInt[IO_ALIAS_MAX_OUT][IO_ALIAS_SIZE];
 static int    ioAliasNbChecked;
+/* Under TA_EMAVariation_FIRST_BAR_SEED: the functions it moves, and the pairs
+ * compared from startIdx 0 and from past the lookback. */
+static int    ioAliasEvFuncs, ioAliasEvPairs[2];
+#define IO_ALIAS_LATE    37
 
 static double ioAliasRand01( unsigned int *seed )
 {
@@ -4016,7 +4020,8 @@ static TA_RetCode ioAliasSetInputs( TA_ParamHolder *paramHolder,
    return retCode;
 }
 
-static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
+/* late: from IO_ALIAS_LATE bars past the default lookback, else from 0. */
+static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo, int late )
 {
    static const char *compName[6] = { "open", "high", "low", "close", "volume", "oi" };
    static const TA_InputFlags compFlag[6] =
@@ -4030,7 +4035,7 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
    TA_RetCode retCode;
    ErrorNumber errNumber = TA_TEST_PASS;
    unsigned int i, o, k;
-   int c, j, refBegIdx, refNbElement, outBegIdx, outNbElement;
+   int c, j, refBegIdx, refNbElement, outBegIdx, outNbElement, startIdx = 0;
 
    if( funcInfo->nbInput > IO_ALIAS_MAX_IN || funcInfo->nbOutput > IO_ALIAS_MAX_OUT )
    {
@@ -4056,7 +4061,17 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
       else
          TA_SetOutputParamRealPtr( paramHolder, k, &ioAliasRefOut[k][0] );
    }
-   retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_END, &refBegIdx, &refNbElement );
+   if( late )
+   {
+      if( TA_GetLookback( paramHolder, &startIdx ) != TA_SUCCESS )
+      {
+         TA_ParamHolderFree( paramHolder );
+         printf( "  IN-PLACE ALIAS [%s]: no lookback\n", funcInfo->name );
+         return TA_ABS_TST_FAIL_INPLACE_ALIAS;
+      }
+      startIdx += IO_ALIAS_LATE;
+   }
+   retCode = TA_CallFunc( paramHolder, startIdx, IO_ALIAS_END, &refBegIdx, &refNbElement );
    TA_ParamHolderFree( paramHolder );
    if( retCode != TA_SUCCESS )
    {
@@ -4128,7 +4143,7 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
                else
                   TA_SetOutputParamRealPtr( paramHolder, k, &ioAliasOut[k][0] );
             }
-            retCode = TA_CallFunc( paramHolder, 0, IO_ALIAS_END,
+            retCode = TA_CallFunc( paramHolder, startIdx, IO_ALIAS_END,
                                    &outBegIdx, &outNbElement );
             TA_ParamHolderFree( paramHolder );
 
@@ -4202,8 +4217,40 @@ static ErrorNumber checkInPlaceAliasCorrect( const TA_FuncInfo *funcInfo )
 static void testInPlaceAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
    ErrorNumber *errorNumber = (ErrorNumber *)opaqueData;
-   ErrorNumber err = checkInPlaceAliasCorrect( funcInfo );
+   ErrorNumber err = checkInPlaceAliasCorrect( funcInfo, 0 );
    /* Keep enumerating on failure so one run reports every offender. */
+   if( err != TA_TEST_PASS && *errorNumber == TA_TEST_PASS )
+      *errorNumber = err;
+}
+
+/* The same under TA_EMAVariation_FIRST_BAR_SEED, whose seeds read from bar 0
+ * whatever the start, for the functions it moves on the gate's own series. */
+static void testInPlaceAliasEmaVariation( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   ErrorNumber *errorNumber = (ErrorNumber *)opaqueData;
+   ErrorNumber err = TA_TEST_PASS;
+   TA_History history;
+   int late, before;
+
+   memset( &history, 0, sizeof(history) );
+   history.nbBars = MAX_NB_TEST_ELEMENT;
+   history.open   = ioAliasData[0][0];
+   history.high   = ioAliasData[0][1];
+   history.low    = ioAliasData[0][2];
+   history.close  = ioAliasData[0][3];
+   history.volume = ioAliasData[0][4];
+   history.openInterest = ioAliasData[0][5];
+   if( !codegen_ema_variation_moves( funcInfo, &history ) )
+      return;
+   ioAliasEvFuncs++;
+   TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+   for( late = 0; late < 2 && err == TA_TEST_PASS; late++ )
+   {
+      before = ioAliasNbChecked;
+      err = checkInPlaceAliasCorrect( funcInfo, late );
+      ioAliasEvPairs[late] += ioAliasNbChecked - before;
+   }
+   TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
    if( err != TA_TEST_PASS && *errorNumber == TA_TEST_PASS )
       *errorNumber = err;
 }
@@ -4980,6 +5027,19 @@ static ErrorNumber test_default_calls(void)
       {
          printf( "Failed: in-place alias gate vacuous (%d pairs checked)\n",
                  ioAliasNbChecked );
+         errNumber = TA_ABS_TST_FAIL_INPLACE_ALIAS_VACUOUS;
+      }
+   }
+   if( errNumber == TA_TEST_PASS )
+   {
+      ioAliasEvFuncs = ioAliasEvPairs[0] = ioAliasEvPairs[1] = 0;
+      TA_ForEachFunc( testInPlaceAliasEmaVariation, &errNumber );
+      if( errNumber == TA_TEST_PASS && (ioAliasEvFuncs == 0
+          || ioAliasEvPairs[0] < ioAliasEvFuncs || ioAliasEvPairs[1] < ioAliasEvFuncs) )
+      {
+         printf( "Failed: in-place alias gate under FIRST_BAR_SEED vacuous (%d function(s), "
+                 "%d pair(s) from 0, %d from past the lookback)\n",
+                 ioAliasEvFuncs, ioAliasEvPairs[0], ioAliasEvPairs[1] );
          errNumber = TA_ABS_TST_FAIL_INPLACE_ALIAS_VACUOUS;
       }
    }

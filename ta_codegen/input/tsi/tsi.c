@@ -55,9 +55,9 @@ TA_RetCode tsi(int startIdx, int endIdx,
    /* Blau's double smoothing in one pass: the signed momentum and its
     * magnitude are carried through the same two EMA stages, then divided.
     *
-    * Each stage seeds the way ema.c does -- a simple average of that stage's
-    * first 'period' inputs -- so the result is bit-identical to TA_MOM(1)
-    * followed by two TA_EMA calls on each chain. The stage boundary below is
+    * Each stage seeds the way ema.c does -- by default a simple average of that
+    * stage's first 'period' inputs -- so the result is bit-identical to
+    * TA_MOM(1) followed by two TA_EMA calls on each chain. The stage boundary below is
     * the callee LOOKBACK, not (period-1), so that a warm
     * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
     * seeds from the values the first would have published. The seed sums

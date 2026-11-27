@@ -1318,6 +1318,9 @@ public class TaCodegenServe {
 
     // ---- stream_verify: C# stream vs C# batch, bitwise ----
 
+    static string SvDigest(int ev, int beg, int nb, ulong h) =>
+        ",\"ema_variation\":" + ev + ",\"batch_beg\":" + beg + ",\"batch_nb\":" + nb + ",\"batch_hash\":\"" + h.ToString("x16") + "\"";
+
     /* Strict comparator for SAME-TIER legs: peek vs update, Value vs update,
        clone vs clone, and the int.MinValue sentinel pair all run ONE code path
        twice, so they have no licence to differ in a single bit. -0.0 != +0.0
@@ -1442,6 +1445,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -1459,6 +1464,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -1614,7 +1623,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ACCBANDS(JsonElement req) {
@@ -1653,6 +1662,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -1670,6 +1681,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -1896,7 +1913,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ACOS(JsonElement req) {
@@ -1932,6 +1949,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -1949,6 +1968,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -2095,7 +2118,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AD(JsonElement req) {
@@ -2131,6 +2154,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -2148,6 +2173,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -2300,7 +2329,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ADD(JsonElement req) {
@@ -2336,6 +2365,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -2353,6 +2384,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -2501,7 +2536,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ADOSC(JsonElement req) {
@@ -2539,6 +2574,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -2557,6 +2594,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -2716,7 +2757,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ADR(JsonElement req) {
@@ -2753,6 +2794,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -2770,6 +2813,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -2925,7 +2972,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ADX(JsonElement req) {
@@ -2962,6 +3009,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)0, svK);
@@ -2980,6 +3029,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -3137,7 +3190,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ADXR(JsonElement req) {
@@ -3174,6 +3227,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)0, svK);
@@ -3192,6 +3247,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -3349,7 +3408,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ALLIGATOR(JsonElement req) {
@@ -3393,6 +3452,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -3411,6 +3472,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -3631,7 +3698,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ALMA(JsonElement req) {
@@ -3670,6 +3737,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -3687,6 +3756,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -3840,7 +3913,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AO(JsonElement req) {
@@ -3878,6 +3951,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -3895,6 +3970,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -4050,7 +4129,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_APO(JsonElement req) {
@@ -4102,6 +4181,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -4126,6 +4207,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -4279,7 +4364,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AROON(JsonElement req) {
@@ -4317,6 +4402,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -4334,6 +4421,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -4519,7 +4611,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AROONOSC(JsonElement req) {
@@ -4556,6 +4648,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -4573,6 +4667,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -4728,7 +4826,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ASI(JsonElement req) {
@@ -4765,6 +4863,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -4782,6 +4882,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -4934,7 +5038,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ASIN(JsonElement req) {
@@ -4970,6 +5074,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -4987,6 +5093,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -5133,7 +5243,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ATAN(JsonElement req) {
@@ -5169,6 +5279,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -5186,6 +5298,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -5332,7 +5448,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ATR(JsonElement req) {
@@ -5369,6 +5485,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
@@ -5387,6 +5505,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -5544,7 +5666,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AVGDEV(JsonElement req) {
@@ -5581,6 +5703,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -5598,6 +5722,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -5751,7 +5879,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_AVGPRICE(JsonElement req) {
@@ -5787,6 +5915,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -5804,6 +5934,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -5956,7 +6090,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_BBANDS(JsonElement req) {
@@ -6015,6 +6149,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -6039,6 +6175,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -6253,7 +6395,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_BBW(JsonElement req) {
@@ -6306,6 +6448,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -6330,6 +6474,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -6483,7 +6631,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_BETA(JsonElement req) {
@@ -6520,6 +6668,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -6537,6 +6687,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -6692,7 +6846,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_BOP(JsonElement req) {
@@ -6728,6 +6882,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -6745,6 +6901,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -6897,7 +7057,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CCI(JsonElement req) {
@@ -6934,6 +7094,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -6951,6 +7113,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -7108,7 +7274,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CDL2CROWS(JsonElement req) {
@@ -21001,6 +21167,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
@@ -21019,6 +21187,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -21208,7 +21381,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CEIL(JsonElement req) {
@@ -21244,6 +21417,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -21261,6 +21436,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -21407,7 +21586,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CG(JsonElement req) {
@@ -21444,6 +21623,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -21461,6 +21642,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -21614,7 +21799,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CHOP(JsonElement req) {
@@ -21651,6 +21836,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -21668,6 +21855,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -21825,7 +22016,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CHOPTR(JsonElement req) {
@@ -21862,6 +22053,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -21879,6 +22072,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -22036,7 +22233,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CKSP(JsonElement req) {
@@ -22076,6 +22273,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
@@ -22094,6 +22293,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -22283,7 +22487,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CMF(JsonElement req) {
@@ -22320,6 +22524,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -22337,6 +22543,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -22496,7 +22706,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CMO(JsonElement req) {
@@ -22533,6 +22743,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)3, svK);
@@ -22551,6 +22763,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -22704,7 +22920,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CMOU(JsonElement req) {
@@ -22741,6 +22957,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -22758,6 +22976,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -22911,7 +23133,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_COPPOCK(JsonElement req) {
@@ -22950,6 +23172,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -22967,6 +23191,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -23120,7 +23348,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CORREL(JsonElement req) {
@@ -23157,6 +23385,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -23174,6 +23404,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -23329,7 +23563,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_COS(JsonElement req) {
@@ -23365,6 +23599,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -23382,6 +23618,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -23528,7 +23768,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_COSH(JsonElement req) {
@@ -23564,6 +23804,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -23581,6 +23823,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -23727,7 +23973,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CRSI(JsonElement req) {
@@ -23766,6 +24012,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
@@ -23784,6 +24032,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -23937,7 +24189,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CTI(JsonElement req) {
@@ -23974,6 +24226,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -23991,6 +24245,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -24144,7 +24402,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CUMSUM(JsonElement req) {
@@ -24180,6 +24438,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -24197,6 +24457,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -24343,7 +24607,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_CVI(JsonElement req) {
@@ -24381,6 +24645,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -24399,6 +24665,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -24554,7 +24824,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DEMA(JsonElement req) {
@@ -24591,6 +24861,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -24609,6 +24881,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -24762,7 +25038,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DIV(JsonElement req) {
@@ -24798,6 +25074,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -24815,6 +25093,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -24963,7 +25245,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DONCHIAN(JsonElement req) {
@@ -25002,6 +25284,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -25019,6 +25303,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -25239,7 +25529,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DOSC(JsonElement req) {
@@ -25279,6 +25569,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -25298,6 +25590,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -25451,7 +25747,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DPO(JsonElement req) {
@@ -25488,6 +25784,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -25505,6 +25803,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -25658,7 +25960,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_DX(JsonElement req) {
@@ -25695,6 +25997,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)4, svK);
@@ -25713,6 +26017,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -25870,7 +26178,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_EFI(JsonElement req) {
@@ -25907,6 +26215,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -25925,6 +26235,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -26080,7 +26394,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_EMA(JsonElement req) {
@@ -26117,6 +26431,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -26135,6 +26451,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -26288,7 +26608,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_EMV(JsonElement req) {
@@ -26326,6 +26646,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -26343,6 +26665,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -26500,7 +26826,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ER(JsonElement req) {
@@ -26537,6 +26863,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -26554,6 +26882,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -26707,7 +27039,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ERI(JsonElement req) {
@@ -26745,6 +27077,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -26763,6 +27097,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -26952,7 +27291,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_EXP(JsonElement req) {
@@ -26988,6 +27327,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -27005,6 +27346,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -27151,7 +27496,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_FISHER(JsonElement req) {
@@ -27189,6 +27534,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)36, svK);
@@ -27207,6 +27554,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -27392,7 +27744,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_FLOOR(JsonElement req) {
@@ -27428,6 +27780,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -27445,6 +27799,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -27591,7 +27949,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_FOSC(JsonElement req) {
@@ -27628,6 +27986,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -27645,6 +28005,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -27798,7 +28162,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_FRACTAL(JsonElement req) {
@@ -27837,6 +28201,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -27854,6 +28220,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashI32(svHash, b0, nb);
+            svHash = SvHashI32(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
@@ -28025,7 +28396,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_FRAMA(JsonElement req) {
@@ -28062,6 +28433,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)27, svK);
@@ -28080,6 +28453,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -28235,7 +28612,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_GATOR(JsonElement req) {
@@ -28278,6 +28655,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -28296,6 +28675,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -28481,7 +28865,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HA(JsonElement req) {
@@ -28520,6 +28904,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)25, svK);
@@ -28538,6 +28924,13 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashF64(svHash, b3, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -28805,7 +29198,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HMA(JsonElement req) {
@@ -28842,6 +29235,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -28859,6 +29254,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -29012,7 +29411,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_DCPERIOD(JsonElement req) {
@@ -29048,6 +29447,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)6, svK);
@@ -29066,6 +29467,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -29212,7 +29617,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_DCPHASE(JsonElement req) {
@@ -29248,6 +29653,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)7, svK);
@@ -29266,6 +29673,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -29412,7 +29823,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_PHASOR(JsonElement req) {
@@ -29449,6 +29860,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)8, svK);
@@ -29467,6 +29880,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -29640,7 +30058,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_SINE(JsonElement req) {
@@ -29677,6 +30095,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)9, svK);
@@ -29695,6 +30115,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -29868,7 +30293,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_TRENDLINE(JsonElement req) {
@@ -29904,6 +30329,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)10, svK);
@@ -29922,6 +30349,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -30068,7 +30499,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_HT_TRENDMODE(JsonElement req) {
@@ -30104,6 +30535,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)11, svK);
@@ -30122,6 +30555,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashI32(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
@@ -30262,7 +30699,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_IBS(JsonElement req) {
@@ -30298,6 +30735,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -30315,6 +30754,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -30465,7 +30908,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ICHIMOKU(JsonElement req) {
@@ -30507,6 +30950,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -30524,6 +30969,13 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashF64(svHash, b3, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -30785,7 +31237,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_IMI(JsonElement req) {
@@ -30822,6 +31274,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -30839,6 +31293,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -30994,7 +31452,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KAMA(JsonElement req) {
@@ -31031,6 +31489,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)13, svK);
@@ -31049,6 +31509,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -31202,7 +31666,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KC(JsonElement req) {
@@ -31243,6 +31707,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
@@ -31262,6 +31728,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -31488,7 +31960,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KDJ(JsonElement req) {
@@ -31549,6 +32021,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -31573,6 +32047,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -31799,7 +32279,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KST(JsonElement req) {
@@ -31845,6 +32325,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -31862,6 +32344,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -32043,7 +32530,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KSTEXT(JsonElement req) {
@@ -32107,6 +32594,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -32131,6 +32620,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -32312,7 +32806,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KURTOSIS(JsonElement req) {
@@ -32349,6 +32843,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -32366,6 +32862,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -32519,7 +33019,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_KVO(JsonElement req) {
@@ -32559,6 +33059,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -32577,6 +33079,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -32770,7 +33277,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LINEARREG(JsonElement req) {
@@ -32807,6 +33314,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -32824,6 +33333,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -32977,7 +33490,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LINEARREG_ANGLE(JsonElement req) {
@@ -33014,6 +33527,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -33031,6 +33546,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -33184,7 +33703,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LINEARREG_INTERCEPT(JsonElement req) {
@@ -33221,6 +33740,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -33238,6 +33759,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -33391,7 +33916,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LINEARREG_SLOPE(JsonElement req) {
@@ -33428,6 +33953,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -33445,6 +33972,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -33598,7 +34129,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LN(JsonElement req) {
@@ -33634,6 +34165,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -33651,6 +34184,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -33797,7 +34334,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_LOG10(JsonElement req) {
@@ -33833,6 +34370,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -33850,6 +34389,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -33996,7 +34539,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MA(JsonElement req) {
@@ -34047,6 +34590,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -34071,6 +34616,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -34224,7 +34773,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MACD(JsonElement req) {
@@ -34265,6 +34814,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -34283,6 +34834,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -34497,7 +35054,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MACDEXT(JsonElement req) {
@@ -34560,6 +35117,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -34584,6 +35143,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -34798,7 +35363,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MACDFIX(JsonElement req) {
@@ -34837,6 +35402,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -34855,6 +35422,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -35069,7 +35642,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MACDV(JsonElement req) {
@@ -35110,6 +35683,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -35129,6 +35704,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -35355,7 +35936,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MAENV(JsonElement req) {
@@ -35414,6 +35995,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -35438,6 +36021,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashF64(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -35652,7 +36241,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MAMA(JsonElement req) {
@@ -35691,6 +36280,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)14, svK);
@@ -35709,6 +36300,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -35882,7 +36478,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MARKETFI(JsonElement req) {
@@ -35918,6 +36514,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -35935,6 +36533,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -36085,7 +36687,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MASSI(JsonElement req) {
@@ -36123,6 +36725,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -36141,6 +36745,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -36296,7 +36904,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MAVP(JsonElement req) {
@@ -36349,6 +36957,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -36373,6 +36983,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -36528,7 +37142,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MAX(JsonElement req) {
@@ -36565,6 +37179,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -36582,6 +37198,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -36735,7 +37355,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MAXINDEX(JsonElement req) {
@@ -36772,6 +37392,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -36789,6 +37411,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashI32(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
@@ -36936,7 +37562,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MCGD(JsonElement req) {
@@ -36973,6 +37599,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)28, svK);
@@ -36991,6 +37619,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -37144,7 +37776,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MEDIAN(JsonElement req) {
@@ -37181,6 +37813,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -37198,6 +37832,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -37351,7 +37989,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MEDPRICE(JsonElement req) {
@@ -37387,6 +38025,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -37404,6 +38044,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -37552,7 +38196,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MFI(JsonElement req) {
@@ -37589,6 +38233,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -37606,6 +38252,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -37765,7 +38415,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MIDPOINT(JsonElement req) {
@@ -37802,6 +38452,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -37819,6 +38471,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -37972,7 +38628,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MIDPRICE(JsonElement req) {
@@ -38009,6 +38665,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -38026,6 +38684,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -38181,7 +38843,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MIN(JsonElement req) {
@@ -38218,6 +38880,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -38235,6 +38899,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -38388,7 +39056,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MININDEX(JsonElement req) {
@@ -38425,6 +39093,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -38442,6 +39112,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashI32(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
@@ -38589,7 +39263,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MINMAX(JsonElement req) {
@@ -38627,6 +39301,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -38644,6 +39320,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -38825,7 +39506,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MINMAXINDEX(JsonElement req) {
@@ -38863,6 +39544,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -38880,6 +39563,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashI32(svHash, b0, nb);
+            svHash = SvHashI32(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
@@ -39051,7 +39739,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MINUS_DI(JsonElement req) {
@@ -39088,6 +39776,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)16, svK);
@@ -39106,6 +39796,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -39263,7 +39957,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MINUS_DM(JsonElement req) {
@@ -39300,6 +39994,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)17, svK);
@@ -39318,6 +40014,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -39473,7 +40173,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MOM(JsonElement req) {
@@ -39510,6 +40210,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -39527,6 +40229,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -39680,7 +40386,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_MULT(JsonElement req) {
@@ -39716,6 +40422,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -39733,6 +40441,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -39881,7 +40593,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_NATR(JsonElement req) {
@@ -39918,6 +40630,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)18, svK);
@@ -39936,6 +40650,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -40093,7 +40811,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_NVI(JsonElement req) {
@@ -40129,6 +40847,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -40146,6 +40866,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -40294,7 +41018,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_OBV(JsonElement req) {
@@ -40330,6 +41054,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -40347,6 +41073,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -40495,7 +41225,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PERCENTB(JsonElement req) {
@@ -40548,6 +41278,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -40572,6 +41304,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -40725,7 +41461,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PERCENTILE(JsonElement req) {
@@ -40763,6 +41499,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -40780,6 +41518,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -40933,7 +41675,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PERCENTRANK(JsonElement req) {
@@ -40970,6 +41712,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -40987,6 +41731,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -41140,7 +41888,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PLUS_DI(JsonElement req) {
@@ -41177,6 +41925,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)19, svK);
@@ -41195,6 +41945,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -41352,7 +42106,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PLUS_DM(JsonElement req) {
@@ -41389,6 +42143,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)20, svK);
@@ -41407,6 +42163,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -41562,7 +42322,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PPO(JsonElement req) {
@@ -41614,6 +42374,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -41638,6 +42400,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -41791,7 +42557,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PSO(JsonElement req) {
@@ -41829,6 +42595,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -41847,6 +42615,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -42004,7 +42776,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PVI(JsonElement req) {
@@ -42040,6 +42812,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -42057,6 +42831,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -42205,7 +42983,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PVO(JsonElement req) {
@@ -42257,6 +43035,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -42281,6 +43061,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -42434,7 +43218,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_PVT(JsonElement req) {
@@ -42470,6 +43254,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -42487,6 +43273,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -42635,7 +43425,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_QSTICK(JsonElement req) {
@@ -42672,6 +43462,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -42689,6 +43481,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -42844,7 +43640,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_RMA(JsonElement req) {
@@ -42881,6 +43677,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -42899,6 +43697,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -43052,7 +43854,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ROC(JsonElement req) {
@@ -43089,6 +43891,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -43106,6 +43910,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -43259,7 +44067,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ROCP(JsonElement req) {
@@ -43296,6 +44104,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -43313,6 +44123,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -43466,7 +44280,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ROCR(JsonElement req) {
@@ -43503,6 +44317,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -43520,6 +44336,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -43673,7 +44493,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ROCR100(JsonElement req) {
@@ -43710,6 +44530,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -43727,6 +44549,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -43880,7 +44706,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ROGERSSATCHELL(JsonElement req) {
@@ -43918,6 +44744,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -43935,6 +44763,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -44094,7 +44926,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_RSI(JsonElement req) {
@@ -44131,6 +44963,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
@@ -44149,6 +44983,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -44302,7 +45140,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_RVI(JsonElement req) {
@@ -44340,6 +45178,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)26, svK);
@@ -44358,6 +45198,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -44511,7 +45355,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_RVIR(JsonElement req) {
@@ -44549,6 +45393,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)26, svK);
@@ -44567,6 +45413,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -44722,7 +45572,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_RVOL(JsonElement req) {
@@ -44759,6 +45609,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -44776,6 +45628,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -44929,7 +45785,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SAR(JsonElement req) {
@@ -44967,6 +45823,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -44984,6 +45842,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -45132,7 +45994,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SAREXT(JsonElement req) {
@@ -45176,6 +46038,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -45193,6 +46057,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -45341,7 +46209,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SHARPE(JsonElement req) {
@@ -45380,6 +46248,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -45397,6 +46267,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -45550,7 +46424,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SI(JsonElement req) {
@@ -45587,6 +46461,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -45604,6 +46480,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -45756,7 +46636,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SIN(JsonElement req) {
@@ -45792,6 +46672,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -45809,6 +46691,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -45955,7 +46841,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SINH(JsonElement req) {
@@ -45991,6 +46877,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -46008,6 +46896,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -46154,7 +47046,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SKEW(JsonElement req) {
@@ -46191,6 +47083,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -46208,6 +47102,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -46361,7 +47259,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SMA(JsonElement req) {
@@ -46398,6 +47296,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -46415,6 +47315,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -46568,7 +47472,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SMI(JsonElement req) {
@@ -46609,6 +47513,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -46627,6 +47533,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -46816,7 +47727,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SORTINO(JsonElement req) {
@@ -46855,6 +47766,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -46872,6 +47785,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -47025,7 +47942,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SQRT(JsonElement req) {
@@ -47061,6 +47978,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -47078,6 +47997,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -47224,7 +48147,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SQZMOM(JsonElement req) {
@@ -47267,6 +48190,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -47284,6 +48209,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashI32(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -47458,7 +48388,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SSF(JsonElement req) {
@@ -47495,6 +48425,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -47513,6 +48445,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -47666,7 +48602,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_STC(JsonElement req) {
@@ -47705,6 +48641,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)30, svK);
@@ -47724,6 +48662,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -47877,7 +48819,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_STDDEV(JsonElement req) {
@@ -47915,6 +48857,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -47932,6 +48876,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -48085,7 +49033,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_STOCH(JsonElement req) {
@@ -48143,6 +49091,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -48167,6 +49117,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -48356,7 +49311,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_STOCHF(JsonElement req) {
@@ -48411,6 +49366,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
@@ -48435,6 +49392,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -48624,7 +49586,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_STOCHRSI(JsonElement req) {
@@ -48680,6 +49642,8 @@ public class TaCodegenServe {
             return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":" + (eOk ? 1 : 0) + ",\"enumRejects\":" + ((eOpen ? 1 : 0) + (eFill ? 1 : 0)) + ",\"ok\":" + (eOk ? 1 : 0) + ",\"peek_ok\":1}";
         }
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
@@ -48705,6 +49669,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -48886,7 +49855,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SUB(JsonElement req) {
@@ -48922,6 +49891,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -48939,6 +49910,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -49087,7 +50062,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SUM(JsonElement req) {
@@ -49124,6 +50099,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -49141,6 +50118,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -49294,7 +50275,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SUPERTREND(JsonElement req) {
@@ -49333,6 +50314,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
@@ -49351,6 +50334,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashI32(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -49525,7 +50513,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SWAK_2PHP(JsonElement req) {
@@ -49562,6 +50550,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)34, svK);
@@ -49580,6 +50570,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -49733,7 +50727,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SWAK_BP(JsonElement req) {
@@ -49771,6 +50765,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)35, svK);
@@ -49789,6 +50785,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -49942,7 +50942,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SWAK_BUTTER(JsonElement req) {
@@ -49979,6 +50979,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)32, svK);
@@ -49997,6 +50999,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -50150,7 +51156,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SWAK_GAUSS(JsonElement req) {
@@ -50187,6 +51193,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)31, svK);
@@ -50205,6 +51213,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -50358,7 +51370,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_SWAK_HP(JsonElement req) {
@@ -50395,6 +51407,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)33, svK);
@@ -50413,6 +51427,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -50566,7 +51584,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_T3(JsonElement req) {
@@ -50604,6 +51622,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)23, svK);
@@ -50622,6 +51642,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -50775,7 +51799,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TAN(JsonElement req) {
@@ -50811,6 +51835,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -50828,6 +51854,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -50974,7 +52004,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TANH(JsonElement req) {
@@ -51010,6 +52040,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -51027,6 +52059,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -51173,7 +52209,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TEMA(JsonElement req) {
@@ -51210,6 +52246,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -51228,6 +52266,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -51381,7 +52423,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TRANGE(JsonElement req) {
@@ -51417,6 +52459,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -51434,6 +52478,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -51584,7 +52632,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TRIMA(JsonElement req) {
@@ -51621,6 +52669,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -51638,6 +52688,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -51791,7 +52845,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TRIX(JsonElement req) {
@@ -51828,6 +52882,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -51846,6 +52902,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -51999,7 +53059,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TSF(JsonElement req) {
@@ -52036,6 +53096,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -52053,6 +53115,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -52206,7 +53272,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TSI(JsonElement req) {
@@ -52244,6 +53310,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -52262,6 +53330,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -52415,7 +53487,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_TYPPRICE(JsonElement req) {
@@ -52451,6 +53523,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -52468,6 +53542,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -52618,7 +53696,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ULTOSC(JsonElement req) {
@@ -52657,6 +53735,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -52674,6 +53754,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -52831,7 +53915,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VAR(JsonElement req) {
@@ -52869,6 +53953,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -52886,6 +53972,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -53039,7 +54129,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VHF(JsonElement req) {
@@ -53076,6 +54166,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -53093,6 +54185,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -53246,7 +54342,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VIDYA(JsonElement req) {
@@ -53284,6 +54380,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
@@ -53302,6 +54400,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -53455,7 +54557,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VORTEX(JsonElement req) {
@@ -53493,6 +54595,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -53510,6 +54614,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -53699,7 +54808,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VWAP(JsonElement req) {
@@ -53735,6 +54844,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -53752,6 +54863,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -53904,7 +55019,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_VWMA(JsonElement req) {
@@ -53941,6 +55056,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -53958,6 +55075,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -54113,7 +55234,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_WAD(JsonElement req) {
@@ -54149,6 +55270,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -54166,6 +55289,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -54316,7 +55443,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_WAVETREND(JsonElement req) {
@@ -54356,6 +55483,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -54374,6 +55503,11 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashF64(svHash, b1, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -54563,7 +55697,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_WCLPRICE(JsonElement req) {
@@ -54599,6 +55733,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -54616,6 +55752,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -54766,7 +55906,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_WILLR(JsonElement req) {
@@ -54803,6 +55943,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -54820,6 +55962,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -54977,7 +56123,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_WMA(JsonElement req) {
@@ -55014,6 +56160,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -55031,6 +56179,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -55184,7 +56336,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ZIGZAG(JsonElement req) {
@@ -55224,6 +56376,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
@@ -55241,6 +56395,12 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashI32(svHash, b1, nb);
+            svHash = SvHashI32(svHash, b2, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -55437,7 +56597,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string Sv_ZLEMA(JsonElement req) {
@@ -55474,6 +56634,8 @@ public class TaCodegenServe {
         long zsign = 0;
         long updAlloc = 0;
         int rounds = 1;
+        int svEv = -1;
+        ulong svHash = 0UL;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
@@ -55492,6 +56654,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
             }
+            svEv = (int)c2.EmaVariation();
+            svHash = SvHashInit();
+            svHash = SvHashF64(svHash, b0, nb);
+            svHash = SvHashFin(svHash);
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
@@ -55645,7 +56811,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + SvDigest(svEv, beg, nb, svHash) + "}";
     }
 
     static string HandleFuzzInHash(JsonElement req) {

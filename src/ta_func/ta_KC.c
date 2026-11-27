@@ -170,8 +170,8 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
    {
       startIdx = lookbackTotal;
    }
-   /* Each leg is entered at its OWN lookback, so each is the shipped function
-    * over this range and nothing here over-warms the shorter one: a caller who
+   /* Each leg is the shipped function over this range, so nothing here
+    * over-warms the shorter one: a caller who
     * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
     * calling TA_ATR directly. The typical price is a derived input, so it is
     * materialized only over the window the moving average reads.
@@ -223,8 +223,8 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-    * own lookback puts its first output on startIdx, where the ATR's already is.
+   /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+    * either seed: the moving average's first output lands where the ATR's is.
     */
    retCode = TA_EMA(emaLookback,endIdx - tpStartIdx,tempTP,optInTimePeriod,outBegIdx,outNBElement,outRealMiddleBand);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
@@ -509,8 +509,8 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
       {
          startIdx = lookbackTotal;
       }
-      /* Each leg is entered at its OWN lookback, so each is the shipped function
-       * over this range and nothing here over-warms the shorter one: a caller who
+      /* Each leg is the shipped function over this range, so nothing here
+       * over-warms the shorter one: a caller who
        * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
@@ -587,8 +587,8 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
          return retCode;
       }
       lagNb1 = tempNbElement;
-      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-       * own lookback puts its first output on startIdx, where the ATR's already is.
+      /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+       * either seed: the moving average's first output lands where the ATR's is.
        */
       /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */

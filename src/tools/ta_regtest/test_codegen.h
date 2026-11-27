@@ -30,6 +30,10 @@ ErrorNumber test_codegen_unstable_map( void );
  * --xlang-hash alike. */
 ErrorNumber codegen_output_arity_within_cap( void );
 
+/* Whether TA_EMAVariation_FIRST_BAR_SEED moves the in-process output over
+ * `history`, at the defaults or one MAType parameter off them. */
+int codegen_ema_variation_moves(const TA_FuncInfo *fi, const TA_History *history);
+
 ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter);

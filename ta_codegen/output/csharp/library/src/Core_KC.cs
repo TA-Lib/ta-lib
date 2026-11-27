@@ -199,8 +199,8 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Each leg is entered at its OWN lookback, so each is the shipped function
-       * over this range and nothing here over-warms the shorter one: a caller who
+      /* Each leg is the shipped function over this range, so nothing here
+       * over-warms the shorter one: a caller who
        * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
@@ -229,8 +229,8 @@ public partial class Core
       tempBegIdx = _xr1.BegIdx;
       tempNbElement = _xr1.Count;
       retCode = RetCode.Success;
-      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-       * own lookback puts its first output on startIdx, where the ATR's already is.
+      /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+       * either seed: the moving average's first output lands where the ATR's is.
        */
       OutRange _xr2 = Ema(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx = _xr2.BegIdx;
@@ -852,8 +852,8 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Each leg is entered at its OWN lookback, so each is the shipped function
-       * over this range and nothing here over-warms the shorter one: a caller who
+      /* Each leg is the shipped function over this range, so nothing here
+       * over-warms the shorter one: a caller who
        * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
@@ -882,8 +882,8 @@ public partial class Core
       AtrStream sub1 = AtrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, out tempBegIdx, out tempNbElement, tempATR);
       retCode = RetCode.Success;
       lagNb1 = tempNbElement;
-      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
-       * own lookback puts its first output on startIdx, where the ATR's already is.
+      /* tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+       * either seed: the moving average's first output lands where the ATR's is.
        */
       /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */

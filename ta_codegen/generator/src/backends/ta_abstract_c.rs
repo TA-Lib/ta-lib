@@ -3220,6 +3220,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* TA_SetCompatibility does nothing and TA_GetCompatibility always\n\
          \x20* answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing\n\
          \x20* sources still compile and link; avoid them in new code.\n\
+         \x20* TA_SetEMAVariation selects the EMA family's first-bar seed.\n\
          \x20*/\n\
          TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
          \n\

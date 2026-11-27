@@ -205,10 +205,10 @@ public partial class Core
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    same bar. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -947,10 +947,10 @@ public partial class Core
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    same bar. The signal EMA's is formed the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at

@@ -4175,3 +4175,20 @@ fn an_ema_variation_arm_is_proved_under_each_setting() {
     let wrong = refusal(&source_variant("kc", "      emaLookback = startIdx;\n", ""));
     assert!(wrong.contains("depends on where the batch started"), "{wrong}");
 }
+
+/// Without callee lookbacks the joined walk cannot prove KC's plan, and the plan
+/// each setting proves alone does not serve the other: the stream is refused.
+#[test]
+fn a_delay_plan_the_ema_variation_moves_is_refused() {
+    struct SignaturesOnly;
+    impl streaming::CalleeLookup for SignaturesOnly {
+        fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
+            streaming::CalleeLookup::callee(lookup(), name)
+        }
+    }
+    assert!(streaming::validate_streamable(&load("kc"), lookup()).is_ok());
+    let Err(err) = streaming::validate_streamable(&load("kc"), &SignaturesOnly) else {
+        panic!("KC streamed with no callee lookback")
+    };
+    assert!(err.to_string().contains("the EMA variation changes the stream's delay plan"), "{err}");
+}

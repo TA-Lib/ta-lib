@@ -211,8 +211,8 @@ impl Core {
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Each leg is entered at its OWN lookback, so each is the shipped function
-        // over this range and nothing here over-warms the shorter one: a caller who
+        // Each leg is the shipped function over this range, so nothing here
+        // over-warms the shorter one: a caller who
         // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
         // calling TA_ATR directly. The typical price is a derived input, so it is
         // materialized only over the window the moving average reads.
@@ -230,8 +230,8 @@ impl Core {
         // The ATR consumes the price inputs before the moving average below writes
         // the middle band, which may be aliased onto one of them.
         let _xr1 = match self.atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        // tempTP is bar-tpStartIdx relative, so entering the moving average at its
-        // own lookback puts its first output on startIdx, where the ATR's already is.
+        // tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+        // either seed: the moving average's first output lands where the ATR's is.
         let _xr2 = match self.ema(emaLookback, endIdx - tpStartIdx, &tempTP, optInTimePeriod, outRealMiddleBand) { Ok(_r) => _r, Err(_e) => return _e };
         *outBegIdx = _xr2.beg_idx;
         *outNBElement = _xr2.count;
@@ -541,8 +541,8 @@ impl Core {
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Each leg is entered at its OWN lookback, so each is the shipped function
-        // over this range and nothing here over-warms the shorter one: a caller who
+        // Each leg is the shipped function over this range, so nothing here
+        // over-warms the shorter one: a caller who
         // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
         // calling TA_ATR directly. The typical price is a derived input, so it is
         // materialized only over the window the moving average reads.
@@ -566,8 +566,8 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.atr_open_and_fill_internal(&inHigh[..(endIdx as usize) + 1], &inLow[..(endIdx as usize) + 1], &inClose[..(endIdx as usize) + 1], startIdx as usize, optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
         lagNb1 = tempNbElement as i64;
-        // tempTP is bar-tpStartIdx relative, so entering the moving average at its
-        // own lookback puts its first output on startIdx, where the ATR's already is.
+        // tempTP is bar-tpStartIdx relative, where startIdx is emaLookback under
+        // either seed: the moving average's first output lands where the ATR's is.
         // Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - tpStartIdx) as usize) + 1], emaLookback as usize, optInTimePeriod, outBegIdx, outNBElement, &mut sc_outRealMiddleBand[..])?;

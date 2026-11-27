@@ -296,10 +296,10 @@ impl Core {
         // (streaming.rs:2076) and SMI has two, the numerator and the denominator,
         // which must be smoothed separately before they are divided.
         //
-        // Each of the three stages seeds the way ema.c does -- a simple average of
-        // that stage's first 'period' inputs -- so the result is bit-identical to
-        // TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
-        // are the callee LOOKBACKS, not (period-1), so that a warm
+        // Each of the three stages seeds the way ema.c does -- by default a simple
+        // average of that stage's first 'period' inputs -- so the result is
+        // bit-identical to TA_MAX + TA_MIN followed by four TA_EMA calls. The stage
+        // boundaries below are the callee LOOKBACKS, not (period-1), so that a warm
         // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production
@@ -977,10 +977,10 @@ impl Core {
         // (streaming.rs:2076) and SMI has two, the numerator and the denominator,
         // which must be smoothed separately before they are divided.
         //
-        // Each of the three stages seeds the way ema.c does -- a simple average of
-        // that stage's first 'period' inputs -- so the result is bit-identical to
-        // TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
-        // are the callee LOOKBACKS, not (period-1), so that a warm
+        // Each of the three stages seeds the way ema.c does -- by default a simple
+        // average of that stage's first 'period' inputs -- so the result is
+        // bit-identical to TA_MAX + TA_MIN followed by four TA_EMA calls. The stage
+        // boundaries below are the callee LOOKBACKS, not (period-1), so that a warm
         // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production

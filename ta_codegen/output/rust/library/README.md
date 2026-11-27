@@ -52,8 +52,8 @@ not an error — the same contract as C, Java and C#.
 ## Configuration
 
 `Core` is immutable after construction. The value-affecting settings — unstable
-period and candlestick thresholds — are chosen up front with a builder and then
-frozen:
+period, EMA variation and candlestick thresholds — are chosen up front with a
+builder and then frozen:
 
 ```rust
 use ta_lib::{Core, FuncUnstId, RetCode};

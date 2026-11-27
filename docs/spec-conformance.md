@@ -308,7 +308,9 @@ rW6: `checkInPlaceAliasCorrect` (`test_abstract.c`),
 `AnOutputOnItsInputAnswersTheSame` (C#'s `MetadataTest`) place each real output
 on each real input component of every function and require the answer of the
 separate-buffer call bit for bit. The call ends 16 bars before the series does,
-and those bars must keep their input values.
+and those bars must keep their input values. In C the functions
+`FIRST_BAR_SEED` moves run again under it, from bar 0 and from past the
+lookback.
 
 rP4: the float leg of regtest `--codegen` compares each server's float entry
 point with its own double one on the same widened inputs, bit for bit: C over
@@ -543,7 +545,8 @@ and rT12 for a count and a candle setting, in TypeScript: `runtime.test.ts`.
 rT14, rT15, rT17 and rT18: `test_ema_variation.c` (tag `EMAVARIATION`) holds C to
 them: the set of functions that move under `FIRST_BAR_SEED` against its declared
 lists, lookback and range unchanged on every call, start independence of the
-input-fed stages with the chained ones shown to move, and goldens written from
+input-fed stages with the chained ones, STOCH and STOCHF among them, shown to
+move, and goldens written from
 the seed rule; the `--ref` leg holds the 0.6.4 MetaStock mode against it
 (the migration paragraph). `--codegen`, `--xlang-hash` and `stream_verify` run
 every port under the setting bitwise against C, each with a floor on calls that

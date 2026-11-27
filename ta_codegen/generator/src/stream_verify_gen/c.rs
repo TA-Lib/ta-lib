@@ -1496,6 +1496,16 @@ pub(crate) fn generate_c_stream_verify(
             s.push_str(&format!("            TA_SetUnstablePeriod({id}, 0);\n"));
         }
         emit_sv_batch_fail_tail(&mut s, candle);
+        // The batch's digest and the EMA variation, which the driver holds to
+        // in-process C under the same setting.
+        if !candle {
+            s.push_str("        unsigned long long svBatchHash = fuzz_hash_init();\n");
+            for (i, b) in bbuf.iter().enumerate() {
+                let ty = if out_is_int[i] { "int" } else { "double" };
+                let _ = writeln!(s, "        svBatchHash = fuzz_hash_bytes(svBatchHash, {b}, (unsigned long)svNb * sizeof({ty}));");
+            }
+            s.push_str("        svBatchHash = fuzz_hash_fin(svBatchHash);\n");
+        }
 
         // OpenAndFill leg: the whole filled array must equal batch(0, svN-1)
         // bit-for-bit, and its begIdx/nb must match batch. Same seeded inputs +
@@ -1862,6 +1872,7 @@ pub(crate) fn generate_c_stream_verify(
         if candle {
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d,\\\"round_mask\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);\n");
         } else {
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"ema_variation\\\":%d,\\\"batch_beg\\\":%d,\\\"batch_nb\\\":%d,\\\"batch_hash\\\":\\\"%016llx\\\"\", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);\n");
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);\n");
         }
         let mut body = String::with_capacity(s.len() - body_start);

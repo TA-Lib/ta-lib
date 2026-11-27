@@ -285,9 +285,9 @@ public partial class Core
        *  - True Range: start from high-low, then compare/replace with the two
        *    previous-close distances, in that order; Wilder smoothing in ONE
        *    statement.
-       *  - Each recursion is seeded with the sum of its first 'period' inputs,
+       *  - Each recursion's default seed is the sum of its first 'period' inputs,
        *    accumulated from 0.0 in input order, divided by the period. The
-       *    signal EMA is seeded the same way from the first 'signal period'
+       *    signal EMA's is formed the same way from the first 'signal period'
        *    line values.
        *  - The line is the spread divided by the Average True Range, then
        *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
@@ -297,11 +297,11 @@ public partial class Core
        * read, and the previous close is re-read from the input one bar back,
        * which no output store has reached.
        */
-      /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
-       * first MACD-V line bar, so each is the shipped function entered at that
-       * bar and nothing here over-warms the shorter one: a caller who wants a
-       * leg converged sets that function's unstable period, exactly as when
-       * calling it directly.
+      /* Each leg is seeded where the shipped function seeds it and warmed up to
+       * lineIdx, the first MACD-V line bar, so each is the shipped function
+       * entered at that bar and nothing here over-warms the shorter one: a caller
+       * who wants a leg converged sets that function's unstable period, exactly
+       * as when calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
       /* The first-bar seed does not move with startIdx: both EMA start on
@@ -1428,9 +1428,9 @@ public partial class Core
        *  - True Range: start from high-low, then compare/replace with the two
        *    previous-close distances, in that order; Wilder smoothing in ONE
        *    statement.
-       *  - Each recursion is seeded with the sum of its first 'period' inputs,
+       *  - Each recursion's default seed is the sum of its first 'period' inputs,
        *    accumulated from 0.0 in input order, divided by the period. The
-       *    signal EMA is seeded the same way from the first 'signal period'
+       *    signal EMA's is formed the same way from the first 'signal period'
        *    line values.
        *  - The line is the spread divided by the Average True Range, then
        *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
@@ -1440,11 +1440,11 @@ public partial class Core
        * read, and the previous close is re-read from the input one bar back,
        * which no output store has reached.
        */
-      /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
-       * first MACD-V line bar, so each is the shipped function entered at that
-       * bar and nothing here over-warms the shorter one: a caller who wants a
-       * leg converged sets that function's unstable period, exactly as when
-       * calling it directly.
+      /* Each leg is seeded where the shipped function seeds it and warmed up to
+       * lineIdx, the first MACD-V line bar, so each is the shipped function
+       * entered at that bar and nothing here over-warms the shorter one: a caller
+       * who wants a leg converged sets that function's unstable period, exactly
+       * as when calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
       /* The first-bar seed does not move with startIdx: both EMA start on

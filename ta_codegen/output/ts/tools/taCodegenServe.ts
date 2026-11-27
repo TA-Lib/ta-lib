@@ -25675,6 +25675,10 @@ createInterface({ input: process.stdin, crlfDelay: Infinity, terminal: false }).
 const SV_F64 = new Float64Array(2);
 const SV_U32 = new Uint32Array(SV_F64.buffer);
 
+function svDigest(ev: number, beg: number, nb: number, h: bigint): string {
+  return `,\x22ema_variation\x22:${ev},\x22batch_beg\x22:${beg},\x22batch_nb\x22:${nb},\x22batch_hash\x22:\x22${BigInt.asUintN(64, h).toString(16).padStart(16, '0')}\x22`;
+}
+
 function svBne(a: number, b: number): boolean {
   SV_F64[0] = a;
   SV_F64[1] = b;
@@ -25747,6 +25751,8 @@ function sv_AC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -25758,6 +25764,10 @@ function sv_AC(p: Params): string {
       try { AC.acOpen({ high: fz_h, low: fz_l }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -25876,7 +25886,7 @@ function sv_AC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ACCBANDS(p: Params): string {
@@ -25914,6 +25924,8 @@ function sv_ACCBANDS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -25925,6 +25937,12 @@ function sv_ACCBANDS(p: Params): string {
       try { ACCBANDS.accbandsOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26084,7 +26102,7 @@ function sv_ACCBANDS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ACOS(p: Params): string {
@@ -26119,6 +26137,8 @@ function sv_ACOS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -26130,6 +26150,10 @@ function sv_ACOS(p: Params): string {
       try { ACOS.acosOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26243,7 +26267,7 @@ function sv_ACOS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AD(p: Params): string {
@@ -26278,6 +26302,8 @@ function sv_AD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -26289,6 +26315,10 @@ function sv_AD(p: Params): string {
       try { AD.adOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26402,7 +26432,7 @@ function sv_AD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ADD(p: Params): string {
@@ -26437,6 +26467,8 @@ function sv_ADD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -26448,6 +26480,10 @@ function sv_ADD(p: Params): string {
       try { ADD.addOpen(fz_c, fz_v, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26561,7 +26597,7 @@ function sv_ADD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ADOSC(p: Params): string {
@@ -26599,6 +26635,8 @@ function sv_ADOSC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -26612,6 +26650,10 @@ function sv_ADOSC(p: Params): string {
       try { ADOSC.adoscOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26730,7 +26772,7 @@ function sv_ADOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ADR(p: Params): string {
@@ -26766,6 +26808,8 @@ function sv_ADR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -26777,6 +26821,10 @@ function sv_ADR(p: Params): string {
       try { ADR.adrOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -26895,7 +26943,7 @@ function sv_ADR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ADX(p: Params): string {
@@ -26932,6 +26980,8 @@ function sv_ADX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(0, svK).build(); }
@@ -26945,6 +26995,10 @@ function sv_ADX(p: Params): string {
       try { ADX.adxOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27063,7 +27117,7 @@ function sv_ADX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ADXR(p: Params): string {
@@ -27100,6 +27154,8 @@ function sv_ADXR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(0, svK).build(); }
@@ -27113,6 +27169,10 @@ function sv_ADXR(p: Params): string {
       try { ADXR.adxrOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27231,7 +27291,7 @@ function sv_ADXR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ALLIGATOR(p: Params): string {
@@ -27275,6 +27335,8 @@ function sv_ALLIGATOR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
@@ -27288,6 +27350,12 @@ function sv_ALLIGATOR(p: Params): string {
       try { ALLIGATOR.alligatorOpen({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27447,7 +27515,7 @@ function sv_ALLIGATOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ALMA(p: Params): string {
@@ -27485,6 +27553,8 @@ function sv_ALMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -27496,6 +27566,10 @@ function sv_ALMA(p: Params): string {
       try { ALMA.almaOpen(fz_c, { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27614,7 +27688,7 @@ function sv_ALMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AO(p: Params): string {
@@ -27651,6 +27725,8 @@ function sv_AO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -27662,6 +27738,10 @@ function sv_AO(p: Params): string {
       try { AO.aoOpen({ high: fz_h, low: fz_l }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27780,7 +27860,7 @@ function sv_AO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_APO(p: Params): string {
@@ -27820,6 +27900,8 @@ function sv_APO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -27833,6 +27915,10 @@ function sv_APO(p: Params): string {
       try { APO.apoOpen(fz_c, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -27951,7 +28037,7 @@ function sv_APO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AROON(p: Params): string {
@@ -27988,6 +28074,8 @@ function sv_AROON(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -27999,6 +28087,11 @@ function sv_AROON(p: Params): string {
       try { AROON.aroonOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28142,7 +28235,7 @@ function sv_AROON(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AROONOSC(p: Params): string {
@@ -28178,6 +28271,8 @@ function sv_AROONOSC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -28189,6 +28284,10 @@ function sv_AROONOSC(p: Params): string {
       try { AROONOSC.aroonoscOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28307,7 +28406,7 @@ function sv_AROONOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ASI(p: Params): string {
@@ -28343,6 +28442,8 @@ function sv_ASI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -28354,6 +28455,10 @@ function sv_ASI(p: Params): string {
       try { ASI.asiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { limitMove: optInLimitMove, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28467,7 +28572,7 @@ function sv_ASI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ASIN(p: Params): string {
@@ -28502,6 +28607,8 @@ function sv_ASIN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -28513,6 +28620,10 @@ function sv_ASIN(p: Params): string {
       try { ASIN.asinOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28626,7 +28737,7 @@ function sv_ASIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ATAN(p: Params): string {
@@ -28661,6 +28772,8 @@ function sv_ATAN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -28672,6 +28785,10 @@ function sv_ATAN(p: Params): string {
       try { ATAN.atanOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28785,7 +28902,7 @@ function sv_ATAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ATR(p: Params): string {
@@ -28822,6 +28939,8 @@ function sv_ATR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
@@ -28835,6 +28954,10 @@ function sv_ATR(p: Params): string {
       try { ATR.atrOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -28953,7 +29076,7 @@ function sv_ATR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AVGDEV(p: Params): string {
@@ -28989,6 +29112,8 @@ function sv_AVGDEV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -29000,6 +29125,10 @@ function sv_AVGDEV(p: Params): string {
       try { AVGDEV.avgdevOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29118,7 +29247,7 @@ function sv_AVGDEV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_AVGPRICE(p: Params): string {
@@ -29153,6 +29282,8 @@ function sv_AVGPRICE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -29164,6 +29295,10 @@ function sv_AVGPRICE(p: Params): string {
       try { AVGPRICE.avgpriceOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29277,7 +29412,7 @@ function sv_AVGPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_BBANDS(p: Params): string {
@@ -29320,6 +29455,8 @@ function sv_BBANDS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -29333,6 +29470,12 @@ function sv_BBANDS(p: Params): string {
       try { BBANDS.bbandsOpen(fz_c, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29492,7 +29635,7 @@ function sv_BBANDS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_BBW(p: Params): string {
@@ -29533,6 +29676,8 @@ function sv_BBW(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -29546,6 +29691,10 @@ function sv_BBW(p: Params): string {
       try { BBW.bbwOpen(fz_c, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29664,7 +29813,7 @@ function sv_BBW(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_BETA(p: Params): string {
@@ -29700,6 +29849,8 @@ function sv_BETA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -29711,6 +29862,10 @@ function sv_BETA(p: Params): string {
       try { BETA.betaOpen(fz_c, fz_v, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29829,7 +29984,7 @@ function sv_BETA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_BOP(p: Params): string {
@@ -29864,6 +30019,8 @@ function sv_BOP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -29875,6 +30032,10 @@ function sv_BOP(p: Params): string {
       try { BOP.bopOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -29988,7 +30149,7 @@ function sv_BOP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CCI(p: Params): string {
@@ -30024,6 +30185,8 @@ function sv_CCI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -30035,6 +30198,10 @@ function sv_CCI(p: Params): string {
       try { CCI.cciOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -30153,7 +30320,7 @@ function sv_CCI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CDL2CROWS(p: Params): string {
@@ -40020,6 +40187,8 @@ function sv_CE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
@@ -40033,6 +40202,11 @@ function sv_CE(p: Params): string {
       try { CE.ceOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -40176,7 +40350,7 @@ function sv_CE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CEIL(p: Params): string {
@@ -40211,6 +40385,8 @@ function sv_CEIL(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -40222,6 +40398,10 @@ function sv_CEIL(p: Params): string {
       try { CEIL.ceilOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -40335,7 +40515,7 @@ function sv_CEIL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CG(p: Params): string {
@@ -40371,6 +40551,8 @@ function sv_CG(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -40382,6 +40564,10 @@ function sv_CG(p: Params): string {
       try { CG.cgOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -40500,7 +40686,7 @@ function sv_CG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CHOP(p: Params): string {
@@ -40536,6 +40722,8 @@ function sv_CHOP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -40547,6 +40735,10 @@ function sv_CHOP(p: Params): string {
       try { CHOP.chopOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -40665,7 +40857,7 @@ function sv_CHOP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CHOPTR(p: Params): string {
@@ -40701,6 +40893,8 @@ function sv_CHOPTR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -40712,6 +40906,10 @@ function sv_CHOPTR(p: Params): string {
       try { CHOPTR.choptrOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -40830,7 +41028,7 @@ function sv_CHOPTR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CKSP(p: Params): string {
@@ -40870,6 +41068,8 @@ function sv_CKSP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
@@ -40883,6 +41083,11 @@ function sv_CKSP(p: Params): string {
       try { CKSP.ckspOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41026,7 +41231,7 @@ function sv_CKSP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CMF(p: Params): string {
@@ -41062,6 +41267,8 @@ function sv_CMF(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -41073,6 +41280,10 @@ function sv_CMF(p: Params): string {
       try { CMF.cmfOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41191,7 +41402,7 @@ function sv_CMF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CMO(p: Params): string {
@@ -41228,6 +41439,8 @@ function sv_CMO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(3, svK).build(); }
@@ -41241,6 +41454,10 @@ function sv_CMO(p: Params): string {
       try { CMO.cmoOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41359,7 +41576,7 @@ function sv_CMO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CMOU(p: Params): string {
@@ -41395,6 +41612,8 @@ function sv_CMOU(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -41406,6 +41625,10 @@ function sv_CMOU(p: Params): string {
       try { CMOU.cmouOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41524,7 +41747,7 @@ function sv_CMOU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_COPPOCK(p: Params): string {
@@ -41562,6 +41785,8 @@ function sv_COPPOCK(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -41573,6 +41798,10 @@ function sv_COPPOCK(p: Params): string {
       try { COPPOCK.coppockOpen(fz_c, { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41691,7 +41920,7 @@ function sv_COPPOCK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CORREL(p: Params): string {
@@ -41727,6 +41956,8 @@ function sv_CORREL(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -41738,6 +41969,10 @@ function sv_CORREL(p: Params): string {
       try { CORREL.correlOpen(fz_c, fz_v, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -41856,7 +42091,7 @@ function sv_CORREL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_COS(p: Params): string {
@@ -41891,6 +42126,8 @@ function sv_COS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -41902,6 +42139,10 @@ function sv_COS(p: Params): string {
       try { COS.cosOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42015,7 +42256,7 @@ function sv_COS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_COSH(p: Params): string {
@@ -42050,6 +42291,8 @@ function sv_COSH(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -42061,6 +42304,10 @@ function sv_COSH(p: Params): string {
       try { COSH.coshOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42174,7 +42421,7 @@ function sv_COSH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CRSI(p: Params): string {
@@ -42213,6 +42460,8 @@ function sv_CRSI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).build(); }
@@ -42226,6 +42475,10 @@ function sv_CRSI(p: Params): string {
       try { CRSI.crsiOpen(fz_c, { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42344,7 +42597,7 @@ function sv_CRSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CTI(p: Params): string {
@@ -42380,6 +42633,8 @@ function sv_CTI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -42391,6 +42646,10 @@ function sv_CTI(p: Params): string {
       try { CTI.ctiOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42509,7 +42768,7 @@ function sv_CTI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CUMSUM(p: Params): string {
@@ -42544,6 +42803,8 @@ function sv_CUMSUM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -42555,6 +42816,10 @@ function sv_CUMSUM(p: Params): string {
       try { CUMSUM.cumsumOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42668,7 +42933,7 @@ function sv_CUMSUM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_CVI(p: Params): string {
@@ -42706,6 +42971,8 @@ function sv_CVI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -42719,6 +42986,10 @@ function sv_CVI(p: Params): string {
       try { CVI.cviOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -42837,7 +43108,7 @@ function sv_CVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DEMA(p: Params): string {
@@ -42874,6 +43145,8 @@ function sv_DEMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -42887,6 +43160,10 @@ function sv_DEMA(p: Params): string {
       try { DEMA.demaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43005,7 +43282,7 @@ function sv_DEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DIV(p: Params): string {
@@ -43040,6 +43317,8 @@ function sv_DIV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -43051,6 +43330,10 @@ function sv_DIV(p: Params): string {
       try { DIV.divOpen(fz_c, fz_v, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43164,7 +43447,7 @@ function sv_DIV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DONCHIAN(p: Params): string {
@@ -43202,6 +43485,8 @@ function sv_DONCHIAN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -43213,6 +43498,12 @@ function sv_DONCHIAN(p: Params): string {
       try { DONCHIAN.donchianOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43372,7 +43663,7 @@ function sv_DONCHIAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DOSC(p: Params): string {
@@ -43412,6 +43703,8 @@ function sv_DOSC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).unstablePeriod(21, svK).build(); }
@@ -43425,6 +43718,10 @@ function sv_DOSC(p: Params): string {
       try { DOSC.doscOpen(fz_c, { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43543,7 +43840,7 @@ function sv_DOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DPO(p: Params): string {
@@ -43579,6 +43876,8 @@ function sv_DPO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -43590,6 +43889,10 @@ function sv_DPO(p: Params): string {
       try { DPO.dpoOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43708,7 +44011,7 @@ function sv_DPO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_DX(p: Params): string {
@@ -43745,6 +44048,8 @@ function sv_DX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(4, svK).build(); }
@@ -43758,6 +44063,10 @@ function sv_DX(p: Params): string {
       try { DX.dxOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -43876,7 +44185,7 @@ function sv_DX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_EFI(p: Params): string {
@@ -43913,6 +44222,8 @@ function sv_EFI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -43926,6 +44237,10 @@ function sv_EFI(p: Params): string {
       try { EFI.efiOpen({ close: fz_c, volume: fz_v }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44044,7 +44359,7 @@ function sv_EFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_EMA(p: Params): string {
@@ -44081,6 +44396,8 @@ function sv_EMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -44094,6 +44411,10 @@ function sv_EMA(p: Params): string {
       try { EMA.emaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44212,7 +44533,7 @@ function sv_EMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_EMV(p: Params): string {
@@ -44249,6 +44570,8 @@ function sv_EMV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -44260,6 +44583,10 @@ function sv_EMV(p: Params): string {
       try { EMV.emvOpen({ high: fz_h, low: fz_l, volume: fz_v }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44378,7 +44705,7 @@ function sv_EMV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ER(p: Params): string {
@@ -44414,6 +44741,8 @@ function sv_ER(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -44425,6 +44754,10 @@ function sv_ER(p: Params): string {
       try { ER.erOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44543,7 +44876,7 @@ function sv_ER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ERI(p: Params): string {
@@ -44581,6 +44914,8 @@ function sv_ERI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -44594,6 +44929,11 @@ function sv_ERI(p: Params): string {
       try { ERI.eriOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44737,7 +45077,7 @@ function sv_ERI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_EXP(p: Params): string {
@@ -44772,6 +45112,8 @@ function sv_EXP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -44783,6 +45125,10 @@ function sv_EXP(p: Params): string {
       try { EXP.expOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -44896,7 +45242,7 @@ function sv_EXP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_FISHER(p: Params): string {
@@ -44934,6 +45280,8 @@ function sv_FISHER(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(36, svK).build(); }
@@ -44947,6 +45295,11 @@ function sv_FISHER(p: Params): string {
       try { FISHER.fisherOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -45090,7 +45443,7 @@ function sv_FISHER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_FLOOR(p: Params): string {
@@ -45125,6 +45478,8 @@ function sv_FLOOR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -45136,6 +45491,10 @@ function sv_FLOOR(p: Params): string {
       try { FLOOR.floorOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -45249,7 +45608,7 @@ function sv_FLOOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_FOSC(p: Params): string {
@@ -45285,6 +45644,8 @@ function sv_FOSC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -45296,6 +45657,10 @@ function sv_FOSC(p: Params): string {
       try { FOSC.foscOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -45414,7 +45779,7 @@ function sv_FOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_FRACTAL(p: Params): string {
@@ -45452,6 +45817,8 @@ function sv_FRACTAL(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -45463,6 +45830,11 @@ function sv_FRACTAL(p: Params): string {
       try { FRACTAL.fractalOpen({ high: fz_h, low: fz_l }, { leftBars: optInLeftBars, rightBars: optInRightBars, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashI32(svHash, b0, nb.value);
+    svHash = fuzzHashI32(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Int32Array(svN).fill(-987654321);
@@ -45604,7 +45976,7 @@ function sv_FRACTAL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_FRAMA(p: Params): string {
@@ -45641,6 +46013,8 @@ function sv_FRAMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(27, svK).build(); }
@@ -45654,6 +46028,10 @@ function sv_FRAMA(p: Params): string {
       try { FRAMA.framaOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -45772,7 +46150,7 @@ function sv_FRAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_GATOR(p: Params): string {
@@ -45815,6 +46193,8 @@ function sv_GATOR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
@@ -45828,6 +46208,11 @@ function sv_GATOR(p: Params): string {
       try { GATOR.gatorOpen({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -45971,7 +46356,7 @@ function sv_GATOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HA(p: Params): string {
@@ -46010,6 +46395,8 @@ function sv_HA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(25, svK).build(); }
@@ -46023,6 +46410,13 @@ function sv_HA(p: Params): string {
       try { HA.haOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashF64(svHash, b3, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -46188,7 +46582,7 @@ function sv_HA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HMA(p: Params): string {
@@ -46224,6 +46618,8 @@ function sv_HMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -46235,6 +46631,10 @@ function sv_HMA(p: Params): string {
       try { HMA.hmaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -46353,7 +46753,7 @@ function sv_HMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_DCPERIOD(p: Params): string {
@@ -46389,6 +46789,8 @@ function sv_HT_DCPERIOD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(6, svK).build(); }
@@ -46402,6 +46804,10 @@ function sv_HT_DCPERIOD(p: Params): string {
       try { HT_DCPERIOD.htDcperiodOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -46515,7 +46921,7 @@ function sv_HT_DCPERIOD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_DCPHASE(p: Params): string {
@@ -46551,6 +46957,8 @@ function sv_HT_DCPHASE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(7, svK).build(); }
@@ -46564,6 +46972,10 @@ function sv_HT_DCPHASE(p: Params): string {
       try { HT_DCPHASE.htDcphaseOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -46677,7 +47089,7 @@ function sv_HT_DCPHASE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_PHASOR(p: Params): string {
@@ -46714,6 +47126,8 @@ function sv_HT_PHASOR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(8, svK).build(); }
@@ -46727,6 +47141,11 @@ function sv_HT_PHASOR(p: Params): string {
       try { HT_PHASOR.htPhasorOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -46862,7 +47281,7 @@ function sv_HT_PHASOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_SINE(p: Params): string {
@@ -46899,6 +47318,8 @@ function sv_HT_SINE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(9, svK).build(); }
@@ -46912,6 +47333,11 @@ function sv_HT_SINE(p: Params): string {
       try { HT_SINE.htSineOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -47047,7 +47473,7 @@ function sv_HT_SINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_TRENDLINE(p: Params): string {
@@ -47083,6 +47509,8 @@ function sv_HT_TRENDLINE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(10, svK).build(); }
@@ -47096,6 +47524,10 @@ function sv_HT_TRENDLINE(p: Params): string {
       try { HT_TRENDLINE.htTrendlineOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -47209,7 +47641,7 @@ function sv_HT_TRENDLINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_HT_TRENDMODE(p: Params): string {
@@ -47245,6 +47677,8 @@ function sv_HT_TRENDMODE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(11, svK).build(); }
@@ -47258,6 +47692,10 @@ function sv_HT_TRENDMODE(p: Params): string {
       try { HT_TRENDMODE.htTrendmodeOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashI32(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Int32Array(svN).fill(-987654321);
@@ -47370,7 +47808,7 @@ function sv_HT_TRENDMODE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_IBS(p: Params): string {
@@ -47405,6 +47843,8 @@ function sv_IBS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -47416,6 +47856,10 @@ function sv_IBS(p: Params): string {
       try { IBS.ibsOpen({ high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -47529,7 +47973,7 @@ function sv_IBS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ICHIMOKU(p: Params): string {
@@ -47570,6 +48014,8 @@ function sv_ICHIMOKU(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -47581,6 +48027,13 @@ function sv_ICHIMOKU(p: Params): string {
       try { ICHIMOKU.ichimokuOpen({ high: fz_h, low: fz_l }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashF64(svHash, b3, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -47756,7 +48209,7 @@ function sv_ICHIMOKU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_IMI(p: Params): string {
@@ -47792,6 +48245,8 @@ function sv_IMI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -47803,6 +48258,10 @@ function sv_IMI(p: Params): string {
       try { IMI.imiOpen({ open: fz_o, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -47921,7 +48380,7 @@ function sv_IMI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KAMA(p: Params): string {
@@ -47958,6 +48417,8 @@ function sv_KAMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(13, svK).build(); }
@@ -47971,6 +48432,10 @@ function sv_KAMA(p: Params): string {
       try { KAMA.kamaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -48089,7 +48554,7 @@ function sv_KAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KC(p: Params): string {
@@ -48130,6 +48595,8 @@ function sv_KC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).unstablePeriod(5, svK).build(); }
@@ -48143,6 +48610,12 @@ function sv_KC(p: Params): string {
       try { KC.kcOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -48302,7 +48775,7 @@ function sv_KC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KDJ(p: Params): string {
@@ -48347,6 +48820,8 @@ function sv_KDJ(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -48360,6 +48835,12 @@ function sv_KDJ(p: Params): string {
       try { KDJ.kdjOpen({ high: fz_h, low: fz_l, close: fz_c }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -48519,7 +49000,7 @@ function sv_KDJ(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KST(p: Params): string {
@@ -48564,6 +49045,8 @@ function sv_KST(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -48575,6 +49058,11 @@ function sv_KST(p: Params): string {
       try { KST.kstOpen(fz_c, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -48718,7 +49206,7 @@ function sv_KST(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KSTEXT(p: Params): string {
@@ -48768,6 +49256,8 @@ function sv_KSTEXT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -48781,6 +49271,11 @@ function sv_KSTEXT(p: Params): string {
       try { KSTEXT.kstextOpen(fz_c, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -48924,7 +49419,7 @@ function sv_KSTEXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KURTOSIS(p: Params): string {
@@ -48960,6 +49455,8 @@ function sv_KURTOSIS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -48971,6 +49468,10 @@ function sv_KURTOSIS(p: Params): string {
       try { KURTOSIS.kurtosisOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49089,7 +49590,7 @@ function sv_KURTOSIS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_KVO(p: Params): string {
@@ -49129,6 +49630,8 @@ function sv_KVO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -49142,6 +49645,11 @@ function sv_KVO(p: Params): string {
       try { KVO.kvoOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49285,7 +49793,7 @@ function sv_KVO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LINEARREG(p: Params): string {
@@ -49321,6 +49829,8 @@ function sv_LINEARREG(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -49332,6 +49842,10 @@ function sv_LINEARREG(p: Params): string {
       try { LINEARREG.linearregOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49450,7 +49964,7 @@ function sv_LINEARREG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LINEARREG_ANGLE(p: Params): string {
@@ -49486,6 +50000,8 @@ function sv_LINEARREG_ANGLE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -49497,6 +50013,10 @@ function sv_LINEARREG_ANGLE(p: Params): string {
       try { LINEARREG_ANGLE.linearregAngleOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49615,7 +50135,7 @@ function sv_LINEARREG_ANGLE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LINEARREG_INTERCEPT(p: Params): string {
@@ -49651,6 +50171,8 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -49662,6 +50184,10 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
       try { LINEARREG_INTERCEPT.linearregInterceptOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49780,7 +50306,7 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LINEARREG_SLOPE(p: Params): string {
@@ -49816,6 +50342,8 @@ function sv_LINEARREG_SLOPE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -49827,6 +50355,10 @@ function sv_LINEARREG_SLOPE(p: Params): string {
       try { LINEARREG_SLOPE.linearregSlopeOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -49945,7 +50477,7 @@ function sv_LINEARREG_SLOPE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LN(p: Params): string {
@@ -49980,6 +50512,8 @@ function sv_LN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -49991,6 +50525,10 @@ function sv_LN(p: Params): string {
       try { LN.lnOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -50104,7 +50642,7 @@ function sv_LN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_LOG10(p: Params): string {
@@ -50139,6 +50677,8 @@ function sv_LOG10(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -50150,6 +50690,10 @@ function sv_LOG10(p: Params): string {
       try { LOG10.log10Open(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -50263,7 +50807,7 @@ function sv_LOG10(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MA(p: Params): string {
@@ -50302,6 +50846,8 @@ function sv_MA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -50315,6 +50861,10 @@ function sv_MA(p: Params): string {
       try { MA.maOpen(fz_c, { timePeriod: optInTimePeriod, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -50433,7 +50983,7 @@ function sv_MA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MACD(p: Params): string {
@@ -50474,6 +51024,8 @@ function sv_MACD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -50487,6 +51039,12 @@ function sv_MACD(p: Params): string {
       try { MACD.macdOpen(fz_c, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -50646,7 +51204,7 @@ function sv_MACD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MACDEXT(p: Params): string {
@@ -50693,6 +51251,8 @@ function sv_MACDEXT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -50706,6 +51266,12 @@ function sv_MACDEXT(p: Params): string {
       try { MACDEXT.macdextOpen(fz_c, { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -50865,7 +51431,7 @@ function sv_MACDEXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MACDFIX(p: Params): string {
@@ -50904,6 +51470,8 @@ function sv_MACDFIX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -50917,6 +51485,12 @@ function sv_MACDFIX(p: Params): string {
       try { MACDFIX.macdfixOpen(fz_c, { signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -51076,7 +51650,7 @@ function sv_MACDFIX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MACDV(p: Params): string {
@@ -51117,6 +51691,8 @@ function sv_MACDV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).unstablePeriod(2, svK).build(); }
@@ -51130,6 +51706,12 @@ function sv_MACDV(p: Params): string {
       try { MACDV.macdvOpen({ high: fz_h, low: fz_l, close: fz_c }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -51289,7 +51871,7 @@ function sv_MACDV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MAENV(p: Params): string {
@@ -51332,6 +51914,8 @@ function sv_MAENV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -51345,6 +51929,12 @@ function sv_MAENV(p: Params): string {
       try { MAENV.maenvOpen(fz_c, { timePeriod: optInTimePeriod, percentUp: optInPercentUp, percentDn: optInPercentDn, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashF64(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -51504,7 +52094,7 @@ function sv_MAENV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MAMA(p: Params): string {
@@ -51543,6 +52133,8 @@ function sv_MAMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(14, svK).build(); }
@@ -51556,6 +52148,11 @@ function sv_MAMA(p: Params): string {
       try { MAMA.mamaOpen(fz_c, { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -51691,7 +52288,7 @@ function sv_MAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MARKETFI(p: Params): string {
@@ -51726,6 +52323,8 @@ function sv_MARKETFI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -51737,6 +52336,10 @@ function sv_MARKETFI(p: Params): string {
       try { MARKETFI.marketfiOpen({ high: fz_h, low: fz_l, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -51850,7 +52453,7 @@ function sv_MARKETFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MASSI(p: Params): string {
@@ -51888,6 +52491,8 @@ function sv_MASSI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -51901,6 +52506,10 @@ function sv_MASSI(p: Params): string {
       try { MASSI.massiOpen({ high: fz_h, low: fz_l }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -52019,7 +52628,7 @@ function sv_MASSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MAVP(p: Params): string {
@@ -52060,6 +52669,8 @@ function sv_MAVP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -52073,6 +52684,10 @@ function sv_MAVP(p: Params): string {
       try { MAVP.mavpOpen(fz_c, fz_v, { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -52191,7 +52806,7 @@ function sv_MAVP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MAX(p: Params): string {
@@ -52227,6 +52842,8 @@ function sv_MAX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -52238,6 +52855,10 @@ function sv_MAX(p: Params): string {
       try { MAX.maxOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -52356,7 +52977,7 @@ function sv_MAX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MAXINDEX(p: Params): string {
@@ -52392,6 +53013,8 @@ function sv_MAXINDEX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -52403,6 +53026,10 @@ function sv_MAXINDEX(p: Params): string {
       try { MAXINDEX.maxindexOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashI32(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Int32Array(svN).fill(-987654321);
@@ -52520,7 +53147,7 @@ function sv_MAXINDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MCGD(p: Params): string {
@@ -52557,6 +53184,8 @@ function sv_MCGD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(28, svK).build(); }
@@ -52570,6 +53199,10 @@ function sv_MCGD(p: Params): string {
       try { MCGD.mcgdOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -52688,7 +53321,7 @@ function sv_MCGD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MEDIAN(p: Params): string {
@@ -52724,6 +53357,8 @@ function sv_MEDIAN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -52735,6 +53370,10 @@ function sv_MEDIAN(p: Params): string {
       try { MEDIAN.medianOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -52853,7 +53492,7 @@ function sv_MEDIAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MEDPRICE(p: Params): string {
@@ -52888,6 +53527,8 @@ function sv_MEDPRICE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -52899,6 +53540,10 @@ function sv_MEDPRICE(p: Params): string {
       try { MEDPRICE.medpriceOpen({ high: fz_h, low: fz_l }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -53012,7 +53657,7 @@ function sv_MEDPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MFI(p: Params): string {
@@ -53048,6 +53693,8 @@ function sv_MFI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53059,6 +53706,10 @@ function sv_MFI(p: Params): string {
       try { MFI.mfiOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -53177,7 +53828,7 @@ function sv_MFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MIDPOINT(p: Params): string {
@@ -53213,6 +53864,8 @@ function sv_MIDPOINT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53224,6 +53877,10 @@ function sv_MIDPOINT(p: Params): string {
       try { MIDPOINT.midpointOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -53342,7 +53999,7 @@ function sv_MIDPOINT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MIDPRICE(p: Params): string {
@@ -53378,6 +54035,8 @@ function sv_MIDPRICE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53389,6 +54048,10 @@ function sv_MIDPRICE(p: Params): string {
       try { MIDPRICE.midpriceOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -53507,7 +54170,7 @@ function sv_MIDPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MIN(p: Params): string {
@@ -53543,6 +54206,8 @@ function sv_MIN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53554,6 +54219,10 @@ function sv_MIN(p: Params): string {
       try { MIN.minOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -53672,7 +54341,7 @@ function sv_MIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MININDEX(p: Params): string {
@@ -53708,6 +54377,8 @@ function sv_MININDEX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53719,6 +54390,10 @@ function sv_MININDEX(p: Params): string {
       try { MININDEX.minindexOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashI32(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Int32Array(svN).fill(-987654321);
@@ -53836,7 +54511,7 @@ function sv_MININDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MINMAX(p: Params): string {
@@ -53873,6 +54548,8 @@ function sv_MINMAX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -53884,6 +54561,11 @@ function sv_MINMAX(p: Params): string {
       try { MINMAX.minmaxOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -54027,7 +54709,7 @@ function sv_MINMAX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MINMAXINDEX(p: Params): string {
@@ -54064,6 +54746,8 @@ function sv_MINMAXINDEX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -54075,6 +54759,11 @@ function sv_MINMAXINDEX(p: Params): string {
       try { MINMAXINDEX.minmaxindexOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashI32(svHash, b0, nb.value);
+    svHash = fuzzHashI32(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Int32Array(svN).fill(-987654321);
@@ -54216,7 +54905,7 @@ function sv_MINMAXINDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MINUS_DI(p: Params): string {
@@ -54253,6 +54942,8 @@ function sv_MINUS_DI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(16, svK).build(); }
@@ -54266,6 +54957,10 @@ function sv_MINUS_DI(p: Params): string {
       try { MINUS_DI.minusDiOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -54384,7 +55079,7 @@ function sv_MINUS_DI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MINUS_DM(p: Params): string {
@@ -54421,6 +55116,8 @@ function sv_MINUS_DM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(17, svK).build(); }
@@ -54434,6 +55131,10 @@ function sv_MINUS_DM(p: Params): string {
       try { MINUS_DM.minusDmOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -54552,7 +55253,7 @@ function sv_MINUS_DM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MOM(p: Params): string {
@@ -54588,6 +55289,8 @@ function sv_MOM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -54599,6 +55302,10 @@ function sv_MOM(p: Params): string {
       try { MOM.momOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -54717,7 +55424,7 @@ function sv_MOM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_MULT(p: Params): string {
@@ -54752,6 +55459,8 @@ function sv_MULT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -54763,6 +55472,10 @@ function sv_MULT(p: Params): string {
       try { MULT.multOpen(fz_c, fz_v, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -54876,7 +55589,7 @@ function sv_MULT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_NATR(p: Params): string {
@@ -54913,6 +55626,8 @@ function sv_NATR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(18, svK).build(); }
@@ -54926,6 +55641,10 @@ function sv_NATR(p: Params): string {
       try { NATR.natrOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55044,7 +55763,7 @@ function sv_NATR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_NVI(p: Params): string {
@@ -55079,6 +55798,8 @@ function sv_NVI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -55090,6 +55811,10 @@ function sv_NVI(p: Params): string {
       try { NVI.nviOpen({ close: fz_c, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55203,7 +55928,7 @@ function sv_NVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_OBV(p: Params): string {
@@ -55238,6 +55963,8 @@ function sv_OBV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -55249,6 +55976,10 @@ function sv_OBV(p: Params): string {
       try { OBV.obvOpen(fz_c, { volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55362,7 +56093,7 @@ function sv_OBV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PERCENTB(p: Params): string {
@@ -55403,6 +56134,8 @@ function sv_PERCENTB(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -55416,6 +56149,10 @@ function sv_PERCENTB(p: Params): string {
       try { PERCENTB.percentbOpen(fz_c, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55534,7 +56271,7 @@ function sv_PERCENTB(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PERCENTILE(p: Params): string {
@@ -55571,6 +56308,8 @@ function sv_PERCENTILE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -55582,6 +56321,10 @@ function sv_PERCENTILE(p: Params): string {
       try { PERCENTILE.percentileOpen(fz_c, { timePeriod: optInTimePeriod, percentile: optInPercentile, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55700,7 +56443,7 @@ function sv_PERCENTILE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PERCENTRANK(p: Params): string {
@@ -55736,6 +56479,8 @@ function sv_PERCENTRANK(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -55747,6 +56492,10 @@ function sv_PERCENTRANK(p: Params): string {
       try { PERCENTRANK.percentrankOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -55865,7 +56614,7 @@ function sv_PERCENTRANK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PLUS_DI(p: Params): string {
@@ -55902,6 +56651,8 @@ function sv_PLUS_DI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(19, svK).build(); }
@@ -55915,6 +56666,10 @@ function sv_PLUS_DI(p: Params): string {
       try { PLUS_DI.plusDiOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56033,7 +56788,7 @@ function sv_PLUS_DI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PLUS_DM(p: Params): string {
@@ -56070,6 +56825,8 @@ function sv_PLUS_DM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(20, svK).build(); }
@@ -56083,6 +56840,10 @@ function sv_PLUS_DM(p: Params): string {
       try { PLUS_DM.plusDmOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56201,7 +56962,7 @@ function sv_PLUS_DM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PPO(p: Params): string {
@@ -56241,6 +57002,8 @@ function sv_PPO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -56254,6 +57017,10 @@ function sv_PPO(p: Params): string {
       try { PPO.ppoOpen(fz_c, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56372,7 +57139,7 @@ function sv_PPO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PSO(p: Params): string {
@@ -56410,6 +57177,8 @@ function sv_PSO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -56423,6 +57192,10 @@ function sv_PSO(p: Params): string {
       try { PSO.psoOpen({ high: fz_h, low: fz_l, close: fz_c }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56541,7 +57314,7 @@ function sv_PSO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PVI(p: Params): string {
@@ -56576,6 +57349,8 @@ function sv_PVI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -56587,6 +57362,10 @@ function sv_PVI(p: Params): string {
       try { PVI.pviOpen({ close: fz_c, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56700,7 +57479,7 @@ function sv_PVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PVO(p: Params): string {
@@ -56740,6 +57519,8 @@ function sv_PVO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -56753,6 +57534,10 @@ function sv_PVO(p: Params): string {
       try { PVO.pvoOpen({ volume: fz_v }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -56871,7 +57656,7 @@ function sv_PVO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_PVT(p: Params): string {
@@ -56906,6 +57691,8 @@ function sv_PVT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -56917,6 +57704,10 @@ function sv_PVT(p: Params): string {
       try { PVT.pvtOpen({ close: fz_c, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57030,7 +57821,7 @@ function sv_PVT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_QSTICK(p: Params): string {
@@ -57066,6 +57857,8 @@ function sv_QSTICK(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -57077,6 +57870,10 @@ function sv_QSTICK(p: Params): string {
       try { QSTICK.qstickOpen({ open: fz_o, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57195,7 +57992,7 @@ function sv_QSTICK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_RMA(p: Params): string {
@@ -57232,6 +58029,8 @@ function sv_RMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
@@ -57245,6 +58044,10 @@ function sv_RMA(p: Params): string {
       try { RMA.rmaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57363,7 +58166,7 @@ function sv_RMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ROC(p: Params): string {
@@ -57399,6 +58202,8 @@ function sv_ROC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -57410,6 +58215,10 @@ function sv_ROC(p: Params): string {
       try { ROC.rocOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57528,7 +58337,7 @@ function sv_ROC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ROCP(p: Params): string {
@@ -57564,6 +58373,8 @@ function sv_ROCP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -57575,6 +58386,10 @@ function sv_ROCP(p: Params): string {
       try { ROCP.rocpOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57693,7 +58508,7 @@ function sv_ROCP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ROCR(p: Params): string {
@@ -57729,6 +58544,8 @@ function sv_ROCR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -57740,6 +58557,10 @@ function sv_ROCR(p: Params): string {
       try { ROCR.rocrOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -57858,7 +58679,7 @@ function sv_ROCR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ROCR100(p: Params): string {
@@ -57894,6 +58715,8 @@ function sv_ROCR100(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -57905,6 +58728,10 @@ function sv_ROCR100(p: Params): string {
       try { ROCR100.rocr100Open(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58023,7 +58850,7 @@ function sv_ROCR100(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ROGERSSATCHELL(p: Params): string {
@@ -58060,6 +58887,8 @@ function sv_ROGERSSATCHELL(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -58071,6 +58900,10 @@ function sv_ROGERSSATCHELL(p: Params): string {
       try { ROGERSSATCHELL.rogerssatchellOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58189,7 +59022,7 @@ function sv_ROGERSSATCHELL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_RSI(p: Params): string {
@@ -58226,6 +59059,8 @@ function sv_RSI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).build(); }
@@ -58239,6 +59074,10 @@ function sv_RSI(p: Params): string {
       try { RSI.rsiOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58357,7 +59196,7 @@ function sv_RSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_RVI(p: Params): string {
@@ -58395,6 +59234,8 @@ function sv_RVI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(26, svK).build(); }
@@ -58408,6 +59249,10 @@ function sv_RVI(p: Params): string {
       try { RVI.rviOpen(fz_c, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58526,7 +59371,7 @@ function sv_RVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_RVIR(p: Params): string {
@@ -58564,6 +59409,8 @@ function sv_RVIR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(26, svK).build(); }
@@ -58577,6 +59424,10 @@ function sv_RVIR(p: Params): string {
       try { RVIR.rvirOpen({ high: fz_h, low: fz_l }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58695,7 +59546,7 @@ function sv_RVIR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_RVOL(p: Params): string {
@@ -58731,6 +59582,8 @@ function sv_RVOL(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -58742,6 +59595,10 @@ function sv_RVOL(p: Params): string {
       try { RVOL.rvolOpen({ volume: fz_v }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -58860,7 +59717,7 @@ function sv_RVOL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SAR(p: Params): string {
@@ -58897,6 +59754,8 @@ function sv_SAR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -58908,6 +59767,10 @@ function sv_SAR(p: Params): string {
       try { SAR.sarOpen({ high: fz_h, low: fz_l }, { acceleration: optInAcceleration, maximum: optInMaximum, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59021,7 +59884,7 @@ function sv_SAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SAREXT(p: Params): string {
@@ -59064,6 +59927,8 @@ function sv_SAREXT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59075,6 +59940,10 @@ function sv_SAREXT(p: Params): string {
       try { SAREXT.sarextOpen({ high: fz_h, low: fz_l }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59188,7 +60057,7 @@ function sv_SAREXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SHARPE(p: Params): string {
@@ -59226,6 +60095,8 @@ function sv_SHARPE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59237,6 +60108,10 @@ function sv_SHARPE(p: Params): string {
       try { SHARPE.sharpeOpen(fz_c, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59355,7 +60230,7 @@ function sv_SHARPE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SI(p: Params): string {
@@ -59391,6 +60266,8 @@ function sv_SI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59402,6 +60279,10 @@ function sv_SI(p: Params): string {
       try { SI.siOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { limitMove: optInLimitMove, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59515,7 +60396,7 @@ function sv_SI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SIN(p: Params): string {
@@ -59550,6 +60431,8 @@ function sv_SIN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59561,6 +60444,10 @@ function sv_SIN(p: Params): string {
       try { SIN.sinOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59674,7 +60561,7 @@ function sv_SIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SINH(p: Params): string {
@@ -59709,6 +60596,8 @@ function sv_SINH(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59720,6 +60609,10 @@ function sv_SINH(p: Params): string {
       try { SINH.sinhOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59833,7 +60726,7 @@ function sv_SINH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SKEW(p: Params): string {
@@ -59869,6 +60762,8 @@ function sv_SKEW(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -59880,6 +60775,10 @@ function sv_SKEW(p: Params): string {
       try { SKEW.skewOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -59998,7 +60897,7 @@ function sv_SKEW(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SMA(p: Params): string {
@@ -60034,6 +60933,8 @@ function sv_SMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -60045,6 +60946,10 @@ function sv_SMA(p: Params): string {
       try { SMA.smaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -60163,7 +61068,7 @@ function sv_SMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SMI(p: Params): string {
@@ -60204,6 +61109,8 @@ function sv_SMI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -60217,6 +61124,11 @@ function sv_SMI(p: Params): string {
       try { SMI.smiOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -60360,7 +61272,7 @@ function sv_SMI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SORTINO(p: Params): string {
@@ -60398,6 +61310,8 @@ function sv_SORTINO(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -60409,6 +61323,10 @@ function sv_SORTINO(p: Params): string {
       try { SORTINO.sortinoOpen(fz_c, { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -60527,7 +61445,7 @@ function sv_SORTINO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SQRT(p: Params): string {
@@ -60562,6 +61480,8 @@ function sv_SQRT(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -60573,6 +61493,10 @@ function sv_SQRT(p: Params): string {
       try { SQRT.sqrtOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -60686,7 +61610,7 @@ function sv_SQRT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SQZMOM(p: Params): string {
@@ -60728,6 +61652,8 @@ function sv_SQZMOM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -60739,6 +61665,11 @@ function sv_SQZMOM(p: Params): string {
       try { SQZMOM.sqzmomOpen({ high: fz_h, low: fz_l, close: fz_c }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashI32(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -60881,7 +61812,7 @@ function sv_SQZMOM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SSF(p: Params): string {
@@ -60918,6 +61849,8 @@ function sv_SSF(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).build(); }
@@ -60931,6 +61864,10 @@ function sv_SSF(p: Params): string {
       try { SSF.ssfOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61049,7 +61986,7 @@ function sv_SSF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_STC(p: Params): string {
@@ -61088,6 +62025,8 @@ function sv_STC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(30, svK).unstablePeriod(5, svK).build(); }
@@ -61101,6 +62040,10 @@ function sv_STC(p: Params): string {
       try { STC.stcOpen(fz_c, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61219,7 +62162,7 @@ function sv_STC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_STDDEV(p: Params): string {
@@ -61256,6 +62199,8 @@ function sv_STDDEV(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -61267,6 +62212,10 @@ function sv_STDDEV(p: Params): string {
       try { STDDEV.stddevOpen(fz_c, { timePeriod: optInTimePeriod, nbDev: optInNbDev, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61385,7 +62334,7 @@ function sv_STDDEV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_STOCH(p: Params): string {
@@ -61429,6 +62378,8 @@ function sv_STOCH(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -61442,6 +62393,11 @@ function sv_STOCH(p: Params): string {
       try { STOCH.stochOpen({ high: fz_h, low: fz_l, close: fz_c }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61585,7 +62541,7 @@ function sv_STOCH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_STOCHF(p: Params): string {
@@ -61626,6 +62582,8 @@ function sv_STOCHF(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -61639,6 +62597,11 @@ function sv_STOCHF(p: Params): string {
       try { STOCHF.stochfOpen({ high: fz_h, low: fz_l, close: fz_c }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61782,7 +62745,7 @@ function sv_STOCHF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_STOCHRSI(p: Params): string {
@@ -61824,6 +62787,8 @@ function sv_STOCHRSI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
@@ -61837,6 +62802,11 @@ function sv_STOCHRSI(p: Params): string {
       try { STOCHRSI.stochrsiOpen(fz_c, { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -61980,7 +62950,7 @@ function sv_STOCHRSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SUB(p: Params): string {
@@ -62015,6 +62985,8 @@ function sv_SUB(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -62026,6 +62998,10 @@ function sv_SUB(p: Params): string {
       try { SUB.subOpen(fz_c, fz_v, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -62139,7 +63115,7 @@ function sv_SUB(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SUM(p: Params): string {
@@ -62175,6 +63151,8 @@ function sv_SUM(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -62186,6 +63164,10 @@ function sv_SUM(p: Params): string {
       try { SUM.sumOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -62304,7 +63286,7 @@ function sv_SUM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SUPERTREND(p: Params): string {
@@ -62343,6 +63325,8 @@ function sv_SUPERTREND(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
@@ -62356,6 +63340,11 @@ function sv_SUPERTREND(p: Params): string {
       try { SUPERTREND.supertrendOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashI32(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -62498,7 +63487,7 @@ function sv_SUPERTREND(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SWAK_2PHP(p: Params): string {
@@ -62535,6 +63524,8 @@ function sv_SWAK_2PHP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(34, svK).build(); }
@@ -62548,6 +63539,10 @@ function sv_SWAK_2PHP(p: Params): string {
       try { SWAK_2PHP.swak2phpOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -62666,7 +63661,7 @@ function sv_SWAK_2PHP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SWAK_BP(p: Params): string {
@@ -62704,6 +63699,8 @@ function sv_SWAK_BP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(35, svK).build(); }
@@ -62717,6 +63714,10 @@ function sv_SWAK_BP(p: Params): string {
       try { SWAK_BP.swakBpOpen(fz_c, { timePeriod: optInTimePeriod, delta: optInDelta, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -62835,7 +63836,7 @@ function sv_SWAK_BP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SWAK_BUTTER(p: Params): string {
@@ -62872,6 +63873,8 @@ function sv_SWAK_BUTTER(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(32, svK).build(); }
@@ -62885,6 +63888,10 @@ function sv_SWAK_BUTTER(p: Params): string {
       try { SWAK_BUTTER.swakButterOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63003,7 +64010,7 @@ function sv_SWAK_BUTTER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SWAK_GAUSS(p: Params): string {
@@ -63040,6 +64047,8 @@ function sv_SWAK_GAUSS(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(31, svK).build(); }
@@ -63053,6 +64062,10 @@ function sv_SWAK_GAUSS(p: Params): string {
       try { SWAK_GAUSS.swakGaussOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63171,7 +64184,7 @@ function sv_SWAK_GAUSS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_SWAK_HP(p: Params): string {
@@ -63208,6 +64221,8 @@ function sv_SWAK_HP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(33, svK).build(); }
@@ -63221,6 +64236,10 @@ function sv_SWAK_HP(p: Params): string {
       try { SWAK_HP.swakHpOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63339,7 +64358,7 @@ function sv_SWAK_HP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_T3(p: Params): string {
@@ -63377,6 +64396,8 @@ function sv_T3(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(23, svK).build(); }
@@ -63390,6 +64411,10 @@ function sv_T3(p: Params): string {
       try { T3.t3Open(fz_c, { timePeriod: optInTimePeriod, vFactor: optInVFactor, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63508,7 +64533,7 @@ function sv_T3(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TAN(p: Params): string {
@@ -63543,6 +64568,8 @@ function sv_TAN(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -63554,6 +64581,10 @@ function sv_TAN(p: Params): string {
       try { TAN.tanOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63667,7 +64698,7 @@ function sv_TAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TANH(p: Params): string {
@@ -63702,6 +64733,8 @@ function sv_TANH(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -63713,6 +64746,10 @@ function sv_TANH(p: Params): string {
       try { TANH.tanhOpen(fz_c, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63826,7 +64863,7 @@ function sv_TANH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TEMA(p: Params): string {
@@ -63863,6 +64900,8 @@ function sv_TEMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -63876,6 +64915,10 @@ function sv_TEMA(p: Params): string {
       try { TEMA.temaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -63994,7 +65037,7 @@ function sv_TEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TRANGE(p: Params): string {
@@ -64029,6 +65072,8 @@ function sv_TRANGE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -64040,6 +65085,10 @@ function sv_TRANGE(p: Params): string {
       try { TRANGE.trangeOpen({ high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64153,7 +65202,7 @@ function sv_TRANGE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TRIMA(p: Params): string {
@@ -64189,6 +65238,8 @@ function sv_TRIMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -64200,6 +65251,10 @@ function sv_TRIMA(p: Params): string {
       try { TRIMA.trimaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64318,7 +65373,7 @@ function sv_TRIMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TRIX(p: Params): string {
@@ -64355,6 +65410,8 @@ function sv_TRIX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -64368,6 +65425,10 @@ function sv_TRIX(p: Params): string {
       try { TRIX.trixOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64486,7 +65547,7 @@ function sv_TRIX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TSF(p: Params): string {
@@ -64522,6 +65583,8 @@ function sv_TSF(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -64533,6 +65596,10 @@ function sv_TSF(p: Params): string {
       try { TSF.tsfOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64651,7 +65718,7 @@ function sv_TSF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TSI(p: Params): string {
@@ -64689,6 +65756,8 @@ function sv_TSI(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -64702,6 +65771,10 @@ function sv_TSI(p: Params): string {
       try { TSI.tsiOpen(fz_c, { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64820,7 +65893,7 @@ function sv_TSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_TYPPRICE(p: Params): string {
@@ -64855,6 +65928,8 @@ function sv_TYPPRICE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -64866,6 +65941,10 @@ function sv_TYPPRICE(p: Params): string {
       try { TYPPRICE.typpriceOpen({ high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -64979,7 +66058,7 @@ function sv_TYPPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ULTOSC(p: Params): string {
@@ -65017,6 +66096,8 @@ function sv_ULTOSC(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -65028,6 +66109,10 @@ function sv_ULTOSC(p: Params): string {
       try { ULTOSC.ultoscOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65146,7 +66231,7 @@ function sv_ULTOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VAR(p: Params): string {
@@ -65183,6 +66268,8 @@ function sv_VAR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -65194,6 +66281,10 @@ function sv_VAR(p: Params): string {
       try { VAR.varOpen(fz_c, { timePeriod: optInTimePeriod, nbDev: optInNbDev, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65312,7 +66403,7 @@ function sv_VAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VHF(p: Params): string {
@@ -65348,6 +66439,8 @@ function sv_VHF(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -65359,6 +66452,10 @@ function sv_VHF(p: Params): string {
       try { VHF.vhfOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65477,7 +66574,7 @@ function sv_VHF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VIDYA(p: Params): string {
@@ -65515,6 +66612,8 @@ function sv_VIDYA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(29, svK).build(); }
@@ -65528,6 +66627,10 @@ function sv_VIDYA(p: Params): string {
       try { VIDYA.vidyaOpen(fz_c, { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65646,7 +66749,7 @@ function sv_VIDYA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VORTEX(p: Params): string {
@@ -65683,6 +66786,8 @@ function sv_VORTEX(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -65694,6 +66799,11 @@ function sv_VORTEX(p: Params): string {
       try { VORTEX.vortexOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65837,7 +66947,7 @@ function sv_VORTEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VWAP(p: Params): string {
@@ -65872,6 +66982,8 @@ function sv_VWAP(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -65883,6 +66995,10 @@ function sv_VWAP(p: Params): string {
       try { VWAP.vwapOpen({ high: fz_h, low: fz_l, close: fz_c, volume: fz_v }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -65996,7 +67112,7 @@ function sv_VWAP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_VWMA(p: Params): string {
@@ -66032,6 +67148,8 @@ function sv_VWMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -66043,6 +67161,10 @@ function sv_VWMA(p: Params): string {
       try { VWMA.vwmaOpen(fz_c, { volume: fz_v }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -66161,7 +67283,7 @@ function sv_VWMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_WAD(p: Params): string {
@@ -66196,6 +67318,8 @@ function sv_WAD(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -66207,6 +67331,10 @@ function sv_WAD(p: Params): string {
       try { WAD.wadOpen({ high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -66320,7 +67448,7 @@ function sv_WAD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_WAVETREND(p: Params): string {
@@ -66360,6 +67488,8 @@ function sv_WAVETREND(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -66373,6 +67503,11 @@ function sv_WAVETREND(p: Params): string {
       try { WAVETREND.wavetrendOpen({ high: fz_h, low: fz_l, close: fz_c }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashF64(svHash, b1, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -66516,7 +67651,7 @@ function sv_WAVETREND(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_WCLPRICE(p: Params): string {
@@ -66551,6 +67686,8 @@ function sv_WCLPRICE(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -66562,6 +67699,10 @@ function sv_WCLPRICE(p: Params): string {
       try { WCLPRICE.wclpriceOpen({ high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -66675,7 +67816,7 @@ function sv_WCLPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_WILLR(p: Params): string {
@@ -66711,6 +67852,8 @@ function sv_WILLR(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -66722,6 +67865,10 @@ function sv_WILLR(p: Params): string {
       try { WILLR.willrOpen({ high: fz_h, low: fz_l, close: fz_c }, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -66840,7 +67987,7 @@ function sv_WILLR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_WMA(p: Params): string {
@@ -66876,6 +68023,8 @@ function sv_WMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -66887,6 +68036,10 @@ function sv_WMA(p: Params): string {
       try { WMA.wmaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -67005,7 +68158,7 @@ function sv_WMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ZIGZAG(p: Params): string {
@@ -67044,6 +68197,8 @@ function sv_ZIGZAG(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
@@ -67055,6 +68210,12 @@ function sv_ZIGZAG(p: Params): string {
       try { ZIGZAG.zigzagOpen({ high: fz_h, low: fz_l }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashI32(svHash, b1, nb.value);
+    svHash = fuzzHashI32(svHash, b2, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -67213,7 +68374,7 @@ function sv_ZIGZAG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function sv_ZLEMA(p: Params): string {
@@ -67250,6 +68411,8 @@ function sv_ZLEMA(p: Params): string {
   let rangeSites = 0;
   const zsign = [0];
   const rounds = 1;
+  let svEv = -1;
+  let svHash = 0n;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
     try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
@@ -67263,6 +68426,10 @@ function sv_ZLEMA(p: Params): string {
       try { ZLEMA.zlemaOpen(fz_c, { timePeriod: optInTimePeriod, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
     }
+    svEv = c2.emaVariation();
+    svHash = fuzzHashInit();
+    svHash = fuzzHashF64(svHash, b0, nb.value);
+    svHash = fuzzHashFin(svHash);
     fillChecked = 1;
     try {
       const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
@@ -67381,7 +68548,7 @@ function sv_ZLEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}${svDigest(svEv, beg.value, nb.value, svHash)}}`;
 }
 
 function handleStreamVerify(p: Params): string {

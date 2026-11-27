@@ -201,6 +201,18 @@ fn has_non_ge1_tap(func: &FuncDef, lookup: &dyn CalleeLookup) -> bool {
     }
 }
 
+/// The period-bank selector `stream_verify` overwrites with a ramp: its flat
+/// input index and the optional inputs bounding the ramp, or `-1`s.
+fn period_ramp(func: &FuncDef, lookup: &dyn CalleeLookup) -> [i64; 3] {
+    let resolved = func.resolved_for(Lang::C);
+    let Ok(StreamPlan::PeriodBank(pb)) = crate::streaming::validate_streamable(&resolved, lookup) else {
+        return [-1; 3];
+    };
+    let at = |v: Option<usize>| v.and_then(|i| i64::try_from(i).ok()).unwrap_or(-1);
+    let opt = |n: &str| at(func.optional_inputs.iter().position(|o| o.name == n));
+    [at(flat_inputs(func).iter().position(|(_, n)| *n == pb.period_input)), opt(&pb.min_param), opt(&pb.max_param)]
+}
+
 /// Build the whole `ta_stream_frame.h` for the streaming subset of `funcs`.
 pub fn render(funcs: &[FuncDef], lookup: &dyn CalleeLookup) -> String {
     let streaming: Vec<&FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
@@ -257,6 +269,7 @@ pub fn render(funcs: &[FuncDef], lookup: &dyn CalleeLookup) -> String {
          \x20  int                  nbOutput;\n\
          \x20  const int           *outIsInt;      /* from ta_variant_frame.h; per output, 1 = TA_Integer */\n\
          \x20  int                  nonGe1Tap;     /* 1 = a composed delay line has a tap that may be 0 bars deep */\n\
+         \x20  int                  periodRamp[3]; /* stream_verify's ramp: input, min and max optInput; -1 when none */\n\
          } TA_StreamEntry;\n\n",
     );
 
@@ -269,6 +282,7 @@ pub fn render(funcs: &[FuncDef], lookup: &dyn CalleeLookup) -> String {
         let n = &func.name;
         let nb_in = flat_inputs(func).len();
         let nb_opt = func.optional_inputs.len();
+        let ramp = period_ramp(func, lookup);
         let opt_ptr = if nb_opt == 0 {
             "NULL".to_string()
         } else {
@@ -277,9 +291,12 @@ pub fn render(funcs: &[FuncDef], lookup: &dyn CalleeLookup) -> String {
         let _ = writeln!(
             o,
             "   {{ \"{n}\", TA_{n}_SFrameOpen, TA_{n}_SFrameFill, TA_{n}_SFrameClose,\n\
-             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n}, {} }},",
+             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n}, {}, {{ {}, {}, {} }} }},",
             func.outputs.len(),
-            u8::from(has_non_ge1_tap(func, lookup))
+            u8::from(has_non_ge1_tap(func, lookup)),
+            ramp[0],
+            ramp[1],
+            ramp[2]
         );
     }
     o.push_str("};\n\n");

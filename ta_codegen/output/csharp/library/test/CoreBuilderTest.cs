@@ -138,7 +138,7 @@ public static class CoreBuilderTest
 
     /// <summary>C's TA_SetEMAVariation, per Core: a refused value leaves the
     /// builder as it was, two Cores answer by their own setting, and a stream
-    /// keeps the one it opened under.</summary>
+    /// a FIRST_BAR_SEED Core opens equals that Core's batch.</summary>
     private static void EmaVariationIsPerCoreAndFixedAtOpen()
     {
         Check(Core.Default.EmaVariation() == EMAVariation.SMA_SEED, "Core.Default is SMA_SEED");
@@ -184,7 +184,7 @@ public static class CoreBuilderTest
                 same = false;
             }
         }
-        Check(same, "an open stream keeps FIRST_BAR_SEED, bar for bar with the batch");
+        Check(same, "the stream equals the FIRST_BAR_SEED batch, bar for bar");
     }
 
     private static void MisuseThrows()

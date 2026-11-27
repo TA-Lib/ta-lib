@@ -305,8 +305,8 @@ fn test_frames_index_outputs_by_declaration_position() {
 fn stream_rows_flag_only_a_tap_that_may_be_zero_deep() {
     let funcs: Vec<ir::FuncDef> = ["gator", "adxr"].iter().map(|n| load_indicator(n).0).collect();
     let streamed = backends::stream_frame::render(&funcs, make_registry());
-    assert!(streamed.contains("TA_VOutIsInt_GATOR, 1 },"), "GATOR's row must carry nonGe1Tap 1");
-    assert!(streamed.contains("TA_VOutIsInt_ADXR, 0 },"), "ADXR's row must carry nonGe1Tap 0");
+    assert!(streamed.contains("TA_VOutIsInt_GATOR, 1, {"), "GATOR's row must carry nonGe1Tap 1");
+    assert!(streamed.contains("TA_VOutIsInt_ADXR, 0, {"), "ADXR's row must carry nonGe1Tap 0");
 }
 
 /// A cross-typed output pair is compared wherever it can actually alias, and

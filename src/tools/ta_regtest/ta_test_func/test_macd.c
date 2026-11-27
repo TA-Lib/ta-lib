@@ -102,6 +102,7 @@ typedef struct
    TA_Integer oneOfTheExpectedOutRealIndex2;
    TA_Real    oneOfTheExpectedOutReal2;
 
+   TA_MAType  maType[3]; /* MACDEXT only: fast, slow, signal */
 } TA_Test;
 
 typedef struct
@@ -124,13 +125,13 @@ static TA_Test tableTest[] =
    { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071) }, /* Histogram */
+                                                          0, (-1.9738)-(-2.7071), { 0 } }, /* Histogram */
 
    /* Test period inversion */
    { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071) }, /* Histogram */
+                                                          0, (-1.9738)-(-2.7071), { 0 } }, /* Histogram */
 
    /*******************************/
    /*   MACDEXT - MIMIC CLASSIC   */
@@ -138,7 +139,8 @@ static TA_Test tableTest[] =
    { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
-                                                          0, (-1.9738)-(-2.7071)}, /* Histogram */
+                                                          0, (-1.9738)-(-2.7071), /* Histogram */
+                                                          { TA_MAType_EMA, TA_MAType_EMA, TA_MAType_EMA } },
 
    /***************/
    /*   MACD FIX  */
@@ -146,17 +148,17 @@ static TA_Test tableTest[] =
    { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9519,  /* MACD */
                                                           0, -2.6865,  /* Signal */
-                                                          0, (-1.9519)-(-2.6865) }, /* Histogram */
+                                                          0, (-1.9519)-(-2.6865), { 0 } }, /* Histogram */
 
    { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8768, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8768)-(1.3533)}, /* Histogram */
+                                                        252-34,  (0.8768)-(1.3533), { 0 } }, /* Histogram */
    /* Test period inversion */
    { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8768, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8768)-(1.3533)} /* Histogram */
+                                                        252-34,  (0.8768)-(1.3533), { 0 } } /* Histogram */
 
 };
 
@@ -171,30 +173,41 @@ static TA_Test tableFirstBarSeed[] =
    { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33,
                                                           0, -1.2692,  /* MACD */
                                                           0, -1.7962,  /* Signal */
-                                                          0, (-1.2692)-(-1.7962) }, /* Histogram */
+                                                          0, (-1.2692)-(-1.7962), { 0 } }, /* Histogram */
    { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_SUCCESS,  33, 252-33,
                                                      252-34,  0.9040,  /* MACD */
                                                      252-34,  1.4046,  /* Signal */
-                                                     252-34,  (0.9040)-(1.4046) }, /* Histogram */
+                                                     252-34,  (0.9040)-(1.4046), { 0 } }, /* Histogram */
    { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33,
                                                           1, -1.0482,  /* MACD */
                                                           1, -1.6466,  /* Signal */
-                                                          1, (-1.0482)-(-1.6466) }, /* Histogram */
+                                                          1, (-1.0482)-(-1.6466), /* Histogram */
+                                                          { TA_MAType_EMA, TA_MAType_EMA, TA_MAType_EMA } },
+   { 0, TA_MACDEXT_TEST, 0, 251, 5, 14, 4, TA_SUCCESS,  16, 252-16,
+                                                          0, -1.0310,  /* MACD */
+                                                          0, -0.4671,  /* Signal */
+                                                          0, (-1.0310)-(-0.4671), /* Histogram */
+                                                          { TA_MAType_EMA, TA_MAType_EMA, TA_MAType_EMA } },
+   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33,
+                                                          0, -2.0140,  /* MACD */
+                                                          0, -3.5818,  /* Signal */
+                                                          0, (-2.0140)-(-3.5818), /* Histogram */
+                                                          { TA_MAType_DEMA, TA_MAType_EMA, TA_MAType_EMA } },
 
    { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.2185,  /* MACD */
                                                           0, -1.7119,  /* Signal */
-                                                          0, (-1.2185)-(-1.7119) }, /* Histogram */
+                                                          0, (-1.2185)-(-1.7119), { 0 } }, /* Histogram */
 
    { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)}, /* Histogram */
+                                                        252-34,  (0.8764)-(1.3533), { 0 } }, /* Histogram */
    /* Test period inversion */
    { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_SUCCESS, 33, 252-33,
                                                         252-34,  0.8764, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)} /* Histogram */
+                                                        252-34,  (0.8764)-(1.3533), { 0 } } /* Histogram */
 };
 
 #define NB_TEST_FIRST_BAR_SEED (sizeof(tableFirstBarSeed)/sizeof(TA_Test))
@@ -328,20 +341,20 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
                             endIdx,
                             testParam->close,
                             testParam->test->optInFastPeriod,
-                            TA_MAType_EMA,
+                            testParam->test->maType[0],
                             testParam->test->optInSlowPeriod,
-                            TA_MAType_EMA,
+                            testParam->test->maType[1],
                             testParam->test->optInSignalPeriod_2,
-                            TA_MAType_EMA,
+                            testParam->test->maType[2],
                             outBegIdx, outNbElement,
                             out1, out2, out3 );
 
       *lookback = TA_MACDEXT_Lookback( testParam->test->optInFastPeriod,
-                                       TA_MAType_EMA,
+                                       testParam->test->maType[0],
                                        testParam->test->optInSlowPeriod,
-                                       TA_MAType_EMA,
+                                       testParam->test->maType[1],
                                        testParam->test->optInSignalPeriod_2,
-                                       TA_MAType_EMA );
+                                       testParam->test->maType[2] );
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -409,11 +422,11 @@ static ErrorNumber do_test( const TA_History *history,
                             test->endIdx,
                             gBuffer[0].in,
                             test->optInFastPeriod,
-                            TA_MAType_EMA,
+                            test->maType[0],
                             test->optInSlowPeriod,
-                            TA_MAType_EMA,
+                            test->maType[1],
                             test->optInSignalPeriod_2,
-                            TA_MAType_EMA,
+                            test->maType[2],
                             &outBegIdx, &outNbElement,
                             gBuffer[0].out0,
                             gBuffer[0].out1,
@@ -453,11 +466,11 @@ static ErrorNumber do_test( const TA_History *history,
       case TA_MACDEXT_TEST:
          funcName = "MACDEXT";
          optBuf[0] = (double)test->optInFastPeriod;
-         optBuf[1] = (double)TA_MAType_EMA;
+         optBuf[1] = (double)test->maType[0];
          optBuf[2] = (double)test->optInSlowPeriod;
-         optBuf[3] = (double)TA_MAType_EMA;
+         optBuf[3] = (double)test->maType[1];
          optBuf[4] = (double)test->optInSignalPeriod_2;
-         optBuf[5] = (double)TA_MAType_EMA;
+         optBuf[5] = (double)test->maType[2];
          nbOpt = 6;
          break;
       default:
@@ -510,11 +523,11 @@ static ErrorNumber do_test( const TA_History *history,
                             test->endIdx,
                             gBuffer[1].in,
                             test->optInFastPeriod,
-                            TA_MAType_EMA,
+                            test->maType[0],
                             test->optInSlowPeriod,
-                            TA_MAType_EMA,
+                            test->maType[1],
                             test->optInSignalPeriod_2,
-                            TA_MAType_EMA,
+                            test->maType[2],
                             &outBegIdx, &outNbElement,
                             gBuffer[1].in,
                             gBuffer[1].out1,
@@ -575,11 +588,11 @@ static ErrorNumber do_test( const TA_History *history,
                             test->endIdx,
                             gBuffer[2].in,
                             test->optInFastPeriod,
-                            TA_MAType_EMA,
+                            test->maType[0],
                             test->optInSlowPeriod,
-                            TA_MAType_EMA,
+                            test->maType[1],
                             test->optInSignalPeriod_2,
-                            TA_MAType_EMA,
+                            test->maType[2],
                             &outBegIdx, &outNbElement,
                             gBuffer[2].out1,
                             gBuffer[2].in,
@@ -636,11 +649,11 @@ static ErrorNumber do_test( const TA_History *history,
                             test->endIdx,
                             gBuffer[3].in,
                             test->optInFastPeriod,
-                            TA_MAType_EMA,
+                            test->maType[0],
                             test->optInSlowPeriod,
-                            TA_MAType_EMA,
+                            test->maType[1],
                             test->optInSignalPeriod_2,
-                            TA_MAType_EMA,
+                            test->maType[2],
                             &outBegIdx, &outNbElement,
                             gBuffer[3].out1,
                             gBuffer[3].out2,

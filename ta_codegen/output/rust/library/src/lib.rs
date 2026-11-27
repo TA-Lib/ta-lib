@@ -42,7 +42,7 @@
 //!   A range that ends before the lookback is a **success with no values**, not an error.
 //!
 //! [`Core`] is immutable after construction: its per-instance settings — unstable
-//! period and candlestick thresholds — are chosen up front with
+//! period, EMA variation and candlestick thresholds — are chosen up front with
 //! [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
 //! can be shared read-only across threads (e.g. via `Arc`) with no locking:
 //!

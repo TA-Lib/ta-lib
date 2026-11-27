@@ -165,6 +165,8 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     l.line("rounds := 1");
     if candle {
         l.guard("candleLegs != 0", &["rounds = 5"]);
+    } else {
+        l.line("svEv, svHash := -1, uint64(0)");
     }
     l.open("for rd := 0; rd < rounds; rd++ {");
     l.line("core := *s.core");
@@ -221,6 +223,17 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     }
     l.close("}");
 
+    // The batch's digest and the Core's EMA variation, which the driver holds
+    // to in-process C under the same setting.
+    if !candle {
+        l.line("svEv = int(c2.EMAVariation())");
+        l.line("svHash = fuzzHashInit()");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let f = if *is_int { "fuzzHashI32" } else { "fuzzHashF64" };
+            l.line(format!("svHash = {f}(svHash, b{i}[:nb])"));
+        }
+        l.line("svHash = fuzzHashFin(svHash)");
+    }
     // OpenAndFill leg: the fill against batch, the canary slack above it, and
     // the aliasing rejections.
     l.line("fillChecked = 1");
@@ -495,10 +508,12 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let mut tail = String::new();
     let _ = write!(
         tail,
-        "return fmt.Sprintf({}, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)",
+        "return fmt.Sprintf({}, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag{})",
         raw(&format!(
-            r#"{{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":{SV_RANGE_MASK_GO},"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}}"#
-        ))
+            r#"{{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":{SV_RANGE_MASK_GO},"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s{}}}"#,
+            if candle { "" } else { "%s" }
+        )),
+        if candle { "" } else { ", svDigest(svEv, beg, nb, svHash)" }
     );
     l.line(tail);
     l.close("}");
@@ -510,6 +525,7 @@ fn emit_go_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
 /// unknown names (TA_STREAM_PROBE included) answer `not_streamable`.
 pub(crate) fn generate_go_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::from(SV_GO_SUPPORT);
+    s.push_str("\nfunc svDigest(ev, beg, nb int, h uint64) string {\n\treturn fmt.Sprintf(`,\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016x\"`, ev, beg, nb, h)\n}\n");
     let lookup = crate::streaming::FuncsLookup(funcs);
     let emitted: Vec<&FuncDef> = funcs.iter().filter(|f| crate::backends::go_stream::emits_stream(f, &lookup)).collect();
     s.push_str("\nfunc (s *server) streamVerify(p params) string {\n\tswitch p.str(\"funcName\") {\n");

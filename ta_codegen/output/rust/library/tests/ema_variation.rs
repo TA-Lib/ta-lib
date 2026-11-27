@@ -1,5 +1,5 @@
 //! C's TA_SetEMAVariation on one Core: each Core answers by its own setting,
-//! and a stream keeps the one it opened under. An unknown value is not
+//! and a stream it opens equals its batch. An unknown value is not
 //! representable on the builder; `EMAVariation::try_from` refuses it.
 
 use ta_lib::{Core, EMAVariation, RetCode};
@@ -11,7 +11,7 @@ fn series(n: usize) -> Vec<f64> {
 }
 
 #[test]
-fn each_core_answers_by_its_own_ema_variation_and_a_stream_keeps_its_own() {
+fn each_core_answers_by_its_own_ema_variation_and_its_stream_equals_its_batch() {
     assert_eq!(Core::new().ema_variation(), EMAVariation::SMA_SEED);
     assert_eq!(EMAVariation::try_from(2), Err(RetCode::BadParam));
     assert_eq!(EMAVariation::try_from(-1), Err(RetCode::BadParam));

@@ -995,9 +995,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PSO_OpenImpl( struct TA_PSO_Stream **str
        * to 6.0e-16 absolute in doubles, which no golden at a sane tolerance can
        * see; only the composite gate against TA_STOCHF + TA_EMA + TA_EMA can.
        *
-       * Each pass seeds the way ema.c does -- a simple average of that pass's
-       * first optInEMAPeriod inputs, summed from 0.0 in production order -- so
-       * the result is bit-identical to that composed chain. The stage boundary
+       * Each pass seeds the way ema.c does -- by default a simple average of that
+       * pass's first optInEMAPeriod inputs, summed from 0.0 in production order --
+       * so the result is bit-identical to that composed chain. The stage boundary
        * below is the callee LOOKBACK, not (period-1), so that a warm
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second pass then
        * seeds from the values the first would have published, exactly as the

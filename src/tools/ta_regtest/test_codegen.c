@@ -2587,6 +2587,7 @@ typedef struct {
     int               streamFunctions;
     int               streamEmaFunctions; /* streaming functions FIRST_BAR_SEED moves */
     long long         streamEmaLegs;      /* their requests under it that ran a leg */
+    long long         streamEmaDigests;   /* of those, the ones whose batch digest C held */
     int               streamLegs;
     int               streamSkipped;
     int               streamRejectArms;
@@ -3336,7 +3337,7 @@ static void run_float_leg(CodegenRangeTestParam *p, int withSentinel)
  * value of its list. The EMA-variation passes of the sweep, the stream legs
  * and --xlang-hash run on these functions only, so a function that starts
  * reading the setting joins them without a list to edit. */
-static int codegen_ema_variation_moves(const TA_FuncInfo *fi, const TA_History *history)
+int codegen_ema_variation_moves(const TA_FuncInfo *fi, const TA_History *history)
 {
     static TA_Real    r[2][MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
     static TA_Integer n[2][MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
@@ -4160,6 +4161,124 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
     return nvec;
 }
 
+static unsigned long long xlang_parse_hash(const char *resp, const char *field, int *present);
+
+/* A stream_verify request under FIRST_BAR_SEED reports the EMA variation its
+ * round's Core held and a digest of the batch its legs were compared against;
+ * both are held to the in-process library under the same setting, on the
+ * inputs the server generated. Without this a round that built its Core under
+ * the default compares a default stream to a default batch and passes. The
+ * digest of a transcendental call is not compared on a tolerance-lane server.
+ * *moved is set when the setting moves in-process C's batch on these inputs.
+ * Returns 0 on a mismatch, after printing it. */
+#define SV_EV_MAXN 256
+static int stream_ev_round_holds(const ForEachFuncContext *ctx, const TA_FuncInfo *fi,
+                                 const double *vec, int shape, int seed, int n,
+                                 int *hashCompared, int *moved)
+{
+    static double fz[6][SV_EV_MAXN], ramp[SV_EV_MAXN];
+    static TA_Real    outR[MAX_OUTPUTS][SV_EV_MAXN];
+    static TA_Integer outI[MAX_OUTPUTS][SV_EV_MAXN];
+    static const char *const comp[6] = { "inOpen", "inHigh", "inLow", "inClose", "inVolume", "inOpenInterest" };
+    const TA_StreamEntry *se = xlang_stream_entry(fi->name);
+    const char *resp = ctx->responseBuf;
+    const void *bufs[MAX_OUTPUTS];
+    int isInt[MAX_OUTPUTS];
+    TA_ParamHolder *h = NULL;
+    TA_Integer beg = 0, nb = 0;
+    TA_RetCode rc;
+    unsigned long long hash, got, dflt;
+    unsigned int i;
+    int flat = 0, generic = 0, present = 0, t, c;
+
+    *hashCompared = 0;
+    *moved = 0;
+    if( !strstr(resp, "\"ema_variation\":") || json_get_int(resp, "ema_variation") != (int)TA_EMAVariation_FIRST_BAR_SEED )
+    {
+        printf("STREAM EMA VARIATION [TA_%s]: the round's Core did not report FIRST_BAR_SEED\n"
+               "  request:  %s\n  response: %s\n", fi->name, ctx->requestBuf, resp);
+        return 0;
+    }
+    if( n > SV_EV_MAXN || fi->nbOutput > MAX_OUTPUTS || TA_ParamHolderAlloc(fi->handle, &h) != TA_SUCCESS )
+        return 0;
+    fuzz_gen(shape, seed, n, fz[0], fz[1], fz[2], fz[3], fz[4], fz[5]);
+    for( i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Price )
+        {
+            static const TA_InputFlags flag[6] = { TA_IN_PRICE_OPEN, TA_IN_PRICE_HIGH, TA_IN_PRICE_LOW,
+                                                   TA_IN_PRICE_CLOSE, TA_IN_PRICE_VOLUME, TA_IN_PRICE_OPENINTEREST };
+            for( c = 0; c < 6; c++ ) flat += (ii->flags & flag[c]) != 0;
+            TA_SetInputParamPricePtr(h, i, fz[0], fz[1], fz[2], fz[3], fz[4], fz[5]);
+            continue;
+        }
+        {
+            const double *a = NULL;
+            for( c = 0; c < 6 && !a; c++ )
+                if( strcmp(ii->paramName, comp[c]) == 0 ) a = fz[c];
+            if( !a ) a = generic++ == 0 ? fz[3] : fz[4];
+            if( se && se->periodRamp[0] == flat )
+            {
+                int lo = (int)vec[se->periodRamp[1]], hi = (int)vec[se->periodRamp[2]];
+                for( t = 0; t < n; t++ ) ramp[t] = (double)(lo + (t % (hi - lo + 3)) - 1);
+                a = ramp;
+            }
+            TA_SetInputParamRealPtr(h, i, a);
+            flat++;
+        }
+    }
+    for( i = 0; i < fi->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            TA_SetOptInputParamReal(h, i, vec[i]);
+        else
+            TA_SetOptInputParamInteger(h, i, (TA_Integer)vec[i]);
+    }
+    for( i = 0; i < fi->nbOutput; i++ )
+    {
+        const TA_OutputParameterInfo *oo;
+        TA_GetOutputParameterInfo(fi->handle, i, &oo);
+        isInt[i] = oo->type == TA_Output_Integer;
+        bufs[i] = isInt[i] ? (const void *)outI[i] : (const void *)outR[i];
+        if( isInt[i] ) TA_SetOutputParamIntegerPtr(h, i, outI[i]);
+        else           TA_SetOutputParamRealPtr(h, i, outR[i]);
+    }
+    rc = TA_CallFunc(h, 0, n - 1, &beg, &nb);
+    dflt = codegen_output_hash(fi->nbOutput, isInt, bufs, rc == TA_SUCCESS ? nb : 0);
+    TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+    rc = TA_CallFunc(h, 0, n - 1, &beg, &nb);
+    TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+    TA_ParamHolderFree(h);
+    hash = codegen_output_hash(fi->nbOutput, isInt, bufs, rc == TA_SUCCESS ? nb : 0);
+    *moved = hash != dflt;
+    got = xlang_parse_hash(resp, "batch_hash", &present);
+    if( rc != TA_SUCCESS || !present || json_get_int(resp, "batch_beg") != beg
+        || json_get_int(resp, "batch_nb") != nb )
+    {
+        printf("STREAM EMA VARIATION [TA_%s]: the round's batch is (%d, %d), in-process C under "
+               "FIRST_BAR_SEED (%d, %d) rc=%d\n  request:  %s\n  response: %s\n", fi->name,
+               json_get_int(resp, "batch_beg"), json_get_int(resp, "batch_nb"), beg, nb, (int)rc,
+               ctx->requestBuf, resp);
+        return 0;
+    }
+    if( codegen_lang_transcendental_tol(ctx->lang->name) > 0.0
+        && codegen_call_is_transcendental(fi->handle, vec, (int)fi->nbOptInput) )
+        return 1;
+    *hashCompared = 1;
+    if( got != hash )
+    {
+        printf("STREAM EMA VARIATION [TA_%s]: the round's batch digest %016llx is not in-process "
+               "C's under FIRST_BAR_SEED, %016llx\n  request:  %s\n  response: %s\n", fi->name,
+               got, hash, ctx->requestBuf, resp);
+        return 0;
+    }
+    return 1;
+}
+
 static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 {
     ForEachFuncContext *ctx = (ForEachFuncContext *)opaqueData;
@@ -4186,7 +4305,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int cloneLegs = 0;     /* fork legs it ran */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     long long vmath = 0;   /* pairs the server held by fuzz_vmath_near */
-    int isUnstable, evMoves, evLegs = 0;
+    int isUnstable, evMoves, evLegs = 0, evHashCmp = 0, evMovedLegs = 0;
     static char evResp[JSON_BUF_SIZE];
 
     if( ctx->error != TA_TEST_PASS ) return;
@@ -4237,7 +4356,9 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 /* Under TA_EMAVariation_FIRST_BAR_SEED, which the server applies
                  * to the batch and every stream of the request: the defaults
-                 * and every enum-sweep vector, for a function it moves. */
+                 * and every enum-sweep vector, for a function it moves, on
+                 * RANDWALK and the monotone shapes, since no seed moves an
+                 * average of a flat series. */
                 if( !evMoves || !(v == 0 || vecIsEnum[v]) ) continue;
                 if( !codegen_set_ema_variation(ctx->cp, 1, evResp) )
                 {
@@ -4302,7 +4423,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * MONO_DOWN, and the MONO_DOWN leg is the one that caught a
              * one-bar ring rotation for it. g_streamShapeSeen is the standing
              * floor on that: the mapping below must reach every shape. */
-            shape = evPass ? (v + 3) % 7 : autoPass ? (v + 1) % 7
+            shape = evPass ? v % 3 : autoPass ? (v + 1) % 7
                   : (variant >= 2) ? (variant - 1) : (v + variant) % 7;
             if( shape >= 0 && shape < FUZZ_NSHAPES )
                 g_streamShapeSeen[shape] = 1;
@@ -4323,7 +4444,19 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
                 if( !json_is_error(ctx->responseBuf)
                     && stream_flag(ctx->responseBuf, "\"legs\":") > 0 )
+                {
+                    int compared = 0, moved = 0;
                     evLegs++;
+                    if( !stream_ev_round_holds(ctx, funcInfo, vec[v], shape, 1234 + v * 7 + variant,
+                                               STREAM_N, &compared, &moved) )
+                    {
+                        ctx->failed++;
+                        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                        return;
+                    }
+                    evHashCmp += compared;
+                    evMovedLegs += moved;
+                }
             }
             if( pipeErr != TA_TEST_PASS )
             {
@@ -4641,10 +4774,12 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamLegs += legs;
     ctx->streamEmaFunctions += evMoves;
     ctx->streamEmaLegs += evLegs;
-    if( evMoves && evLegs == 0 && ctx->error == TA_TEST_PASS )
+    ctx->streamEmaDigests += evHashCmp;
+    if( evMoves && (evLegs == 0 || evMovedLegs == 0) && ctx->error == TA_TEST_PASS )
     {
         printf("STREAM EMA VARIATION VACUOUS [TA_%s]: FIRST_BAR_SEED moves its batch "
-               "output and no stream request under it ran a leg\n", funcInfo->name);
+               "output, and of %d stream request(s) under it none ran a leg on inputs "
+               "it moves\n", funcInfo->name, evLegs);
         ctx->failed++;
         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
     }
@@ -5713,10 +5848,11 @@ static ErrorNumber test_codegen_for_language(
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL && ctx.streamFunctions > 0
-                && (ctx.streamEmaFunctions == 0 || ctx.streamEmaLegs == 0) )
+                && (ctx.streamEmaFunctions == 0 || ctx.streamEmaLegs == 0 || ctx.streamEmaDigests == 0) )
             {
                 printf("STREAM EMA VARIATION VACUOUS: %d function(s), %lld request(s) under "
-                       "FIRST_BAR_SEED\n", ctx.streamEmaFunctions, ctx.streamEmaLegs);
+                       "FIRST_BAR_SEED, %lld batch digest(s) compared\n", ctx.streamEmaFunctions,
+                       ctx.streamEmaLegs, ctx.streamEmaDigests);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* An Auto lookback longer than the series compares nothing. */
@@ -7552,9 +7688,14 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
             }
     }
     if( member.metastock )
+    {
+        int msRan = 0;
+        for( i = 0; i < REF_MS_NB_ORACLE; i++ )
+            msRan += ctx.msOracleCompared[i] > 0;
         printf("MetaStock: %lld case(s) against %s's TA_COMPATIBILITY_METASTOCK under "
                "TA_EMAVariation_FIRST_BAR_SEED, over %d function(s); %d excluded\n",
-               ctx.msCases, member.libVersion, REF_MS_NB_ORACLE, REF_MS_NB_EXCLUDED);
+               ctx.msCases, member.libVersion, msRan, REF_MS_NB_EXCLUDED);
+    }
     if( ctx.comparisons == 0 )
     {
         printf("FAIL: zero comparisons (broken %s or over-narrow filter?)\n", serve + 2);

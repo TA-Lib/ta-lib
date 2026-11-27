@@ -5751,6 +5751,10 @@ func svCandleRound(c *talib.Core, rd int) {
 	}
 }
 
+func svDigest(ev, beg, nb int, h uint64) string {
+	return fmt.Sprintf(`,"ema_variation":%d,"batch_beg":%d,"batch_nb":%d,"batch_hash":"%016x"`, ev, beg, nb, h)
+}
+
 func (s *server) streamVerify(p params) string {
 	switch p.str("funcName") {
 	case "TA_AC":
@@ -6282,6 +6286,7 @@ func svAC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -6302,6 +6307,10 @@ func svAC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -6588,7 +6597,7 @@ func svAC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svACCBANDS(s *server, p params) string {
@@ -6624,6 +6633,7 @@ func svACCBANDS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -6644,6 +6654,12 @@ func svACCBANDS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -7095,7 +7111,7 @@ func svACCBANDS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svACOS(s *server, p params) string {
@@ -7128,6 +7144,7 @@ func svACOS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -7148,6 +7165,10 @@ func svACOS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -7434,7 +7455,7 @@ func svACOS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAD(s *server, p params) string {
@@ -7467,6 +7488,7 @@ func svAD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -7487,6 +7509,10 @@ func svAD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -7773,7 +7799,7 @@ func svAD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svADD(s *server, p params) string {
@@ -7806,6 +7832,7 @@ func svADD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -7826,6 +7853,10 @@ func svADD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -8112,7 +8143,7 @@ func svADD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svADOSC(s *server, p params) string {
@@ -8148,6 +8179,7 @@ func svADOSC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -8171,6 +8203,10 @@ func svADOSC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -8457,7 +8493,7 @@ func svADOSC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svADR(s *server, p params) string {
@@ -8491,6 +8527,7 @@ func svADR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -8511,6 +8548,10 @@ func svADR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -8797,7 +8838,7 @@ func svADR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svADX(s *server, p params) string {
@@ -8832,6 +8873,7 @@ func svADX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -8855,6 +8897,10 @@ func svADX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -9141,7 +9187,7 @@ func svADX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svADXR(s *server, p params) string {
@@ -9176,6 +9222,7 @@ func svADXR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -9199,6 +9246,10 @@ func svADXR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -9485,7 +9536,7 @@ func svADXR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svALLIGATOR(s *server, p params) string {
@@ -9527,6 +9578,7 @@ func svALLIGATOR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -9550,6 +9602,12 @@ func svALLIGATOR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -10001,7 +10059,7 @@ func svALLIGATOR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svALMA(s *server, p params) string {
@@ -10037,6 +10095,7 @@ func svALMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -10057,6 +10116,10 @@ func svALMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -10343,7 +10406,7 @@ func svALMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAO(s *server, p params) string {
@@ -10378,6 +10441,7 @@ func svAO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -10398,6 +10462,10 @@ func svAO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -10684,7 +10752,7 @@ func svAO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAPO(s *server, p params) string {
@@ -10721,6 +10789,7 @@ func svAPO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -10762,6 +10831,10 @@ func svAPO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -11048,7 +11121,7 @@ func svAPO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAROON(s *server, p params) string {
@@ -11083,6 +11156,7 @@ func svAROON(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -11103,6 +11177,11 @@ func svAROON(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -11473,7 +11552,7 @@ func svAROON(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAROONOSC(s *server, p params) string {
@@ -11507,6 +11586,7 @@ func svAROONOSC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -11527,6 +11607,10 @@ func svAROONOSC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -11813,7 +11897,7 @@ func svAROONOSC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svASI(s *server, p params) string {
@@ -11847,6 +11931,7 @@ func svASI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -11867,6 +11952,10 @@ func svASI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -12153,7 +12242,7 @@ func svASI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svASIN(s *server, p params) string {
@@ -12186,6 +12275,7 @@ func svASIN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -12206,6 +12296,10 @@ func svASIN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -12492,7 +12586,7 @@ func svASIN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svATAN(s *server, p params) string {
@@ -12525,6 +12619,7 @@ func svATAN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -12545,6 +12640,10 @@ func svATAN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -12831,7 +12930,7 @@ func svATAN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svATR(s *server, p params) string {
@@ -12866,6 +12965,7 @@ func svATR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -12889,6 +12989,10 @@ func svATR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -13175,7 +13279,7 @@ func svATR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAVGDEV(s *server, p params) string {
@@ -13209,6 +13313,7 @@ func svAVGDEV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -13229,6 +13334,10 @@ func svAVGDEV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -13515,7 +13624,7 @@ func svAVGDEV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svAVGPRICE(s *server, p params) string {
@@ -13548,6 +13657,7 @@ func svAVGPRICE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -13568,6 +13678,10 @@ func svAVGPRICE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -13854,7 +13968,7 @@ func svAVGPRICE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svBBANDS(s *server, p params) string {
@@ -13894,6 +14008,7 @@ func svBBANDS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -13935,6 +14050,12 @@ func svBBANDS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -14386,7 +14507,7 @@ func svBBANDS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svBBW(s *server, p params) string {
@@ -14424,6 +14545,7 @@ func svBBW(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -14465,6 +14587,10 @@ func svBBW(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -14751,7 +14877,7 @@ func svBBW(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svBETA(s *server, p params) string {
@@ -14785,6 +14911,7 @@ func svBETA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -14805,6 +14932,10 @@ func svBETA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -15091,7 +15222,7 @@ func svBETA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svBOP(s *server, p params) string {
@@ -15124,6 +15255,7 @@ func svBOP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -15144,6 +15276,10 @@ func svBOP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -15430,7 +15566,7 @@ func svBOP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCCI(s *server, p params) string {
@@ -15464,6 +15600,7 @@ func svCCI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -15484,6 +15621,10 @@ func svCCI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -15770,7 +15911,7 @@ func svCCI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCDL2CROWS(s *server, p params) string {
@@ -36981,6 +37122,7 @@ func svCE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -37004,6 +37146,11 @@ func svCE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -37374,7 +37521,7 @@ func svCE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCEIL(s *server, p params) string {
@@ -37407,6 +37554,7 @@ func svCEIL(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -37427,6 +37575,10 @@ func svCEIL(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -37713,7 +37865,7 @@ func svCEIL(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCG(s *server, p params) string {
@@ -37747,6 +37899,7 @@ func svCG(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -37767,6 +37920,10 @@ func svCG(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -38053,7 +38210,7 @@ func svCG(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCHOP(s *server, p params) string {
@@ -38087,6 +38244,7 @@ func svCHOP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -38107,6 +38265,10 @@ func svCHOP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -38393,7 +38555,7 @@ func svCHOP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCHOPTR(s *server, p params) string {
@@ -38427,6 +38589,7 @@ func svCHOPTR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -38447,6 +38610,10 @@ func svCHOPTR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -38733,7 +38900,7 @@ func svCHOPTR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCKSP(s *server, p params) string {
@@ -38771,6 +38938,7 @@ func svCKSP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -38794,6 +38962,11 @@ func svCKSP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -39164,7 +39337,7 @@ func svCKSP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCMF(s *server, p params) string {
@@ -39198,6 +39371,7 @@ func svCMF(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -39218,6 +39392,10 @@ func svCMF(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -39504,7 +39682,7 @@ func svCMF(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCMO(s *server, p params) string {
@@ -39539,6 +39717,7 @@ func svCMO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -39562,6 +39741,10 @@ func svCMO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -39848,7 +40031,7 @@ func svCMO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCMOU(s *server, p params) string {
@@ -39882,6 +40065,7 @@ func svCMOU(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -39902,6 +40086,10 @@ func svCMOU(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -40188,7 +40376,7 @@ func svCMOU(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCOPPOCK(s *server, p params) string {
@@ -40224,6 +40412,7 @@ func svCOPPOCK(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -40244,6 +40433,10 @@ func svCOPPOCK(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -40530,7 +40723,7 @@ func svCOPPOCK(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCORREL(s *server, p params) string {
@@ -40564,6 +40757,7 @@ func svCORREL(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -40584,6 +40778,10 @@ func svCORREL(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -40870,7 +41068,7 @@ func svCORREL(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCOS(s *server, p params) string {
@@ -40903,6 +41101,7 @@ func svCOS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -40923,6 +41122,10 @@ func svCOS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -41209,7 +41412,7 @@ func svCOS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCOSH(s *server, p params) string {
@@ -41242,6 +41445,7 @@ func svCOSH(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -41262,6 +41466,10 @@ func svCOSH(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -41548,7 +41756,7 @@ func svCOSH(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCRSI(s *server, p params) string {
@@ -41585,6 +41793,7 @@ func svCRSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -41608,6 +41817,10 @@ func svCRSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -41894,7 +42107,7 @@ func svCRSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCTI(s *server, p params) string {
@@ -41928,6 +42141,7 @@ func svCTI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -41948,6 +42162,10 @@ func svCTI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -42234,7 +42452,7 @@ func svCTI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCUMSUM(s *server, p params) string {
@@ -42267,6 +42485,7 @@ func svCUMSUM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -42287,6 +42506,10 @@ func svCUMSUM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -42573,7 +42796,7 @@ func svCUMSUM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svCVI(s *server, p params) string {
@@ -42609,6 +42832,7 @@ func svCVI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -42632,6 +42856,10 @@ func svCVI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -42918,7 +43146,7 @@ func svCVI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDEMA(s *server, p params) string {
@@ -42953,6 +43181,7 @@ func svDEMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -42976,6 +43205,10 @@ func svDEMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -43262,7 +43495,7 @@ func svDEMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDIV(s *server, p params) string {
@@ -43295,6 +43528,7 @@ func svDIV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -43315,6 +43549,10 @@ func svDIV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -43601,7 +43839,7 @@ func svDIV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDONCHIAN(s *server, p params) string {
@@ -43637,6 +43875,7 @@ func svDONCHIAN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -43657,6 +43896,12 @@ func svDONCHIAN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -44108,7 +44353,7 @@ func svDONCHIAN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDOSC(s *server, p params) string {
@@ -44146,6 +44391,7 @@ func svDOSC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -44172,6 +44418,10 @@ func svDOSC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -44458,7 +44708,7 @@ func svDOSC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDPO(s *server, p params) string {
@@ -44492,6 +44742,7 @@ func svDPO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -44512,6 +44763,10 @@ func svDPO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -44798,7 +45053,7 @@ func svDPO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svDX(s *server, p params) string {
@@ -44833,6 +45088,7 @@ func svDX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -44856,6 +45112,10 @@ func svDX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -45142,7 +45402,7 @@ func svDX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svEFI(s *server, p params) string {
@@ -45177,6 +45437,7 @@ func svEFI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -45200,6 +45461,10 @@ func svEFI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -45486,7 +45751,7 @@ func svEFI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svEMA(s *server, p params) string {
@@ -45521,6 +45786,7 @@ func svEMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -45544,6 +45810,10 @@ func svEMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -45830,7 +46100,7 @@ func svEMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svEMV(s *server, p params) string {
@@ -45865,6 +46135,7 @@ func svEMV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -45885,6 +46156,10 @@ func svEMV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -46171,7 +46446,7 @@ func svEMV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svER(s *server, p params) string {
@@ -46205,6 +46480,7 @@ func svER(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -46225,6 +46501,10 @@ func svER(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -46511,7 +46791,7 @@ func svER(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svERI(s *server, p params) string {
@@ -46547,6 +46827,7 @@ func svERI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -46570,6 +46851,11 @@ func svERI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -46940,7 +47226,7 @@ func svERI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svEXP(s *server, p params) string {
@@ -46973,6 +47259,7 @@ func svEXP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -46993,6 +47280,10 @@ func svEXP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -47279,7 +47570,7 @@ func svEXP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svFISHER(s *server, p params) string {
@@ -47315,6 +47606,7 @@ func svFISHER(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -47338,6 +47630,11 @@ func svFISHER(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -47708,7 +48005,7 @@ func svFISHER(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svFLOOR(s *server, p params) string {
@@ -47741,6 +48038,7 @@ func svFLOOR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -47761,6 +48059,10 @@ func svFLOOR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -48047,7 +48349,7 @@ func svFLOOR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svFOSC(s *server, p params) string {
@@ -48081,6 +48383,7 @@ func svFOSC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -48101,6 +48404,10 @@ func svFOSC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -48387,7 +48694,7 @@ func svFOSC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svFRACTAL(s *server, p params) string {
@@ -48423,6 +48730,7 @@ func svFRACTAL(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -48443,6 +48751,11 @@ func svFRACTAL(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashI32(svHash, b0[:nb])
+		svHash = fuzzHashI32(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryI(svN)
@@ -48807,7 +49120,7 @@ func svFRACTAL(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svFRAMA(s *server, p params) string {
@@ -48842,6 +49155,7 @@ func svFRAMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -48865,6 +49179,10 @@ func svFRAMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -49151,7 +49469,7 @@ func svFRAMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svGATOR(s *server, p params) string {
@@ -49192,6 +49510,7 @@ func svGATOR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -49215,6 +49534,11 @@ func svGATOR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -49585,7 +49909,7 @@ func svGATOR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHA(s *server, p params) string {
@@ -49622,6 +49946,7 @@ func svHA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -49645,6 +49970,13 @@ func svHA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashF64(svHash, b3[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -50177,7 +50509,7 @@ func svHA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHMA(s *server, p params) string {
@@ -50211,6 +50543,7 @@ func svHMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -50231,6 +50564,10 @@ func svHMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -50517,7 +50854,7 @@ func svHMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_DCPERIOD(s *server, p params) string {
@@ -50551,6 +50888,7 @@ func svHT_DCPERIOD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -50574,6 +50912,10 @@ func svHT_DCPERIOD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -50860,7 +51202,7 @@ func svHT_DCPERIOD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_DCPHASE(s *server, p params) string {
@@ -50894,6 +51236,7 @@ func svHT_DCPHASE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -50917,6 +51260,10 @@ func svHT_DCPHASE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -51203,7 +51550,7 @@ func svHT_DCPHASE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_PHASOR(s *server, p params) string {
@@ -51238,6 +51585,7 @@ func svHT_PHASOR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -51261,6 +51609,11 @@ func svHT_PHASOR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -51631,7 +51984,7 @@ func svHT_PHASOR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_SINE(s *server, p params) string {
@@ -51666,6 +52019,7 @@ func svHT_SINE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -51689,6 +52043,11 @@ func svHT_SINE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -52059,7 +52418,7 @@ func svHT_SINE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_TRENDLINE(s *server, p params) string {
@@ -52093,6 +52452,7 @@ func svHT_TRENDLINE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -52116,6 +52476,10 @@ func svHT_TRENDLINE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -52402,7 +52766,7 @@ func svHT_TRENDLINE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svHT_TRENDMODE(s *server, p params) string {
@@ -52436,6 +52800,7 @@ func svHT_TRENDMODE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -52459,6 +52824,10 @@ func svHT_TRENDMODE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashI32(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryI(svN)
@@ -52742,7 +53111,7 @@ func svHT_TRENDMODE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svIBS(s *server, p params) string {
@@ -52775,6 +53144,7 @@ func svIBS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -52795,6 +53165,10 @@ func svIBS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -53081,7 +53455,7 @@ func svIBS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svICHIMOKU(s *server, p params) string {
@@ -53120,6 +53494,7 @@ func svICHIMOKU(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -53140,6 +53515,13 @@ func svICHIMOKU(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashF64(svHash, b3[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -53672,7 +54054,7 @@ func svICHIMOKU(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svIMI(s *server, p params) string {
@@ -53706,6 +54088,7 @@ func svIMI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -53726,6 +54109,10 @@ func svIMI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -54012,7 +54399,7 @@ func svIMI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKAMA(s *server, p params) string {
@@ -54047,6 +54434,7 @@ func svKAMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -54070,6 +54458,10 @@ func svKAMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -54356,7 +54748,7 @@ func svKAMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKC(s *server, p params) string {
@@ -54395,6 +54787,7 @@ func svKC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -54421,6 +54814,12 @@ func svKC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -54872,7 +55271,7 @@ func svKC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKDJ(s *server, p params) string {
@@ -54913,6 +55312,7 @@ func svKDJ(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -54954,6 +55354,12 @@ func svKDJ(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -55405,7 +55811,7 @@ func svKDJ(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKST(s *server, p params) string {
@@ -55448,6 +55854,7 @@ func svKST(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -55468,6 +55875,11 @@ func svKST(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -55838,7 +56250,7 @@ func svKST(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKSTEXT(s *server, p params) string {
@@ -55884,6 +56296,7 @@ func svKSTEXT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -55925,6 +56338,11 @@ func svKSTEXT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -56295,7 +56713,7 @@ func svKSTEXT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKURTOSIS(s *server, p params) string {
@@ -56329,6 +56747,7 @@ func svKURTOSIS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -56349,6 +56768,10 @@ func svKURTOSIS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -56635,7 +57058,7 @@ func svKURTOSIS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svKVO(s *server, p params) string {
@@ -56673,6 +57096,7 @@ func svKVO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -56696,6 +57120,11 @@ func svKVO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -57066,7 +57495,7 @@ func svKVO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLINEARREG(s *server, p params) string {
@@ -57100,6 +57529,7 @@ func svLINEARREG(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -57120,6 +57550,10 @@ func svLINEARREG(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -57406,7 +57840,7 @@ func svLINEARREG(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLINEARREG_ANGLE(s *server, p params) string {
@@ -57440,6 +57874,7 @@ func svLINEARREG_ANGLE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -57460,6 +57895,10 @@ func svLINEARREG_ANGLE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -57746,7 +58185,7 @@ func svLINEARREG_ANGLE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLINEARREG_INTERCEPT(s *server, p params) string {
@@ -57780,6 +58219,7 @@ func svLINEARREG_INTERCEPT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -57800,6 +58240,10 @@ func svLINEARREG_INTERCEPT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -58086,7 +58530,7 @@ func svLINEARREG_INTERCEPT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLINEARREG_SLOPE(s *server, p params) string {
@@ -58120,6 +58564,7 @@ func svLINEARREG_SLOPE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -58140,6 +58585,10 @@ func svLINEARREG_SLOPE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -58426,7 +58875,7 @@ func svLINEARREG_SLOPE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLN(s *server, p params) string {
@@ -58459,6 +58908,7 @@ func svLN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -58479,6 +58929,10 @@ func svLN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -58765,7 +59219,7 @@ func svLN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svLOG10(s *server, p params) string {
@@ -58798,6 +59252,7 @@ func svLOG10(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -58818,6 +59273,10 @@ func svLOG10(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -59104,7 +59563,7 @@ func svLOG10(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMA(s *server, p params) string {
@@ -59140,6 +59599,7 @@ func svMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -59181,6 +59641,10 @@ func svMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -59467,7 +59931,7 @@ func svMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMACD(s *server, p params) string {
@@ -59506,6 +59970,7 @@ func svMACD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -59529,6 +59994,12 @@ func svMACD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -59980,7 +60451,7 @@ func svMACD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMACDEXT(s *server, p params) string {
@@ -60022,6 +60493,7 @@ func svMACDEXT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -60063,6 +60535,12 @@ func svMACDEXT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -60514,7 +60992,7 @@ func svMACDEXT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMACDFIX(s *server, p params) string {
@@ -60551,6 +61029,7 @@ func svMACDFIX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -60574,6 +61053,12 @@ func svMACDFIX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -61025,7 +61510,7 @@ func svMACDFIX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMACDV(s *server, p params) string {
@@ -61064,6 +61549,7 @@ func svMACDV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -61090,6 +61576,12 @@ func svMACDV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -61541,7 +62033,7 @@ func svMACDV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMAENV(s *server, p params) string {
@@ -61581,6 +62073,7 @@ func svMAENV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -61622,6 +62115,12 @@ func svMAENV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashF64(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -62073,7 +62572,7 @@ func svMAENV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMAMA(s *server, p params) string {
@@ -62110,6 +62609,7 @@ func svMAMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -62133,6 +62633,11 @@ func svMAMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -62503,7 +63008,7 @@ func svMAMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMARKETFI(s *server, p params) string {
@@ -62536,6 +63041,7 @@ func svMARKETFI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -62556,6 +63062,10 @@ func svMARKETFI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -62842,7 +63352,7 @@ func svMARKETFI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMASSI(s *server, p params) string {
@@ -62878,6 +63388,7 @@ func svMASSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -62901,6 +63412,10 @@ func svMASSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -63187,7 +63702,7 @@ func svMASSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMAVP(s *server, p params) string {
@@ -63227,6 +63742,7 @@ func svMAVP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -63268,6 +63784,10 @@ func svMAVP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -63554,7 +64074,7 @@ func svMAVP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMAX(s *server, p params) string {
@@ -63588,6 +64108,7 @@ func svMAX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -63608,6 +64129,10 @@ func svMAX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -63894,7 +64419,7 @@ func svMAX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMAXINDEX(s *server, p params) string {
@@ -63928,6 +64453,7 @@ func svMAXINDEX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -63948,6 +64474,10 @@ func svMAXINDEX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashI32(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryI(svN)
@@ -64231,7 +64761,7 @@ func svMAXINDEX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMCGD(s *server, p params) string {
@@ -64266,6 +64796,7 @@ func svMCGD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -64289,6 +64820,10 @@ func svMCGD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -64575,7 +65110,7 @@ func svMCGD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMEDIAN(s *server, p params) string {
@@ -64609,6 +65144,7 @@ func svMEDIAN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -64629,6 +65165,10 @@ func svMEDIAN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -64915,7 +65455,7 @@ func svMEDIAN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMEDPRICE(s *server, p params) string {
@@ -64948,6 +65488,7 @@ func svMEDPRICE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -64968,6 +65509,10 @@ func svMEDPRICE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -65254,7 +65799,7 @@ func svMEDPRICE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMFI(s *server, p params) string {
@@ -65288,6 +65833,7 @@ func svMFI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -65308,6 +65854,10 @@ func svMFI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -65594,7 +66144,7 @@ func svMFI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMIDPOINT(s *server, p params) string {
@@ -65628,6 +66178,7 @@ func svMIDPOINT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -65648,6 +66199,10 @@ func svMIDPOINT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -65934,7 +66489,7 @@ func svMIDPOINT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMIDPRICE(s *server, p params) string {
@@ -65968,6 +66523,7 @@ func svMIDPRICE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -65988,6 +66544,10 @@ func svMIDPRICE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -66274,7 +66834,7 @@ func svMIDPRICE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMIN(s *server, p params) string {
@@ -66308,6 +66868,7 @@ func svMIN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -66328,6 +66889,10 @@ func svMIN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -66614,7 +67179,7 @@ func svMIN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMININDEX(s *server, p params) string {
@@ -66648,6 +67213,7 @@ func svMININDEX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -66668,6 +67234,10 @@ func svMININDEX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashI32(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryI(svN)
@@ -66951,7 +67521,7 @@ func svMININDEX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMINMAX(s *server, p params) string {
@@ -66986,6 +67556,7 @@ func svMINMAX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -67006,6 +67577,11 @@ func svMINMAX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -67376,7 +67952,7 @@ func svMINMAX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMINMAXINDEX(s *server, p params) string {
@@ -67411,6 +67987,7 @@ func svMINMAXINDEX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -67431,6 +68008,11 @@ func svMINMAXINDEX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashI32(svHash, b0[:nb])
+		svHash = fuzzHashI32(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryI(svN)
@@ -67795,7 +68377,7 @@ func svMINMAXINDEX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMINUS_DI(s *server, p params) string {
@@ -67830,6 +68412,7 @@ func svMINUS_DI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -67853,6 +68436,10 @@ func svMINUS_DI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -68139,7 +68726,7 @@ func svMINUS_DI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMINUS_DM(s *server, p params) string {
@@ -68174,6 +68761,7 @@ func svMINUS_DM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -68197,6 +68785,10 @@ func svMINUS_DM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -68483,7 +69075,7 @@ func svMINUS_DM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMOM(s *server, p params) string {
@@ -68517,6 +69109,7 @@ func svMOM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -68537,6 +69130,10 @@ func svMOM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -68823,7 +69420,7 @@ func svMOM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svMULT(s *server, p params) string {
@@ -68856,6 +69453,7 @@ func svMULT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -68876,6 +69474,10 @@ func svMULT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -69162,7 +69764,7 @@ func svMULT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svNATR(s *server, p params) string {
@@ -69197,6 +69799,7 @@ func svNATR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -69220,6 +69823,10 @@ func svNATR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -69506,7 +70113,7 @@ func svNATR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svNVI(s *server, p params) string {
@@ -69539,6 +70146,7 @@ func svNVI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -69559,6 +70167,10 @@ func svNVI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -69845,7 +70457,7 @@ func svNVI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svOBV(s *server, p params) string {
@@ -69878,6 +70490,7 @@ func svOBV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -69898,6 +70511,10 @@ func svOBV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -70184,7 +70801,7 @@ func svOBV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPERCENTB(s *server, p params) string {
@@ -70222,6 +70839,7 @@ func svPERCENTB(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -70263,6 +70881,10 @@ func svPERCENTB(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -70549,7 +71171,7 @@ func svPERCENTB(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPERCENTILE(s *server, p params) string {
@@ -70584,6 +71206,7 @@ func svPERCENTILE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -70604,6 +71227,10 @@ func svPERCENTILE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -70890,7 +71517,7 @@ func svPERCENTILE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPERCENTRANK(s *server, p params) string {
@@ -70924,6 +71551,7 @@ func svPERCENTRANK(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -70944,6 +71572,10 @@ func svPERCENTRANK(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -71230,7 +71862,7 @@ func svPERCENTRANK(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPLUS_DI(s *server, p params) string {
@@ -71265,6 +71897,7 @@ func svPLUS_DI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -71288,6 +71921,10 @@ func svPLUS_DI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -71574,7 +72211,7 @@ func svPLUS_DI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPLUS_DM(s *server, p params) string {
@@ -71609,6 +72246,7 @@ func svPLUS_DM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -71632,6 +72270,10 @@ func svPLUS_DM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -71918,7 +72560,7 @@ func svPLUS_DM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPPO(s *server, p params) string {
@@ -71955,6 +72597,7 @@ func svPPO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -71996,6 +72639,10 @@ func svPPO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -72282,7 +72929,7 @@ func svPPO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPSO(s *server, p params) string {
@@ -72318,6 +72965,7 @@ func svPSO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -72341,6 +72989,10 @@ func svPSO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -72627,7 +73279,7 @@ func svPSO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPVI(s *server, p params) string {
@@ -72660,6 +73312,7 @@ func svPVI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -72680,6 +73333,10 @@ func svPVI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -72966,7 +73623,7 @@ func svPVI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPVO(s *server, p params) string {
@@ -73003,6 +73660,7 @@ func svPVO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -73044,6 +73702,10 @@ func svPVO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -73330,7 +73992,7 @@ func svPVO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svPVT(s *server, p params) string {
@@ -73363,6 +74025,7 @@ func svPVT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -73383,6 +74046,10 @@ func svPVT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -73669,7 +74336,7 @@ func svPVT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svQSTICK(s *server, p params) string {
@@ -73703,6 +74370,7 @@ func svQSTICK(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -73723,6 +74391,10 @@ func svQSTICK(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -74009,7 +74681,7 @@ func svQSTICK(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svRMA(s *server, p params) string {
@@ -74044,6 +74716,7 @@ func svRMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -74067,6 +74740,10 @@ func svRMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -74353,7 +75030,7 @@ func svRMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svROC(s *server, p params) string {
@@ -74387,6 +75064,7 @@ func svROC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -74407,6 +75085,10 @@ func svROC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -74693,7 +75375,7 @@ func svROC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svROCP(s *server, p params) string {
@@ -74727,6 +75409,7 @@ func svROCP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -74747,6 +75430,10 @@ func svROCP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -75033,7 +75720,7 @@ func svROCP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svROCR(s *server, p params) string {
@@ -75067,6 +75754,7 @@ func svROCR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -75087,6 +75775,10 @@ func svROCR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -75373,7 +76065,7 @@ func svROCR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svROCR100(s *server, p params) string {
@@ -75407,6 +76099,7 @@ func svROCR100(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -75427,6 +76120,10 @@ func svROCR100(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -75713,7 +76410,7 @@ func svROCR100(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svROGERSSATCHELL(s *server, p params) string {
@@ -75748,6 +76445,7 @@ func svROGERSSATCHELL(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -75768,6 +76466,10 @@ func svROGERSSATCHELL(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -76054,7 +76756,7 @@ func svROGERSSATCHELL(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svRSI(s *server, p params) string {
@@ -76089,6 +76791,7 @@ func svRSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -76112,6 +76815,10 @@ func svRSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -76398,7 +77105,7 @@ func svRSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svRVI(s *server, p params) string {
@@ -76434,6 +77141,7 @@ func svRVI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -76457,6 +77165,10 @@ func svRVI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -76743,7 +77455,7 @@ func svRVI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svRVIR(s *server, p params) string {
@@ -76779,6 +77491,7 @@ func svRVIR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -76802,6 +77515,10 @@ func svRVIR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -77088,7 +77805,7 @@ func svRVIR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svRVOL(s *server, p params) string {
@@ -77122,6 +77839,7 @@ func svRVOL(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -77142,6 +77860,10 @@ func svRVOL(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -77428,7 +78150,7 @@ func svRVOL(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSAR(s *server, p params) string {
@@ -77463,6 +78185,7 @@ func svSAR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -77483,6 +78206,10 @@ func svSAR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -77769,7 +78496,7 @@ func svSAR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSAREXT(s *server, p params) string {
@@ -77810,6 +78537,7 @@ func svSAREXT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -77830,6 +78558,10 @@ func svSAREXT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -78116,7 +78848,7 @@ func svSAREXT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSHARPE(s *server, p params) string {
@@ -78152,6 +78884,7 @@ func svSHARPE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -78172,6 +78905,10 @@ func svSHARPE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -78458,7 +79195,7 @@ func svSHARPE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSI(s *server, p params) string {
@@ -78492,6 +79229,7 @@ func svSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -78512,6 +79250,10 @@ func svSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -78798,7 +79540,7 @@ func svSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSIN(s *server, p params) string {
@@ -78831,6 +79573,7 @@ func svSIN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -78851,6 +79594,10 @@ func svSIN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -79137,7 +79884,7 @@ func svSIN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSINH(s *server, p params) string {
@@ -79170,6 +79917,7 @@ func svSINH(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -79190,6 +79938,10 @@ func svSINH(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -79476,7 +80228,7 @@ func svSINH(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSKEW(s *server, p params) string {
@@ -79510,6 +80262,7 @@ func svSKEW(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -79530,6 +80283,10 @@ func svSKEW(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -79816,7 +80573,7 @@ func svSKEW(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSMA(s *server, p params) string {
@@ -79850,6 +80607,7 @@ func svSMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -79870,6 +80628,10 @@ func svSMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -80156,7 +80918,7 @@ func svSMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSMI(s *server, p params) string {
@@ -80195,6 +80957,7 @@ func svSMI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -80218,6 +80981,11 @@ func svSMI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -80588,7 +81356,7 @@ func svSMI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSORTINO(s *server, p params) string {
@@ -80624,6 +81392,7 @@ func svSORTINO(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -80644,6 +81413,10 @@ func svSORTINO(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -80930,7 +81703,7 @@ func svSORTINO(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSQRT(s *server, p params) string {
@@ -80963,6 +81736,7 @@ func svSQRT(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -80983,6 +81757,10 @@ func svSQRT(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -81269,7 +82047,7 @@ func svSQRT(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSQZMOM(s *server, p params) string {
@@ -81309,6 +82087,7 @@ func svSQZMOM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -81329,6 +82108,11 @@ func svSQZMOM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashI32(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -81696,7 +82480,7 @@ func svSQZMOM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSSF(s *server, p params) string {
@@ -81731,6 +82515,7 @@ func svSSF(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -81754,6 +82539,10 @@ func svSSF(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -82040,7 +82829,7 @@ func svSSF(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSTC(s *server, p params) string {
@@ -82077,6 +82866,7 @@ func svSTC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -82103,6 +82893,10 @@ func svSTC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -82389,7 +83183,7 @@ func svSTC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSTDDEV(s *server, p params) string {
@@ -82424,6 +83218,7 @@ func svSTDDEV(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -82444,6 +83239,10 @@ func svSTDDEV(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -82730,7 +83529,7 @@ func svSTDDEV(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSTOCH(s *server, p params) string {
@@ -82770,6 +83569,7 @@ func svSTOCH(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -82811,6 +83611,11 @@ func svSTOCH(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -83181,7 +83986,7 @@ func svSTOCH(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSTOCHF(s *server, p params) string {
@@ -83219,6 +84024,7 @@ func svSTOCHF(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -83260,6 +84066,11 @@ func svSTOCHF(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -83630,7 +84441,7 @@ func svSTOCHF(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSTOCHRSI(s *server, p params) string {
@@ -83669,6 +84480,7 @@ func svSTOCHRSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -83713,6 +84525,11 @@ func svSTOCHRSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -84083,7 +84900,7 @@ func svSTOCHRSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSUB(s *server, p params) string {
@@ -84116,6 +84933,7 @@ func svSUB(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -84136,6 +84954,10 @@ func svSUB(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -84422,7 +85244,7 @@ func svSUB(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSUM(s *server, p params) string {
@@ -84456,6 +85278,7 @@ func svSUM(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -84476,6 +85299,10 @@ func svSUM(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -84762,7 +85589,7 @@ func svSUM(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSUPERTREND(s *server, p params) string {
@@ -84799,6 +85626,7 @@ func svSUPERTREND(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -84822,6 +85650,11 @@ func svSUPERTREND(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashI32(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -85189,7 +86022,7 @@ func svSUPERTREND(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSWAK_2PHP(s *server, p params) string {
@@ -85224,6 +86057,7 @@ func svSWAK_2PHP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -85247,6 +86081,10 @@ func svSWAK_2PHP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -85533,7 +86371,7 @@ func svSWAK_2PHP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSWAK_BP(s *server, p params) string {
@@ -85569,6 +86407,7 @@ func svSWAK_BP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -85592,6 +86431,10 @@ func svSWAK_BP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -85878,7 +86721,7 @@ func svSWAK_BP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSWAK_BUTTER(s *server, p params) string {
@@ -85913,6 +86756,7 @@ func svSWAK_BUTTER(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -85936,6 +86780,10 @@ func svSWAK_BUTTER(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -86222,7 +87070,7 @@ func svSWAK_BUTTER(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSWAK_GAUSS(s *server, p params) string {
@@ -86257,6 +87105,7 @@ func svSWAK_GAUSS(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -86280,6 +87129,10 @@ func svSWAK_GAUSS(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -86566,7 +87419,7 @@ func svSWAK_GAUSS(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svSWAK_HP(s *server, p params) string {
@@ -86601,6 +87454,7 @@ func svSWAK_HP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -86624,6 +87478,10 @@ func svSWAK_HP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -86910,7 +87768,7 @@ func svSWAK_HP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svT3(s *server, p params) string {
@@ -86946,6 +87804,7 @@ func svT3(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -86969,6 +87828,10 @@ func svT3(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -87255,7 +88118,7 @@ func svT3(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTAN(s *server, p params) string {
@@ -87288,6 +88151,7 @@ func svTAN(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -87308,6 +88172,10 @@ func svTAN(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -87594,7 +88462,7 @@ func svTAN(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTANH(s *server, p params) string {
@@ -87627,6 +88495,7 @@ func svTANH(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -87647,6 +88516,10 @@ func svTANH(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -87933,7 +88806,7 @@ func svTANH(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTEMA(s *server, p params) string {
@@ -87968,6 +88841,7 @@ func svTEMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -87991,6 +88865,10 @@ func svTEMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -88277,7 +89155,7 @@ func svTEMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTRANGE(s *server, p params) string {
@@ -88310,6 +89188,7 @@ func svTRANGE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -88330,6 +89209,10 @@ func svTRANGE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -88616,7 +89499,7 @@ func svTRANGE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTRIMA(s *server, p params) string {
@@ -88650,6 +89533,7 @@ func svTRIMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -88670,6 +89554,10 @@ func svTRIMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -88956,7 +89844,7 @@ func svTRIMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTRIX(s *server, p params) string {
@@ -88991,6 +89879,7 @@ func svTRIX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -89014,6 +89903,10 @@ func svTRIX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -89300,7 +90193,7 @@ func svTRIX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTSF(s *server, p params) string {
@@ -89334,6 +90227,7 @@ func svTSF(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -89354,6 +90248,10 @@ func svTSF(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -89640,7 +90538,7 @@ func svTSF(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTSI(s *server, p params) string {
@@ -89676,6 +90574,7 @@ func svTSI(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -89699,6 +90598,10 @@ func svTSI(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -89985,7 +90888,7 @@ func svTSI(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svTYPPRICE(s *server, p params) string {
@@ -90018,6 +90921,7 @@ func svTYPPRICE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -90038,6 +90942,10 @@ func svTYPPRICE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -90324,7 +91232,7 @@ func svTYPPRICE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svULTOSC(s *server, p params) string {
@@ -90360,6 +91268,7 @@ func svULTOSC(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -90380,6 +91289,10 @@ func svULTOSC(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -90666,7 +91579,7 @@ func svULTOSC(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVAR(s *server, p params) string {
@@ -90701,6 +91614,7 @@ func svVAR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -90721,6 +91635,10 @@ func svVAR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -91007,7 +91925,7 @@ func svVAR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVHF(s *server, p params) string {
@@ -91041,6 +91959,7 @@ func svVHF(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -91061,6 +91980,10 @@ func svVHF(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -91347,7 +92270,7 @@ func svVHF(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVIDYA(s *server, p params) string {
@@ -91383,6 +92306,7 @@ func svVIDYA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -91406,6 +92330,10 @@ func svVIDYA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -91692,7 +92620,7 @@ func svVIDYA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVORTEX(s *server, p params) string {
@@ -91727,6 +92655,7 @@ func svVORTEX(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -91747,6 +92676,11 @@ func svVORTEX(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -92117,7 +93051,7 @@ func svVORTEX(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVWAP(s *server, p params) string {
@@ -92150,6 +93084,7 @@ func svVWAP(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -92170,6 +93105,10 @@ func svVWAP(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -92456,7 +93395,7 @@ func svVWAP(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svVWMA(s *server, p params) string {
@@ -92490,6 +93429,7 @@ func svVWMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -92510,6 +93450,10 @@ func svVWMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -92796,7 +93740,7 @@ func svVWMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svWAD(s *server, p params) string {
@@ -92829,6 +93773,7 @@ func svWAD(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -92849,6 +93794,10 @@ func svWAD(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -93135,7 +94084,7 @@ func svWAD(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svWAVETREND(s *server, p params) string {
@@ -93173,6 +94122,7 @@ func svWAVETREND(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -93196,6 +94146,11 @@ func svWAVETREND(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashF64(svHash, b1[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -93566,7 +94521,7 @@ func svWAVETREND(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svWCLPRICE(s *server, p params) string {
@@ -93599,6 +94554,7 @@ func svWCLPRICE(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -93619,6 +94575,10 @@ func svWCLPRICE(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -93905,7 +94865,7 @@ func svWCLPRICE(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svWILLR(s *server, p params) string {
@@ -93939,6 +94899,7 @@ func svWILLR(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -93959,6 +94920,10 @@ func svWILLR(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -94245,7 +95210,7 @@ func svWILLR(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svWMA(s *server, p params) string {
@@ -94279,6 +95244,7 @@ func svWMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -94299,6 +95265,10 @@ func svWMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -94585,7 +95555,7 @@ func svWMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svZIGZAG(s *server, p params) string {
@@ -94622,6 +95592,7 @@ func svZIGZAG(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -94642,6 +95613,12 @@ func svZIGZAG(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashI32(svHash, b1[:nb])
+		svHash = fuzzHashI32(svHash, b2[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -95090,7 +96067,7 @@ func svZIGZAG(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 func svZLEMA(s *server, p params) string {
@@ -95125,6 +96102,7 @@ func svZLEMA(s *server, p params) string {
 	cloneLegs := 0
 	zsign := int64(0)
 	rounds := 1
+	svEv, svHash := -1, uint64(0)
 	for rd := 0; rd < rounds; rd++ {
 		core := *s.core
 		c2 := &core
@@ -95148,6 +96126,10 @@ func svZLEMA(s *server, p params) string {
 			openRejects := oErr != nil
 			return fmt.Sprintf(`{"retCode":%d,"legs":0,"nb":%d,"openRejects":%d,"ok":%d,"peek_ok":1}`, rc, nb, b2i(openRejects), b2i(openRejects))
 		}
+		svEv = int(c2.EMAVariation())
+		svHash = fuzzHashInit()
+		svHash = fuzzHashF64(svHash, b0[:nb])
+		svHash = fuzzHashFin(svHash)
 		fillChecked = 1
 		{
 			f0 := svCanaryF(svN)
@@ -95434,7 +96416,7 @@ func svZLEMA(s *server, p params) string {
 			}
 		}
 	}
-	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag)
+	return fmt.Sprintf(`{"retCode":0,"beg":%d,"nb":%d,"legs":%d,"fill_checked":%d,"fill_ok":%d,"range_checked":%d,"range_legs":%d,"range_sites":%d,"range_sites_all":27,"range_ok":%d,"value_checked":%d,"value_legs":%d,"value_ok":%d,"clone_checked":%d,"clone_legs":%d,"clone_ok":%d,"step_ok":%d,"ok":%d,"peek_ok":%d,"peek_reps":%d,"peek_rep_ok":%d,"peek_rejects":%d,"benign":%d,"round_mask":%d%s%s}`, beg, nb, legs, fillChecked, b2i(fillOk), rangeChecked, rangeLegs, rangeSites, b2i(rangeOk), valueChecked, valueLegs, b2i(valueOk), cloneChecked, cloneLegs, b2i(cloneOk), b2i(allOk), b2i(allOk && fillOk && rangeOk && valueOk && cloneOk), b2i(peekAll), peekReps, b2i(peekRepAll), peekRejects, zsign, roundMask, diag, svDigest(svEv, beg, nb, svHash))
 }
 
 // ---- ride-along: batch-vs-stream on caller-supplied data ----

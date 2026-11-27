@@ -52,6 +52,18 @@ fn rust_canary_check(out_is_int: &[bool]) -> String {
     s
 }
 
+/// The batch's digest and the Core's EMA variation, which the driver holds to
+/// in-process C under the same setting.
+fn rust_batch_digest(out_is_int: &[bool]) -> String {
+    let mut s = String::from("        sv_ev = c2.ema_variation() as i32;\n        sv_hash = fuzz_hash_init();\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let f = if *is_int { "fuzz_hash_bytes_i32" } else { "fuzz_hash_bytes_f64" };
+        let _ = writeln!(s, "        sv_hash = {f}(sv_hash, &b{i}[..nb]);");
+    }
+    s.push_str("        sv_hash = fuzz_hash_fin(sv_hash);\n");
+    s
+}
+
 /// One `sv_<name>` verify function for a function with an emitted Rust stream.
 #[allow(clippy::too_many_lines)]
 pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
@@ -188,6 +200,9 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     }
     s.push_str(&bdecls);
 
+    if !candle {
+        s.push_str("    let mut sv_ev = -1i32;\n    let mut sv_hash = 0u64;\n");
+    }
     s.push_str("    let mut legs = 0i64;\n    let mut round_mask = 0i32;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut peek_reps = 0i64;\n    let mut peek_rejects = 0i64;\n    let mut peek_rep_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
     // The range leg (#241): a handle's OutRange against what batch reported for
     // the same bars. Public API in every backend, so unlike the state leg this
@@ -274,6 +289,9 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     }
     s.push_str("        }\n");
 
+    if !candle {
+        s.push_str(&rust_batch_digest(&out_is_int));
+    }
     // OpenAndFill leg (fill == batch arrays, bitwise).
     s.push_str("        fill_checked = 1;\n        {\n");
     s.push_str(&fdecls);
@@ -324,7 +342,9 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"value_checked\\\":{},\\\"value_legs\\\":{},\\\"value_ok\\\":{},\\\"step_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{},\\\"round_mask\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)\n");
+    let digest = if candle { "" } else { "{}" };
+    let digest_args = if candle { "" } else { ", sv_digest(sv_ev, beg, nb, sv_hash)" };
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"value_checked\\\":{},\\\"value_legs\\\":{},\\\"value_ok\\\":{},\\\"step_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{},\\\"round_mask\\\":{}{}"); s.push_str(digest); s.push_str("}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag"); s.push_str(digest_args); s.push_str(")\n");
     s.push_str("}\n\n");
     s
 }
@@ -598,6 +618,9 @@ pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     use std::fmt::Write as _;
     let mut s = String::new();
     s.push_str("// ---- stream_verify: Rust stream vs Rust batch, bitwise ----\n\n");
+    s.push_str("fn sv_digest(ev: i32, beg: usize, nb: usize, hash: u64) -> String {\n");
+    s.push_str("    format!(\",\\\"ema_variation\\\":{ev},\\\"batch_beg\\\":{beg},\\\"batch_nb\\\":{nb},\\\"batch_hash\\\":\\\"{hash:016x}\\\"\")\n");
+    s.push_str("}\n\n");
     // Cross-tier compare — see the C emitter for the rule. Differing bits that
     // compare equal are +0.0 vs -0.0 (issue #147): counted, never a mismatch.
     // The peek-vs-update spot-assert stays a strict `to_bits()` compare.

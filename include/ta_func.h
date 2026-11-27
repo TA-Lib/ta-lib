@@ -22316,6 +22316,7 @@ TA_LIB_API TA_EMAVariation TA_GetEMAVariation( void );
  * TA_SetCompatibility does nothing and TA_GetCompatibility always
  * answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing
  * sources still compile and link; avoid them in new code.
+ * TA_SetEMAVariation selects the EMA family's first-bar seed.
  */
 TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );
 

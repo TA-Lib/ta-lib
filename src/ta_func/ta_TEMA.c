@@ -184,7 +184,7 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
     *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-    *  - Each EMA is seeded with the sum of its first 'period'
+    *  - Each EMA's default seed is the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order (0.0+x is
     *    not x for x=-0.0), divided by the period.
     *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
@@ -589,7 +589,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **s
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
-       *  - Each EMA is seeded with the sum of its first 'period'
+       *  - Each EMA's default seed is the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
        *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,

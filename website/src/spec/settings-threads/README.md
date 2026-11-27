@@ -62,14 +62,14 @@ The EMA variation selects how the EMA family seeds its recursion: `SMA_SEED`, th
 
 <a id="rt14"></a>**rT14** Under `FIRST_BAR_SEED`, a stage is seeded with one value:
 
-- A stage fed by the function's input, or by a per-bar transform of it (EFI's force, CVI's high-low spread, ZLEMA's de-lagged price), takes the first value of that series in the caller's array: bar 0, or the first bar where the transform exists. It runs from there to the requested start, whatever `startIdx` is. Stages of different periods fed by the same series start on that same bar.
-- A stage fed by anything else, such as another stage or DOSC's RSI, takes the first value of its feeder that the call uses: the one on the bar where `SMA_SEED` starts the window it averages.
+- A stage fed by the function's input, or by a per-bar transform of it (EFI's force, CVI's high-low spread, ZLEMA's de-lagged price, the windowed series PSO, SMI and KSTEXT smooth), takes the first value of that series in the caller's array: bar 0, or the first bar where the transform exists. It runs from there to the requested start, whatever `startIdx` is. Stages of different periods fed by the same series start on that same bar.
+- A stage fed by anything else, such as another stage, DOSC's RSI, or the Fast-K that STOCH, STOCHF and KDJ smooth through an MA type, takes the first value of its feeder that the call uses: the one on the bar where `SMA_SEED` starts the window it averages.
 
 <a id="rt15"></a>**rT15** The EMA variation changes no lookback ([rL5](/spec/lookback/#rl5)), so no first output bar and no count ([rW1](/spec/inputs-outputs/#rw1)).
 
 <a id="rt16"></a>**rT16** Under `FIRST_BAR_SEED`, a stage fed by the input is stepped from its seed bar to the requested start, so a call reads bars before `max(startIdx, lookback) - lookback`, which [rL1](/spec/lookback/#rl1) otherwise excludes, and its cost grows with `startIdx`. A stream's `Open` steps through the whole history it is given.
 
-<a id="rt17"></a>**rT17** Under `FIRST_BAR_SEED`, the value a stage fed by the input takes at a bar does not depend on `startIdx`, up to rounding, so a function built from such stages alone, such as EMA or MACD's line, writes the same values for every `startIdx`. The seed bar of a stage fed by anything else moves with `startIdx`: a call to DEMA, TEMA, TRIX, MACD's signal and histogram, and the like, starting past the lookback writes different values from a call starting at 0.
+<a id="rt17"></a>**rT17** Under `FIRST_BAR_SEED`, the value a stage fed by the input takes at a bar does not depend on `startIdx`, up to rounding, so a function built from such stages alone, such as EMA or MACD's line, writes the same values for every `startIdx`. The seed bar of a stage fed by anything else moves with `startIdx`: a call to DEMA, TEMA, TRIX, MACD's signal and histogram, STOCH or STOCHF with an `EMA` MA type, and the like, starting past the lookback writes different values from a call starting at 0.
 
 <a id="rt18"></a>**rT18** The EMA variation moves exactly the functions with a stage ([rT13](/spec/settings-threads/#rt13)):
 

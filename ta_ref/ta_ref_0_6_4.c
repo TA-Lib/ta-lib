@@ -13,7 +13,9 @@
  *   row may differ by the 1e-9 relative FMA contract ("*" below).
  * - Its TA_COMPATIBILITY_METASTOCK mode is the oracle for
  *   TA_EMAVariation_FIRST_BAR_SEED, under the same rows and waivers. Its TRIX
- *   past the lookback is #98's, which trix_natr_98 already waives.
+ *   past the lookback is #98's, which trix_natr_98 waives in both modes, so
+ *   test_ema_variation.c's TRIX golden is the only value oracle for a
+ *   late-start TRIX under the setting.
  *
  * The waiver predicates are two-pass on purpose: deciding whether to trust the
  * oracle must not re-run either implementation's algorithm. */

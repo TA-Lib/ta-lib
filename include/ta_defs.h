@@ -169,6 +169,7 @@ typedef enum {
 
 /* DEPRECATED: the MetaStock variant was removed in 0.8.1 and the setting now
  * selects nothing. Kept so existing sources still compile and link.
+ * TA_SetEMAVariation selects the EMA family's first-bar seed.
  */
 typedef enum {
     TA_COMPATIBILITY_DEFAULT   = 0,

@@ -7679,6 +7679,9 @@ static SV_NOINLINE void sv_verify_AC(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AC_Stream *stf = NULL;
@@ -7911,6 +7914,7 @@ static SV_NOINLINE void sv_verify_AC(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -7948,6 +7952,11 @@ static SV_NOINLINE void sv_verify_ACCBANDS(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ACCBANDS_Stream *stf = NULL;
@@ -8227,6 +8236,7 @@ static SV_NOINLINE void sv_verify_ACCBANDS(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -8263,6 +8273,9 @@ static SV_NOINLINE void sv_verify_ACOS(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ACOS_Stream *stf = NULL;
@@ -8497,6 +8510,7 @@ static SV_NOINLINE void sv_verify_ACOS(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -8533,6 +8547,9 @@ static SV_NOINLINE void sv_verify_AD(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AD_Stream *stf = NULL;
@@ -8765,6 +8782,7 @@ static SV_NOINLINE void sv_verify_AD(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -8801,6 +8819,9 @@ static SV_NOINLINE void sv_verify_ADD(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ADD_Stream *stf = NULL;
@@ -9033,6 +9054,7 @@ static SV_NOINLINE void sv_verify_ADD(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -9072,6 +9094,9 @@ static SV_NOINLINE void sv_verify_ADOSC(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ADOSC_Stream *stf = NULL;
@@ -9305,6 +9330,7 @@ static SV_NOINLINE void sv_verify_ADOSC(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -9342,6 +9368,9 @@ static SV_NOINLINE void sv_verify_ADR(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ADR_Stream *stf = NULL;
@@ -9574,6 +9603,7 @@ static SV_NOINLINE void sv_verify_ADR(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -9612,6 +9642,9 @@ static SV_NOINLINE void sv_verify_ADX(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ADX_Stream *stf = NULL;
@@ -9845,6 +9878,7 @@ static SV_NOINLINE void sv_verify_ADX(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -9883,6 +9917,9 @@ static SV_NOINLINE void sv_verify_ADXR(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ADXR_Stream *stf = NULL;
@@ -10116,6 +10153,7 @@ static SV_NOINLINE void sv_verify_ADXR(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -10159,6 +10197,11 @@ static SV_NOINLINE void sv_verify_ALLIGATOR(const char *json, char *resp, int re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ALLIGATOR_Stream *stf = NULL;
@@ -10439,6 +10482,7 @@ static SV_NOINLINE void sv_verify_ALLIGATOR(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -10478,6 +10522,9 @@ static SV_NOINLINE void sv_verify_ALMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ALMA_Stream *stf = NULL;
@@ -10710,6 +10757,7 @@ static SV_NOINLINE void sv_verify_ALMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -10748,6 +10796,9 @@ static SV_NOINLINE void sv_verify_AO(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AO_Stream *stf = NULL;
@@ -10980,6 +11031,7 @@ static SV_NOINLINE void sv_verify_AO(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -11032,6 +11084,9 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_APO_Stream *stf = NULL;
@@ -11271,6 +11326,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -11308,6 +11364,10 @@ static SV_NOINLINE void sv_verify_AROON(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AROON_Stream *stf = NULL;
@@ -11567,6 +11627,7 @@ static SV_NOINLINE void sv_verify_AROON(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -11604,6 +11665,9 @@ static SV_NOINLINE void sv_verify_AROONOSC(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AROONOSC_Stream *stf = NULL;
@@ -11836,6 +11900,7 @@ static SV_NOINLINE void sv_verify_AROONOSC(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -11873,6 +11938,9 @@ static SV_NOINLINE void sv_verify_ASI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ASI_Stream *stf = NULL;
@@ -12105,6 +12173,7 @@ static SV_NOINLINE void sv_verify_ASI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -12141,6 +12210,9 @@ static SV_NOINLINE void sv_verify_ASIN(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ASIN_Stream *stf = NULL;
@@ -12375,6 +12447,7 @@ static SV_NOINLINE void sv_verify_ASIN(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -12411,6 +12484,9 @@ static SV_NOINLINE void sv_verify_ATAN(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ATAN_Stream *stf = NULL;
@@ -12645,6 +12721,7 @@ static SV_NOINLINE void sv_verify_ATAN(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -12683,6 +12760,9 @@ static SV_NOINLINE void sv_verify_ATR(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ATR_Stream *stf = NULL;
@@ -12916,6 +12996,7 @@ static SV_NOINLINE void sv_verify_ATR(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -12953,6 +13034,9 @@ static SV_NOINLINE void sv_verify_AVGDEV(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AVGDEV_Stream *stf = NULL;
@@ -13185,6 +13269,7 @@ static SV_NOINLINE void sv_verify_AVGDEV(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -13221,6 +13306,9 @@ static SV_NOINLINE void sv_verify_AVGPRICE(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_AVGPRICE_Stream *stf = NULL;
@@ -13453,6 +13541,7 @@ static SV_NOINLINE void sv_verify_AVGPRICE(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -13506,6 +13595,11 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_BBANDS_Stream *stf = NULL;
@@ -13792,6 +13886,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -13845,6 +13940,9 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_BBW_Stream *stf = NULL;
@@ -14084,6 +14182,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -14121,6 +14220,9 @@ static SV_NOINLINE void sv_verify_BETA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_BETA_Stream *stf = NULL;
@@ -14353,6 +14455,7 @@ static SV_NOINLINE void sv_verify_BETA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -14389,6 +14492,9 @@ static SV_NOINLINE void sv_verify_BOP(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_BOP_Stream *stf = NULL;
@@ -14621,6 +14727,7 @@ static SV_NOINLINE void sv_verify_BOP(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -14658,6 +14765,9 @@ static SV_NOINLINE void sv_verify_CCI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CCI_Stream *stf = NULL;
@@ -14890,6 +15000,7 @@ static SV_NOINLINE void sv_verify_CCI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -31406,6 +31517,10 @@ static SV_NOINLINE void sv_verify_CE(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CE_Stream *stf = NULL;
@@ -31666,6 +31781,7 @@ static SV_NOINLINE void sv_verify_CE(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -31702,6 +31818,9 @@ static SV_NOINLINE void sv_verify_CEIL(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CEIL_Stream *stf = NULL;
@@ -31934,6 +32053,7 @@ static SV_NOINLINE void sv_verify_CEIL(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -31971,6 +32091,9 @@ static SV_NOINLINE void sv_verify_CG(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CG_Stream *stf = NULL;
@@ -32203,6 +32326,7 @@ static SV_NOINLINE void sv_verify_CG(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -32240,6 +32364,9 @@ static SV_NOINLINE void sv_verify_CHOP(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CHOP_Stream *stf = NULL;
@@ -32472,6 +32599,7 @@ static SV_NOINLINE void sv_verify_CHOP(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -32509,6 +32637,9 @@ static SV_NOINLINE void sv_verify_CHOPTR(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CHOPTR_Stream *stf = NULL;
@@ -32741,6 +32872,7 @@ static SV_NOINLINE void sv_verify_CHOPTR(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -32781,6 +32913,10 @@ static SV_NOINLINE void sv_verify_CKSP(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CKSP_Stream *stf = NULL;
@@ -33041,6 +33177,7 @@ static SV_NOINLINE void sv_verify_CKSP(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -33078,6 +33215,9 @@ static SV_NOINLINE void sv_verify_CMF(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CMF_Stream *stf = NULL;
@@ -33310,6 +33450,7 @@ static SV_NOINLINE void sv_verify_CMF(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -33348,6 +33489,9 @@ static SV_NOINLINE void sv_verify_CMO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CMO_Stream *stf = NULL;
@@ -33581,6 +33725,7 @@ static SV_NOINLINE void sv_verify_CMO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -33618,6 +33763,9 @@ static SV_NOINLINE void sv_verify_CMOU(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CMOU_Stream *stf = NULL;
@@ -33850,6 +33998,7 @@ static SV_NOINLINE void sv_verify_CMOU(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -33889,6 +34038,9 @@ static SV_NOINLINE void sv_verify_COPPOCK(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_COPPOCK_Stream *stf = NULL;
@@ -34121,6 +34273,7 @@ static SV_NOINLINE void sv_verify_COPPOCK(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -34158,6 +34311,9 @@ static SV_NOINLINE void sv_verify_CORREL(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CORREL_Stream *stf = NULL;
@@ -34390,6 +34546,7 @@ static SV_NOINLINE void sv_verify_CORREL(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -34426,6 +34583,9 @@ static SV_NOINLINE void sv_verify_COS(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_COS_Stream *stf = NULL;
@@ -34660,6 +34820,7 @@ static SV_NOINLINE void sv_verify_COS(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -34696,6 +34857,9 @@ static SV_NOINLINE void sv_verify_COSH(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_COSH_Stream *stf = NULL;
@@ -34930,6 +35094,7 @@ static SV_NOINLINE void sv_verify_COSH(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -34970,6 +35135,9 @@ static SV_NOINLINE void sv_verify_CRSI(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CRSI_Stream *stf = NULL;
@@ -35203,6 +35371,7 @@ static SV_NOINLINE void sv_verify_CRSI(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -35240,6 +35409,9 @@ static SV_NOINLINE void sv_verify_CTI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CTI_Stream *stf = NULL;
@@ -35472,6 +35644,7 @@ static SV_NOINLINE void sv_verify_CTI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -35508,6 +35681,9 @@ static SV_NOINLINE void sv_verify_CUMSUM(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CUMSUM_Stream *stf = NULL;
@@ -35740,6 +35916,7 @@ static SV_NOINLINE void sv_verify_CUMSUM(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -35779,6 +35956,9 @@ static SV_NOINLINE void sv_verify_CVI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_CVI_Stream *stf = NULL;
@@ -36012,6 +36192,7 @@ static SV_NOINLINE void sv_verify_CVI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -36050,6 +36231,9 @@ static SV_NOINLINE void sv_verify_DEMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DEMA_Stream *stf = NULL;
@@ -36283,6 +36467,7 @@ static SV_NOINLINE void sv_verify_DEMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -36319,6 +36504,9 @@ static SV_NOINLINE void sv_verify_DIV(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DIV_Stream *stf = NULL;
@@ -36551,6 +36739,7 @@ static SV_NOINLINE void sv_verify_DIV(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -36588,6 +36777,11 @@ static SV_NOINLINE void sv_verify_DONCHIAN(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DONCHIAN_Stream *stf = NULL;
@@ -36867,6 +37061,7 @@ static SV_NOINLINE void sv_verify_DONCHIAN(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -36910,6 +37105,9 @@ static SV_NOINLINE void sv_verify_DOSC(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DOSC_Stream *stf = NULL;
@@ -37144,6 +37342,7 @@ static SV_NOINLINE void sv_verify_DOSC(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -37181,6 +37380,9 @@ static SV_NOINLINE void sv_verify_DPO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DPO_Stream *stf = NULL;
@@ -37413,6 +37615,7 @@ static SV_NOINLINE void sv_verify_DPO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -37451,6 +37654,9 @@ static SV_NOINLINE void sv_verify_DX(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_DX_Stream *stf = NULL;
@@ -37684,6 +37890,7 @@ static SV_NOINLINE void sv_verify_DX(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -37722,6 +37929,9 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_EFI_Stream *stf = NULL;
@@ -37955,6 +38165,7 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -37993,6 +38204,9 @@ static SV_NOINLINE void sv_verify_EMA(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_EMA_Stream *stf = NULL;
@@ -38226,6 +38440,7 @@ static SV_NOINLINE void sv_verify_EMA(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -38264,6 +38479,9 @@ static SV_NOINLINE void sv_verify_EMV(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_EMV_Stream *stf = NULL;
@@ -38496,6 +38714,7 @@ static SV_NOINLINE void sv_verify_EMV(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -38533,6 +38752,9 @@ static SV_NOINLINE void sv_verify_ER(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ER_Stream *stf = NULL;
@@ -38765,6 +38987,7 @@ static SV_NOINLINE void sv_verify_ER(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -38803,6 +39026,10 @@ static SV_NOINLINE void sv_verify_ERI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ERI_Stream *stf = NULL;
@@ -39063,6 +39290,7 @@ static SV_NOINLINE void sv_verify_ERI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -39099,6 +39327,9 @@ static SV_NOINLINE void sv_verify_EXP(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_EXP_Stream *stf = NULL;
@@ -39333,6 +39564,7 @@ static SV_NOINLINE void sv_verify_EXP(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -39371,6 +39603,10 @@ static SV_NOINLINE void sv_verify_FISHER(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_FISHER_Stream *stf = NULL;
@@ -39631,6 +39867,7 @@ static SV_NOINLINE void sv_verify_FISHER(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -39667,6 +39904,9 @@ static SV_NOINLINE void sv_verify_FLOOR(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_FLOOR_Stream *stf = NULL;
@@ -39899,6 +40139,7 @@ static SV_NOINLINE void sv_verify_FLOOR(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -39936,6 +40177,9 @@ static SV_NOINLINE void sv_verify_FOSC(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_FOSC_Stream *stf = NULL;
@@ -40168,6 +40412,7 @@ static SV_NOINLINE void sv_verify_FOSC(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -40206,6 +40451,10 @@ static SV_NOINLINE void sv_verify_FRACTAL(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib1, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_FRACTAL_Stream *stf = NULL;
@@ -40458,6 +40707,7 @@ static SV_NOINLINE void sv_verify_FRACTAL(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -40496,6 +40746,9 @@ static SV_NOINLINE void sv_verify_FRAMA(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_FRAMA_Stream *stf = NULL;
@@ -40729,6 +40982,7 @@ static SV_NOINLINE void sv_verify_FRAMA(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -40772,6 +41026,10 @@ static SV_NOINLINE void sv_verify_GATOR(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_GATOR_Stream *stf = NULL;
@@ -41032,6 +41290,7 @@ static SV_NOINLINE void sv_verify_GATOR(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -41069,6 +41328,12 @@ static SV_NOINLINE void sv_verify_HA(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b3, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HA_Stream *stf = NULL;
@@ -41369,6 +41634,7 @@ static SV_NOINLINE void sv_verify_HA(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -41406,6 +41672,9 @@ static SV_NOINLINE void sv_verify_HMA(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HMA_Stream *stf = NULL;
@@ -41638,6 +41907,7 @@ static SV_NOINLINE void sv_verify_HMA(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -41675,6 +41945,9 @@ static SV_NOINLINE void sv_verify_HT_DCPERIOD(const char *json, char *resp, int 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_DCPERIOD_Stream *stf = NULL;
@@ -41908,6 +42181,7 @@ static SV_NOINLINE void sv_verify_HT_DCPERIOD(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -41945,6 +42219,9 @@ static SV_NOINLINE void sv_verify_HT_DCPHASE(const char *json, char *resp, int r
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_DCPHASE_Stream *stf = NULL;
@@ -42178,6 +42455,7 @@ static SV_NOINLINE void sv_verify_HT_DCPHASE(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -42215,6 +42493,10 @@ static SV_NOINLINE void sv_verify_HT_PHASOR(const char *json, char *resp, int re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_PHASOR_Stream *stf = NULL;
@@ -42475,6 +42757,7 @@ static SV_NOINLINE void sv_verify_HT_PHASOR(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -42512,6 +42795,10 @@ static SV_NOINLINE void sv_verify_HT_SINE(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_SINE_Stream *stf = NULL;
@@ -42772,6 +43059,7 @@ static SV_NOINLINE void sv_verify_HT_SINE(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -42809,6 +43097,9 @@ static SV_NOINLINE void sv_verify_HT_TRENDLINE(const char *json, char *resp, int
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_TRENDLINE_Stream *stf = NULL;
@@ -43042,6 +43333,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDLINE(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -43079,6 +43371,9 @@ static SV_NOINLINE void sv_verify_HT_TRENDMODE(const char *json, char *resp, int
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_HT_TRENDMODE_Stream *stf = NULL;
@@ -43305,6 +43600,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDMODE(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -43341,6 +43637,9 @@ static SV_NOINLINE void sv_verify_IBS(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_IBS_Stream *stf = NULL;
@@ -43573,6 +43872,7 @@ static SV_NOINLINE void sv_verify_IBS(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -43612,6 +43912,12 @@ static SV_NOINLINE void sv_verify_ICHIMOKU(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b3, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ICHIMOKU_Stream *stf = NULL;
@@ -43911,6 +44217,7 @@ static SV_NOINLINE void sv_verify_ICHIMOKU(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -43948,6 +44255,9 @@ static SV_NOINLINE void sv_verify_IMI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_IMI_Stream *stf = NULL;
@@ -44180,6 +44490,7 @@ static SV_NOINLINE void sv_verify_IMI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -44218,6 +44529,9 @@ static SV_NOINLINE void sv_verify_KAMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KAMA_Stream *stf = NULL;
@@ -44451,6 +44765,7 @@ static SV_NOINLINE void sv_verify_KAMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -44493,6 +44808,11 @@ static SV_NOINLINE void sv_verify_KC(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KC_Stream *stf = NULL;
@@ -44774,6 +45094,7 @@ static SV_NOINLINE void sv_verify_KC(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -44828,6 +45149,11 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KDJ_Stream *stf = NULL;
@@ -45114,6 +45440,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -45159,6 +45486,10 @@ static SV_NOINLINE void sv_verify_KST(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KST_Stream *stf = NULL;
@@ -45418,6 +45749,7 @@ static SV_NOINLINE void sv_verify_KST(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -45478,6 +45810,10 @@ static SV_NOINLINE void sv_verify_KSTEXT(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KSTEXT_Stream *stf = NULL;
@@ -45744,6 +46080,7 @@ static SV_NOINLINE void sv_verify_KSTEXT(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -45781,6 +46118,9 @@ static SV_NOINLINE void sv_verify_KURTOSIS(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KURTOSIS_Stream *stf = NULL;
@@ -46013,6 +46353,7 @@ static SV_NOINLINE void sv_verify_KURTOSIS(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -46053,6 +46394,10 @@ static SV_NOINLINE void sv_verify_KVO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_KVO_Stream *stf = NULL;
@@ -46313,6 +46658,7 @@ static SV_NOINLINE void sv_verify_KVO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -46350,6 +46696,9 @@ static SV_NOINLINE void sv_verify_LINEARREG(const char *json, char *resp, int re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LINEARREG_Stream *stf = NULL;
@@ -46582,6 +46931,7 @@ static SV_NOINLINE void sv_verify_LINEARREG(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -46619,6 +46969,9 @@ static SV_NOINLINE void sv_verify_LINEARREG_ANGLE(const char *json, char *resp, 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LINEARREG_ANGLE_Stream *stf = NULL;
@@ -46851,6 +47204,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_ANGLE(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -46888,6 +47242,9 @@ static SV_NOINLINE void sv_verify_LINEARREG_INTERCEPT(const char *json, char *re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LINEARREG_INTERCEPT_Stream *stf = NULL;
@@ -47120,6 +47477,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_INTERCEPT(const char *json, char *re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -47157,6 +47515,9 @@ static SV_NOINLINE void sv_verify_LINEARREG_SLOPE(const char *json, char *resp, 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LINEARREG_SLOPE_Stream *stf = NULL;
@@ -47389,6 +47750,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_SLOPE(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -47425,6 +47787,9 @@ static SV_NOINLINE void sv_verify_LN(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LN_Stream *stf = NULL;
@@ -47659,6 +48024,7 @@ static SV_NOINLINE void sv_verify_LN(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -47695,6 +48061,9 @@ static SV_NOINLINE void sv_verify_LOG10(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_LOG10_Stream *stf = NULL;
@@ -47929,6 +48298,7 @@ static SV_NOINLINE void sv_verify_LOG10(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -47980,6 +48350,9 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MA_Stream *stf = NULL;
@@ -48219,6 +48592,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -48259,6 +48633,11 @@ static SV_NOINLINE void sv_verify_MACD(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MACD_Stream *stf = NULL;
@@ -48539,6 +48918,7 @@ static SV_NOINLINE void sv_verify_MACD(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -48594,6 +48974,11 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MACDEXT_Stream *stf = NULL;
@@ -48880,6 +49265,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -48918,6 +49304,11 @@ static SV_NOINLINE void sv_verify_MACDFIX(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MACDFIX_Stream *stf = NULL;
@@ -49198,6 +49589,7 @@ static SV_NOINLINE void sv_verify_MACDFIX(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -49240,6 +49632,11 @@ static SV_NOINLINE void sv_verify_MACDV(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MACDV_Stream *stf = NULL;
@@ -49521,6 +49918,7 @@ static SV_NOINLINE void sv_verify_MACDV(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -49574,6 +49972,11 @@ static SV_NOINLINE void sv_verify_MAENV(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b2, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MAENV_Stream *stf = NULL;
@@ -49860,6 +50263,7 @@ static SV_NOINLINE void sv_verify_MAENV(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -49899,6 +50303,10 @@ static SV_NOINLINE void sv_verify_MAMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MAMA_Stream *stf = NULL;
@@ -50159,6 +50567,7 @@ static SV_NOINLINE void sv_verify_MAMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -50195,6 +50604,9 @@ static SV_NOINLINE void sv_verify_MARKETFI(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MARKETFI_Stream *stf = NULL;
@@ -50427,6 +50839,7 @@ static SV_NOINLINE void sv_verify_MARKETFI(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -50466,6 +50879,9 @@ static SV_NOINLINE void sv_verify_MASSI(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MASSI_Stream *stf = NULL;
@@ -50699,6 +51115,7 @@ static SV_NOINLINE void sv_verify_MASSI(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -50752,6 +51169,9 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MAVP_Stream *stf = NULL;
@@ -50991,6 +51411,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -51028,6 +51449,9 @@ static SV_NOINLINE void sv_verify_MAX(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MAX_Stream *stf = NULL;
@@ -51260,6 +51684,7 @@ static SV_NOINLINE void sv_verify_MAX(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -51297,6 +51722,9 @@ static SV_NOINLINE void sv_verify_MAXINDEX(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MAXINDEX_Stream *stf = NULL;
@@ -51522,6 +51950,7 @@ static SV_NOINLINE void sv_verify_MAXINDEX(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -51560,6 +51989,9 @@ static SV_NOINLINE void sv_verify_MCGD(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MCGD_Stream *stf = NULL;
@@ -51793,6 +52225,7 @@ static SV_NOINLINE void sv_verify_MCGD(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -51830,6 +52263,9 @@ static SV_NOINLINE void sv_verify_MEDIAN(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MEDIAN_Stream *stf = NULL;
@@ -52062,6 +52498,7 @@ static SV_NOINLINE void sv_verify_MEDIAN(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -52098,6 +52535,9 @@ static SV_NOINLINE void sv_verify_MEDPRICE(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MEDPRICE_Stream *stf = NULL;
@@ -52330,6 +52770,7 @@ static SV_NOINLINE void sv_verify_MEDPRICE(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -52367,6 +52808,9 @@ static SV_NOINLINE void sv_verify_MFI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MFI_Stream *stf = NULL;
@@ -52599,6 +53043,7 @@ static SV_NOINLINE void sv_verify_MFI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -52636,6 +53081,9 @@ static SV_NOINLINE void sv_verify_MIDPOINT(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MIDPOINT_Stream *stf = NULL;
@@ -52868,6 +53316,7 @@ static SV_NOINLINE void sv_verify_MIDPOINT(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -52905,6 +53354,9 @@ static SV_NOINLINE void sv_verify_MIDPRICE(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MIDPRICE_Stream *stf = NULL;
@@ -53137,6 +53589,7 @@ static SV_NOINLINE void sv_verify_MIDPRICE(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -53174,6 +53627,9 @@ static SV_NOINLINE void sv_verify_MIN(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MIN_Stream *stf = NULL;
@@ -53406,6 +53862,7 @@ static SV_NOINLINE void sv_verify_MIN(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -53443,6 +53900,9 @@ static SV_NOINLINE void sv_verify_MININDEX(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MININDEX_Stream *stf = NULL;
@@ -53668,6 +54128,7 @@ static SV_NOINLINE void sv_verify_MININDEX(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -53705,6 +54166,10 @@ static SV_NOINLINE void sv_verify_MINMAX(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MINMAX_Stream *stf = NULL;
@@ -53964,6 +54429,7 @@ static SV_NOINLINE void sv_verify_MINMAX(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -54001,6 +54467,10 @@ static SV_NOINLINE void sv_verify_MINMAXINDEX(const char *json, char *resp, int 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib1, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MINMAXINDEX_Stream *stf = NULL;
@@ -54253,6 +54723,7 @@ static SV_NOINLINE void sv_verify_MINMAXINDEX(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -54291,6 +54762,9 @@ static SV_NOINLINE void sv_verify_MINUS_DI(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MINUS_DI_Stream *stf = NULL;
@@ -54524,6 +54998,7 @@ static SV_NOINLINE void sv_verify_MINUS_DI(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -54562,6 +55037,9 @@ static SV_NOINLINE void sv_verify_MINUS_DM(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MINUS_DM_Stream *stf = NULL;
@@ -54795,6 +55273,7 @@ static SV_NOINLINE void sv_verify_MINUS_DM(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -54832,6 +55311,9 @@ static SV_NOINLINE void sv_verify_MOM(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MOM_Stream *stf = NULL;
@@ -55064,6 +55546,7 @@ static SV_NOINLINE void sv_verify_MOM(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -55100,6 +55583,9 @@ static SV_NOINLINE void sv_verify_MULT(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_MULT_Stream *stf = NULL;
@@ -55332,6 +55818,7 @@ static SV_NOINLINE void sv_verify_MULT(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -55370,6 +55857,9 @@ static SV_NOINLINE void sv_verify_NATR(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_NATR_Stream *stf = NULL;
@@ -55603,6 +56093,7 @@ static SV_NOINLINE void sv_verify_NATR(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -55639,6 +56130,9 @@ static SV_NOINLINE void sv_verify_NVI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_NVI_Stream *stf = NULL;
@@ -55871,6 +56365,7 @@ static SV_NOINLINE void sv_verify_NVI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -55907,6 +56402,9 @@ static SV_NOINLINE void sv_verify_OBV(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_OBV_Stream *stf = NULL;
@@ -56139,6 +56637,7 @@ static SV_NOINLINE void sv_verify_OBV(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -56192,6 +56691,9 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PERCENTB_Stream *stf = NULL;
@@ -56431,6 +56933,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -56469,6 +56972,9 @@ static SV_NOINLINE void sv_verify_PERCENTILE(const char *json, char *resp, int r
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PERCENTILE_Stream *stf = NULL;
@@ -56701,6 +57207,7 @@ static SV_NOINLINE void sv_verify_PERCENTILE(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -56738,6 +57245,9 @@ static SV_NOINLINE void sv_verify_PERCENTRANK(const char *json, char *resp, int 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PERCENTRANK_Stream *stf = NULL;
@@ -56970,6 +57480,7 @@ static SV_NOINLINE void sv_verify_PERCENTRANK(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -57008,6 +57519,9 @@ static SV_NOINLINE void sv_verify_PLUS_DI(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PLUS_DI_Stream *stf = NULL;
@@ -57241,6 +57755,7 @@ static SV_NOINLINE void sv_verify_PLUS_DI(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -57279,6 +57794,9 @@ static SV_NOINLINE void sv_verify_PLUS_DM(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PLUS_DM_Stream *stf = NULL;
@@ -57512,6 +58030,7 @@ static SV_NOINLINE void sv_verify_PLUS_DM(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -57564,6 +58083,9 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PPO_Stream *stf = NULL;
@@ -57803,6 +58325,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -57842,6 +58365,9 @@ static SV_NOINLINE void sv_verify_PSO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PSO_Stream *stf = NULL;
@@ -58075,6 +58601,7 @@ static SV_NOINLINE void sv_verify_PSO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -58111,6 +58638,9 @@ static SV_NOINLINE void sv_verify_PVI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PVI_Stream *stf = NULL;
@@ -58343,6 +58873,7 @@ static SV_NOINLINE void sv_verify_PVI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -58395,6 +58926,9 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PVO_Stream *stf = NULL;
@@ -58634,6 +59168,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -58670,6 +59205,9 @@ static SV_NOINLINE void sv_verify_PVT(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_PVT_Stream *stf = NULL;
@@ -58902,6 +59440,7 @@ static SV_NOINLINE void sv_verify_PVT(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -58939,6 +59478,9 @@ static SV_NOINLINE void sv_verify_QSTICK(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_QSTICK_Stream *stf = NULL;
@@ -59171,6 +59713,7 @@ static SV_NOINLINE void sv_verify_QSTICK(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -59209,6 +59752,9 @@ static SV_NOINLINE void sv_verify_RMA(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_RMA_Stream *stf = NULL;
@@ -59442,6 +59988,7 @@ static SV_NOINLINE void sv_verify_RMA(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -59479,6 +60026,9 @@ static SV_NOINLINE void sv_verify_ROC(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ROC_Stream *stf = NULL;
@@ -59711,6 +60261,7 @@ static SV_NOINLINE void sv_verify_ROC(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -59748,6 +60299,9 @@ static SV_NOINLINE void sv_verify_ROCP(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ROCP_Stream *stf = NULL;
@@ -59980,6 +60534,7 @@ static SV_NOINLINE void sv_verify_ROCP(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -60017,6 +60572,9 @@ static SV_NOINLINE void sv_verify_ROCR(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ROCR_Stream *stf = NULL;
@@ -60249,6 +60807,7 @@ static SV_NOINLINE void sv_verify_ROCR(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -60286,6 +60845,9 @@ static SV_NOINLINE void sv_verify_ROCR100(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ROCR100_Stream *stf = NULL;
@@ -60518,6 +61080,7 @@ static SV_NOINLINE void sv_verify_ROCR100(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -60556,6 +61119,9 @@ static SV_NOINLINE void sv_verify_ROGERSSATCHELL(const char *json, char *resp, i
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ROGERSSATCHELL_Stream *stf = NULL;
@@ -60788,6 +61354,7 @@ static SV_NOINLINE void sv_verify_ROGERSSATCHELL(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -60826,6 +61393,9 @@ static SV_NOINLINE void sv_verify_RSI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_RSI_Stream *stf = NULL;
@@ -61059,6 +61629,7 @@ static SV_NOINLINE void sv_verify_RSI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -61098,6 +61669,9 @@ static SV_NOINLINE void sv_verify_RVI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_RVI_Stream *stf = NULL;
@@ -61331,6 +61905,7 @@ static SV_NOINLINE void sv_verify_RVI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -61370,6 +61945,9 @@ static SV_NOINLINE void sv_verify_RVIR(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_RVIR_Stream *stf = NULL;
@@ -61603,6 +62181,7 @@ static SV_NOINLINE void sv_verify_RVIR(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -61640,6 +62219,9 @@ static SV_NOINLINE void sv_verify_RVOL(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_RVOL_Stream *stf = NULL;
@@ -61872,6 +62454,7 @@ static SV_NOINLINE void sv_verify_RVOL(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -61910,6 +62493,9 @@ static SV_NOINLINE void sv_verify_SAR(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SAR_Stream *stf = NULL;
@@ -62142,6 +62728,7 @@ static SV_NOINLINE void sv_verify_SAR(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -62186,6 +62773,9 @@ static SV_NOINLINE void sv_verify_SAREXT(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SAREXT_Stream *stf = NULL;
@@ -62418,6 +63008,7 @@ static SV_NOINLINE void sv_verify_SAREXT(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -62457,6 +63048,9 @@ static SV_NOINLINE void sv_verify_SHARPE(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SHARPE_Stream *stf = NULL;
@@ -62689,6 +63283,7 @@ static SV_NOINLINE void sv_verify_SHARPE(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -62726,6 +63321,9 @@ static SV_NOINLINE void sv_verify_SI(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SI_Stream *stf = NULL;
@@ -62958,6 +63556,7 @@ static SV_NOINLINE void sv_verify_SI(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -62994,6 +63593,9 @@ static SV_NOINLINE void sv_verify_SIN(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SIN_Stream *stf = NULL;
@@ -63228,6 +63830,7 @@ static SV_NOINLINE void sv_verify_SIN(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -63264,6 +63867,9 @@ static SV_NOINLINE void sv_verify_SINH(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SINH_Stream *stf = NULL;
@@ -63498,6 +64104,7 @@ static SV_NOINLINE void sv_verify_SINH(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -63535,6 +64142,9 @@ static SV_NOINLINE void sv_verify_SKEW(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SKEW_Stream *stf = NULL;
@@ -63767,6 +64377,7 @@ static SV_NOINLINE void sv_verify_SKEW(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -63804,6 +64415,9 @@ static SV_NOINLINE void sv_verify_SMA(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SMA_Stream *stf = NULL;
@@ -64036,6 +64650,7 @@ static SV_NOINLINE void sv_verify_SMA(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -64077,6 +64692,10 @@ static SV_NOINLINE void sv_verify_SMI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SMI_Stream *stf = NULL;
@@ -64337,6 +64956,7 @@ static SV_NOINLINE void sv_verify_SMI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -64376,6 +64996,9 @@ static SV_NOINLINE void sv_verify_SORTINO(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SORTINO_Stream *stf = NULL;
@@ -64608,6 +65231,7 @@ static SV_NOINLINE void sv_verify_SORTINO(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -64644,6 +65268,9 @@ static SV_NOINLINE void sv_verify_SQRT(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SQRT_Stream *stf = NULL;
@@ -64876,6 +65503,7 @@ static SV_NOINLINE void sv_verify_SQRT(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -64918,6 +65546,10 @@ static SV_NOINLINE void sv_verify_SQZMOM(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SQZMOM_Stream *stf = NULL;
@@ -65170,6 +65802,7 @@ static SV_NOINLINE void sv_verify_SQZMOM(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -65208,6 +65841,9 @@ static SV_NOINLINE void sv_verify_SSF(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SSF_Stream *stf = NULL;
@@ -65441,6 +66077,7 @@ static SV_NOINLINE void sv_verify_SSF(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -65483,6 +66120,9 @@ static SV_NOINLINE void sv_verify_STC(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_STC_Stream *stf = NULL;
@@ -65717,6 +66357,7 @@ static SV_NOINLINE void sv_verify_STC(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -65755,6 +66396,9 @@ static SV_NOINLINE void sv_verify_STDDEV(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_STDDEV_Stream *stf = NULL;
@@ -65987,6 +66631,7 @@ static SV_NOINLINE void sv_verify_STDDEV(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -66041,6 +66686,10 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_STOCH_Stream *stf = NULL;
@@ -66307,6 +66956,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -66359,6 +67009,10 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_STOCHF_Stream *stf = NULL;
@@ -66625,6 +67279,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -66680,6 +67335,10 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_STOCHRSI_Stream *stf = NULL;
@@ -66947,6 +67606,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -66983,6 +67643,9 @@ static SV_NOINLINE void sv_verify_SUB(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SUB_Stream *stf = NULL;
@@ -67215,6 +67878,7 @@ static SV_NOINLINE void sv_verify_SUB(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -67252,6 +67916,9 @@ static SV_NOINLINE void sv_verify_SUM(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SUM_Stream *stf = NULL;
@@ -67484,6 +68151,7 @@ static SV_NOINLINE void sv_verify_SUM(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -67523,6 +68191,10 @@ static SV_NOINLINE void sv_verify_SUPERTREND(const char *json, char *resp, int r
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SUPERTREND_Stream *stf = NULL;
@@ -67776,6 +68448,7 @@ static SV_NOINLINE void sv_verify_SUPERTREND(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -67814,6 +68487,9 @@ static SV_NOINLINE void sv_verify_SWAK_2PHP(const char *json, char *resp, int re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SWAK_2PHP_Stream *stf = NULL;
@@ -68047,6 +68723,7 @@ static SV_NOINLINE void sv_verify_SWAK_2PHP(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -68086,6 +68763,9 @@ static SV_NOINLINE void sv_verify_SWAK_BP(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SWAK_BP_Stream *stf = NULL;
@@ -68319,6 +68999,7 @@ static SV_NOINLINE void sv_verify_SWAK_BP(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -68357,6 +69038,9 @@ static SV_NOINLINE void sv_verify_SWAK_BUTTER(const char *json, char *resp, int 
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SWAK_BUTTER_Stream *stf = NULL;
@@ -68590,6 +69274,7 @@ static SV_NOINLINE void sv_verify_SWAK_BUTTER(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -68628,6 +69313,9 @@ static SV_NOINLINE void sv_verify_SWAK_GAUSS(const char *json, char *resp, int r
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SWAK_GAUSS_Stream *stf = NULL;
@@ -68861,6 +69549,7 @@ static SV_NOINLINE void sv_verify_SWAK_GAUSS(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -68899,6 +69588,9 @@ static SV_NOINLINE void sv_verify_SWAK_HP(const char *json, char *resp, int resp
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_SWAK_HP_Stream *stf = NULL;
@@ -69132,6 +69824,7 @@ static SV_NOINLINE void sv_verify_SWAK_HP(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -69171,6 +69864,9 @@ static SV_NOINLINE void sv_verify_T3(const char *json, char *resp, int resp_size
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_T3_Stream *stf = NULL;
@@ -69404,6 +70100,7 @@ static SV_NOINLINE void sv_verify_T3(const char *json, char *resp, int resp_size
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -69440,6 +70137,9 @@ static SV_NOINLINE void sv_verify_TAN(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TAN_Stream *stf = NULL;
@@ -69674,6 +70374,7 @@ static SV_NOINLINE void sv_verify_TAN(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -69710,6 +70411,9 @@ static SV_NOINLINE void sv_verify_TANH(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TANH_Stream *stf = NULL;
@@ -69944,6 +70648,7 @@ static SV_NOINLINE void sv_verify_TANH(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -69982,6 +70687,9 @@ static SV_NOINLINE void sv_verify_TEMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TEMA_Stream *stf = NULL;
@@ -70215,6 +70923,7 @@ static SV_NOINLINE void sv_verify_TEMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -70251,6 +70960,9 @@ static SV_NOINLINE void sv_verify_TRANGE(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TRANGE_Stream *stf = NULL;
@@ -70483,6 +71195,7 @@ static SV_NOINLINE void sv_verify_TRANGE(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -70520,6 +71233,9 @@ static SV_NOINLINE void sv_verify_TRIMA(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TRIMA_Stream *stf = NULL;
@@ -70752,6 +71468,7 @@ static SV_NOINLINE void sv_verify_TRIMA(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -70790,6 +71507,9 @@ static SV_NOINLINE void sv_verify_TRIX(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TRIX_Stream *stf = NULL;
@@ -71023,6 +71743,7 @@ static SV_NOINLINE void sv_verify_TRIX(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -71060,6 +71781,9 @@ static SV_NOINLINE void sv_verify_TSF(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TSF_Stream *stf = NULL;
@@ -71292,6 +72016,7 @@ static SV_NOINLINE void sv_verify_TSF(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -71331,6 +72056,9 @@ static SV_NOINLINE void sv_verify_TSI(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TSI_Stream *stf = NULL;
@@ -71564,6 +72292,7 @@ static SV_NOINLINE void sv_verify_TSI(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -71600,6 +72329,9 @@ static SV_NOINLINE void sv_verify_TYPPRICE(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_TYPPRICE_Stream *stf = NULL;
@@ -71832,6 +72564,7 @@ static SV_NOINLINE void sv_verify_TYPPRICE(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -71871,6 +72604,9 @@ static SV_NOINLINE void sv_verify_ULTOSC(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ULTOSC_Stream *stf = NULL;
@@ -72103,6 +72839,7 @@ static SV_NOINLINE void sv_verify_ULTOSC(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -72141,6 +72878,9 @@ static SV_NOINLINE void sv_verify_VAR(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VAR_Stream *stf = NULL;
@@ -72373,6 +73113,7 @@ static SV_NOINLINE void sv_verify_VAR(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -72410,6 +73151,9 @@ static SV_NOINLINE void sv_verify_VHF(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VHF_Stream *stf = NULL;
@@ -72642,6 +73386,7 @@ static SV_NOINLINE void sv_verify_VHF(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -72681,6 +73426,9 @@ static SV_NOINLINE void sv_verify_VIDYA(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VIDYA_Stream *stf = NULL;
@@ -72914,6 +73662,7 @@ static SV_NOINLINE void sv_verify_VIDYA(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -72951,6 +73700,10 @@ static SV_NOINLINE void sv_verify_VORTEX(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VORTEX_Stream *stf = NULL;
@@ -73210,6 +73963,7 @@ static SV_NOINLINE void sv_verify_VORTEX(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -73246,6 +74000,9 @@ static SV_NOINLINE void sv_verify_VWAP(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VWAP_Stream *stf = NULL;
@@ -73478,6 +74235,7 @@ static SV_NOINLINE void sv_verify_VWAP(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -73515,6 +74273,9 @@ static SV_NOINLINE void sv_verify_VWMA(const char *json, char *resp, int resp_si
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_VWMA_Stream *stf = NULL;
@@ -73747,6 +74508,7 @@ static SV_NOINLINE void sv_verify_VWMA(const char *json, char *resp, int resp_si
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -73783,6 +74545,9 @@ static SV_NOINLINE void sv_verify_WAD(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_WAD_Stream *stf = NULL;
@@ -74015,6 +74780,7 @@ static SV_NOINLINE void sv_verify_WAD(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -74055,6 +74821,10 @@ static SV_NOINLINE void sv_verify_WAVETREND(const char *json, char *resp, int re
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b1, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_WAVETREND_Stream *stf = NULL;
@@ -74315,6 +75085,7 @@ static SV_NOINLINE void sv_verify_WAVETREND(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -74351,6 +75122,9 @@ static SV_NOINLINE void sv_verify_WCLPRICE(const char *json, char *resp, int res
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_WCLPRICE_Stream *stf = NULL;
@@ -74583,6 +75357,7 @@ static SV_NOINLINE void sv_verify_WCLPRICE(const char *json, char *resp, int res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -74620,6 +75395,9 @@ static SV_NOINLINE void sv_verify_WILLR(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_WILLR_Stream *stf = NULL;
@@ -74852,6 +75630,7 @@ static SV_NOINLINE void sv_verify_WILLR(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -74889,6 +75668,9 @@ static SV_NOINLINE void sv_verify_WMA(const char *json, char *resp, int resp_siz
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_WMA_Stream *stf = NULL;
@@ -75121,6 +75903,7 @@ static SV_NOINLINE void sv_verify_WMA(const char *json, char *resp, int resp_siz
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -75159,6 +75942,11 @@ static SV_NOINLINE void sv_verify_ZIGZAG(const char *json, char *resp, int resp_
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib0, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_ib1, (unsigned long)svNb * sizeof(int));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ZIGZAG_Stream *stf = NULL;
@@ -75438,6 +76226,7 @@ static SV_NOINLINE void sv_verify_ZIGZAG(const char *json, char *resp, int resp_
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 
@@ -75476,6 +76265,9 @@ static SV_NOINLINE void sv_verify_ZLEMA(const char *json, char *resp, int resp_s
         snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1,\"vmath\":%d}", (int)rc, svNb, openRejects, openRejects, g_svVmath);
         return;
     }
+    unsigned long long svBatchHash = fuzz_hash_init();
+    svBatchHash = fuzz_hash_bytes(svBatchHash, sv_b0, (unsigned long)svNb * sizeof(double));
+    svBatchHash = fuzz_hash_fin(svBatchHash);
     {
         int fBeg = 0, fNb = 0, ft;
         TA_ZLEMA_Stream *stf = NULL;
@@ -75709,6 +76501,7 @@ static SV_NOINLINE void sv_verify_ZLEMA(const char *json, char *resp, int resp_s
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+    pos = json_appendf(resp, resp_size, pos, ",\"ema_variation\":%d,\"batch_beg\":%d,\"batch_nb\":%d,\"batch_hash\":\"%016llx\"", (int)TA_GetEMAVariation(), svBeg, svNb, svBatchHash);
     pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
 }
 

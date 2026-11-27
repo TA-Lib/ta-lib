@@ -1977,6 +1977,10 @@ fn main() {
 }
 // ---- stream_verify: Rust stream vs Rust batch, bitwise ----
 
+fn sv_digest(ev: i32, beg: usize, nb: usize, hash: u64) -> String {
+    format!(",\"ema_variation\":{ev},\"batch_beg\":{beg},\"batch_nb\":{nb},\"batch_hash\":\"{hash:016x}\"")
+}
+
 fn sv_xtier_ne(a: f64, b: f64, zsign: &mut i64) -> bool {
     if a.to_bits() == b.to_bits() { return false; }
     if a == b { *zsign += 1; return false; }
@@ -2480,6 +2484,8 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -2514,6 +2520,10 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ac_open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -2627,7 +2637,7 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -2881,6 +2891,8 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -2915,6 +2927,12 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
             let open_rejects = c2.accbands_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -3062,7 +3080,7 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -3301,6 +3319,8 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -3335,6 +3355,10 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
             let open_rejects = c2.acos_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -3448,7 +3472,7 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -3694,6 +3718,8 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -3728,6 +3754,10 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ad_open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -3841,7 +3871,7 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4077,6 +4107,8 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -4111,6 +4143,10 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
             let open_rejects = c2.add_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -4224,7 +4260,7 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4478,6 +4514,8 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -4513,6 +4551,10 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.adosc_open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -4626,7 +4668,7 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4867,6 +4909,8 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -4901,6 +4945,10 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.adr_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -5014,7 +5062,7 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -5261,6 +5309,8 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -5296,6 +5346,10 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
             let open_rejects = c2.adx_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -5409,7 +5463,7 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -5655,6 +5709,8 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -5690,6 +5746,10 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.adxr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -5803,7 +5863,7 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6064,6 +6124,8 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -6099,6 +6161,12 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
             let open_rejects = c2.alligator_open(&fz_h, &fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -6246,7 +6314,7 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6497,6 +6565,8 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -6531,6 +6601,10 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.alma_open(&fz_c, optInTimePeriod, optInSigma, optInOffset).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -6644,7 +6718,7 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6883,6 +6957,8 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -6917,6 +6993,10 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ao_open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -7030,7 +7110,7 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -7274,6 +7354,8 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -7315,6 +7397,10 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.apo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -7428,7 +7514,7 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -7668,6 +7754,8 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -7702,6 +7790,11 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
             let open_rejects = c2.aroon_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -7832,7 +7925,7 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8074,6 +8167,8 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -8108,6 +8203,10 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.aroonosc_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -8221,7 +8320,7 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8473,6 +8572,8 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -8507,6 +8608,10 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.asi_open(&fz_o, &fz_h, &fz_l, &fz_c, optInLimitMove).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -8620,7 +8725,7 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8849,6 +8954,8 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -8883,6 +8990,10 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
             let open_rejects = c2.asin_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -8996,7 +9107,7 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9218,6 +9329,8 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -9252,6 +9365,10 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
             let open_rejects = c2.atan_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -9365,7 +9482,7 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9609,6 +9726,8 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -9644,6 +9763,10 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.atr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -9757,7 +9880,7 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9987,6 +10110,8 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -10021,6 +10146,10 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
             let open_rejects = c2.avgdev_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -10134,7 +10263,7 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -10381,6 +10510,8 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -10415,6 +10546,10 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
             let open_rejects = c2.avgprice_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -10528,7 +10663,7 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -10785,6 +10920,8 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -10826,6 +10963,12 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
             let open_rejects = c2.bbands_open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -10973,7 +11116,7 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -11232,6 +11375,8 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -11273,6 +11418,10 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
             let open_rejects = c2.bbw_open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -11386,7 +11535,7 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -11623,6 +11772,8 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -11657,6 +11808,10 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
             let open_rejects = c2.beta_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -11770,7 +11925,7 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -12019,6 +12174,8 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -12053,6 +12210,10 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
             let open_rejects = c2.bop_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -12166,7 +12327,7 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -12413,6 +12574,8 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -12447,6 +12610,10 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cci_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -12560,7 +12727,7 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -37424,6 +37591,8 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -37459,6 +37628,11 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ce_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -37589,7 +37763,7 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -37823,6 +37997,8 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -37857,6 +38033,10 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ceil_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -37970,7 +38150,7 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38195,6 +38375,8 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -38229,6 +38411,10 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cg_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -38342,7 +38528,7 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38584,6 +38770,8 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -38618,6 +38806,10 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
             let open_rejects = c2.chop_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -38731,7 +38923,7 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38977,6 +39169,8 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -39011,6 +39205,10 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.choptr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -39124,7 +39322,7 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -39380,6 +39578,8 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -39415,6 +39615,11 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cksp_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -39545,7 +39750,7 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -39807,6 +40012,8 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -39841,6 +40048,10 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cmf_open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -39954,7 +40165,7 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40189,6 +40400,8 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -40224,6 +40437,10 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cmo_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -40337,7 +40554,7 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40563,6 +40780,8 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -40597,6 +40816,10 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cmou_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -40710,7 +40933,7 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40942,6 +41165,8 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -40976,6 +41201,10 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
             let open_rejects = c2.coppock_open(&fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -41089,7 +41318,7 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -41325,6 +41554,8 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -41359,6 +41590,10 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
             let open_rejects = c2.correl_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -41472,7 +41707,7 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -41697,6 +41932,8 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -41731,6 +41968,10 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cos_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -41844,7 +42085,7 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -42066,6 +42307,8 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -42100,6 +42343,10 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cosh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -42213,7 +42460,7 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -42444,6 +42691,8 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -42479,6 +42728,10 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.crsi_open(&fz_c, optInTimePeriod, optInStreakPeriod, optInRankPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -42592,7 +42845,7 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -42820,6 +43073,8 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -42854,6 +43109,10 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cti_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -42967,7 +43226,7 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43190,6 +43449,8 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -43224,6 +43485,10 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cumsum_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -43337,7 +43602,7 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43573,6 +43838,8 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -43608,6 +43875,10 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cvi_open(&fz_h, &fz_l, optInTimePeriod, optInROCPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -43721,7 +43992,7 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43950,6 +44221,8 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -43985,6 +44258,10 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
             let open_rejects = c2.dema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -44098,7 +44375,7 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -44329,6 +44606,8 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -44363,6 +44642,10 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
             let open_rejects = c2.div_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -44476,7 +44759,7 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -44719,6 +45002,8 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -44753,6 +45038,12 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
             let open_rejects = c2.donchian_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -44900,7 +45191,7 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45149,6 +45440,8 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -45185,6 +45478,10 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.dosc_open(&fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -45298,7 +45595,7 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45527,6 +45824,8 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -45561,6 +45860,10 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.dpo_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -45674,7 +45977,7 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45919,6 +46222,8 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -45954,6 +46259,10 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
             let open_rejects = c2.dx_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -46067,7 +46376,7 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -46305,6 +46614,8 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -46340,6 +46651,10 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.efi_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -46453,7 +46768,7 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -46684,6 +46999,8 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -46719,6 +47036,10 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -46832,7 +47153,7 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -47077,6 +47398,8 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -47111,6 +47434,10 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
             let open_rejects = c2.emv_open(&fz_h, &fz_l, &fz_v, optInTimePeriod, optInVolumeDivisor).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -47224,7 +47551,7 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -47455,6 +47782,8 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -47489,6 +47818,10 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
             let open_rejects = c2.er_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -47602,7 +47935,7 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -47848,6 +48181,8 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -47883,6 +48218,11 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
             let open_rejects = c2.eri_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -48013,7 +48353,7 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -48246,6 +48586,8 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -48280,6 +48622,10 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.exp_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -48393,7 +48739,7 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -48633,6 +48979,8 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -48668,6 +49016,11 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
             let open_rejects = c2.fisher_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -48798,7 +49151,7 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -49029,6 +49382,8 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -49063,6 +49418,10 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
             let open_rejects = c2.floor_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -49176,7 +49535,7 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -49401,6 +49760,8 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -49435,6 +49796,10 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.fosc_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -49548,7 +49913,7 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -49789,6 +50154,8 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -49823,6 +50190,11 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
             let open_rejects = c2.fractal_open(&fz_h, &fz_l, optInLeftBars, optInRightBars).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
@@ -49953,7 +50325,7 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -50199,6 +50571,8 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -50234,6 +50608,10 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
             let open_rejects = c2.frama_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -50347,7 +50725,7 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -50602,6 +50980,8 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -50637,6 +51017,11 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
             let open_rejects = c2.gator_open(&fz_h, &fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -50767,7 +51152,7 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -51042,6 +51427,8 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut b3: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -51077,6 +51464,13 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ha_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b3[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -51241,7 +51635,7 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -51490,6 +51884,8 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -51524,6 +51920,10 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.hma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -51637,7 +52037,7 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -51863,6 +52263,8 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -51898,6 +52300,10 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_dcperiod_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -52011,7 +52417,7 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -52236,6 +52642,8 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -52271,6 +52679,10 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_dcphase_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -52384,7 +52796,7 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -52613,6 +53025,8 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -52648,6 +53062,11 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_phasor_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -52778,7 +53197,7 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -53013,6 +53432,8 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -53048,6 +53469,11 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_sine_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -53178,7 +53604,7 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -53409,6 +53835,8 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -53444,6 +53872,10 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_trendline_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -53557,7 +53989,7 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -53782,6 +54214,8 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -53817,6 +54251,10 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ht_trendmode_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
@@ -53930,7 +54368,7 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -54168,6 +54606,8 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -54202,6 +54642,10 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ibs_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -54315,7 +54759,7 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -54570,6 +55014,8 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut b3: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -54604,6 +55050,13 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ichimoku_open(&fz_h, &fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b3[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -54768,7 +55221,7 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -55024,6 +55477,8 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -55058,6 +55513,10 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.imi_open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -55171,7 +55630,7 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -55402,6 +55861,8 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -55437,6 +55898,10 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kama_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -55550,7 +56015,7 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -55806,6 +56271,8 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -55842,6 +56309,12 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kc_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInATRPeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -55989,7 +56462,7 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -56284,6 +56757,8 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -56325,6 +56800,12 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kdj_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -56472,7 +56953,7 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -56746,6 +57227,8 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -56780,6 +57263,11 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kst_open(&fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -56910,7 +57398,7 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -57199,6 +57687,8 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -57240,6 +57730,11 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kstext_open(&fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -57370,7 +57865,7 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -57612,6 +58107,8 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -57646,6 +58143,10 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kurtosis_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -57759,7 +58260,7 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -58019,6 +58520,8 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -58054,6 +58557,11 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.kvo_open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -58184,7 +58692,7 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -58424,6 +58932,8 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -58458,6 +58968,10 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
             let open_rejects = c2.linearreg_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -58571,7 +59085,7 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -58797,6 +59311,8 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -58831,6 +59347,10 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             let open_rejects = c2.linearreg_angle_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -58944,7 +59464,7 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59170,6 +59690,8 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -59204,6 +59726,10 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             let open_rejects = c2.linearreg_intercept_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -59317,7 +59843,7 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59543,6 +60069,8 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -59577,6 +60105,10 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             let open_rejects = c2.linearreg_slope_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -59690,7 +60222,7 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59913,6 +60445,8 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -59947,6 +60481,10 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ln_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -60060,7 +60598,7 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -60282,6 +60820,8 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -60316,6 +60856,10 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
             let open_rejects = c2.log10_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -60429,7 +60973,7 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -60666,6 +61210,8 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -60707,6 +61253,10 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ma_open(&fz_c, optInTimePeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -60820,7 +61370,7 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -61061,6 +61611,8 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -61096,6 +61648,12 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
             let open_rejects = c2.macd_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -61243,7 +61801,7 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -61527,6 +62085,8 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -61568,6 +62128,12 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
             let open_rejects = c2.macdext_open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -61715,7 +62281,7 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -61966,6 +62532,8 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -62001,6 +62569,12 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
             let open_rejects = c2.macdfix_open(&fz_c, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -62148,7 +62722,7 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -62416,6 +62990,8 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -62452,6 +63028,12 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
             let open_rejects = c2.macdv_open(&fz_h, &fz_l, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -62599,7 +63181,7 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -62869,6 +63451,8 @@ pub(super) fn sv_maenv(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -62910,6 +63494,12 @@ pub(super) fn sv_maenv(core: &Core, params: &Value) -> String {
             let open_rejects = c2.maenv_open(&fz_c, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -63057,7 +63647,7 @@ pub(super) fn sv_maenv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -63308,6 +63898,8 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -63343,6 +63935,11 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mama_open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -63473,7 +64070,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -63719,6 +64316,8 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -63753,6 +64352,10 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.marketfi_open(&fz_h, &fz_l, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -63866,7 +64469,7 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -64106,6 +64709,8 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -64141,6 +64746,10 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.massi_open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -64254,7 +64863,7 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -64507,6 +65116,8 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     for _pi in 0..svN { fz_v[_pi] = (optInMinPeriod + ((_pi as i32) % (optInMaxPeriod - optInMinPeriod + 3)) - 1) as f64; }
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -64548,6 +65159,10 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mavp_open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -64661,7 +65276,7 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -64891,6 +65506,8 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -64925,6 +65542,10 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
             let open_rejects = c2.max_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -65038,7 +65659,7 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -65264,6 +65885,8 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -65298,6 +65921,10 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
             let open_rejects = c2.maxindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
@@ -65411,7 +66038,7 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -65640,6 +66267,8 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -65675,6 +66304,10 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mcgd_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -65788,7 +66421,7 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66014,6 +66647,8 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -66048,6 +66683,10 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
             let open_rejects = c2.median_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -66161,7 +66800,7 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66392,6 +67031,8 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -66426,6 +67067,10 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
             let open_rejects = c2.medprice_open(&fz_h, &fz_l).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -66539,7 +67184,7 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66790,6 +67435,8 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -66824,6 +67471,10 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mfi_open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -66937,7 +67588,7 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -67169,6 +67820,8 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -67203,6 +67856,10 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
             let open_rejects = c2.midpoint_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -67316,7 +67973,7 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -67550,6 +68207,8 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -67584,6 +68243,10 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
             let open_rejects = c2.midprice_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -67697,7 +68360,7 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -67925,6 +68588,8 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -67959,6 +68624,10 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
             let open_rejects = c2.min_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -68072,7 +68741,7 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -68298,6 +68967,8 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -68332,6 +69003,10 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
             let open_rejects = c2.minindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
@@ -68445,7 +69120,7 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -68675,6 +69350,8 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -68709,6 +69386,11 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
             let open_rejects = c2.minmax_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -68839,7 +69521,7 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69075,6 +69757,8 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -69109,6 +69793,11 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             let open_rejects = c2.minmaxindex_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<i32> = vec![-987654321i32; svN];
@@ -69239,7 +69928,7 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69490,6 +70179,8 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -69525,6 +70216,10 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
             let open_rejects = c2.minus_di_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -69638,7 +70333,7 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69879,6 +70574,8 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -69914,6 +70611,10 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
             let open_rejects = c2.minus_dm_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -70027,7 +70728,7 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -70255,6 +70956,8 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -70289,6 +70992,10 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mom_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -70402,7 +71109,7 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -70633,6 +71340,8 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -70667,6 +71376,10 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
             let open_rejects = c2.mult_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -70780,7 +71493,7 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71026,6 +71739,8 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -71061,6 +71776,10 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.natr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -71174,7 +71893,7 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71409,6 +72128,8 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -71443,6 +72164,10 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.nvi_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -71556,7 +72281,7 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71788,6 +72513,8 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -71822,6 +72549,10 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
             let open_rejects = c2.obv_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -71935,7 +72666,7 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -72180,6 +72911,8 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -72221,6 +72954,10 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
             let open_rejects = c2.percentb_open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -72334,7 +73071,7 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -72566,6 +73303,8 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -72600,6 +73339,10 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
             let open_rejects = c2.percentile_open(&fz_c, optInTimePeriod, optInPercentile).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -72713,7 +73456,7 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -72940,6 +73683,8 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -72974,6 +73719,10 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
             let open_rejects = c2.percentrank_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -73087,7 +73836,7 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -73332,6 +74081,8 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -73367,6 +74118,10 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
             let open_rejects = c2.plus_di_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -73480,7 +74235,7 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -73721,6 +74476,8 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -73756,6 +74513,10 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
             let open_rejects = c2.plus_dm_open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -73869,7 +74630,7 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -74112,6 +74873,8 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -74153,6 +74916,10 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ppo_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -74266,7 +75033,7 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -74513,6 +75280,8 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -74548,6 +75317,10 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
             let open_rejects = c2.pso_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInEMAPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -74661,7 +75434,7 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -74897,6 +75670,8 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -74931,6 +75706,10 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.pvi_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -75044,7 +75823,7 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -75286,6 +76065,8 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -75327,6 +76108,10 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
             let open_rejects = c2.pvo_open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -75440,7 +76225,7 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -75673,6 +76458,8 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -75707,6 +76494,10 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
             let open_rejects = c2.pvt_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -75820,7 +76611,7 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76055,6 +76846,8 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -76089,6 +76882,10 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
             let open_rejects = c2.qstick_open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -76202,7 +76999,7 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76433,6 +77230,8 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -76468,6 +77267,10 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -76581,7 +77384,7 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76807,6 +77610,8 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -76841,6 +77646,10 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.roc_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -76954,7 +77763,7 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -77180,6 +77989,8 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -77214,6 +78025,10 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rocp_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -77327,7 +78142,7 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -77553,6 +78368,8 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -77587,6 +78404,10 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rocr_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -77700,7 +78521,7 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -77926,6 +78747,8 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -77960,6 +78783,10 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rocr100_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -78073,7 +78900,7 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -78326,6 +79153,8 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -78360,6 +79189,10 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rogerssatchell_open(&fz_o, &fz_h, &fz_l, &fz_c, optInTimePeriod, optInAnnualization).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -78473,7 +79306,7 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -78709,6 +79542,8 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -78744,6 +79579,10 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rsi_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -78857,7 +79696,7 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79089,6 +79928,8 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -79124,6 +79965,10 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rvi_open(&fz_c, optInTimePeriod, optInStdDevPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -79237,7 +80082,7 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79475,6 +80320,8 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -79510,6 +80357,10 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rvir_open(&fz_h, &fz_l, optInTimePeriod, optInStdDevPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -79623,7 +80474,7 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79852,6 +80703,8 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -79886,6 +80739,10 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
             let open_rejects = c2.rvol_open(&fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -79999,7 +80856,7 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -80236,6 +81093,8 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -80270,6 +81129,10 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sar_open(&fz_h, &fz_l, optInAcceleration, optInMaximum).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -80383,7 +81246,7 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -80641,6 +81504,8 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -80675,6 +81540,10 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sarext_open(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -80788,7 +81657,7 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81029,6 +81898,8 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -81063,6 +81934,10 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sharpe_open(&fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -81176,7 +82051,7 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81428,6 +82303,8 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -81462,6 +82339,10 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
             let open_rejects = c2.si_open(&fz_o, &fz_h, &fz_l, &fz_c, optInLimitMove).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -81575,7 +82456,7 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81804,6 +82685,8 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -81838,6 +82721,10 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sin_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -81951,7 +82838,7 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -82173,6 +83060,8 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -82207,6 +83096,10 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sinh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -82320,7 +83213,7 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -82545,6 +83438,8 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -82579,6 +83474,10 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
             let open_rejects = c2.skew_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -82692,7 +83591,7 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -82918,6 +83817,8 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -82952,6 +83853,10 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -83065,7 +83970,7 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -83320,6 +84225,8 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -83355,6 +84262,11 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.smi_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -83485,7 +84397,7 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -83730,6 +84642,8 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -83764,6 +84678,10 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sortino_open(&fz_c, optInTimePeriod, optInMAR, optInAnnualization).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -83877,7 +84795,7 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -84102,6 +85020,8 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -84136,6 +85056,10 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sqrt_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -84249,7 +85173,7 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -84509,6 +85433,8 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -84543,6 +85469,11 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sqzmom_open(&fz_h, &fz_l, &fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -84673,7 +85604,7 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -84917,6 +85848,8 @@ pub(super) fn sv_ssf(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -84952,6 +85885,10 @@ pub(super) fn sv_ssf(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ssf_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -85065,7 +86002,7 @@ pub(super) fn sv_ssf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -85300,6 +86237,8 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -85336,6 +86275,10 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.stc_open(&fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -85449,7 +86392,7 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -85680,6 +86623,8 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -85714,6 +86659,10 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
             let open_rejects = c2.stddev_open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -85827,7 +86776,7 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -86101,6 +87050,8 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -86142,6 +87093,11 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
             let open_rejects = c2.stoch_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -86272,7 +87228,7 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -86547,6 +87503,8 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -86588,6 +87546,11 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
             let open_rejects = c2.stochf_open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -86718,7 +87681,7 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -86978,6 +87941,8 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -87020,6 +87985,11 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.stochrsi_open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -87150,7 +88120,7 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -87390,6 +88360,8 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -87424,6 +88396,10 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sub_open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -87537,7 +88513,7 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -87764,6 +88740,8 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -87798,6 +88776,10 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
             let open_rejects = c2.sum_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -87911,7 +88893,7 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88160,6 +89142,8 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -88195,6 +89179,11 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
             let open_rejects = c2.supertrend_open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInMultiplier).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -88325,7 +89314,7 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88565,6 +89554,8 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -88600,6 +89591,10 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
             let open_rejects = c2.swak_2php_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -88713,7 +89708,7 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88945,6 +89940,8 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -88980,6 +89977,10 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.swak_bp_open(&fz_c, optInTimePeriod, optInDelta).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -89093,7 +90094,7 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -89323,6 +90324,8 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -89358,6 +90361,10 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
             let open_rejects = c2.swak_butter_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -89471,7 +90478,7 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -89700,6 +90707,8 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -89735,6 +90744,10 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
             let open_rejects = c2.swak_gauss_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -89848,7 +90861,7 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90077,6 +91090,8 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -90112,6 +91127,10 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
             let open_rejects = c2.swak_hp_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -90225,7 +91244,7 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90457,6 +91476,8 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -90492,6 +91513,10 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
             let open_rejects = c2.t3_open(&fz_c, optInTimePeriod, optInVFactor).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -90605,7 +91630,7 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90829,6 +91854,8 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -90863,6 +91890,10 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
             let open_rejects = c2.tan_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -90976,7 +92007,7 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91198,6 +92229,8 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -91232,6 +92265,10 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
             let open_rejects = c2.tanh_open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -91345,7 +92382,7 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91570,6 +92607,8 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -91605,6 +92644,10 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
             let open_rejects = c2.tema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -91718,7 +92761,7 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91957,6 +93000,8 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -91991,6 +93036,10 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
             let open_rejects = c2.trange_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -92104,7 +93153,7 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -92333,6 +93382,8 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -92367,6 +93418,10 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
             let open_rejects = c2.trima_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -92480,7 +93535,7 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -92706,6 +93761,8 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -92741,6 +93798,10 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
             let open_rejects = c2.trix_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -92854,7 +93915,7 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93080,6 +94141,8 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -93114,6 +94177,10 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
             let open_rejects = c2.tsf_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -93227,7 +94294,7 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93456,6 +94523,8 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -93491,6 +94560,10 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
             let open_rejects = c2.tsi_open(&fz_c, optInFirstPeriod, optInSecondPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -93604,7 +94677,7 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93844,6 +94917,8 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -93878,6 +94953,10 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
             let open_rejects = c2.typprice_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -93991,7 +95070,7 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -94242,6 +95321,8 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -94276,6 +95357,10 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
             let open_rejects = c2.ultosc_open(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -94389,7 +95474,7 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -94624,6 +95709,8 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -94658,6 +95745,10 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
             let open_rejects = c2.var_open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -94771,7 +95862,7 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -94998,6 +96089,8 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -95032,6 +96125,10 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
             let open_rejects = c2.vhf_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -95145,7 +96242,7 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -95377,6 +96474,8 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -95412,6 +96511,10 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
             let open_rejects = c2.vidya_open(&fz_c, optInTimePeriod, optInCMOPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -95525,7 +96628,7 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -95772,6 +96875,8 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -95806,6 +96911,11 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
             let open_rejects = c2.vortex_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -95936,7 +97046,7 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -96193,6 +97303,8 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -96227,6 +97339,10 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
             let open_rejects = c2.vwap_open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -96340,7 +97456,7 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -96579,6 +97695,8 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -96613,6 +97731,10 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.vwma_open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -96726,7 +97848,7 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -96967,6 +98089,8 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -97001,6 +98125,10 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
             let open_rejects = c2.wad_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -97114,7 +98242,7 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -97369,6 +98497,8 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -97404,6 +98534,11 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
             let open_rejects = c2.wavetrend_open(&fz_h, &fz_l, &fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -97534,7 +98669,7 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -97785,6 +98920,8 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -97819,6 +98956,10 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
             let open_rejects = c2.wclprice_open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -97932,7 +99073,7 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -98177,6 +99318,8 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -98211,6 +99354,10 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
             let open_rejects = c2.willr_open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -98324,7 +99471,7 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -98554,6 +99701,8 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -98588,6 +99737,10 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
             let open_rejects = c2.wma_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -98701,7 +99854,7 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -98946,6 +100099,8 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut b2: Vec<i32> = vec![0i32; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -98980,6 +100135,12 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
             let open_rejects = c2.zigzag_open(&fz_h, &fz_l, optInSensitivity, optInMinTrendLength).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b1[..nb]);
+        sv_hash = fuzz_hash_bytes_i32(sv_hash, &b2[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -99127,7 +100288,7 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -99368,6 +100529,8 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
     let mut fz_oi = vec![0.0f64; svN];
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut sv_ev = -1i32;
+    let mut sv_hash = 0u64;
     let mut legs = 0i64;
     let mut round_mask = 0i32;
     let mut all_ok = true;
@@ -99403,6 +100566,10 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
             let open_rejects = c2.zlema_open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
         }
+        sv_ev = c2.ema_variation() as i32;
+        sv_hash = fuzz_hash_init();
+        sv_hash = fuzz_hash_bytes_f64(sv_hash, &b0[..nb]);
+        sv_hash = fuzz_hash_fin(sv_hash);
         fill_checked = 1;
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
@@ -99516,7 +100683,7 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag, sv_digest(sv_ev, beg, nb, sv_hash))
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
