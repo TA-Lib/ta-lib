@@ -147,6 +147,12 @@ static int g_stcTrendCmp;
 static int g_stcFlatCmp;
 static int g_stcSwapCmp;
 static int g_stcInplaceCmp;
+/* Under TA_EMAVariation_FIRST_BAR_SEED the line's two legs and TA_EMA both
+ * start on bar 0 whatever L0 is, so the composite holds unchanged but the
+ * SMA-seeded stcRefEma does not apply. */
+static int g_stcFirstBar;
+static int g_stcFirstBarCmp;
+static int g_stcFirstBarMacdCmp;
 
 static void        stcWalk( double *c, int nb );
 static void        stcSin( double *c, int nb );
@@ -179,6 +185,21 @@ ErrorNumber test_func_stc( TA_History *history )
    err = test_stc_goldens();
    if( err == TA_TEST_PASS )
       err = test_stc_composite();
+   if( err == TA_TEST_PASS )
+   {
+      g_stcFirstBar = 1;
+      g_stcFirstBarCmp = g_stcFirstBarMacdCmp = 0;
+      TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+      err = test_stc_composite();
+      TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+      g_stcFirstBar = 0;
+      if( err == TA_TEST_PASS && (g_stcFirstBarCmp == 0 || g_stcFirstBarMacdCmp == 0) )
+      {
+         printf( "STC Fail: the first-bar seed composite compared nothing (%d, %d)\n",
+                 g_stcFirstBarCmp, g_stcFirstBarMacdCmp );
+         err = TA_STC_VACUOUS;
+      }
+   }
    if( err == TA_TEST_PASS )
       err = test_stc_lookback();
    if( err == TA_TEST_PASS )
@@ -485,6 +506,12 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
       printf( "STC %s Fail: TA_EMA(%d) answered (%d,%d) (%d,%d)\n", tag, L0, b1, n1, b2, n2 );
       return TA_STC_VACUOUS;
    }
+   if( g_stcFirstBar )
+   {
+      for( j = 0; j < nL; j++ )
+         line[j] = ef[j] - es[j];
+      goto composed;
+   }
    rc  = stcRefEma( L0, nb-1, c, t->fast, &b1, &n1, rf );
    rc |= stcRefEma( L0, nb-1, c, t->slow, &b2, &n2, rs );
    if( rc != TA_SUCCESS || b1 != L0 || b2 != L0 || n1 != nL || n2 != nL )
@@ -506,6 +533,8 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
    }
    g_stcEmaCmp += 2 * nL;
 
+composed:
+
    /* Under a level the signal EMA of period 1 adds no bar, as at a count of 0. */
    if( k == 0 || k > TA_INDEX_MAX )
    {
@@ -517,7 +546,8 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
                  tag, t->fast, t->slow, startIdx );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
-      g_stcMacdCmp += nL;
+      if( g_stcFirstBar ) g_stcFirstBarMacdCmp += nL;
+      else                g_stcMacdCmp += nL;
    }
 
    stcStage( line, nL, t->cycle, pf, lo, hi );
@@ -533,7 +563,8 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
               startIdx + j, out[j], pff[j+u] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
-   g_stcCompositeCmp += nbElement;
+   if( g_stcFirstBar ) g_stcFirstBarCmp += nbElement;
+   else                g_stcCompositeCmp += nbElement;
    return TA_TEST_PASS;
 }
 

@@ -294548,6 +294548,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.acImpl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -294721,6 +294722,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.accbandsImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1, b2); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -294938,6 +294940,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.acosImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -295103,6 +295106,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.adImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -295268,6 +295272,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.addImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -295435,6 +295440,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.adoscImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
@@ -295607,6 +295613,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.adrImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -295778,6 +295785,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[0] = svK;
             RetCode rc;
             try { rc = c2.adxImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -295950,6 +295958,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[0] = svK;
             RetCode rc;
             try { rc = c2.adxrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -296129,6 +296138,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[24] = svK;
             RetCode rc;
             try { rc = c2.alligatorImpl(0, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, beg, nb, b0, b1, b2); }
@@ -296350,6 +296360,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.almaImpl(0, svN - 1, fz_c, optInTimePeriod, optInSigma, optInOffset, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -296522,6 +296533,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.aoImpl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -296701,6 +296713,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -296880,6 +296893,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.aroonImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -297079,6 +297093,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.aroonoscImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -297250,6 +297265,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.asiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInLimitMove, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -297415,6 +297431,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.asinImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -297580,6 +297597,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.atanImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -297746,6 +297764,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[2] = svK;
             RetCode rc;
             try { rc = c2.atrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -297918,6 +297937,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.avgdevImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -298088,6 +298108,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.avgpriceImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -298265,6 +298286,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -298499,6 +298521,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -298677,6 +298700,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.betaImpl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -298847,6 +298871,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.bopImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -299013,6 +299038,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cciImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -299184,6 +299210,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl2crowsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -299352,6 +299379,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3blackcrowsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -299520,6 +299548,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3insideImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -299688,6 +299717,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3linestrikeImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -299856,6 +299886,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3outsideImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -300024,6 +300055,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3starsinsouthImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -300192,6 +300224,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdl3whitesoldiersImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -300361,6 +300394,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlabandonedbabyImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -300529,6 +300563,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdladvanceblockImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -300697,6 +300732,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlbeltholdImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -300865,6 +300901,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlbreakawayImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -301033,6 +301070,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlclosingmarubozuImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -301201,6 +301239,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlconcealbabyswallImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -301369,6 +301408,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlcounterattackImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -301538,6 +301578,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdldarkcloudcoverImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -301706,6 +301747,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdldojiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -301874,6 +301916,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdldojistarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -302042,6 +302085,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdldragonflydojiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -302210,6 +302254,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlengulfingImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -302379,6 +302424,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdleveningdojistarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -302548,6 +302594,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdleveningstarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -302716,6 +302763,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlgapsidesidewhiteImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -302884,6 +302932,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlgravestonedojiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303052,6 +303101,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhammerImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303220,6 +303270,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhangingmanImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303388,6 +303439,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlharamiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303556,6 +303608,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlharamicrossImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303724,6 +303777,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhighwaveImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -303892,6 +303946,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhikkakeImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304060,6 +304115,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhikkakemodImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304228,6 +304284,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlhomingpigeonImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304396,6 +304453,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlidentical3crowsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304564,6 +304622,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlinneckImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304732,6 +304791,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlinvertedhammerImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -304900,6 +304960,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlkickingImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305068,6 +305129,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlkickingbylengthImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305236,6 +305298,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlladderbottomImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305404,6 +305467,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdllongleggeddojiImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305572,6 +305636,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdllonglineImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305740,6 +305805,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlmarubozuImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -305908,6 +305974,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlmatchinglowImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -306077,6 +306144,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlmatholdImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -306246,6 +306314,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlmorningdojistarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -306415,6 +306484,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlmorningstarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
@@ -306583,6 +306653,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlonneckImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -306751,6 +306822,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlpiercingImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -306919,6 +306991,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlrickshawmanImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307087,6 +307160,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlrisefall3methodsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307255,6 +307329,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlseparatinglinesImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307423,6 +307498,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlshootingstarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307591,6 +307667,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlshortlineImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307759,6 +307836,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlspinningtopImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -307927,6 +308005,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlstalledpatternImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308095,6 +308174,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlsticksandwichImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308263,6 +308343,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdltakuriImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308431,6 +308512,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdltasukigapImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308599,6 +308681,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlthrustingImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308767,6 +308850,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdltristarImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -308935,6 +309019,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlunique3riverImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -309103,6 +309188,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlupsidegap2crowsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -309271,6 +309357,7 @@ public class TaCodegenServe {
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             svApplyCandleRound(c2, rd);
             RetCode rc;
             try { rc = c2.cdlxsidegap3methodsImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
@@ -309441,6 +309528,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[2] = svK;
             RetCode rc;
             try { rc = c2.ceImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, beg, nb, b0, b1); }
@@ -309640,6 +309728,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.ceilImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -309806,6 +309895,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cgImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -309977,6 +310067,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.chopImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -310148,6 +310239,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.choptrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -310322,6 +310414,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[2] = svK;
             RetCode rc;
             try { rc = c2.ckspImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, beg, nb, b0, b1); }
@@ -310522,6 +310615,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cmfImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -310693,6 +310787,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[3] = svK;
             RetCode rc;
             try { rc = c2.cmoImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -310865,6 +310960,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cmouImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -311038,6 +311134,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.coppockImpl(0, svN - 1, fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -311209,6 +311306,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.correlImpl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -311379,6 +311477,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cosImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -311544,6 +311643,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.coshImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -311712,6 +311812,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[21] = svK;
             RetCode rc;
             try { rc = c2.crsiImpl(0, svN - 1, fz_c, optInTimePeriod, optInStreakPeriod, optInRankPeriod, beg, nb, b0); }
@@ -311884,6 +311985,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.ctiImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -312054,6 +312156,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.cumsumImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -312221,6 +312324,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.cviImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, beg, nb, b0); }
@@ -312393,6 +312497,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.demaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -312564,6 +312669,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.divImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -312732,6 +312838,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.donchianImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1, b2); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -312953,6 +313060,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[21] = svK;
             RetCode rc;
@@ -313126,6 +313234,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.dpoImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -313297,6 +313406,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[4] = svK;
             RetCode rc;
             try { rc = c2.dxImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -313469,6 +313579,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.efiImpl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
@@ -313641,6 +313752,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.emaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -313814,6 +313926,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.emvImpl(0, svN - 1, fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -313985,6 +314098,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.erImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -314157,6 +314271,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.eriImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1); }
@@ -314356,6 +314471,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.expImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -314523,6 +314639,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[36] = svK;
             RetCode rc;
             try { rc = c2.fisherImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
@@ -314722,6 +314839,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.floorImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -314888,6 +315006,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.foscImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -315061,6 +315180,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.fractalImpl(0, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -315258,6 +315378,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[27] = svK;
             RetCode rc;
             try { rc = c2.framaImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -315436,6 +315557,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[24] = svK;
             RetCode rc;
             try { rc = c2.gatorImpl(0, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, beg, nb, b0, b1); }
@@ -315638,6 +315760,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[25] = svK;
             RetCode rc;
             try { rc = c2.haImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0, b1, b2, b3); }
@@ -315866,6 +315989,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.hmaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -316036,6 +316160,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[6] = svK;
             RetCode rc;
             try { rc = c2.htDcperiodImpl(0, svN - 1, fz_c, beg, nb, b0); }
@@ -316202,6 +316327,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[7] = svK;
             RetCode rc;
             try { rc = c2.htDcphaseImpl(0, svN - 1, fz_c, beg, nb, b0); }
@@ -316369,6 +316495,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[8] = svK;
             RetCode rc;
             try { rc = c2.htPhasorImpl(0, svN - 1, fz_c, beg, nb, b0, b1); }
@@ -316561,6 +316688,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[9] = svK;
             RetCode rc;
             try { rc = c2.htSineImpl(0, svN - 1, fz_c, beg, nb, b0, b1); }
@@ -316752,6 +316880,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[10] = svK;
             RetCode rc;
             try { rc = c2.htTrendlineImpl(0, svN - 1, fz_c, beg, nb, b0); }
@@ -316918,6 +317047,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[11] = svK;
             RetCode rc;
             try { rc = c2.htTrendmodeImpl(0, svN - 1, fz_c, beg, nb, b0); }
@@ -317083,6 +317213,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.ibsImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -317254,6 +317385,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.ichimokuImpl(0, svN - 1, fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, beg, nb, b0, b1, b2, b3); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -317491,6 +317623,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.imiImpl(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -317662,6 +317795,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[13] = svK;
             RetCode rc;
             try { rc = c2.kamaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -317838,6 +317972,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[2] = svK;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
@@ -318076,6 +318211,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -318310,6 +318446,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.kstImpl(0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -318532,6 +318669,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -318738,6 +318876,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.kurtosisImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -318912,6 +319051,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.kvoImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -319112,6 +319252,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.linearregImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -319283,6 +319424,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.linearregAngleImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -319454,6 +319596,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.linearregInterceptImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -319625,6 +319768,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.linearregSlopeImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -319795,6 +319939,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.lnImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -319960,6 +320105,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.log10Impl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -320133,6 +320279,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -320315,6 +320462,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.macdImpl(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2); }
@@ -320559,6 +320707,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -320786,6 +320935,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.macdfixImpl(0, svN - 1, fz_c, optInSignalPeriod, beg, nb, b0, b1, b2); }
@@ -321009,6 +321159,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[2] = svK;
             RetCode rc;
@@ -321240,6 +321391,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -321467,6 +321619,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[14] = svK;
             RetCode rc;
             try { rc = c2.mamaImpl(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, beg, nb, b0, b1); }
@@ -321658,6 +321811,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.marketfiImpl(0, svN - 1, fz_h, fz_l, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -321825,6 +321979,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.massiImpl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
@@ -322006,6 +322161,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -322184,6 +322340,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.maxImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -322355,6 +322512,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.maxindexImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -322525,6 +322683,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[28] = svK;
             RetCode rc;
             try { rc = c2.mcgdImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -322697,6 +322856,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.medianImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -322867,6 +323027,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.medpriceImpl(0, svN - 1, fz_h, fz_l, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323033,6 +323194,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.mfiImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323204,6 +323366,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.midpointImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323375,6 +323538,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.midpriceImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323546,6 +323710,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.minImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323717,6 +323882,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.minindexImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -323888,6 +324054,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.minmaxImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -324088,6 +324255,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.minmaxindexImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -324285,6 +324453,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[16] = svK;
             RetCode rc;
             try { rc = c2.minusDiImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -324457,6 +324626,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[17] = svK;
             RetCode rc;
             try { rc = c2.minusDmImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -324629,6 +324799,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.momImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -324799,6 +324970,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.multImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -324965,6 +325137,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[18] = svK;
             RetCode rc;
             try { rc = c2.natrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -325136,6 +325309,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.nviImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -325301,6 +325475,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.obvImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -325476,6 +325651,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -325655,6 +325831,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.percentileImpl(0, svN - 1, fz_c, optInTimePeriod, optInPercentile, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -325826,6 +326003,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.percentrankImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -325997,6 +326175,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[19] = svK;
             RetCode rc;
             try { rc = c2.plusDiImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -326169,6 +326348,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[20] = svK;
             RetCode rc;
             try { rc = c2.plusDmImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -326349,6 +326529,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -326528,6 +326709,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.psoImpl(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInEMAPeriod, beg, nb, b0); }
@@ -326699,6 +326881,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.pviImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -326873,6 +327056,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -327050,6 +327234,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.pvtImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -327216,6 +327401,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.qstickImpl(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -327387,6 +327573,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[24] = svK;
             RetCode rc;
             try { rc = c2.rmaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -327559,6 +327746,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rocImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -327730,6 +327918,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rocpImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -327901,6 +328090,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rocrImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -328072,6 +328262,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rocr100Impl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -328244,6 +328435,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rogerssatchellImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -328415,6 +328607,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[21] = svK;
             RetCode rc;
             try { rc = c2.rsiImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -328588,6 +328781,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[26] = svK;
             RetCode rc;
             try { rc = c2.rviImpl(0, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, beg, nb, b0); }
@@ -328761,6 +328955,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[26] = svK;
             RetCode rc;
             try { rc = c2.rvirImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, beg, nb, b0); }
@@ -328933,6 +329128,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.rvolImpl(0, svN - 1, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329105,6 +329301,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sarImpl(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329278,6 +329475,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sarextImpl(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329446,6 +329644,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sharpeImpl(0, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329617,6 +329816,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.siImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInLimitMove, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329782,6 +329982,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sinImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -329947,6 +330148,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sinhImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -330113,6 +330315,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.skewImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -330284,6 +330487,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.smaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -330459,6 +330663,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.smiImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -330661,6 +330866,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sortinoImpl(0, svN - 1, fz_c, optInTimePeriod, optInMAR, optInAnnualization, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -330831,6 +331037,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sqrtImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -331003,6 +331210,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sqzmomImpl(0, svN - 1, fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -331201,6 +331409,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             RetCode rc;
             try { rc = c2.ssfImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -331375,6 +331584,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[30] = svK;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
@@ -331549,6 +331759,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.stddevImpl(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -331737,6 +331948,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -331952,6 +332164,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
             c2.unstablePeriod[24] = svK;
@@ -332168,6 +332381,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[21] = svK;
             c2.unstablePeriod[37] = svK;
             c2.unstablePeriod[29] = svK;
@@ -332374,6 +332588,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.subImpl(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -332540,6 +332755,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.sumImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -332713,6 +332929,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[2] = svK;
             RetCode rc;
             try { rc = c2.supertrendImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, beg, nb, b0, b1); }
@@ -332912,6 +333129,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[34] = svK;
             RetCode rc;
             try { rc = c2.swak2phpImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -333085,6 +333303,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[35] = svK;
             RetCode rc;
             try { rc = c2.swakBpImpl(0, svN - 1, fz_c, optInTimePeriod, optInDelta, beg, nb, b0); }
@@ -333257,6 +333476,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[32] = svK;
             RetCode rc;
             try { rc = c2.swakButterImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -333429,6 +333649,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[31] = svK;
             RetCode rc;
             try { rc = c2.swakGaussImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -333601,6 +333822,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[33] = svK;
             RetCode rc;
             try { rc = c2.swakHpImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -333774,6 +333996,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[23] = svK;
             RetCode rc;
             try { rc = c2.t3Impl(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, beg, nb, b0); }
@@ -333945,6 +334168,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.tanImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -334110,6 +334334,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.tanhImpl(0, svN - 1, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -334276,6 +334501,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.temaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -334447,6 +334673,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.trangeImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -334613,6 +334840,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.trimaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -334784,6 +335012,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.trixImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -334956,6 +335185,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.tsfImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -335128,6 +335358,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.tsiImpl(0, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, beg, nb, b0); }
@@ -335299,6 +335530,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.typpriceImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -335467,6 +335699,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.ultoscImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -335639,6 +335872,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.varImpl(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -335810,6 +336044,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.vhfImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -335982,6 +336217,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[29] = svK;
             RetCode rc;
             try { rc = c2.vidyaImpl(0, svN - 1, fz_c, optInTimePeriod, optInCMOPeriod, beg, nb, b0); }
@@ -336155,6 +336391,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.vortexImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -336353,6 +336590,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.vwapImpl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -336519,6 +336757,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.vwmaImpl(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -336689,6 +336928,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.wadImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -336858,6 +337098,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.wavetrendImpl(0, svN - 1, fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -337057,6 +337298,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.wclpriceImpl(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -337223,6 +337465,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.willrImpl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -337394,6 +337637,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.wmaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -337568,6 +337812,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             RetCode rc;
             try { rc = c2.zigzagImpl(0, svN - 1, fz_h, fz_l, optInSensitivity, optInMinTrendLength, beg, nb, b0, b1, b2); }
             catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
@@ -337785,6 +338030,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.emaVariation = core.emaVariation;
             c2.unstablePeriod[5] = svK;
             RetCode rc;
             try { rc = c2.zlemaImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }

@@ -1443,7 +1443,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -1654,7 +1654,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -1933,7 +1933,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -2132,7 +2132,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -2337,7 +2337,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -2540,7 +2540,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -2754,7 +2754,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -2963,7 +2963,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)0, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -3175,7 +3175,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)0, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -3394,7 +3394,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -3671,7 +3671,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -3879,7 +3879,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -4103,7 +4103,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -4318,7 +4318,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -4557,7 +4557,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -4766,7 +4766,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -4971,7 +4971,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -5170,7 +5170,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -5370,7 +5370,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -5582,7 +5582,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -5788,7 +5788,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -6016,7 +6016,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -6307,7 +6307,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -6521,7 +6521,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -6729,7 +6729,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -6935,7 +6935,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -7149,7 +7149,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -7376,7 +7376,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -7603,7 +7603,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -7830,7 +7830,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -8057,7 +8057,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -8284,7 +8284,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -8511,7 +8511,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -8739,7 +8739,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -8966,7 +8966,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -9193,7 +9193,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -9420,7 +9420,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -9647,7 +9647,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -9874,7 +9874,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -10101,7 +10101,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -10329,7 +10329,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -10556,7 +10556,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -10783,7 +10783,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -11010,7 +11010,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -11237,7 +11237,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -11465,7 +11465,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -11693,7 +11693,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -11920,7 +11920,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -12147,7 +12147,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -12374,7 +12374,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -12601,7 +12601,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -12828,7 +12828,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -13055,7 +13055,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -13282,7 +13282,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -13509,7 +13509,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -13736,7 +13736,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -13963,7 +13963,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -14190,7 +14190,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -14417,7 +14417,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -14644,7 +14644,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -14871,7 +14871,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -15098,7 +15098,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -15325,7 +15325,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -15552,7 +15552,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -15779,7 +15779,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -16006,7 +16006,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -16233,7 +16233,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -16461,7 +16461,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -16689,7 +16689,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -16917,7 +16917,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -17144,7 +17144,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -17371,7 +17371,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -17598,7 +17598,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -17825,7 +17825,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -18052,7 +18052,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -18279,7 +18279,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -18506,7 +18506,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -18733,7 +18733,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -18960,7 +18960,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -19187,7 +19187,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -19414,7 +19414,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -19641,7 +19641,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -19868,7 +19868,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -20095,7 +20095,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -20322,7 +20322,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -20549,7 +20549,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -20776,7 +20776,7 @@ public class TaCodegenServe {
         long zsignMut = 0;
         int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = SvApplyCandleRound(cb, rd);
             Core c2;
             try { c2 = cb.Build(); }
@@ -21002,7 +21002,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -21245,7 +21245,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -21445,7 +21445,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -21652,7 +21652,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -21863,7 +21863,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -22077,7 +22077,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -22321,7 +22321,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -22534,7 +22534,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)3, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -22742,7 +22742,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -22951,7 +22951,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -23158,7 +23158,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -23366,7 +23366,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -23565,7 +23565,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -23767,7 +23767,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -23975,7 +23975,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -24181,7 +24181,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -24382,7 +24382,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -24592,7 +24592,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -24799,7 +24799,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -25003,7 +25003,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -25280,7 +25280,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             Core c2;
@@ -25489,7 +25489,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -25696,7 +25696,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)4, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -25908,7 +25908,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -26118,7 +26118,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -26327,7 +26327,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -26538,7 +26538,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -26746,7 +26746,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -26989,7 +26989,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -27190,7 +27190,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)36, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -27429,7 +27429,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -27629,7 +27629,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -27838,7 +27838,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -28063,7 +28063,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)27, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -28279,7 +28279,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -28521,7 +28521,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)25, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -28843,7 +28843,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -29049,7 +29049,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)6, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -29249,7 +29249,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)7, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -29450,7 +29450,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)8, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -29678,7 +29678,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)9, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -29905,7 +29905,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)10, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -30105,7 +30105,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)11, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -30299,7 +30299,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -30508,7 +30508,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -30823,7 +30823,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -31032,7 +31032,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)13, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -31244,7 +31244,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
@@ -31550,7 +31550,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -31846,7 +31846,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -32108,7 +32108,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -32350,7 +32350,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -32560,7 +32560,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -32808,7 +32808,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -33015,7 +33015,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -33222,7 +33222,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -33429,7 +33429,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -33635,7 +33635,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -33834,7 +33834,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -34048,7 +34048,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -34266,7 +34266,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -34561,7 +34561,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -34838,7 +34838,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -35111,7 +35111,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             Core c2;
@@ -35415,7 +35415,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -35692,7 +35692,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)14, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -35919,7 +35919,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -36124,7 +36124,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -36350,7 +36350,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -36566,7 +36566,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -36773,7 +36773,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -36974,7 +36974,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)28, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -37182,7 +37182,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -37388,7 +37388,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -37590,7 +37590,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -37803,7 +37803,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -38010,7 +38010,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -38219,7 +38219,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -38426,7 +38426,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -38628,7 +38628,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -38864,7 +38864,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -39089,7 +39089,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)16, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -39301,7 +39301,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)17, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -39511,7 +39511,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -39717,7 +39717,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -39919,7 +39919,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)18, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -40130,7 +40130,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -40331,7 +40331,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -40549,7 +40549,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -40764,7 +40764,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -40971,7 +40971,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -41178,7 +41178,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)19, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -41390,7 +41390,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)20, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -41615,7 +41615,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -41830,7 +41830,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -42041,7 +42041,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -42258,7 +42258,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -42471,7 +42471,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -42673,7 +42673,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -42882,7 +42882,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -43090,7 +43090,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -43297,7 +43297,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -43504,7 +43504,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -43711,7 +43711,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -43919,7 +43919,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -44132,7 +44132,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -44341,7 +44341,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)26, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -44550,7 +44550,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)26, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -44760,7 +44760,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -44968,7 +44968,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -45177,7 +45177,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -45381,7 +45381,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -45588,7 +45588,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -45793,7 +45793,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -45992,7 +45992,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -46192,7 +46192,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -46399,7 +46399,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -46610,7 +46610,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -46856,7 +46856,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -47062,7 +47062,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -47268,7 +47268,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -47496,7 +47496,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -47706,7 +47706,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)30, svK);
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
@@ -47916,7 +47916,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -48144,7 +48144,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -48412,7 +48412,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             cb = cb.UnstablePeriod((FuncUnstId)24, svK);
@@ -48681,7 +48681,7 @@ public class TaCodegenServe {
         }
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)21, svK);
             cb = cb.UnstablePeriod((FuncUnstId)37, svK);
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
@@ -48923,7 +48923,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -49125,7 +49125,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -49334,7 +49334,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)2, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -49563,7 +49563,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)34, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -49772,7 +49772,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)35, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -49980,7 +49980,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)32, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -50188,7 +50188,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)31, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -50396,7 +50396,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)33, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -50605,7 +50605,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)23, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -50812,7 +50812,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -51011,7 +51011,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -51211,7 +51211,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -51418,7 +51418,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -51622,7 +51622,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -51829,7 +51829,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -52037,7 +52037,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -52245,7 +52245,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -52452,7 +52452,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -52658,7 +52658,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -52870,7 +52870,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -53077,7 +53077,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -53285,7 +53285,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)29, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -53494,7 +53494,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -53736,7 +53736,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -53942,7 +53942,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -54150,7 +54150,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -54357,7 +54357,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }
@@ -54600,7 +54600,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -54804,7 +54804,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -55015,7 +55015,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -55225,7 +55225,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             Core c2;
             try { c2 = cb.Build(); }
             catch (ArgumentOutOfRangeException) {
@@ -55475,7 +55475,7 @@ public class TaCodegenServe {
         long updAlloc = 0;
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
+            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());
             cb = cb.UnstablePeriod((FuncUnstId)5, svK);
             Core c2;
             try { c2 = cb.Build(); }

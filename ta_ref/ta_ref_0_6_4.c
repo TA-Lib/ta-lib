@@ -11,6 +11,9 @@
  *   stay compared.
  * - 0.6.4 predates explicit fma() (PR #96), so every function without a named
  *   row may differ by the 1e-9 relative FMA contract ("*" below).
+ * - Its TA_COMPATIBILITY_METASTOCK mode is the oracle for
+ *   TA_EMAVariation_FIRST_BAR_SEED, under the same rows and waivers. Its TRIX
+ *   past the lookback is #98's, which trix_natr_98 already waives.
  *
  * The waiver predicates are two-pass on purpose: deciding whether to trust the
  * oracle must not re-run either implementation's algorithm. */
@@ -498,4 +501,5 @@ const TaRefMember ta_ref_member = {
    .waivers     = WAIVERS,
    .nbWaivers   = (int)(sizeof(WAIVERS) / sizeof(WAIVERS[0])),
    .waive       = waive,
+   .metastock   = 1,
 };

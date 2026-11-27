@@ -122,11 +122,11 @@ static long long g_dsServer = 0;
 /* Rule rL12, per axis (0 the unstable periods, 1 the candle settings): shifts
  * found unchanged on a function whose own lookback the change moved, and
  * non-zero shifts found unchanged. */
-static long long g_dsSettingLive[2] = { 0, 0 };
-static long long g_dsSettingNonZero[2] = { 0, 0 };
+static long long g_dsSettingLive[3] = { 0, 0, 0 };
+static long long g_dsSettingNonZero[3] = { 0, 0, 0 };
 /* The same two, for the server's answers. */
-static long long g_dsSrvSettingLive[2] = { 0, 0 };
-static long long g_dsSrvSettingNonZero[2] = { 0, 0 };
+static long long g_dsSrvSettingLive[3] = { 0, 0, 0 };
+static long long g_dsSrvSettingNonZero[3] = { 0, 0, 0 };
 /* Rejected batch calls found to leave the output buffers untouched, where the
  * rejected value lies inside its declared range: a rejection the function body
  * makes itself, after the generated argument checks. At a bound, and one step
@@ -201,10 +201,10 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
    g_dsRealOutRejected = g_dsListOutRejected = g_dsRealAccepted = g_dsListAccepted = 0;
    g_dsFlagged = g_dsNonZero = g_dsServer = 0;
-   g_dsSettingLive[0] = g_dsSettingLive[1] = 0;
-   g_dsSettingNonZero[0] = g_dsSettingNonZero[1] = 0;
-   g_dsSrvSettingLive[0] = g_dsSrvSettingLive[1] = 0;
-   g_dsSrvSettingNonZero[0] = g_dsSrvSettingNonZero[1] = 0;
+   g_dsSettingLive[0] = g_dsSettingLive[1] = g_dsSettingLive[2] = 0;
+   g_dsSettingNonZero[0] = g_dsSettingNonZero[1] = g_dsSettingNonZero[2] = 0;
+   g_dsSrvSettingLive[0] = g_dsSrvSettingLive[1] = g_dsSrvSettingLive[2] = 0;
+   g_dsSrvSettingNonZero[0] = g_dsSrvSettingNonZero[1] = g_dsSrvSettingNonZero[2] = 0;
    g_rejectedAtBoundClean = g_rejectedAboveMinClean = 0;
    g_lsCdlMoved = g_lsCeilingUnst = g_lsCeilingCandle = 0;
    g_lsCeilingAtMax = 0;
@@ -1642,13 +1642,28 @@ static ErrorNumber ds_server_query( const char *method, const char *field,
     return TA_TEST_PASS;
 }
 
-/* Hands the server the unstable periods (axis 0) or the candle settings
- * (axis 1) the library holds now.
+/* Hands the server the unstable periods (axis 0), the candle settings
+ * (axis 1) or the EMA variation (axis 2) the library holds now.
  */
 static ErrorNumber ds_server_push_settings( const char *funcName, int axis )
 {
     unsigned int k, nb = axis == 0 ? TA_FUNC_UNST_COUNT : TA_NB_CANDLE_SETTING;
     int uniform = axis == 0;
+
+    if( axis == 2 )
+    {
+        codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+            "{\"method\":\"set_ema_variation\",\"params\":{\"value\":%d}}",
+            (int)TA_GetEMAVariation());
+        if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                              g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+            || abstract_json_is_error(g_abstractRespBuf) )
+        {
+            printf("  ABSTRACT ERROR [%s]: the server refused the EMA variation\n", funcName);
+            return TA_ABSTRACT_SERVER_ERROR;
+        }
+        return TA_TEST_PASS;
+    }
 
     for( k = 1; uniform && k < TA_FUNC_UNST_COUNT; k++ )
         uniform = TA_Globals->unstablePeriod[k] == TA_Globals->unstablePeriod[0];
@@ -1684,8 +1699,9 @@ static ErrorNumber ds_server_push_settings( const char *funcName, int axis )
 }
 
 /* Rule rL12: the display shift of every output, read again with every unstable
- * period changed, then with every candle setting changed, from the library and
- * from the server. Leaves the settings of both as it found them, on failure
+ * period changed, then with every candle setting changed, then with the other
+ * EMA variation, from the library and from the server. The EMA variation moves
+ * no lookback either. Leaves the settings of both as it found them, on failure
  * too.
  */
 #define DS_SETTING_BUMP 7
@@ -1697,7 +1713,8 @@ static ErrorNumber ds_under_settings( const char *funcName,
                                       const double *optVals,
                                       int askServer )
 {
-    static const char *const axisName[2] = { "an unstable period", "a candle setting" };
+    static const char *const axisName[3] = { "an unstable period", "a candle setting",
+                                             "the EMA variation" };
     TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
     unsigned int savedUnst[TA_FUNC_UNST_COUNT];
     TA_EMAVariation savedEmaVariation = TA_Globals->emaVariation;
@@ -1719,7 +1736,7 @@ static ErrorNumber ds_under_settings( const char *funcName,
     memcpy(savedCandle, TA_Globals->candleSettings, sizeof(savedCandle));
     memcpy(savedUnst, TA_Globals->unstablePeriod, sizeof(savedUnst));
 
-    for( axis = 0; axis < 2; axis++ )
+    for( axis = 0; axis < 3; axis++ )
     {
         TA_Integer lookback = -1;
         int moved = -1, refused = 0, pushed = 0;
@@ -1732,6 +1749,10 @@ static ErrorNumber ds_under_settings( const char *funcName,
                                savedUnst[k] == DS_SETTING_BUMP ? 2 * DS_SETTING_BUMP
                                                                : DS_SETTING_BUMP ) != TA_SUCCESS;
         }
+        else if( axis == 2 )
+            refused = TA_SetEMAVariation( savedEmaVariation == TA_EMAVariation_FIRST_BAR_SEED
+                                          ? TA_EMAVariation_SMA_SEED
+                                          : TA_EMAVariation_FIRST_BAR_SEED ) != TA_SUCCESS;
         else
         {
             for( k = 0; k < TA_NB_CANDLE_SETTING; k++ )
@@ -1741,6 +1762,13 @@ static ErrorNumber ds_under_settings( const char *funcName,
                                savedCandle[k].factor * 3.7 ) != TA_SUCCESS;
         }
         TA_GetLookback(paramHolder, &lookback);
+        if( axis == 2 && lookback != lookback0 )
+        {
+            TA_Globals->emaVariation = savedEmaVariation;
+            printf("  Failed [%s]: the EMA variation moved the lookback from %d to %d\n",
+                   funcName, (int)lookback0, (int)lookback);
+            return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+        }
         for( o = 0; !refused && moved < 0 && o < funcInfo->nbOutput; o++ )
         {
             TA_Integer shift = 12345;
@@ -2072,11 +2100,19 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
         memcpy(TA_Globals->candleSettings, savedCandle, sizeof(savedCandle));
         TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
         TA_GetLookback(paramHolder, &atZero);
+        {
+            TA_Integer firstBar = -1;
+            TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+            TA_GetLookback(paramHolder, &firstBar);
+            TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+            if( firstBar != atZero )
+                bad = "TA_EMAVariation_FIRST_BAR_SEED moved the lookback";
+        }
         TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, (unsigned int)TA_INDEX_MAX);
         TA_GetLookback(paramHolder, &atCeiling);
-        if( atZero >= 0 && atCeiling < atZero )
+        if( !bad && atZero >= 0 && atCeiling < atZero )
             bad = "the lookback shrank with every unstable period at TA_INDEX_MAX";
-        else if( atZero >= 0 && !isCdl && atCeiling - atZero >= TA_INDEX_MAX )
+        else if( !bad && atZero >= 0 && !isCdl && atCeiling - atZero >= TA_INDEX_MAX )
         {
             if( pass == 0 ) g_lsCeilingUnst++;
             else            g_lsCeilingAtMax++;
@@ -2872,24 +2908,25 @@ ErrorNumber test_abstract( void )
    }
 
    if( g_dsSettingLive[0] == 0 || g_dsSettingLive[1] == 0 ||
-       g_dsSettingNonZero[0] == 0 || g_dsSettingNonZero[1] == 0 )
+       g_dsSettingNonZero[0] == 0 || g_dsSettingNonZero[1] == 0 || g_dsSettingNonZero[2] == 0 )
    {
       printf( "  Failed: the display-shift sweep held %lld shift(s) while an unstable "
               "period moved the lookback and %lld while a candle setting did, and "
-              "held %lld and %lld non-zero shift(s)\n",
+              "held %lld, %lld and %lld (the EMA variation) non-zero shift(s)\n",
               g_dsSettingLive[0], g_dsSettingLive[1],
-              g_dsSettingNonZero[0], g_dsSettingNonZero[1] );
+              g_dsSettingNonZero[0], g_dsSettingNonZero[1], g_dsSettingNonZero[2] );
       return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
    if( g_abstractPipe &&
        ( g_dsSrvSettingLive[0] == 0 || g_dsSrvSettingLive[1] == 0 ||
-         g_dsSrvSettingNonZero[0] == 0 || g_dsSrvSettingNonZero[1] == 0 ) )
+         g_dsSrvSettingNonZero[0] == 0 || g_dsSrvSettingNonZero[1] == 0
+         || g_dsSrvSettingNonZero[2] == 0 ) )
    {
       printf( "  Failed: the server held %lld shift(s) while an unstable period moved "
-              "its lookback and %lld while a candle setting did, and held %lld and "
-              "%lld non-zero shift(s)\n",
+              "its lookback and %lld while a candle setting did, and held %lld, "
+              "%lld and %lld (the EMA variation) non-zero shift(s)\n",
               g_dsSrvSettingLive[0], g_dsSrvSettingLive[1],
-              g_dsSrvSettingNonZero[0], g_dsSrvSettingNonZero[1] );
+              g_dsSrvSettingNonZero[0], g_dsSrvSettingNonZero[1], g_dsSrvSettingNonZero[2] );
       return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
 

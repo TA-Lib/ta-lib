@@ -121,6 +121,18 @@ static TA_Test tableTest[] =
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
+/* Under TA_EMAVariation_FIRST_BAR_SEED: 0.6.4's TA_TRIX under
+ * TA_COMPATIBILITY_METASTOCK on this series. */
+static TA_Test tableFirstBarSeed[] =
+{
+   { 1, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      0,   0.2210, 13,  252-13 }, /* First Value */
+   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS,      1,  -0.0100, 13,  252-13 },
+   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-15,  -0.058, 13,  252-13 },
+   { 0, TA_TRIX_TEST, 0, 0, 251,  5, TA_SUCCESS, 252-14,  -0.0956, 13,  252-13 }, /* Last Value */
+};
+
+#define NB_TEST_FIRST_BAR_SEED (sizeof(tableFirstBarSeed)/sizeof(TA_Test))
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_per_ema( TA_History *history )
 {
@@ -143,6 +155,18 @@ ErrorNumber test_func_per_ema( TA_History *history )
       if( retValue != 0 )
       {
          printf( "TA_MA Failed Test #%d (Code=%d)\n", i, retValue );
+         return retValue;
+      }
+   }
+
+   for( i=0; i < NB_TEST_FIRST_BAR_SEED; i++ )
+   {
+      TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+      retValue = do_test_per_ema( history, &tableFirstBarSeed[i] );
+      TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+      if( retValue != 0 )
+      {
+         printf( "TA_TRIX Failed FIRST_BAR_SEED Test #%d (Code=%d)\n", i, retValue );
          return retValue;
       }
    }

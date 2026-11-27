@@ -120,6 +120,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_percentile.c \
 	ta_test_func/test_cvi.c \
 	ta_test_func/test_massi.c \
+	ta_test_func/test_ema_variation.c \
 	ta_test_func/test_adr.c \
 	ta_test_func/test_rvol.c \
 	ta_test_func/test_variants.c \

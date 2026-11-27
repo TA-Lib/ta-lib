@@ -63,6 +63,8 @@ typedef struct
    const TaRefWaiver *waivers;
    int                nbWaivers;
    int              (*waive)( const TaRefCase *c ); /* index into waivers, or -1 */
+   int                metastock;   /* 1: TA_SetCompatibility(TA_COMPATIBILITY_METASTOCK)
+                                    * selects the release's MetaStock variant */
 } TaRefMember;
 
 extern const TaRefMember ta_ref_member;

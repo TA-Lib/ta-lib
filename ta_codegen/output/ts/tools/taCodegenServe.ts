@@ -491,6 +491,7 @@ const UNSUPPORTED_MODE = '{"retCode":0,"timing_ns":0,"unsupported_mode":1}';
 // default entry never routes.
 function coreIsDefault(c: Core): boolean {
   const d = Core.DEFAULT;
+  if (c.emaVariation() !== d.emaVariation()) return false;
   for (let i = 0; i < d.unstablePeriods.length; i++) {
     if (c.unstablePeriods[i] !== d.unstablePeriods[i]) return false;
   }
@@ -25747,7 +25748,7 @@ function sv_AC(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AC.acImpl(c2, 0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -25914,7 +25915,7 @@ function sv_ACCBANDS(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ACCBANDS.accbandsImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1, b2); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -26119,7 +26120,7 @@ function sv_ACOS(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ACOS.acosImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -26278,7 +26279,7 @@ function sv_AD(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AD.adImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -26437,7 +26438,7 @@ function sv_ADD(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ADD.addImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -26600,7 +26601,7 @@ function sv_ADOSC(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ADOSC.adoscImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
@@ -26766,7 +26767,7 @@ function sv_ADR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ADR.adrImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -26933,7 +26934,7 @@ function sv_ADX(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(0, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(0, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ADX.adxImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -27101,7 +27102,7 @@ function sv_ADXR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(0, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(0, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ADXR.adxrImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -27276,7 +27277,7 @@ function sv_ALLIGATOR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(24, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ALLIGATOR.alligatorImpl(c2, 0, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, beg, nb, b0, b1, b2); }
@@ -27485,7 +27486,7 @@ function sv_ALMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ALMA.almaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInSigma, optInOffset, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -27651,7 +27652,7 @@ function sv_AO(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AO.aoImpl(c2, 0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -27821,7 +27822,7 @@ function sv_APO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = APO.apoImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -27988,7 +27989,7 @@ function sv_AROON(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AROON.aroonImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -28178,7 +28179,7 @@ function sv_AROONOSC(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AROONOSC.aroonoscImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -28343,7 +28344,7 @@ function sv_ASI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ASI.asiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInLimitMove, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -28502,7 +28503,7 @@ function sv_ASIN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ASIN.asinImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -28661,7 +28662,7 @@ function sv_ATAN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ATAN.atanImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -28823,7 +28824,7 @@ function sv_ATR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(2, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ATR.atrImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -28989,7 +28990,7 @@ function sv_AVGDEV(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AVGDEV.avgdevImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -29153,7 +29154,7 @@ function sv_AVGPRICE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = AVGPRICE.avgpriceImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -29321,7 +29322,7 @@ function sv_BBANDS(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = BBANDS.bbandsImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0, b1, b2); }
@@ -29534,7 +29535,7 @@ function sv_BBW(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = BBW.bbwImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0); }
@@ -29700,7 +29701,7 @@ function sv_BETA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = BETA.betaImpl(c2, 0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -29864,7 +29865,7 @@ function sv_BOP(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = BOP.bopImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30024,7 +30025,7 @@ function sv_CCI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CCI.cciImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30189,7 +30190,7 @@ function sv_CDL2CROWS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL2CROWS.cdl2crowsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30350,7 +30351,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3BLACKCROWS.cdl3blackcrowsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30511,7 +30512,7 @@ function sv_CDL3INSIDE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3INSIDE.cdl3insideImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30672,7 +30673,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3LINESTRIKE.cdl3linestrikeImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30833,7 +30834,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3OUTSIDE.cdl3outsideImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -30994,7 +30995,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3STARSINSOUTH.cdl3starsinsouthImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31155,7 +31156,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDL3WHITESOLDIERS.cdl3whitesoldiersImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31317,7 +31318,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLABANDONEDBABY.cdlabandonedbabyImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31478,7 +31479,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLADVANCEBLOCK.cdladvanceblockImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31639,7 +31640,7 @@ function sv_CDLBELTHOLD(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLBELTHOLD.cdlbeltholdImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31800,7 +31801,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLBREAKAWAY.cdlbreakawayImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -31961,7 +31962,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLCLOSINGMARUBOZU.cdlclosingmarubozuImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32122,7 +32123,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLCONCEALBABYSWALL.cdlconcealbabyswallImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32283,7 +32284,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLCOUNTERATTACK.cdlcounterattackImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32445,7 +32446,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLDARKCLOUDCOVER.cdldarkcloudcoverImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32606,7 +32607,7 @@ function sv_CDLDOJI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLDOJI.cdldojiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32767,7 +32768,7 @@ function sv_CDLDOJISTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLDOJISTAR.cdldojistarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -32928,7 +32929,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLDRAGONFLYDOJI.cdldragonflydojiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33089,7 +33090,7 @@ function sv_CDLENGULFING(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLENGULFING.cdlengulfingImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33251,7 +33252,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLEVENINGDOJISTAR.cdleveningdojistarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33413,7 +33414,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLEVENINGSTAR.cdleveningstarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33574,7 +33575,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhiteImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33735,7 +33736,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLGRAVESTONEDOJI.cdlgravestonedojiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -33896,7 +33897,7 @@ function sv_CDLHAMMER(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHAMMER.cdlhammerImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34057,7 +34058,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHANGINGMAN.cdlhangingmanImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34218,7 +34219,7 @@ function sv_CDLHARAMI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHARAMI.cdlharamiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34379,7 +34380,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHARAMICROSS.cdlharamicrossImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34540,7 +34541,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHIGHWAVE.cdlhighwaveImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34701,7 +34702,7 @@ function sv_CDLHIKKAKE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHIKKAKE.cdlhikkakeImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -34862,7 +34863,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHIKKAKEMOD.cdlhikkakemodImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35023,7 +35024,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLHOMINGPIGEON.cdlhomingpigeonImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35184,7 +35185,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLIDENTICAL3CROWS.cdlidentical3crowsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35345,7 +35346,7 @@ function sv_CDLINNECK(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLINNECK.cdlinneckImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35506,7 +35507,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLINVERTEDHAMMER.cdlinvertedhammerImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35667,7 +35668,7 @@ function sv_CDLKICKING(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLKICKING.cdlkickingImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35828,7 +35829,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLKICKINGBYLENGTH.cdlkickingbylengthImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -35989,7 +35990,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLLADDERBOTTOM.cdlladderbottomImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36150,7 +36151,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLLONGLEGGEDDOJI.cdllongleggeddojiImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36311,7 +36312,7 @@ function sv_CDLLONGLINE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLLONGLINE.cdllonglineImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36472,7 +36473,7 @@ function sv_CDLMARUBOZU(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLMARUBOZU.cdlmarubozuImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36633,7 +36634,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLMATCHINGLOW.cdlmatchinglowImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36795,7 +36796,7 @@ function sv_CDLMATHOLD(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLMATHOLD.cdlmatholdImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -36957,7 +36958,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLMORNINGDOJISTAR.cdlmorningdojistarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37119,7 +37120,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLMORNINGSTAR.cdlmorningstarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37280,7 +37281,7 @@ function sv_CDLONNECK(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLONNECK.cdlonneckImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37441,7 +37442,7 @@ function sv_CDLPIERCING(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLPIERCING.cdlpiercingImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37602,7 +37603,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLRICKSHAWMAN.cdlrickshawmanImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37763,7 +37764,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLRISEFALL3METHODS.cdlrisefall3methodsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -37924,7 +37925,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSEPARATINGLINES.cdlseparatinglinesImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38085,7 +38086,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSHOOTINGSTAR.cdlshootingstarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38246,7 +38247,7 @@ function sv_CDLSHORTLINE(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSHORTLINE.cdlshortlineImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38407,7 +38408,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSPINNINGTOP.cdlspinningtopImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38568,7 +38569,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSTALLEDPATTERN.cdlstalledpatternImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38729,7 +38730,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLSTICKSANDWICH.cdlsticksandwichImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -38890,7 +38891,7 @@ function sv_CDLTAKURI(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLTAKURI.cdltakuriImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39051,7 +39052,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLTASUKIGAP.cdltasukigapImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39212,7 +39213,7 @@ function sv_CDLTHRUSTING(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLTHRUSTING.cdlthrustingImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39373,7 +39374,7 @@ function sv_CDLTRISTAR(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLTRISTAR.cdltristarImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39534,7 +39535,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLUNIQUE3RIVER.cdlunique3riverImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39695,7 +39696,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLUPSIDEGAP2CROWS.cdlupsidegap2crowsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -39856,7 +39857,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
   const zsign = [0];
   const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = svCandleRound(rd).build();
+    const c2 = svCandleRound(rd).emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CDLXSIDEGAP3METHODS.cdlxsidegap3methodsImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -40021,7 +40022,7 @@ function sv_CE(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(2, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = CE.ceImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, beg, nb, b0, b1); }
@@ -40211,7 +40212,7 @@ function sv_CEIL(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CEIL.ceilImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -40371,7 +40372,7 @@ function sv_CG(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CG.cgImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -40536,7 +40537,7 @@ function sv_CHOP(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CHOP.chopImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -40701,7 +40702,7 @@ function sv_CHOPTR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CHOPTR.choptrImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -40871,7 +40872,7 @@ function sv_CKSP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(2, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = CKSP.ckspImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, optInStopPeriod, beg, nb, b0, b1); }
@@ -41062,7 +41063,7 @@ function sv_CMF(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CMF.cmfImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -41229,7 +41230,7 @@ function sv_CMO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(3, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(3, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = CMO.cmoImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -41395,7 +41396,7 @@ function sv_CMOU(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CMOU.cmouImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -41562,7 +41563,7 @@ function sv_COPPOCK(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = COPPOCK.coppockImpl(c2, 0, svN - 1, fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -41727,7 +41728,7 @@ function sv_CORREL(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CORREL.correlImpl(c2, 0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -41891,7 +41892,7 @@ function sv_COS(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = COS.cosImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -42050,7 +42051,7 @@ function sv_COSH(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = COSH.coshImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -42214,7 +42215,7 @@ function sv_CRSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(21, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = CRSI.crsiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInStreakPeriod, optInRankPeriod, beg, nb, b0); }
@@ -42380,7 +42381,7 @@ function sv_CTI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CTI.ctiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -42544,7 +42545,7 @@ function sv_CUMSUM(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = CUMSUM.cumsumImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -42707,7 +42708,7 @@ function sv_CVI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = CVI.cviImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, beg, nb, b0); }
@@ -42875,7 +42876,7 @@ function sv_DEMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = DEMA.demaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -43040,7 +43041,7 @@ function sv_DIV(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = DIV.divImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -43202,7 +43203,7 @@ function sv_DONCHIAN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = DONCHIAN.donchianImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1, b2); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -43413,7 +43414,7 @@ function sv_DOSC(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).unstablePeriod(21, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).unstablePeriod(21, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = DOSC.doscImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, beg, nb, b0); }
@@ -43579,7 +43580,7 @@ function sv_DPO(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = DPO.dpoImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -43746,7 +43747,7 @@ function sv_DX(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(4, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(4, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = DX.dxImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -43914,7 +43915,7 @@ function sv_EFI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = EFI.efiImpl(c2, 0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
@@ -44082,7 +44083,7 @@ function sv_EMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = EMA.emaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -44249,7 +44250,7 @@ function sv_EMV(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = EMV.emvImpl(c2, 0, svN - 1, fz_h, fz_l, fz_v, optInTimePeriod, optInVolumeDivisor, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -44414,7 +44415,7 @@ function sv_ER(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ER.erImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -44582,7 +44583,7 @@ function sv_ERI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ERI.eriImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1); }
@@ -44772,7 +44773,7 @@ function sv_EXP(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = EXP.expImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -44935,7 +44936,7 @@ function sv_FISHER(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(36, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(36, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = FISHER.fisherImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
@@ -45125,7 +45126,7 @@ function sv_FLOOR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = FLOOR.floorImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -45285,7 +45286,7 @@ function sv_FOSC(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = FOSC.foscImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -45452,7 +45453,7 @@ function sv_FRACTAL(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = FRACTAL.fractalImpl(c2, 0, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -45642,7 +45643,7 @@ function sv_FRAMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(27, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(27, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = FRAMA.framaImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -45816,7 +45817,7 @@ function sv_GATOR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(24, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = GATOR.gatorImpl(c2, 0, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, beg, nb, b0, b1); }
@@ -46011,7 +46012,7 @@ function sv_HA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(25, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(25, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HA.haImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0, b1, b2, b3); }
@@ -46224,7 +46225,7 @@ function sv_HMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = HMA.hmaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -46390,7 +46391,7 @@ function sv_HT_DCPERIOD(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(6, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(6, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_DCPERIOD.htDcperiodImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
@@ -46552,7 +46553,7 @@ function sv_HT_DCPHASE(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(7, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(7, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_DCPHASE.htDcphaseImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
@@ -46715,7 +46716,7 @@ function sv_HT_PHASOR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(8, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(8, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_PHASOR.htPhasorImpl(c2, 0, svN - 1, fz_c, beg, nb, b0, b1); }
@@ -46900,7 +46901,7 @@ function sv_HT_SINE(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(9, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(9, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_SINE.htSineImpl(c2, 0, svN - 1, fz_c, beg, nb, b0, b1); }
@@ -47084,7 +47085,7 @@ function sv_HT_TRENDLINE(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(10, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(10, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_TRENDLINE.htTrendlineImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
@@ -47246,7 +47247,7 @@ function sv_HT_TRENDMODE(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(11, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(11, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = HT_TRENDMODE.htTrendmodeImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
@@ -47405,7 +47406,7 @@ function sv_IBS(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = IBS.ibsImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -47570,7 +47571,7 @@ function sv_ICHIMOKU(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ICHIMOKU.ichimokuImpl(c2, 0, svN - 1, fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, beg, nb, b0, b1, b2, b3); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -47792,7 +47793,7 @@ function sv_IMI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = IMI.imiImpl(c2, 0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -47959,7 +47960,7 @@ function sv_KAMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KAMA.kamaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -48131,7 +48132,7 @@ function sv_KC(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(2, svK).unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KC.kcImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, beg, nb, b0, b1, b2); }
@@ -48348,7 +48349,7 @@ function sv_KDJ(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KDJ.kdjImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1, b2); }
@@ -48564,7 +48565,7 @@ function sv_KST(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = KST.kstImpl(c2, 0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -48769,7 +48770,7 @@ function sv_KSTEXT(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KSTEXT.kstextImpl(c2, 0, svN - 1, fz_c, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, beg, nb, b0, b1); }
@@ -48960,7 +48961,7 @@ function sv_KURTOSIS(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = KURTOSIS.kurtosisImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -49130,7 +49131,7 @@ function sv_KVO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = KVO.kvoImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -49321,7 +49322,7 @@ function sv_LINEARREG(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LINEARREG.linearregImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -49486,7 +49487,7 @@ function sv_LINEARREG_ANGLE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LINEARREG_ANGLE.linearregAngleImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -49651,7 +49652,7 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LINEARREG_INTERCEPT.linearregInterceptImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -49816,7 +49817,7 @@ function sv_LINEARREG_SLOPE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LINEARREG_SLOPE.linearregSlopeImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -49980,7 +49981,7 @@ function sv_LN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LN.lnImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -50139,7 +50140,7 @@ function sv_LOG10(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = LOG10.log10Impl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -50303,7 +50304,7 @@ function sv_MA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MA.maImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInMAType, beg, nb, b0); }
@@ -50475,7 +50476,7 @@ function sv_MACD(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MACD.macdImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2); }
@@ -50694,7 +50695,7 @@ function sv_MACDEXT(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MACDEXT.macdextImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, beg, nb, b0, b1, b2); }
@@ -50905,7 +50906,7 @@ function sv_MACDFIX(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MACDFIX.macdfixImpl(c2, 0, svN - 1, fz_c, optInSignalPeriod, beg, nb, b0, b1, b2); }
@@ -51118,7 +51119,7 @@ function sv_MACDV(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).unstablePeriod(2, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).unstablePeriod(2, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MACDV.macdvImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2); }
@@ -51333,7 +51334,7 @@ function sv_MAENV(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MAENV.maenvImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInPercentUp, optInPercentDn, optInMAType, beg, nb, b0, b1, b2); }
@@ -51544,7 +51545,7 @@ function sv_MAMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(14, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(14, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MAMA.mamaImpl(c2, 0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, beg, nb, b0, b1); }
@@ -51726,7 +51727,7 @@ function sv_MARKETFI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MARKETFI.marketfiImpl(c2, 0, svN - 1, fz_h, fz_l, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -51889,7 +51890,7 @@ function sv_MASSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MASSI.massiImpl(c2, 0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
@@ -52061,7 +52062,7 @@ function sv_MAVP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MAVP.mavpImpl(c2, 0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, beg, nb, b0); }
@@ -52227,7 +52228,7 @@ function sv_MAX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MAX.maxImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -52392,7 +52393,7 @@ function sv_MAXINDEX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MAXINDEX.maxindexImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -52558,7 +52559,7 @@ function sv_MCGD(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(28, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(28, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MCGD.mcgdImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -52724,7 +52725,7 @@ function sv_MEDIAN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MEDIAN.medianImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -52888,7 +52889,7 @@ function sv_MEDPRICE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MEDPRICE.medpriceImpl(c2, 0, svN - 1, fz_h, fz_l, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53048,7 +53049,7 @@ function sv_MFI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MFI.mfiImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53213,7 +53214,7 @@ function sv_MIDPOINT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MIDPOINT.midpointImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53378,7 +53379,7 @@ function sv_MIDPRICE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MIDPRICE.midpriceImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53543,7 +53544,7 @@ function sv_MIN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MIN.minImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53708,7 +53709,7 @@ function sv_MININDEX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MININDEX.minindexImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -53873,7 +53874,7 @@ function sv_MINMAX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MINMAX.minmaxImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -54064,7 +54065,7 @@ function sv_MINMAXINDEX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MINMAXINDEX.minmaxindexImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -54254,7 +54255,7 @@ function sv_MINUS_DI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(16, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(16, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MINUS_DI.minusDiImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -54422,7 +54423,7 @@ function sv_MINUS_DM(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(17, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(17, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = MINUS_DM.minusDmImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -54588,7 +54589,7 @@ function sv_MOM(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MOM.momImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -54752,7 +54753,7 @@ function sv_MULT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = MULT.multImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -54914,7 +54915,7 @@ function sv_NATR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(18, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(18, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = NATR.natrImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -55079,7 +55080,7 @@ function sv_NVI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = NVI.nviImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -55238,7 +55239,7 @@ function sv_OBV(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = OBV.obvImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -55404,7 +55405,7 @@ function sv_PERCENTB(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PERCENTB.percentbImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0); }
@@ -55571,7 +55572,7 @@ function sv_PERCENTILE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = PERCENTILE.percentileImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInPercentile, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -55736,7 +55737,7 @@ function sv_PERCENTRANK(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = PERCENTRANK.percentrankImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -55903,7 +55904,7 @@ function sv_PLUS_DI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(19, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(19, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PLUS_DI.plusDiImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -56071,7 +56072,7 @@ function sv_PLUS_DM(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(20, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(20, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PLUS_DM.plusDmImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
@@ -56242,7 +56243,7 @@ function sv_PPO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PPO.ppoImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -56411,7 +56412,7 @@ function sv_PSO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PSO.psoImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInEMAPeriod, beg, nb, b0); }
@@ -56576,7 +56577,7 @@ function sv_PVI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = PVI.pviImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -56741,7 +56742,7 @@ function sv_PVO(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = PVO.pvoImpl(c2, 0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
@@ -56906,7 +56907,7 @@ function sv_PVT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = PVT.pvtImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -57066,7 +57067,7 @@ function sv_QSTICK(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = QSTICK.qstickImpl(c2, 0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -57233,7 +57234,7 @@ function sv_RMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(24, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(24, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = RMA.rmaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -57399,7 +57400,7 @@ function sv_ROC(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ROC.rocImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -57564,7 +57565,7 @@ function sv_ROCP(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ROCP.rocpImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -57729,7 +57730,7 @@ function sv_ROCR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ROCR.rocrImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -57894,7 +57895,7 @@ function sv_ROCR100(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ROCR100.rocr100Impl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -58060,7 +58061,7 @@ function sv_ROGERSSATCHELL(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ROGERSSATCHELL.rogerssatchellImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -58227,7 +58228,7 @@ function sv_RSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(21, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = RSI.rsiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -58396,7 +58397,7 @@ function sv_RVI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(26, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(26, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = RVI.rviImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, beg, nb, b0); }
@@ -58565,7 +58566,7 @@ function sv_RVIR(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(26, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(26, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = RVIR.rvirImpl(c2, 0, svN - 1, fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, beg, nb, b0); }
@@ -58731,7 +58732,7 @@ function sv_RVOL(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = RVOL.rvolImpl(c2, 0, svN - 1, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -58897,7 +58898,7 @@ function sv_SAR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SAR.sarImpl(c2, 0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59064,7 +59065,7 @@ function sv_SAREXT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SAREXT.sarextImpl(c2, 0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59226,7 +59227,7 @@ function sv_SHARPE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SHARPE.sharpeImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59391,7 +59392,7 @@ function sv_SI(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SI.siImpl(c2, 0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInLimitMove, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59550,7 +59551,7 @@ function sv_SIN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SIN.sinImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59709,7 +59710,7 @@ function sv_SINH(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SINH.sinhImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -59869,7 +59870,7 @@ function sv_SKEW(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SKEW.skewImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -60034,7 +60035,7 @@ function sv_SMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SMA.smaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -60205,7 +60206,7 @@ function sv_SMI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SMI.smiImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -60398,7 +60399,7 @@ function sv_SORTINO(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SORTINO.sortinoImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInMAR, optInAnnualization, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -60562,7 +60563,7 @@ function sv_SQRT(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SQRT.sqrtImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -60728,7 +60729,7 @@ function sv_SQZMOM(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SQZMOM.sqzmomImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -60919,7 +60920,7 @@ function sv_SSF(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SSF.ssfImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -61089,7 +61090,7 @@ function sv_STC(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(30, svK).unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(30, svK).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STC.stcImpl(c2, 0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, beg, nb, b0); }
@@ -61256,7 +61257,7 @@ function sv_STDDEV(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = STDDEV.stddevImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -61430,7 +61431,7 @@ function sv_STOCH(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCH.stochImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1); }
@@ -61627,7 +61628,7 @@ function sv_STOCHF(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCHF.stochfImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
@@ -61825,7 +61826,7 @@ function sv_STOCHRSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(21, svK).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(21, svK).unstablePeriod(37, svK).unstablePeriod(29, svK).unstablePeriod(24, svK).unstablePeriod(5, svK).unstablePeriod(23, svK).unstablePeriod(14, svK).unstablePeriod(13, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = STOCHRSI.stochrsiImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
@@ -62015,7 +62016,7 @@ function sv_SUB(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SUB.subImpl(c2, 0, svN - 1, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -62175,7 +62176,7 @@ function sv_SUM(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = SUM.sumImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -62344,7 +62345,7 @@ function sv_SUPERTREND(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(2, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(2, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SUPERTREND.supertrendImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, beg, nb, b0, b1); }
@@ -62536,7 +62537,7 @@ function sv_SWAK_2PHP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(34, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(34, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SWAK_2PHP.swak2phpImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -62705,7 +62706,7 @@ function sv_SWAK_BP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(35, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(35, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SWAK_BP.swakBpImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInDelta, beg, nb, b0); }
@@ -62873,7 +62874,7 @@ function sv_SWAK_BUTTER(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(32, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(32, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SWAK_BUTTER.swakButterImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -63041,7 +63042,7 @@ function sv_SWAK_GAUSS(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(31, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(31, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SWAK_GAUSS.swakGaussImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -63209,7 +63210,7 @@ function sv_SWAK_HP(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(33, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(33, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = SWAK_HP.swakHpImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -63378,7 +63379,7 @@ function sv_T3(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(23, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(23, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = T3.t3Impl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInVFactor, beg, nb, b0); }
@@ -63543,7 +63544,7 @@ function sv_TAN(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TAN.tanImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -63702,7 +63703,7 @@ function sv_TANH(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TANH.tanhImpl(c2, 0, svN - 1, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -63864,7 +63865,7 @@ function sv_TEMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = TEMA.temaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -64029,7 +64030,7 @@ function sv_TRANGE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TRANGE.trangeImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -64189,7 +64190,7 @@ function sv_TRIMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TRIMA.trimaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -64356,7 +64357,7 @@ function sv_TRIX(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = TRIX.trixImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
@@ -64522,7 +64523,7 @@ function sv_TSF(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TSF.tsfImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -64690,7 +64691,7 @@ function sv_TSI(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = TSI.tsiImpl(c2, 0, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, beg, nb, b0); }
@@ -64855,7 +64856,7 @@ function sv_TYPPRICE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = TYPPRICE.typpriceImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -65017,7 +65018,7 @@ function sv_ULTOSC(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ULTOSC.ultoscImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -65183,7 +65184,7 @@ function sv_VAR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = VAR.varImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -65348,7 +65349,7 @@ function sv_VHF(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = VHF.vhfImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -65516,7 +65517,7 @@ function sv_VIDYA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(29, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(29, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = VIDYA.vidyaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInCMOPeriod, beg, nb, b0); }
@@ -65683,7 +65684,7 @@ function sv_VORTEX(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = VORTEX.vortexImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -65872,7 +65873,7 @@ function sv_VWAP(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = VWAP.vwapImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -66032,7 +66033,7 @@ function sv_VWMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = VWMA.vwmaImpl(c2, 0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -66196,7 +66197,7 @@ function sv_WAD(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = WAD.wadImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -66361,7 +66362,7 @@ function sv_WAVETREND(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = WAVETREND.wavetrendImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, beg, nb, b0, b1); }
@@ -66551,7 +66552,7 @@ function sv_WCLPRICE(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = WCLPRICE.wclpriceImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -66711,7 +66712,7 @@ function sv_WILLR(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = WILLR.willrImpl(c2, 0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -66876,7 +66877,7 @@ function sv_WMA(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = WMA.wmaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -67044,7 +67045,7 @@ function sv_ZIGZAG(p: Params): string {
   const zsign = [0];
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
-    const c2 = new Core();
+    const c2 = Core.builder().emaVariation(core.emaVariation()).build();
     let rc: number;
     try { rc = ZIGZAG.zigzagImpl(c2, 0, svN - 1, fz_h, fz_l, optInSensitivity, optInMinTrendLength, beg, nb, b0, b1, b2); }
     catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
@@ -67251,7 +67252,7 @@ function sv_ZLEMA(p: Params): string {
   const rounds = 1;
   for (let rd = 0; rd < rounds; rd++) {
     let c2: Core;
-    try { c2 = Core.builder().unstablePeriod(5, svK).build(); }
+    try { c2 = Core.builder().emaVariation(core.emaVariation()).unstablePeriod(5, svK).build(); }
     catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
     let rc: number;
     try { rc = ZLEMA.zlemaImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }

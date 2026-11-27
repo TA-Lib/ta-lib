@@ -284,6 +284,9 @@ typedef enum
   TA_INTERNAL_COMPAT_NOOP_FAIL_1    = 738,
   TA_INTERNAL_COMPAT_NOOP_FAIL_2    = 739,
   TA_INTERNAL_INIT_RESET_FAIL       = 740,
+  TA_INTERNAL_EMAV_SETTER_FAIL_0    = 741,
+  TA_INTERNAL_EMAV_SETTER_FAIL_1    = 742,
+  TA_INTERNAL_EMAV_SETTER_FAIL_2    = 743,
 
   /* Error code related to CSI data source tests. */
   TA_CSI_ADDDATASOURCE_FAILED    = 800,
@@ -637,6 +640,14 @@ typedef enum
 
   /* (#609) SSF legs that ran while comparing nothing. */
   TA_SSF_VACUOUS               = 1735,
+
+  /* (#622) TA_SetEMAVariation across functions, test_ema_variation.c. */
+  TA_EMAV_SCOPE                = 1736,
+  TA_EMAV_SHAPE                = 1737,
+  TA_EMAV_INDEPENDENCE         = 1738,
+  TA_EMAV_IDENTITY             = 1739,
+  TA_EMAV_GOLDEN               = 1740,
+  TA_EMAV_VACUOUS              = 1741,
 
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,

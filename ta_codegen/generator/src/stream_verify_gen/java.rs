@@ -205,6 +205,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     // Fresh, pinned, configured Core for this round (per-instance settings).
     s.push_str("            Core c2 = new Core();\n");
+    s.push_str("            c2.emaVariation = core.emaVariation;\n");
     for id in collect_pin_ids(func, funcs, enums) {
         let _ = writeln!(s, "            c2.unstablePeriod[{id}] = svK;");
     }

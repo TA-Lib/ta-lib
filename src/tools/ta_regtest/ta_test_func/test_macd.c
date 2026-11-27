@@ -162,6 +162,43 @@ static TA_Test tableTest[] =
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
+/* Under TA_EMAVariation_FIRST_BAR_SEED. The MACDFIX rows are 0.7.1's
+ * TA_COMPATIBILITY_METASTOCK rows; the MACD and MACDEXT rows, which 0.7.1
+ * left empty, are 0.6.4's TA_MACD and TA_MACDEXT under that mode on this
+ * series. */
+static TA_Test tableFirstBarSeed[] =
+{
+   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33,
+                                                          0, -1.2692,  /* MACD */
+                                                          0, -1.7962,  /* Signal */
+                                                          0, (-1.2692)-(-1.7962) }, /* Histogram */
+   { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_SUCCESS,  33, 252-33,
+                                                     252-34,  0.9040,  /* MACD */
+                                                     252-34,  1.4046,  /* Signal */
+                                                     252-34,  (0.9040)-(1.4046) }, /* Histogram */
+   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33,
+                                                          1, -1.0482,  /* MACD */
+                                                          1, -1.6466,  /* Signal */
+                                                          1, (-1.0482)-(-1.6466) }, /* Histogram */
+
+   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
+                                                          0, -1.2185,  /* MACD */
+                                                          0, -1.7119,  /* Signal */
+                                                          0, (-1.2185)-(-1.7119) }, /* Histogram */
+
+   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS, 33, 252-33,
+                                                        252-34,  0.8764, /* MACD */
+                                                        252-34,  1.3533,   /* Signal */
+                                                        252-34,  (0.8764)-(1.3533)}, /* Histogram */
+   /* Test period inversion */
+   { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_SUCCESS, 33, 252-33,
+                                                        252-34,  0.8764, /* MACD */
+                                                        252-34,  1.3533,   /* Signal */
+                                                        252-34,  (0.8764)-(1.3533)} /* Histogram */
+};
+
+#define NB_TEST_FIRST_BAR_SEED (sizeof(tableFirstBarSeed)/sizeof(TA_Test))
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_macd( TA_History *history )
 {
@@ -184,6 +221,18 @@ ErrorNumber test_func_macd( TA_History *history )
       if( retValue != 0 )
       {
          printf( "TA_MACD Failed Test #%d (Code=%d)\n", i, retValue );
+         return retValue;
+      }
+   }
+
+   for( i=0; i < NB_TEST_FIRST_BAR_SEED; i++ )
+   {
+      TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+      retValue = do_test( history, &tableFirstBarSeed[i] );
+      TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+      if( retValue != 0 )
+      {
+         printf( "TA_MACD Failed FIRST_BAR_SEED Test #%d (Code=%d)\n", i, retValue );
          return retValue;
       }
    }

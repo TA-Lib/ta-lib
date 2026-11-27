@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  081026 MF,CC  First Version -- the unstable-period builder (#186).
+ *  112726 MF,CC  The EMA variation: default, refusal, per Core, fixed at open (#622).
  */
 
 using System;
@@ -133,6 +134,57 @@ public static class CoreBuilderTest
         Core tuned = Core.Builder().UnstablePeriod(FuncUnstId.EMA, 5).Build();
         Check(tuned.EmaLookback(10) == plain.EmaLookback(10) + 5,
             "the unstable period is added to EMA's lookback");
+    }
+
+    /// <summary>C's TA_SetEMAVariation, per Core: a refused value leaves the
+    /// builder as it was, two Cores answer by their own setting, and a stream
+    /// keeps the one it opened under.</summary>
+    private static void EmaVariationIsPerCoreAndFixedAtOpen()
+    {
+        Check(Core.Default.EmaVariation() == EMAVariation.SMA_SEED, "Core.Default is SMA_SEED");
+        Check(new Core().EmaVariation() == EMAVariation.SMA_SEED, "new Core() is SMA_SEED");
+
+        CoreBuilder b = Core.Builder().EmaVariation(EMAVariation.FIRST_BAR_SEED);
+        CheckThrows<ArgumentOutOfRangeException>(() => b.EmaVariation((EMAVariation)2),
+            "an EMAVariation that names no member is refused");
+        CheckThrows<ArgumentOutOfRangeException>(() => b.EmaVariation((EMAVariation)(-1)),
+            "a negative EMAVariation is refused");
+        Core first = b.Build();
+        Check(first.EmaVariation() == EMAVariation.FIRST_BAR_SEED,
+            "the refused values left FIRST_BAR_SEED in the builder");
+        Check(first.ToBuilder().Build().EmaVariation() == EMAVariation.FIRST_BAR_SEED,
+            "ToBuilder carries the EMA variation");
+
+        double[] input = new double[120];
+        for (int i = 0; i < input.Length; i++)
+        {
+            input[i] = 100.0 + 10.0 * Math.Sin(i / 7.0) + 3.0 * Math.Cos(i / 3.0);
+        }
+        double[] dflt = new double[input.Length], fb = new double[input.Length];
+        OutRange rd = Core.Default.Ema(0, input.Length - 1, input, 10, dflt);
+        OutRange rf = first.Ema(0, input.Length - 1, input, 10, fb);
+        Check(rd == rf, "the EMA variation moves no range");
+        Check(dflt[0] != fb[0], "two Cores answer by their own EMA variation");
+        double k = 2.0 / 11.0, e = input[0];
+        for (int t = 1; t <= rf.BegIdx; t++)
+        {
+            e = k * input[t] + (1.0 - k) * e;
+        }
+        Check(Math.Abs(fb[0] - e) <= 1e-12 * Math.Abs(e), $"FIRST_BAR_SEED seeds on bar 0 ({fb[0]} vs {e})");
+
+        Core.EmaStream st = first.EmaOpen(input.AsSpan(0, 60), 10);
+        b.EmaVariation(EMAVariation.SMA_SEED);
+        Check(b.Build().EmaVariation() == EMAVariation.SMA_SEED, "the builder moved on");
+        bool same = true;
+        for (int t = 60; t < input.Length; t++)
+        {
+            double v = st.Update(input[t]);
+            if (BitConverter.DoubleToInt64Bits(v) != BitConverter.DoubleToInt64Bits(fb[t - rf.BegIdx]))
+            {
+                same = false;
+            }
+        }
+        Check(same, "an open stream keeps FIRST_BAR_SEED, bar for bar with the batch");
     }
 
     private static void MisuseThrows()
@@ -550,6 +602,7 @@ public static class CoreBuilderTest
         SetsOneAndOnlyOne();
         WildcardSetsEveryFunction();
         ReachesTheIndicator();
+        EmaVariationIsPerCoreAndFixedAtOpen();
         MisuseThrows();
         BoundIsABoundNotAnOffByOne();
         ARejectedCallWritesNothing();

@@ -453,3 +453,69 @@ func TestEveryExportedIdentifierIsDocumented(t *testing.T) {
 	}
 	t.Logf("%d exported identifiers and groups documented", checked)
 }
+
+// TestEMAVariation holds C's TA_SetEMAVariation on one Core: a refused value
+// changes nothing, two Cores answer by their own setting, and a stream keeps
+// the one it opened under after the Core moves on.
+func TestEMAVariation(t *testing.T) {
+	if got := NewCore().EMAVariation(); got != EMAVariationSMA_SEED {
+		t.Fatalf("a new Core answers %v, want SMA_SEED", got)
+	}
+	first := NewCore()
+	if err := first.SetEMAVariation(EMAVariationFIRST_BAR_SEED); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []EMAVariation{2, -1, 99} {
+		if err := first.SetEMAVariation(bad); !errors.Is(err, BadParam) {
+			t.Errorf("SetEMAVariation(%d) = %v, want BadParam", bad, err)
+		}
+		if got := first.EMAVariation(); got != EMAVariationFIRST_BAR_SEED {
+			t.Fatalf("a refused SetEMAVariation(%d) left %v", bad, got)
+		}
+	}
+
+	in := make([]float64, 120)
+	for i := range in {
+		in[i] = 100 + 10*math.Sin(float64(i)/7) + 3*math.Cos(float64(i)/3)
+	}
+	dflt := make([]float64, len(in))
+	fb := make([]float64, len(in))
+	rd, err := NewCore().EMA(0, len(in)-1, in, 10, dflt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rf, err := first.EMA(0, len(in)-1, in, 10, fb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rd != rf {
+		t.Fatalf("the EMA variation moved the range: %v vs %v", rd, rf)
+	}
+	if dflt[0] == fb[0] {
+		t.Fatal("two Cores answered the same first EMA value")
+	}
+	k, e := 2.0/11.0, in[0]
+	for i := 1; i <= rf.BegIdx; i++ {
+		e = k*in[i] + (1-k)*e
+	}
+	if math.Abs(fb[0]-e) > 1e-12*math.Abs(e) {
+		t.Errorf("FIRST_BAR_SEED is not seeded on bar 0: %v vs %v", fb[0], e)
+	}
+
+	st, _, err := first.EMAOpen(in[:60], 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := first.SetEMAVariation(EMAVariationSMA_SEED); err != nil {
+		t.Fatal(err)
+	}
+	for i := 60; i < len(in); i++ {
+		v, err := st.Update(in[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if math.Float64bits(v) != math.Float64bits(fb[i-rf.BegIdx]) {
+			t.Fatalf("bar %d: the open stream answered %v, the FIRST_BAR_SEED batch %v", i, v, fb[i-rf.BegIdx])
+		}
+	}
+}

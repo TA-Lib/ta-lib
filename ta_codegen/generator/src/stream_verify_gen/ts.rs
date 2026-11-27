@@ -148,9 +148,14 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     for id in pin_ids {
         let _ = write!(pins, ".unstablePeriod({id}, svK)");
     }
-    let base = if candle { "svCandleRound(rd)" } else { "Core.builder()" };
+    // The server's ambient EMA variation, which set_ema_variation moves.
+    let base = if candle {
+        "svCandleRound(rd).emaVariation(core.emaVariation())"
+    } else {
+        "Core.builder().emaVariation(core.emaVariation())"
+    };
     if pins.is_empty() {
-        let _ = writeln!(s, "    const c2 = {};", if candle { "svCandleRound(rd).build()" } else { "new Core()" });
+        let _ = writeln!(s, "    const c2 = {base}.build();");
     } else {
         // Reported, never thrown: an escaping exception reaches ta_regtest as a dead pipe.
         s.push_str("    let c2: Core;\n");

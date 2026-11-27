@@ -323,7 +323,7 @@ fn emit_csharp_sv_func(
     // CoreBuilder rather than by reaching into the instance's fields, so the
     // validation exercised is the library's own; `Build()` snapshots, so the
     // Core never aliases the builder.
-    s.push_str("            CoreBuilder cb = Core.Builder();\n");
+    s.push_str("            CoreBuilder cb = Core.Builder().EmaVariation(core.EmaVariation());\n");
     for id in collect_pin_ids(func, funcs, enums) {
         let _ = writeln!(s, "            cb = cb.UnstablePeriod((FuncUnstId){id}, svK);");
     }

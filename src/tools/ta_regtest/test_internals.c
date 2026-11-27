@@ -107,6 +107,7 @@ static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testBoundedAppend( void );
 static ErrorNumber testUnstablePeriodBounds( void );
 static ErrorNumber testCompatibilityIsInert( void );
+static ErrorNumber testEmaVariationSetter( void );
 static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
 static ErrorNumber testStreamShortHistory( void );
@@ -155,6 +156,13 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Compatibility no-op tests (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testEmaVariationSetter();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: EMA variation setter tests (%d)\n", retValue );
       return retValue;
    }
 
@@ -1437,9 +1445,16 @@ static ErrorNumber testUnstablePeriodBounds( void )
       unsigned int id;
 
       if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 ) != TA_SUCCESS ||
+          TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED ) != TA_SUCCESS ||
           TA_Initialize() != TA_SUCCESS )
       {
          printf( "\nFailed: could not initialize over changed settings\n" );
+         return TA_INTERNAL_INIT_RESET_FAIL;
+      }
+      if( TA_GetEMAVariation() != TA_EMAVariation_SMA_SEED )
+      {
+         printf( "\nFailed: the EMA variation is %d after TA_Initialize, expected SMA_SEED\n",
+                 (int)TA_GetEMAVariation() );
          return TA_INTERNAL_INIT_RESET_FAIL;
       }
       for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
@@ -1484,9 +1499,11 @@ static ErrorNumber testUnstablePeriodBounds( void )
             return TA_INTERNAL_INIT_RESET_FAIL;
          TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 5 );
          TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 );
+         TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
          first = pass == 0 ? TA_Initialize() : TA_Shutdown();
          TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 5 );
          TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 );
+         TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
          second = pass == 0 ? TA_Initialize() : TA_Shutdown();
          if( first != TA_SUCCESS || second != TA_SUCCESS )
          {
@@ -1512,6 +1529,12 @@ static ErrorNumber testUnstablePeriodBounds( void )
                        pass == 0 ? "Initialize" : "Shutdown" );
                return TA_INTERNAL_INIT_RESET_FAIL;
             }
+         }
+         if( TA_GetEMAVariation() != TA_EMAVariation_SMA_SEED )
+         {
+            printf( "\nFailed: the EMA variation is not SMA_SEED after a repeated TA_%s\n",
+                    pass == 0 ? "Initialize" : "Shutdown" );
+            return TA_INTERNAL_INIT_RESET_FAIL;
          }
          if( TA_Globals->candleSettings[TA_BodyDoji].rangeType != TA_RangeType_HighLow ||
              TA_Globals->candleSettings[TA_BodyDoji].avgPeriod != 10 ||
@@ -1550,8 +1573,9 @@ static ErrorNumber testCompatibilityIsInert( void )
       91.625, 89.875, 88.375, 87.625, 84.78, 83.0
    };
    const int nbBar = (int)(sizeof(closes)/sizeof(closes[0]));
-   double outDefault[32], outAfterSet[32];
+   double outDefault[32], outAfterSet[32], emaDefault[32], emaAfterSet[32];
    int begDefault, nbDefault, begAfterSet, nbAfterSet, i;
+   int emaBeg, emaNb, emaBegAfter, emaNbAfter;
    ErrorNumber retValue;
    TA_RetCode retCode;
 
@@ -1569,6 +1593,11 @@ static ErrorNumber testCompatibilityIsInert( void )
               (int)retCode, nbDefault );
       return TA_INTERNAL_COMPAT_NOOP_FAIL_0;
    }
+   /* The EMA leg: MetaStock seeded EMA on the first bar, which is now
+    * TA_SetEMAVariation's job, never this setter's. */
+   retCode = TA_EMA( 0, nbBar-1, closes, 10, &emaBeg, &emaNb, emaDefault );
+   if( retCode != TA_SUCCESS || emaNb <= 0 )
+      return TA_INTERNAL_COMPAT_NOOP_FAIL_0;
 
    /* Any value is accepted and nothing is stored, so the getter still answers
     * the only behaviour the library has.
@@ -1599,12 +1628,65 @@ static ErrorNumber testCompatibilityIsInert( void )
       }
    }
 
+   retCode = TA_EMA( 0, nbBar-1, closes, 10, &emaBegAfter, &emaNbAfter, emaAfterSet );
+   if( retCode != TA_SUCCESS || emaBegAfter != emaBeg || emaNbAfter != emaNb ||
+       memcmp( emaDefault, emaAfterSet, (size_t)emaNb * sizeof(double) ) != 0 ||
+       TA_GetEMAVariation() != TA_EMAVariation_SMA_SEED )
+   {
+      printf( "\nFailed: TA_SetCompatibility moved TA_EMA or the EMA variation\n" );
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+      return TA_INTERNAL_COMPAT_NOOP_FAIL_2;
+   }
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
    retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
    return TA_TEST_PASS;
 }
+/* An unknown value is refused and stores nothing: the guard is unsigned, so a
+ * negative value is tested as well as one past the last member. */
+static ErrorNumber testEmaVariationSetter( void )
+{
+   static const int bad[] = { 2, 3, -1, INT_MIN, INT_MAX };
+   ErrorNumber retValue;
+   int i, start;
+
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   if( TA_GetEMAVariation() != TA_EMAVariation_SMA_SEED )
+   {
+      printf( "\nFailed: a fresh library answers EMA variation %d\n", (int)TA_GetEMAVariation() );
+      return TA_INTERNAL_EMAV_SETTER_FAIL_0;
+   }
+   for( start = 0; start < 2; start++ )
+   {
+      TA_EMAVariation held = start ? TA_EMAVariation_FIRST_BAR_SEED : TA_EMAVariation_SMA_SEED;
+      if( TA_SetEMAVariation( held ) != TA_SUCCESS || TA_GetEMAVariation() != held )
+      {
+         printf( "\nFailed: TA_SetEMAVariation(%d) did not round-trip\n", (int)held );
+         return TA_INTERNAL_EMAV_SETTER_FAIL_1;
+      }
+      for( i = 0; i < (int)(sizeof(bad)/sizeof(bad[0])); i++ )
+      {
+         if( TA_SetEMAVariation( (TA_EMAVariation)bad[i] ) != TA_BAD_PARAM ||
+             TA_GetEMAVariation() != held )
+         {
+            printf( "\nFailed: TA_SetEMAVariation(%d) over %d was not refused, or moved the setting\n",
+                    bad[i], (int)held );
+            TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+            return TA_INTERNAL_EMAV_SETTER_FAIL_2;
+         }
+      }
+   }
+   TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+
+   return freeLib();
+}
+
 #define CANDLE_NB_BAR 64
 
 /* Runs CDLDOJI over the whole series and checks the lookback against what the

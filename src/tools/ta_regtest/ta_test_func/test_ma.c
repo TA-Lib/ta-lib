@@ -317,6 +317,85 @@ static TA_Test tableTest[] =
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
+/* The TA_COMPATIBILITY_METASTOCK rows of 0.7.1, run under
+ * TA_EMAVariation_FIRST_BAR_SEED with their values unchanged. SMA and WMA
+ * carry no EMA stage, so their rows are the default's. */
+static TA_Test tableFirstBarSeed[] =
+{
+   { 1, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_SMA, TA_SUCCESS,   0,   93.15,  1,  252-1  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_SMA, TA_SUCCESS,   1,   94.59,  1,  252-1  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_SMA, TA_SUCCESS,   2,   94.73,  1,  252-1  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_SMA, TA_SUCCESS, 250,  108.31,  1,  252-1  }, /* Last Value */
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS,   0,  90.42,  29,  252-29 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS,   1,  90.21,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS,   2,  89.96,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS,  29,  87.12,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS, 221, 107.95,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_SMA, TA_SUCCESS, 222, 108.42,  29,  252-29 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 0, 1, 1,  14, TA_MAType_WMA, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  0, TA_MAType_WMA, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
+   { 0, TA_ANY_MA_TEST, 0, 2,   2,  2, TA_MAType_WMA, TA_SUCCESS,   0,  94.52,   2, 1 },
+   { 1, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_WMA, TA_SUCCESS,   0,   93.71,  1,  252-1  }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_WMA, TA_SUCCESS,   1,   94.52,  1,  252-1  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_WMA, TA_SUCCESS,   2,   94.85,  1,  252-1  },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  2, TA_MAType_WMA, TA_SUCCESS, 250,  108.16,  1,  252-1  }, /* Last Value */
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS,   0,  88.567,  29,  252-29 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS,   1,  88.233,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS,   2,  88.034,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS,  29,  87.191,  29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS, 221, 109.3466, 29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_SUCCESS, 222, 109.3413, 29,  252-29 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 0, 1, 1,  14, TA_MAType_EMA, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  0, TA_MAType_EMA, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
+   { 1, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS,   0,  94.15, 1+1, 251-1 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS,   1,  94.78, 1+1, 251-1 },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS, 250-1, 108.21, 1+1, 251-1 }, /* Last Value */
+   { 1, TA_ANY_MA_TEST, 1, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,    0,  93.24,  9+1, 243-1 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,    1,  93.97,  9+1, 243-1 },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,   20,  86.23,  9+1, 243-1 },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS, 242-1, 108.97,  9+1, 243-1 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS,   0,  94.78, 1+2, 251-2 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS,   1,  94.11, 1+2, 251-2 },
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  2, TA_MAType_EMA, TA_SUCCESS, 250-2, 108.21, 1+2, 251-2 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,    0,  93.97,  9+2, 243-2 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,    1,  94.79,  9+2, 243-2 },
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,   20,  86.39,  9+2, 243-2 },
+   { 0, TA_ANY_MA_TEST, 2, 0, 251,  10, TA_MAType_EMA, TA_SUCCESS,  242-2, 108.97,  9+2, 243-2 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 1, 249, 251,  10, TA_MAType_EMA, TA_SUCCESS,   1, 109.22, 249, 3 },
+   { 0, TA_ANY_MA_TEST, 1, 249, 251,  10, TA_MAType_EMA, TA_SUCCESS,   2, 108.97, 249, 3 },
+   { 0, TA_ANY_MA_TEST, 2, 249, 251,  10, TA_MAType_EMA, TA_SUCCESS,   2, 108.97, 249, 3 },
+   { 0, TA_ANY_MA_TEST, 3, 249, 251,  10, TA_MAType_EMA, TA_SUCCESS,   2, 108.97, 249, 3 },
+   { 0, TA_ANY_MA_TEST, 0, 1, 1,  14, TA_MAType_DEMA, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  0, TA_MAType_DEMA, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_DEMA, TA_SUCCESS,   0,  83.785, 26, 252-26 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_DEMA, TA_SUCCESS,   1,  84.768, 26, 252-26 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_DEMA, TA_SUCCESS, 252-27, 109.467, 26, 252-26 }, /* Last Value */
+   { 1, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_DEMA, TA_SUCCESS,   0,  93.960, 4, 252-4 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_DEMA, TA_SUCCESS,   1,  94.522, 4, 252-4 },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  2, TA_MAType_DEMA, TA_SUCCESS, 252-5, 107.94, 4, 252-4 }, /* Last Value */
+   { 1, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS,    0,  84.91,  (13*2)+2, 252-((13*2)+2) }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS,    1,  84.97,  (13*2)+2, 252-((13*2)+2) },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS,    2,  84.80,  (13*2)+2, 252-((13*2)+2) },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS,    3,  85.14,  (13*2)+2, 252-((13*2)+2) },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS,   20,  89.83,  (13*2)+2, 252-((13*2)+2) },
+   { 0, TA_ANY_MA_TEST, 1, 0, 251,  14, TA_MAType_DEMA, TA_SUCCESS, 252-((13*2)+2+1), 109.4676, (13*2)+2, 252-((13*2)+2) }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 0, 1, 1,  14, TA_MAType_TEMA, TA_SUCCESS, 0, 0, 0, 0},
+#ifndef TA_FUNC_NO_RANGE_CHECK
+   { 0, TA_ANY_MA_TEST, 0, 0, 251,  0, TA_MAType_TEMA, TA_BAD_PARAM, 0, 0, 0, 0 },
+#endif
+   { 1, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_TEMA, TA_SUCCESS,   0,  84.721, 39, 252-39 }, /* First Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_TEMA, TA_SUCCESS,   1,  84.089, 39, 252-39 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 14, TA_MAType_TEMA, TA_SUCCESS, 252-40, 108.418, 39, 252-39 }, /* Last Value */
+};
+
+#define NB_TEST_FIRST_BAR_SEED (sizeof(tableFirstBarSeed)/sizeof(TA_Test))
+
 /**** Global functions definitions.   ****/
 /* KAMA's efficiency ratio on a window that has stopped moving.
  *
@@ -416,6 +495,24 @@ ErrorNumber test_func_ma( TA_History *history )
             return retValue;
 	     }
 	  }
+   }
+
+   for( i=0; i < NB_TEST_FIRST_BAR_SEED; i++ )
+   {
+      int mavp;
+      for( mavp = 0; mavp < 2; mavp++ )
+      {
+         if( mavp && tableFirstBarSeed[i].id != TA_ANY_MA_TEST )
+            continue;
+         TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+         retValue = do_test_ma( history, &tableFirstBarSeed[i], mavp );
+         TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+         if( retValue != 0 )
+         {
+            printf( "%s Failed FIRST_BAR_SEED Test #%d (Code=%d)\n", mavp ? "TA_MAVP" : "TA_MA", i, retValue );
+            return retValue;
+         }
+      }
    }
 
    retValue = test_kama_flat_window();

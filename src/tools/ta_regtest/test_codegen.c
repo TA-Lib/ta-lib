@@ -2581,8 +2581,12 @@ typedef struct {
     /* Parameter sweep counters */
     int               sweepVariants;
     int               sweepFunctions;
+    int               sweepEmaFunctions;  /* functions the FIRST_BAR_SEED pass ran */
+    long long         sweepEmaMoved;      /* of its variants, those the setting moved */
     /* Stream verification counters */
     int               streamFunctions;
+    int               streamEmaFunctions; /* streaming functions FIRST_BAR_SEED moves */
+    long long         streamEmaLegs;      /* their requests under it that ran a leg */
     int               streamLegs;
     int               streamSkipped;
     int               streamRejectArms;
@@ -3327,6 +3331,147 @@ static void run_float_leg(CodegenRangeTestParam *p, int withSentinel)
     float_leg_restore_state(p);
 }
 
+/* Whether the in-process output moves under TA_EMAVariation_FIRST_BAR_SEED
+ * over `history`, at the defaults or with one MAType parameter on any other
+ * value of its list. The EMA-variation passes of the sweep, the stream legs
+ * and --xlang-hash run on these functions only, so a function that starts
+ * reading the setting joins them without a list to edit. */
+static int codegen_ema_variation_moves(const TA_FuncInfo *fi, const TA_History *history)
+{
+    static TA_Real    r[2][MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+    static TA_Integer n[2][MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+    double opt[64];
+    unsigned int i, j, e;
+    int moved = 0, nbBars = (int)history->nbBars;
+
+    if( fi->nbOptInput > 64 || fi->nbOutput > MAX_OUTPUTS || nbBars > MAX_NB_TEST_ELEMENT )
+        return 0;
+    for( i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type == TA_Input_Integer ) return 0;
+    }
+    for( j = 0; j <= fi->nbOptInput && !moved; j++ )
+    {
+        const TA_OptInputParameterInfo *oj = NULL;
+        const TA_IntegerList *list = NULL;
+        unsigned int nbVal = 1;
+        if( j < fi->nbOptInput )
+        {
+            TA_GetOptInputParameterInfo(fi->handle, j, &oj);
+            if( oj->type != TA_OptInput_IntegerList || !oj->dataSet ) continue;
+            list = (const TA_IntegerList *)oj->dataSet;
+            nbVal = list->nbElement;
+        }
+        for( e = 0; e < nbVal && !moved; e++ )
+        {
+            TA_RetCode rc[2];
+            TA_Integer beg[2], nb[2];
+            int v;
+            for( i = 0; i < fi->nbOptInput; i++ )
+            {
+                const TA_OptInputParameterInfo *oi;
+                TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+                opt[i] = oi->defaultValue;
+            }
+            if( list ) opt[j] = (double)list->data[e].value;
+            for( v = 0; v < 2; v++ )
+            {
+                TA_ParamHolder *h = NULL;
+                rc[v] = TA_ALLOC_ERR;
+                beg[v] = nb[v] = 0;
+                if( TA_ParamHolderAlloc(fi->handle, &h) != TA_SUCCESS ) continue;
+                setup_inputs(h, fi, history);
+                for( i = 0; i < fi->nbOptInput; i++ )
+                {
+                    const TA_OptInputParameterInfo *oi;
+                    TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+                    if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+                        TA_SetOptInputParamReal(h, i, opt[i]);
+                    else
+                        TA_SetOptInputParamInteger(h, i, (TA_Integer)opt[i]);
+                }
+                for( i = 0; i < fi->nbOutput; i++ )
+                {
+                    const TA_OutputParameterInfo *oo;
+                    TA_GetOutputParameterInfo(fi->handle, i, &oo);
+                    if( oo->type == TA_Output_Integer ) TA_SetOutputParamIntegerPtr(h, i, n[v][i]);
+                    else                                TA_SetOutputParamRealPtr(h, i, r[v][i]);
+                }
+                TA_SetEMAVariation(v ? TA_EMAVariation_FIRST_BAR_SEED : TA_EMAVariation_SMA_SEED);
+                rc[v] = TA_CallFunc(h, 0, nbBars - 1, &beg[v], &nb[v]);
+                TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+                TA_ParamHolderFree(h);
+            }
+            if( rc[0] != TA_SUCCESS || rc[1] != TA_SUCCESS || nb[0] != nb[1] ) continue;
+            for( i = 0; i < fi->nbOutput && !moved; i++ )
+            {
+                const TA_OutputParameterInfo *oo;
+                TA_GetOutputParameterInfo(fi->handle, i, &oo);
+                if( oo->type == TA_Output_Integer )
+                    moved = memcmp(n[0][i], n[1][i], (size_t)nb[0] * sizeof(TA_Integer)) != 0;
+                else
+                    moved = memcmp(r[0][i], r[1][i], (size_t)nb[0] * sizeof(TA_Real)) != 0;
+            }
+        }
+    }
+    return moved;
+}
+
+/* set_ema_variation on one server; 1 when it acknowledged. */
+static int codegen_set_ema_variation(CodegenPipe *cp, int value, char *respBuf)
+{
+    char req[96];
+    snprintf(req, sizeof(req),
+             "{\"method\":\"set_ema_variation\",\"params\":{\"value\":%d}}", value);
+    if( codegen_pipe_call(cp, req, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
+        return 0;
+    return !json_is_error(respBuf);
+}
+
+/* The in-process baseline of the current request under the default, kept to
+ * count the FIRST_BAR_SEED pass's variants that differ from it. */
+static TA_RetCode g_sweepEmaRc;
+static TA_Integer g_sweepEmaBeg, g_sweepEmaNb;
+static TA_Real    g_sweepEmaReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+static TA_Integer g_sweepEmaInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+
+static void sweep_ema_snapshot(CodegenRangeTestParam *p)
+{
+    unsigned int o;
+    TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+    inproc_baseline(p, 0, p->nbBars - 1);
+    TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+    g_sweepEmaRc = p->lastRetCode;
+    g_sweepEmaBeg = p->lastBegIdx;
+    g_sweepEmaNb = p->lastNbElement;
+    for( o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        if( p->outputIsInteger[o] )
+            memcpy(g_sweepEmaInt[o], p->outIntBufs[o], sizeof(g_sweepEmaInt[o]));
+        else
+            memcpy(g_sweepEmaReal[o], p->outRealBufs[o], sizeof(g_sweepEmaReal[o]));
+    }
+}
+
+static int sweep_ema_moved(CodegenRangeTestParam *p)
+{
+    unsigned int o;
+    inproc_baseline(p, 0, p->nbBars - 1);
+    if( p->lastRetCode != TA_SUCCESS || g_sweepEmaRc != TA_SUCCESS
+        || p->lastNbElement != g_sweepEmaNb || p->lastBegIdx != g_sweepEmaBeg )
+        return 0;
+    for( o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        size_t bytes = (size_t)g_sweepEmaNb * (p->outputIsInteger[o] ? sizeof(TA_Integer) : sizeof(TA_Real));
+        if( p->outputIsInteger[o] ? memcmp(g_sweepEmaInt[o], p->outIntBufs[o], bytes) != 0
+                                  : memcmp(g_sweepEmaReal[o], p->outRealBufs[o], bytes) != 0 )
+            return 1;
+    }
+    return 0;
+}
+
 /* Run one variant: the in-process library fills the baseline, the language
  * server is diffed against it. Mismatches land in p->codegenError. */
 static void sweep_run_variant(CodegenRangeTestParam *p)
@@ -3403,6 +3548,24 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     const char *failParam = NULL;
     double failValue = 0.0;
 
+    /* The second pass repeats the sweep under TA_EMAVariation_FIRST_BAR_SEED,
+     * on the server and in-process, for a function whose output it moves. */
+    int nbEv = codegen_ema_variation_moves(funcInfo, ctx->history) ? 2 : 1;
+    long long evRan = 0, evMoved = 0;
+    for( int ev = 0; ev < nbEv && params.codegenError == TA_TEST_PASS; ev++ )
+    {
+    if( ev )
+    {
+        if( !codegen_set_ema_variation(params.cp, 1, params.responseBuf) )
+        {
+            printf("  SWEEP FAIL [TA_%s]: set_ema_variation(1) refused: %.120s\n",
+                   funcInfo->name, params.responseBuf);
+            params.codegenError = TA_CODEGEN_RETCODE_MISMATCH;
+            break;
+        }
+        TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+    }
+
     /* One param varied at a time, the others at their defaults. */
     for( i = 0; i < funcInfo->nbOptInput && params.codegenError == TA_TEST_PASS; i++ )
     {
@@ -3476,12 +3639,19 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         for( int c = 0; c < nc && params.codegenError == TA_TEST_PASS; c++ )
         {
             params.optOverride[i] = cand[c];
+            if( ev ) sweep_ema_snapshot(&params);
             { sweep_run_variant(&params); variants++; }
+            if( ev && params.codegenError == TA_TEST_PASS )
+            {
+                evRan++;
+                evMoved += sweep_ema_moved(&params);
+            }
             if( params.codegenError != TA_TEST_PASS
                 || (params.transcendentalError != TA_TEST_PASS && !failParam) )
             {
                 failParam = optInfo->paramName;
                 failValue = cand[c];
+                if( ev ) printf("  (under TA_EMAVariation_FIRST_BAR_SEED)\n");
             }
             params.optOverride[i] = defVals[i];
         }
@@ -3508,16 +3678,38 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             { sweep_run_variant(&params); variants++; }
         if( params.codegenError != TA_TEST_PASS )
         {
-            failParam = "unstablePeriod";
+            failParam = ev ? "unstablePeriod (under FIRST_BAR_SEED)" : "unstablePeriod";
             failValue = 3;
         }
     }
+
+    if( ev )
+    {
+        TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+        if( !codegen_set_ema_variation(params.cp, 0, params.responseBuf) )
+        {
+            printf("  SWEEP FAIL [TA_%s]: set_ema_variation(0) refused: %.120s\n",
+                   funcInfo->name, params.responseBuf);
+            params.codegenError = TA_CODEGEN_RETCODE_MISMATCH;
+        }
+        else if( params.codegenError == TA_TEST_PASS && evMoved == 0 )
+        {
+            printf("  SWEEP EMA VARIATION VACUOUS [TA_%s]: %lld variant(s) under "
+                   "FIRST_BAR_SEED, none of them moved the in-process output\n",
+                   funcInfo->name, evRan);
+            params.codegenError = TA_CODEGEN_SWEEP_VACUOUS;
+        }
+    }
+    }
+    TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
 
     if( params.paramHolder != NULL )
         TA_ParamHolderFree(params.paramHolder);
 
     ctx->sweepVariants += variants;
     ctx->sweepFunctions++;
+    ctx->sweepEmaFunctions += nbEv - 1;
+    ctx->sweepEmaMoved += evMoved;
 
     if( params.codegenError == TA_TEST_PASS )
         params.codegenError = params.transcendentalError;
@@ -3994,10 +4186,12 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int cloneLegs = 0;     /* fork legs it ran */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     long long vmath = 0;   /* pairs the server held by fuzz_vmath_near */
-    int isUnstable;
+    int isUnstable, evMoves, evLegs = 0;
+    static char evResp[JSON_BUF_SIZE];
 
     if( ctx->error != TA_TEST_PASS ) return;
     if( !filterMatchesName(ctx->functionFilter, funcInfo->name) ) return;
+    evMoves = codegen_ema_variation_moves(funcInfo, ctx->history);
 
     /* K-leg eligibility: the function's own unstable flag, or an internal
      * unstable dependency (DEMA/TEMA/TRIX/MACD map to EMA in UNSTABLE_MAP —
@@ -4033,12 +4227,28 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
          * shapes (incl. CONSTANT, TIE_HEAVY, and FUZZ_CANDLE — the
          * pattern-rich inside-bar shape that makes the candlestick streams
          * non-vacuous) are exercised every run. */
-        for( variant = 0; variant < STREAM_NVARIANT + STREAM_NAUTO; variant++ )
+        for( variant = 0; variant < STREAM_NVARIANT + STREAM_NAUTO + 1; variant++ )
         {
             int K = 0, shape;
             ErrorNumber pipeErr;
-            int autoPass = variant >= STREAM_NVARIANT;
-            if( variant == 1 || autoPass )
+            int evPass = variant == STREAM_NVARIANT + STREAM_NAUTO;
+            int autoPass = variant >= STREAM_NVARIANT && !evPass;
+            if( evPass )
+            {
+                /* Under TA_EMAVariation_FIRST_BAR_SEED, which the server applies
+                 * to the batch and every stream of the request: the defaults
+                 * and every enum-sweep vector, for a function it moves. */
+                if( !evMoves || !(v == 0 || vecIsEnum[v]) ) continue;
+                if( !codegen_set_ema_variation(ctx->cp, 1, evResp) )
+                {
+                    printf("STREAM EMA VARIATION [TA_%s]: set_ema_variation(1) refused: %.120s\n",
+                           funcInfo->name, evResp);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
+            else if( variant == 1 || autoPass )
             {
                 /* K-leg: defaults vector when the function is unstable, plus
                  * every enum-sweep vector — the selected sub-stream may be
@@ -4092,7 +4302,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * MONO_DOWN, and the MONO_DOWN leg is the one that caught a
              * one-bar ring rotation for it. g_streamShapeSeen is the standing
              * floor on that: the mapping below must reach every shape. */
-            shape = autoPass ? (v + 1) % 7 : (variant >= 2) ? (variant - 1) : (v + variant) % 7;
+            shape = evPass ? (v + 3) % 7 : autoPass ? (v + 1) % 7
+                  : (variant >= 2) ? (variant - 1) : (v + variant) % 7;
             if( shape >= 0 && shape < FUZZ_NSHAPES )
                 g_streamShapeSeen[shape] = 1;
             stream_build_request(ctx->requestBuf, funcInfo, vec[v],
@@ -4100,6 +4311,20 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                  K);
             pipeErr = codegen_pipe_call(ctx->cp, ctx->requestBuf,
                                         ctx->responseBuf, JSON_BUF_SIZE);
+            if( evPass && pipeErr == TA_TEST_PASS )
+            {
+                if( !codegen_set_ema_variation(ctx->cp, 0, evResp) )
+                {
+                    printf("STREAM EMA VARIATION [TA_%s]: set_ema_variation(0) refused: %.120s\n",
+                           funcInfo->name, evResp);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+                if( !json_is_error(ctx->responseBuf)
+                    && stream_flag(ctx->responseBuf, "\"legs\":") > 0 )
+                    evLegs++;
+            }
             if( pipeErr != TA_TEST_PASS )
             {
                 /* Print the request: a dead pipe leaves no response to read,
@@ -4414,6 +4639,15 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamVmath += vmath;
     ctx->streamFunctions++;
     ctx->streamLegs += legs;
+    ctx->streamEmaFunctions += evMoves;
+    ctx->streamEmaLegs += evLegs;
+    if( evMoves && evLegs == 0 && ctx->error == TA_TEST_PASS )
+    {
+        printf("STREAM EMA VARIATION VACUOUS [TA_%s]: FIRST_BAR_SEED moves its batch "
+               "output and no stream request under it ran a leg\n", funcInfo->name);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+    }
     {
         const TA_StreamEntry *se = xlang_stream_entry(funcInfo->name);
         if( se && se->nonGe1Tap ) ctx->streamNonGe1Functions++;
@@ -5385,6 +5619,8 @@ static ErrorNumber test_codegen_for_language(
     {
         ctx.sweepVariants  = 0;
         ctx.sweepFunctions = 0;
+        ctx.sweepEmaFunctions = 0;
+        ctx.sweepEmaMoved = 0;
         TA_ForEachFunc(sweep_one_function, &ctx);
 
         /* Vacuity floor. A sweep MISMATCH is already loud (SWEEP FAIL, nonzero
@@ -5393,11 +5629,14 @@ static ErrorNumber test_codegen_for_language(
          * variants" and pass. Skipped under --function, where sweeping one
          * function, or none, is the intent. */
         if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL
-            && (ctx.sweepFunctions <= 0 || ctx.sweepVariants <= 0) )
+            && (ctx.sweepFunctions <= 0 || ctx.sweepVariants <= 0
+                || ctx.sweepEmaFunctions <= 0 || ctx.sweepEmaMoved <= 0) )
         {
-            printf("SWEEP VACUOUS: %d variants across %d functions — an "
-                   "unfiltered sweep must verify something\n",
-                   ctx.sweepVariants, ctx.sweepFunctions);
+            printf("SWEEP VACUOUS: %d variants across %d functions, %d function(s) "
+                   "under FIRST_BAR_SEED with %lld moved variant(s) — an unfiltered "
+                   "sweep must verify something\n",
+                   ctx.sweepVariants, ctx.sweepFunctions, ctx.sweepEmaFunctions,
+                   ctx.sweepEmaMoved);
             ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
             ctx.failed++;
         }
@@ -5471,6 +5710,13 @@ static ErrorNumber test_codegen_for_language(
                        "verified OpenAndFill — every streamable function must also "
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL && ctx.streamFunctions > 0
+                && (ctx.streamEmaFunctions == 0 || ctx.streamEmaLegs == 0) )
+            {
+                printf("STREAM EMA VARIATION VACUOUS: %d function(s), %lld request(s) under "
+                       "FIRST_BAR_SEED\n", ctx.streamEmaFunctions, ctx.streamEmaLegs);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* An Auto lookback longer than the series compares nothing. */
@@ -6158,7 +6404,7 @@ typedef struct {
     char      version[16];
     char      commit[48];
     char      libVersion[32];
-    int       nbFunctions, intFloor, maTypeMax;
+    int       nbFunctions, intFloor, maTypeMax, metastock;
     char      excluded[REF_MAX_EXCLUDED][32];
     int       nbExcluded;
     RefTol    tol[REF_MAX_TOL];
@@ -6182,6 +6428,8 @@ typedef struct {
     int          funcsUncompared;   /* every case waived: the function went untested */
     int          funcsLargeEligible, funcsLargeOutput;
     int          serverRestarts;
+    int          msOracleCompared[16], msExcludedDiverged[16];
+    long long    msCases;
     ErrorNumber  error;
 } FuzzContext;
 
@@ -6235,6 +6483,10 @@ static unsigned long long fuzz_hash_local(const CodegenRangeTestParam *p, int nb
     return codegen_output_hash(p->funcInfo->nbOutput, p->outputIsInteger, bufs, nb);
 }
 
+/* Set while the --ref MetaStock pass runs: every abstract_call asks the frozen
+ * serve to switch TA_SetCompatibility to TA_COMPATIBILITY_METASTOCK. */
+static int g_fuzzMetastock;
+
 /* Build an abstract_call request that generates its inputs from (shape,seed,n).
  * hash mode unless fullOutput. */
 static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
@@ -6259,6 +6511,8 @@ static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
     }
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
         pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":%d", unst);
+    if( g_fuzzMetastock )
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"metastock\":1");
     codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
@@ -6515,6 +6769,7 @@ static int ref_load(CodegenPipe *cp, char *req, char *resp, const char *version,
     m->nbExcluded  = json_get_int(resp, "nbExcluded");
     m->nbTol       = json_get_int(resp, "nbTol");
     m->nbWaivers   = json_get_int(resp, "nbWaivers");
+    m->metastock   = json_get_int(resp, "metastock");
 
     snprintf(expectLib, sizeof(expectLib), "%s", version);
     for( i = 0; expectLib[i]; i++ ) if( expectLib[i] == '_' ) expectLib[i] = '.';
@@ -6604,9 +6859,10 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
         if( report )
         {
             ctx->reportedThisFunc++;
-            printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d: "
+            printf("  MISMATCH TA_%s%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d: "
                    "rc %d/%d begIdx %d/%d nbElem %d/%d (current/%s)\n",
-                   fi->name, shape, seed, n, s, e, unst, curRc, refRc, curBeg, refBeg, curNb, refNb, ver);
+                   fi->name, g_fuzzMetastock ? " [FIRST_BAR_SEED vs MetaStock]" : "",
+                   shape, seed, n, s, e, unst, curRc, refRc, curBeg, refBeg, curNb, refNb, ver);
         }
         return 0;
     }
@@ -6701,8 +6957,9 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
     if( report )
     {
         ctx->reportedThisFunc++;
-        printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d  params:",
-               fi->name, shape, seed, n, s, e, unst);
+        printf("  MISMATCH TA_%s%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d  params:",
+               fi->name, g_fuzzMetastock ? " [FIRST_BAR_SEED vs MetaStock]" : "",
+               shape, seed, n, s, e, unst);
         for( unsigned int i = 0; i < fi->nbOptInput; i++ )
         {
             const TA_OptInputParameterInfo *oi;
@@ -6733,6 +6990,34 @@ static void fuzz_print_bound(const RefTol *r)
     case TOL_REL_OUT_FLOOR1:  printf("%g relative, floored at 1", r->tol); break;
     case TOL_NAN_TO:          printf("NaN -> %g", r->tol); break;
     }
+}
+
+/* A member whose release had TA_COMPATIBILITY_METASTOCK (ref_info's
+ * "metastock") is the oracle for TA_EMAVariation_FIRST_BAR_SEED on these:
+ * each case is run again with the serve switched to MetaStock and the current
+ * library to FIRST_BAR_SEED, under the member's own rows and waivers. */
+static const char *const REF_MS_ORACLE[] = {
+    "EMA", "DEMA", "TEMA", "TRIX", "MACD", "MACDFIX", "MA", "MAVP", "MACDEXT",
+    "APO", "PPO", "BBANDS", "STOCH", "STOCHF"
+};
+/* Moved by the release's MetaStock mode and not by FIRST_BAR_SEED. Run in the
+ * same pass, and each must still diverge: one that matches has lost its
+ * reason and belongs in REF_MS_ORACLE or nowhere. */
+static const struct { const char *func; const char *why; } REF_MS_EXCLUDED[] = {
+    { "RSI", "its MetaStock variant (one bar shorter, seeded on the first change) was removed by #388 and stays removed" },
+    { "CMO", "the same MetaStock variant as RSI, removed by #388" },
+};
+#define REF_MS_NB_ORACLE   ((int)(sizeof(REF_MS_ORACLE)/sizeof(REF_MS_ORACLE[0])))
+#define REF_MS_NB_EXCLUDED ((int)(sizeof(REF_MS_EXCLUDED)/sizeof(REF_MS_EXCLUDED[0])))
+
+static int ref_ms_index(const char *name, int *excluded)
+{
+    int i;
+    for( i = 0; i < REF_MS_NB_ORACLE; i++ )
+        if( strcmp(REF_MS_ORACLE[i], name) == 0 ) { *excluded = 0; return i; }
+    for( i = 0; i < REF_MS_NB_EXCLUDED; i++ )
+        if( strcmp(REF_MS_EXCLUDED[i].func, name) == 0 ) { *excluded = 1; return i; }
+    return -1;
 }
 
 static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -6827,13 +7112,19 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         if( oi->type == TA_OptInput_IntegerRange ) hasIntRange = 1;
     }
 
-    /* The second pass repeats every case at a non-zero unstable period. */
-    for( int pass = 0; pass < (nbUnstIds > 0 ? 2 : 1); pass++ )
+    /* The second pass repeats every case at a non-zero unstable period; on a
+     * MetaStock member, an oracle or excluded function repeats both under it. */
+    int msExcluded = 0;
+    int msIdx = m->metastock ? ref_ms_index(funcInfo->name, &msExcluded) : -1;
+    int nbBase = nbUnstIds > 0 ? 2 : 1;
+    long long msCompared = 0, msMoved = 0, msDiverged = 0;
+    for( int pass = 0; pass < nbBase * (msIdx >= 0 ? 2 : 1); pass++ )
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
     for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
     for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
     {
-        int unst = pass ? FUZZ_REF_UNST : 0;
+        int unstPass = pass % nbBase, msPass = pass >= nbBase;
+        int unst = unstPass ? FUZZ_REF_UNST : 0;
         int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
         fuzz_gen(shape, seeds[si], n,
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
@@ -6896,8 +7187,9 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 for( int u = 0; u < nbUnstIds; u++ )
                     TA_SetUnstablePeriod(unstIds[u], (unsigned int)unst);
 
+                g_fuzzMetastock = msPass;
                 fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0, unst);
-                if( !fuzz_call(ctx) ) { if( ctx->error != TA_TEST_PASS ) return; continue; }
+                if( !fuzz_call(ctx) ) { g_fuzzMetastock = 0; if( ctx->error != TA_TEST_PASS ) return; continue; }
                 cases++;
                 int len;
                 if( json_find_field(ctx->respBuf, "waived", &len) )
@@ -6936,13 +7228,38 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     else
                         TA_SetOutputParamRealPtr(paramHolder, o, p.outRealBufs[o]);
                 }
+                unsigned long long smaHash = 0;
+                if( msPass )
+                {
+                    TA_RetCode smaRc = TA_CallFunc(paramHolder, s, e, &curBeg, &curNb);
+                    smaHash = fuzz_hash_local(&p, (smaRc == TA_SUCCESS) ? curNb : 0);
+                    TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+                }
                 TA_RetCode curRc = TA_CallFunc(paramHolder, s, e, &curBeg, &curNb);
+                TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
                 unsigned long long curHash =
                     fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
 
+                if( msPass && msExcluded )
+                {
+                    /* Their MetaStock variant is one bar shorter: a range that
+                     * differs is the divergence, not the rounding the rows hold. */
+                    if( (int)curRc != refRc
+                        || (curRc == TA_SUCCESS && (curBeg != refBeg || curNb != refNb)) )
+                        msDiverged++;
+                    g_fuzzMetastock = 0;
+                    continue;
+                }
+                if( msPass )
+                {
+                    msCompared++;
+                    ctx->msCases++;
+                    if( curRc == TA_SUCCESS && curNb > 0 && curHash != smaHash ) msMoved++;
+                }
+
                 ctx->comparisons++;
                 compared++;
-                if( pass )
+                if( unstPass )
                 {
                     unstCompared++;
                     if( refLb > lb0 ) unstMoved++;
@@ -6960,11 +7277,12 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     if( curBeg != refBeg || curNb != refNb ) mismatch = 1;
                     else if( curHash != refHash ) mismatch = 1;
                 }
-                if( !mismatch ) { ctx->matches++; continue; }
+                if( !mismatch ) { ctx->matches++; g_fuzzMetastock = 0; continue; }
 
                 int cls = fuzz_classify_and_report(ctx, funcInfo, &p, shape, seeds[si], n, s, e,
                                              vec[k], unst, inScale, (int)curRc, curBeg, curNb,
                                              refRc, refBeg, refNb);
+                g_fuzzMetastock = 0;
                 if( cls != 0 && cls != 3 && regtest_vmath_batch(funcInfo->name) )
                 {
                     /* A member row or the signed-zero rule absorbed what only
@@ -6981,6 +7299,29 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         }
     }
     TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    g_fuzzMetastock = 0;
+
+    if( msIdx >= 0 && msExcluded )
+    {
+        ctx->msExcludedDiverged[msIdx] += msDiverged > 0;
+        if( msDiverged == 0 )
+        {
+            printf("  METASTOCK EXCLUSION DEAD TA_%s: every case matched %s's MetaStock "
+                   "mode under FIRST_BAR_SEED; the row's reason (%s) no longer holds\n",
+                   funcInfo->name, m->libVersion, REF_MS_EXCLUDED[msIdx].why);
+            ctx->failures++;
+        }
+    }
+    else if( msIdx >= 0 )
+    {
+        ctx->msOracleCompared[msIdx] += msCompared > 0;
+        if( msCompared == 0 || msMoved == 0 )
+        {
+            printf("  METASTOCK VACUOUS TA_%s: %lld case(s) compared under MetaStock, %lld "
+                   "of them moved by FIRST_BAR_SEED\n", funcInfo->name, msCompared, msMoved);
+            ctx->failures++;
+        }
+    }
 
     /* A waiver that swallows the function untests it; one that grows past its
      * member's ceiling is a predicate that has started to over-fire. Each axis
@@ -7196,7 +7537,24 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
                        version, member.waiver[i].id);
                 ctx.failures++;
             }
+        for( i = 0; member.metastock && i < REF_MS_NB_ORACLE; i++ )
+            if( !ctx.msOracleCompared[i] )
+            {
+                printf("FAIL: %s is a MetaStock oracle function and compared nothing "
+                       "under it\n", REF_MS_ORACLE[i]);
+                ctx.failures++;
+            }
+        for( i = 0; member.metastock && i < REF_MS_NB_EXCLUDED; i++ )
+            if( !ctx.msExcludedDiverged[i] )
+            {
+                printf("FAIL: the MetaStock exclusion %s never diverged\n", REF_MS_EXCLUDED[i].func);
+                ctx.failures++;
+            }
     }
+    if( member.metastock )
+        printf("MetaStock: %lld case(s) against %s's TA_COMPATIBILITY_METASTOCK under "
+               "TA_EMAVariation_FIRST_BAR_SEED, over %d function(s); %d excluded\n",
+               ctx.msCases, member.libVersion, REF_MS_NB_ORACLE, REF_MS_NB_EXCLUDED);
     if( ctx.comparisons == 0 )
     {
         printf("FAIL: zero comparisons (broken %s or over-narrow filter?)\n", serve + 2);
@@ -7381,6 +7739,9 @@ typedef struct {
                                       * the axis is not being exercised at all —
                                       * printed so it cannot go quiet unnoticed  */
     long long    unstFuncs;          /* functions that carried an unstable leg     */
+    long long    evFuncs;            /* functions that carried a FIRST_BAR_SEED leg */
+    long long    evCases;            /* server comparisons under FIRST_BAR_SEED     */
+    long long    evMoved;            /* golden calls it moved off the default's     */
     long long    lbCases;            /* per-server lookback-tier comparisons       */
     long long    autoLbCases;        /* ... of which under an Auto level           */
     long long    autoLbMoved;        /* ... whose lookback the level lengthened    */
@@ -9349,7 +9710,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * The parameter sweep above holds the unstable period at 0. XLANG_UNST_PERIOD
      * runs FIRST and 0 LAST so every function leaves the servers at the value
      * the next one expects. */
-    int unstVals[2] = { 0, 0 };
+    int unstVals[3] = { 0, 0, 0 };
+    int evVals[3] = { 0, 0, 0 };
     int nUnst = 1;
     TA_FuncUnstId unstId = get_unst_id(funcInfo->name);
     if( (funcInfo->flags & TA_FUNC_FLG_UNST_PER) && unstId != TA_TEST_UNST_NONE )
@@ -9385,6 +9747,22 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         ctx->unstFuncs++;
     }
 
+    /* ---- EMA variation axis ----
+     * Last, at unstable 0, for a function whose output FIRST_BAR_SEED moves on
+     * one corpus; the servers are put back to SMA_SEED after the loop. */
+    long long evMovedHere = 0;
+    {
+        fuzz_gen(0, 1, 240, g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
+        hist.nbBars = 240;
+        if( codegen_ema_variation_moves(funcInfo, &hist) )
+        {
+            evVals[nUnst] = 1;
+            nUnst++;
+            ctx->evFuncs++;
+        }
+    }
+    int serverEv = 0;
+
     static const int sizes[] = {40, 120, 240};
     static const int seeds[] = {1, 2, 3};
     ctx->reportedThisFunc = 0;
@@ -9416,7 +9794,22 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
     {
         const int curUnst = unstVals[ui];
+        const int curEv = evVals[ui];
         int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
+        if( curEv != serverEv )
+        {
+            for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
+                if( ctx->sv[sIdx].open
+                    && !codegen_set_ema_variation(&ctx->sv[sIdx].cp, curEv, ctx->respBuf) )
+                {
+                    printf("  XLANG EMA VARIATION [%s] TA_%s: set_ema_variation(%d) refused: %.120s\n",
+                           ctx->sv[sIdx].display, funcInfo->name, curEv, ctx->respBuf);
+                    ctx->sv[sIdx].mism++;
+                    if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                }
+            serverEv = curEv;
+        }
+        TA_SetEMAVariation(curEv ? TA_EMAVariation_FIRST_BAR_SEED : TA_EMAVariation_SMA_SEED);
         fuzz_gen(shape, seeds[si], n,
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
         /* On the fuzz volume (>= 1000) every inPeriods bar clamps to
@@ -9436,7 +9829,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             /* Same argument for the unstable axis: both contract classes assert
              * parameter VALIDATION, which runs before any unstable-period logic,
              * so repeating them at a non-zero period adds no discrimination. */
-            if( kind[k] != FUZZ_VEC_NORMAL && curUnst != 0 ) continue;
+            if( kind[k] != FUZZ_VEC_NORMAL && (curUnst != 0 || curEv) ) continue;
 
             xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
 
@@ -9524,10 +9917,23 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
                 }
 
+                unsigned long long smaHash = 0;
+                TA_RetCode smaRc = TA_SUCCESS;
+                if( curEv )
+                {
+                    TA_Integer smaBeg = 0, smaNb = 0;
+                    TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+                    smaRc = TA_CallFunc(paramHolder, s, e, &smaBeg, &smaNb);
+                    smaHash = fuzz_hash_local(&p, (smaRc == TA_SUCCESS) ? smaNb : 0);
+                    TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED);
+                }
                 TA_RetCode curRc = TA_CallFunc(paramHolder, s, e, &curBeg, &curNb);
                 unsigned long long curHash =
                     fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
                 if( curRc == TA_SUCCESS && curNb > 0 ) ctx->nonEmpty++;
+                if( curEv && curRc == TA_SUCCESS && smaRc == TA_SUCCESS && curNb > 0
+                    && curHash != smaHash )
+                    evMovedHere++;
 
                 if( kind[k] == FUZZ_VEC_SENTINEL )
                 {
@@ -9683,6 +10089,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     if( !vm && kind[k] != FUZZ_VEC_REJECT ) sv->laneEligible++;
                     if( tolPath && !vm ) { ctx->tolCases++; sv->tolCases++; }
                     if( curUnst )  ctx->unstCases++;
+                    if( curEv )    ctx->evCases++;
                     if( kind[k] == FUZZ_VEC_REJECT ) ctx->oorCases++;
 
                     if( tolPath )
@@ -9773,6 +10180,23 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
             }
         }
+    }
+
+    TA_SetEMAVariation(TA_EMAVariation_SMA_SEED);
+    if( serverEv )
+        for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
+            if( ctx->sv[sIdx].open && !codegen_set_ema_variation(&ctx->sv[sIdx].cp, 0, ctx->respBuf) )
+            {
+                ctx->sv[sIdx].mism++;
+                if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+            }
+    ctx->evMoved += evMovedHere;
+    if( evVals[nUnst - 1] && evMovedHere == 0 )
+    {
+        printf("  XLANG EMA VARIATION VACUOUS [TA_%s]: no golden call under FIRST_BAR_SEED "
+               "differed from SMA_SEED\n", funcInfo->name);
+        for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ ) ctx->sv[sIdx].mism++;
+        if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
     }
 
     long long mismAfter = 0;
@@ -9958,6 +10382,8 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                    g_xlangTolRows[i].maxDev, g_xlangTolRows[i].tol);
     printf("unstable period (#116): %lld case(s) at unstable %d across %lld function(s)\n",
            ctx.unstCases, XLANG_UNST_PERIOD, ctx.unstFuncs);
+    printf("EMA variation: %lld case(s) under FIRST_BAR_SEED across %lld function(s), "
+           "%lld golden call(s) it moved\n", ctx.evCases, ctx.evFuncs, ctx.evMoved);
     printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
            "+ %lld lookback; %lld lookback case(s) total\n",
            ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);
@@ -10045,6 +10471,14 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * is a strict subset of the case total, which the 148 other functions keep
      * large whether this leg runs or not. Unfiltered runs only — --function=
      * can legitimately select nothing that carries TA_FUNC_FLG_UNST_PER. */
+    if( !functionFilter && ctx.comparisons > 0
+        && (ctx.evFuncs == 0 || ctx.evCases == 0 || ctx.evMoved == 0) )
+    {
+        printf("FAIL — VACUOUS EMA VARIATION LEG: %lld function(s), %lld case(s), %lld "
+               "moved golden call(s) under FIRST_BAR_SEED\n",
+               ctx.evFuncs, ctx.evCases, ctx.evMoved);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
     if( !functionFilter && ctx.comparisons > 0 && ctx.unstCases == 0 )
     {
         printf("FAIL — VACUOUS UNSTABLE LEG: not one case ran at a non-zero unstable "

@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072526 MF,CC  First Version — immutable Core / CoreBuilder surface.
+ *  112726 MF,CC  The EMA variation: default, refusal, per Core, fixed at open (#622).
  */
 
 package io.github.talib.test;
@@ -55,6 +56,7 @@ import io.github.talib.CandleSetting;
 import io.github.talib.CandleSettingType;
 import io.github.talib.Core;
 import io.github.talib.CoreBuilder;
+import io.github.talib.EMAVariation;
 import io.github.talib.FuncUnstId;
 import io.github.talib.OutRange;
 import io.github.talib.RangeType;
@@ -165,6 +167,50 @@ public class CoreApiTest {
               + r0.begIdx() + " -> " + r9.begIdx() + ")");
         check(plain.rsiLookback(14) + 9 == tuned.rsiLookback(14),
               "the lookback is unstable-period aware per Core instance");
+    }
+
+    /** TA_SetEMAVariation's per-Core form. A refused value leaves the builder as
+     * it was; two Cores answer by their own setting; a stream keeps the one it
+     * opened under whatever the builder does next. */
+    static void emaVariationIsPerCoreAndFixedAtOpen() {
+        check(Core.DEFAULT.emaVariation() == EMAVariation.SMA_SEED, "Core.DEFAULT is SMA_SEED");
+        check(Core.builder().build().emaVariation() == EMAVariation.SMA_SEED,
+              "a fresh builder builds SMA_SEED");
+
+        CoreBuilder b = Core.builder().emaVariation(EMAVariation.FIRST_BAR_SEED);
+        checkThrows(NullPointerException.class, () -> b.emaVariation(null),
+                    "emaVariation(null) is refused");
+        Core first = b.build();
+        check(first.emaVariation() == EMAVariation.FIRST_BAR_SEED,
+              "the refused value left FIRST_BAR_SEED in the builder");
+        check(first.toBuilder().build().emaVariation() == EMAVariation.FIRST_BAR_SEED,
+              "toBuilder carries the EMA variation");
+
+        double[] in = closes(120);
+        double[] dflt = new double[in.length], fb = new double[in.length];
+        OutRange rd = Core.DEFAULT.ema(0, in.length - 1, in, 10, dflt);
+        OutRange rf = first.ema(0, in.length - 1, in, 10, fb);
+        check(rd.begIdx() == rf.begIdx() && rd.count() == rf.count(),
+              "the EMA variation moves no range");
+        check(dflt[0] != fb[0], "two Cores answer by their own EMA variation");
+        double k = 2.0 / 11.0, e = in[0];
+        for (int t = 1; t <= rf.begIdx(); t++) {
+            e = k * in[t] + (1.0 - k) * e;
+        }
+        check(Math.abs(fb[0] - e) <= 1e-12 * Math.abs(e),
+              "FIRST_BAR_SEED seeds on bar 0 (" + fb[0] + " vs " + e + ")");
+
+        Core.EmaStream st = first.emaOpen(java.util.Arrays.copyOf(in, 60), 10);
+        b.emaVariation(EMAVariation.SMA_SEED);
+        check(b.build().emaVariation() == EMAVariation.SMA_SEED, "the builder moved on");
+        boolean same = true;
+        for (int t = 60; t < in.length; t++) {
+            double v = st.update(in[t]);
+            if (Double.doubleToRawLongBits(v) != Double.doubleToRawLongBits(fb[t - rf.begIdx()])) {
+                same = false;
+            }
+        }
+        check(same, "an open stream keeps FIRST_BAR_SEED, bar for bar with the batch");
     }
 
     /** A candle setting must actually change a pattern's verdict. */
@@ -581,6 +627,7 @@ public class CoreApiTest {
         builderSetsOnePeriod();
         builderAllIsSetAll();
         unstablePeriodReachesTheIndicator();
+        emaVariationIsPerCoreAndFixedAtOpen();
         candleSettingReachesTheIndicator();
         candleSettingReadsBack();
         acceptedCandleSettingsKeepTheLookbackAndTheCallInStep();

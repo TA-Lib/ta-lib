@@ -611,6 +611,16 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    errNb = pbCheckCallShape( "TEMA(14) unstable=7", retCode, outBegIdx, 60, outNbElement, endIdx );
    if( errNb != TA_TEST_PASS ) return errNb;
 
+   /* Identity holds under the first-bar seed. */
+   TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+   retCode = TA_EMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
+   TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+   errNb = pbCheckCallShape( "EMA(1) first-bar seed", retCode, outBegIdx, 0, outNbElement, endIdx );
+   if( errNb != TA_TEST_PASS ) return errNb;
+   errNb = pbCheckSameSeries( "EMA(1) first-bar seed", gBuffer[0].out0,
+                              history->close, outNbElement );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
    /* In-place call: output over the input buffer must give the same result. */
    retCode = TA_EMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].in );
    errNb = pbCheckCallShape( "EMA(1) in-place", retCode, outBegIdx, 0, outNbElement, endIdx );
@@ -1692,6 +1702,18 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
                                  TA_MACD_Lookback( 12, 26, 1 ),
                                  (const double[]){ 12, 26, 1 }, 3 );
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   /* ...and under the first-bar seed. */
+   TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+   retCode = TA_MACD( 0, endIdx, gBuffer[0].in, 12, 26, 1,
+                      &outBegIdx, &outNbElement,
+                      gBuffer[0].out0, gBuffer[0].out1, gBuffer[0].out2 );
+   errNb = pbCheckMacdSignalOne( "MACD(12,26,1) first-bar seed", "MACD", history,
+                                 retCode, outBegIdx, outNbElement,
+                                 TA_MACD_Lookback( 12, 26, 1 ),
+                                 (const double[]){ 12, 26, 1 }, 3 );
+   TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* Exhaustive startIdx/endIdx sweep of all 3 outputs at sig=1. */

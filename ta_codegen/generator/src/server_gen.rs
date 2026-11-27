@@ -5619,6 +5619,7 @@ const UNSUPPORTED_MODE = '{"retCode":0,"timing_ns":0,"unsupported_mode":1}';
 // default entry never routes.
 function coreIsDefault(c: Core): boolean {
   const d = Core.DEFAULT;
+  if (c.emaVariation() !== d.emaVariation()) return false;
   for (let i = 0; i < d.unstablePeriods.length; i++) {
     if (c.unstablePeriods[i] !== d.unstablePeriods[i]) return false;
   }

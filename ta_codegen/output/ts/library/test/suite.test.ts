@@ -72,7 +72,7 @@ const TESTS: Record<string, number> = {
   'options.test.ts': 11,
   'phantomIo.test.ts': 5,
   'publicApi.test.ts': 6,
-  'runtime.test.ts': 14,
+  'runtime.test.ts': 15,
   'stream.test.ts': 6,
   'streamContract.test.ts': 13,
   'suite.test.ts': 2,

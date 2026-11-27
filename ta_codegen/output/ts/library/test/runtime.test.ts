@@ -43,14 +43,15 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  110126 MF,CC  First Version
+ *  112726 MF,CC  emaVariation: refusal, per Core, fixed at open (#622)
  */
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { FuncUnstId, MAType } from '../src/enums.ts';
+import { EMAVariation, FuncUnstId, MAType } from '../src/enums.ts';
 import { cdldoji, cdldojiLookback } from '../src/func/cdldoji.ts';
-import { ema, emaLookback } from '../src/func/ema.ts';
+import { ema, emaLookback, emaOpen } from '../src/func/ema.ts';
 import { CandleSetting, CandleSettingType, Core, CoreBuilder, RangeType } from '../src/runtime/core.ts';
 import { RetCode, TALibError } from '../src/runtime/errors.ts';
 import * as flags from '../src/abstract/flags.ts';
@@ -313,4 +314,35 @@ test('candleSetting reads back what the builder stored, and rejects the wildcard
   assertBadParam(() => Core.DEFAULT.candleSetting(-1 as OneSetting));
   assertBadParam(() => Core.DEFAULT.candleSetting(12 as OneSetting));
   assertBadParam(() => Core.DEFAULT.candleSetting(1.5 as OneSetting));
+});
+
+test('emaVariation: refused values change nothing, each Core answers by its own, a stream keeps the one it opened under', () => {
+  assert.equal(Core.DEFAULT.emaVariation(), EMAVariation.SMA_SEED);
+  assert.equal(new CoreBuilder().build().emaVariation(), EMAVariation.SMA_SEED);
+
+  const b = new CoreBuilder().emaVariation(EMAVariation.FIRST_BAR_SEED);
+  for (const bad of [2, -1, 0.5, NaN]) {
+    assertBadParam(() => b.emaVariation(bad as EMAVariation));
+  }
+  const first = b.build();
+  assert.equal(first.emaVariation(), EMAVariation.FIRST_BAR_SEED);
+  assert.equal(first.toBuilder().build().emaVariation(), EMAVariation.FIRST_BAR_SEED);
+
+  const input = Float64Array.from({ length: 120 }, (_, i) => 100 + 10 * Math.sin(i / 7) + 3 * Math.cos(i / 3));
+  const dflt = ema(input, { timePeriod: 10 });
+  const fb = ema(input, { timePeriod: 10, core: first });
+  assert.equal(dflt.begIdx, fb.begIdx);
+  assert.equal(dflt.values.length, fb.values.length);
+  assert.notEqual(dflt.values[0], fb.values[0]);
+  const k = 2 / 11;
+  let e = input[0] ?? 0;
+  for (let t = 1; t <= fb.begIdx; t++) e = k * (input[t] ?? 0) + (1 - k) * e;
+  assert.ok(Math.abs((fb.values[0] ?? 0) - e) <= 1e-12 * Math.abs(e), `seeded on bar 0: ${fb.values[0]} vs ${e}`);
+
+  const stream = emaOpen(input.subarray(0, 60), { timePeriod: 10, core: first });
+  b.emaVariation(EMAVariation.SMA_SEED);
+  assert.equal(b.build().emaVariation(), EMAVariation.SMA_SEED);
+  for (let t = 60; t < input.length; t++) {
+    assert.equal(stream.update(input[t] ?? 0), fb.values[t - fb.begIdx]);
+  }
 });

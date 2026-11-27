@@ -125,6 +125,11 @@ static int ta_ref_handle( const char *json, const char *method, int methodLen,
          snprintf( resp, resp_size, "{\"error\":\"Unknown function: %.*s\"}", nameLen, name );
          return 1;
       }
+      if( json_find_int( json, "metastock" ) && !m->metastock )
+      {
+         snprintf( resp, resp_size, "{\"error\":\"this release has no MetaStock mode\"}" );
+         return 1;
+      }
       return 0;
    }
 
@@ -133,12 +138,12 @@ static int ta_ref_handle( const char *json, const char *method, int methodLen,
       pos = json_appendf( resp, resp_size, 0,
                "{\"version\":\"%s\",\"commit\":\"%s\",\"libVersion\":\"%s.%s.%s\","
                "\"nbFunctions\":%d,\"intFloor\":%d,\"maTypeMax\":%d,"
-               "\"nbExcluded\":%d,\"nbTol\":%d,\"nbWaivers\":%d}",
+               "\"nbExcluded\":%d,\"nbTol\":%d,\"nbWaivers\":%d,\"metastock\":%d}",
                TA_REF_VERSION, m->commit ? m->commit : "",
                TA_GetVersionMajor(), TA_GetVersionMinor(), TA_GetVersionPatch(),
                m->nbFunctions, m->intFloor, TA_REF_MATYPE_MAX,
                ta_ref_count_excluded(), m->tol ? m->nbTol : 0,
-               m->waivers ? m->nbWaivers : 0 );
+               m->waivers ? m->nbWaivers : 0, m->metastock );
       (void)pos;
       return 1;
    }
@@ -218,13 +223,19 @@ static int ta_ref_gen_inputs( const char *json, const TA_FuncHandle *handle,
    return 1;
 }
 
+static int g_refMetastock;
+
 /* Applies the request's unstablePeriod to the ids the function's own handler
- * sets, which the builder checked name the same functions in the release.
- * Returns -1 for a non-zero period on a function that has none. */
+ * sets, which the builder checked name the same functions in the release, and
+ * its "metastock" to the release's compatibility mode. Returns -1 for a
+ * non-zero period on a function that has none. */
 static int ta_ref_set_unstable( const char *json, const char *func, int *set )
 {
    int k = json_find_int( json, "unstablePeriod" ), i, j;
    *set = 0;
+   g_refMetastock = json_find_int( json, "metastock" ) != 0;
+   if( g_refMetastock )
+      TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
    if( k == 0 ) return 0;
    for( i = 0; ta_ref_unst[i].func; i++ )
       if( strcmp( ta_ref_unst[i].func, func ) == 0 )
@@ -234,12 +245,18 @@ static int ta_ref_set_unstable( const char *json, const char *func, int *set )
          *set = 1;
          return 0;
       }
+   if( g_refMetastock )
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+   g_refMetastock = 0;
    return -1;
 }
 
 static void ta_ref_reset_unstable( const char *func, int set )
 {
    int i, j;
+   if( g_refMetastock )
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+   g_refMetastock = 0;
    if( !set ) return;
    for( i = 0; ta_ref_unst[i].func; i++ )
       if( strcmp( ta_ref_unst[i].func, func ) == 0 )

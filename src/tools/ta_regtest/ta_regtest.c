@@ -1149,6 +1149,11 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cvi,       "CVI" );
    DO_TEST( test_func_massi,     "MASSI" );
    DO_TEST( test_func_rvol,      "RVOL" );
+   DO_TEST_LBL( test_func_ema_variation,
+            "EMAVARIATION,FIRST_BAR_SEED,EMA,DEMA,TEMA,TRIX,MACD,MACDFIX,MACDEXT,MACDV,"
+            "APO,PPO,PVO,TSI,DOSC,CVI,SMI,EFI,ERI,MASSI,STC,WAVETREND,PSO,ZLEMA,KC,KSTEXT,"
+            "MA,MAVP,MAENV,BBANDS,BBW,PERCENTB,STOCH,STOCHF,STOCHRSI,KDJ",
+            "EMA variation" );
    DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
    DO_TEST_LBL( test_func_rolling_extremum,
