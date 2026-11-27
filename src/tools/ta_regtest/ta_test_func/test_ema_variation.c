@@ -67,7 +67,7 @@
  *     5. Goldens from the seed rule for the functions no frozen release
  *        reproduces, TRIX past its lookback among them. Each reference below is written from the rule in plain
  *        loops, not from the bodies and not from an outside product; stages
- *        the setting does not touch (ATR, RSI, VAR, non-EMA MA types) come
+ *        the setting does not touch (ATR, RSI, STDDEV, non-EMA MA types) come
  *        from the library at the window the function hands them. Routed
  *        through server_verify under the setting.
  *
@@ -792,6 +792,7 @@ typedef struct
    const char *name;
    int         ip[11];
    double      dp;
+   double      dp2;     /* 0: the second real parameter takes dp too */
 } EvGold;
 
 static const EvGold evGold[] = {
@@ -825,6 +826,16 @@ static const EvGold evGold[] = {
    { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_EMA }, 0 },
    { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_DEMA, TA_MAType_ZLEMA }, 0 },
    { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_TEMA, TA_MAType_TEMA }, 0 },
+   { "BBW",      { 20, TA_MAType_EMA }, 2.0 },
+   { "BBW",      { 10, TA_MAType_DEMA }, 2.0, 1.0 },
+   { "PERCENTB", { 20, TA_MAType_EMA }, 2.0 },
+   { "PERCENTB", { 14, TA_MAType_ZLEMA }, 1.5, 2.5 },
+   { "MAENV",    { 20, TA_MAType_EMA }, 10.0 },
+   { "MAENV",    { 9, TA_MAType_DEMA }, 5.0, 3.0 },
+   { "STOCHRSI", { 21, 5, 3, TA_MAType_EMA }, 0 },
+   { "STOCHRSI", { 9, 14, 5, TA_MAType_DEMA }, 0 },
+   { "KDJ",      { 9, 3, TA_MAType_EMA, 3, TA_MAType_EMA }, 0 },
+   { "KDJ",      { 14, 5, TA_MAType_DEMA, 4, TA_MAType_EMA }, 0 },
 };
 
 #define EV_IS(x) (strcmp( k->name, x ) == 0)
@@ -1061,6 +1072,69 @@ static int ev_model( const EvGold *k, int s0, int L )
       for( t = s; t < EV_N; t++ ) { g_evO[0][t - s] = line[t]; g_evO[1][t - s] = tmp2[t - s]; }
       return s;
    }
+   if( EV_IS("BBW") || EV_IS("PERCENTB") || EV_IS("MAENV") )
+   {
+      double ku = k->dp, kd = k->dp2 != 0.0 ? k->dp2 : k->dp;
+      nb = ev_ma_model( p[1], p[0], c, EV_N, s, tmp, &beg );
+      if( nb <= 0 || beg != s ) return -3;
+      if( EV_IS("MAENV") )
+      {
+         for( t = s; t < EV_N; t++ )
+         {
+            double m = tmp[t - s];
+            g_evO[0][t - s] = m * (1.0 + ku / 100.0); g_evO[1][t - s] = m; g_evO[2][t - s] = m * (1.0 - kd / 100.0);
+         }
+         return s;
+      }
+      if( TA_STDDEV( s, EV_N - 1, c, p[0], 1.0, &beg, &nb, tmp2 ) != TA_SUCCESS || beg != s ) return -2;
+      for( t = s; t < EV_N; t++ )
+      {
+         double m = tmp[t - s], w = (ku + kd) * tmp2[t - s];
+         if( EV_IS("BBW") )
+            g_evO[0][t - s] = m != 0.0 ? 100.0 * w / m : 0.0;
+         else
+            g_evO[0][t - s] = w != 0.0 ? (c[t] - m + kd * tmp2[t - s]) / w : 0.5;
+      }
+      return s;
+   }
+   if( EV_IS("STOCHRSI") || EV_IS("KDJ") )
+   {
+      int rsi = EV_IS("STOCHRSI"), K = p[rsi ? 1 : 0], f0, b1, b2, n1;
+      const double *hi = h, *lo = l, *cl = c;
+      if( rsi )
+      {
+         int r0 = s - L + TA_RSI_Lookback( p[0] );
+         if( TA_RSI( r0, EV_N - 1, c, p[0], &beg, &nb, tmp ) != TA_SUCCESS || beg != r0 ) return -2;
+         for( t = r0; t < EV_N; t++ ) line[t] = tmp[t - r0];
+         hi = lo = cl = line;
+         f0 = r0 + K - 1;
+      }
+      else
+         f0 = s - L + K - 1;
+      for( t = f0; t < EV_N; t++ )
+      {
+         double hh = hi[t - K + 1], ll = lo[t - K + 1];
+         for( i = t - K + 2; i <= t; i++ ) { if( hi[i] > hh ) hh = hi[i]; if( lo[i] < ll ) ll = lo[i]; }
+         x[t] = !ev_zs( hh - ll, fabs( hh ) + fabs( ll ) ) ? (cl[t] - ll) / (hh - ll) * 100.0 : 0.0;
+      }
+      if( rsi )
+      {
+         nb = ev_ma_model( p[3], p[2], x + f0, EV_N - f0, 0, tmp2, &beg );
+         if( nb <= 0 || f0 + beg != s ) return -3;
+         for( t = s; t < EV_N; t++ ) { g_evO[0][t - s] = x[t]; g_evO[1][t - s] = tmp2[t - s]; }
+         return s;
+      }
+      n1 = ev_ma_model( p[2], p[1], x + f0, EV_N - f0, 0, tmp, &b1 );
+      if( n1 <= 0 ) return -3;
+      nb = ev_ma_model( p[4], p[3], tmp, n1, 0, tmp2, &b2 );
+      if( nb <= 0 || f0 + b1 + b2 != s ) return -3;
+      for( t = s; t < EV_N; t++ )
+      {
+         double kk = tmp[t - f0 - b1], dd = tmp2[t - s];
+         g_evO[0][t - s] = kk; g_evO[1][t - s] = dd; g_evO[2][t - s] = 3.0 * kk - 2.0 * dd;
+      }
+      return s;
+   }
    return -9;
 }
 
@@ -1116,7 +1190,7 @@ static ErrorNumber test_ema_variation_goldens( void )
       const TA_FuncHandle *h;
       const TA_FuncInfo *fi;
       double opt[EV_MAXOPT];
-      int nInt = 0;
+      int nInt = 0, nReal = 0;
 
       if( TA_GetFuncHandle( k->name, &h ) != TA_SUCCESS || TA_GetFuncInfo( h, &fi ) != TA_SUCCESS )
       { e = TA_EMAV_GOLDEN; break; }
@@ -1125,7 +1199,7 @@ static ErrorNumber test_ema_variation_goldens( void )
          const TA_OptInputParameterInfo *oi;
          TA_GetOptInputParameterInfo( fi->handle, i, &oi );
          opt[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
-                  ? k->dp : (double)k->ip[nInt++];
+                  ? (nReal++ == 1 && k->dp2 != 0.0 ? k->dp2 : k->dp) : (double)k->ip[nInt++];
       }
       for( s = 0; s < 2 && e == TA_TEST_PASS; s++ )
       {

@@ -282,9 +282,10 @@ export function ppoImpl(
   }
   if (optInMAType === MAType.EMA) {
     /* EMA fast path: both recursions in one loop, no buffer. Bit-identical to
-     * the general path only while each EMA is seeded at its OWN lookback and
-     * keeps ema.c's recursion spelling: the fast EMA starts earlier than the
-     * slow one, and a shared seed bar would change every output.
+     * the general path only while each EMA is seeded on the bar TA_EMA seeds
+     * it and keeps ema.c's recursion spelling: under SMA_SEED the fast EMA
+     * starts earlier than the slow one, and a shared seed bar would change
+     * every output.
      */
     let _eFastK = 0;
     let _eSlowK = 0;

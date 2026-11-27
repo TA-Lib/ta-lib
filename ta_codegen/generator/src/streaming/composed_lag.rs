@@ -514,13 +514,13 @@ fn presumption_only(a: &OpenAction, relaxed: &BTreeSet<usize>, extra: &BTreeSet<
     }
 }
 
-/// `plan` is `other` with only `droppable` actions added, a mirrored arm compared
-/// the same way.
 /// A mirrored arm's actions, which carry no place of their own.
 fn arm(v: &[OpenAction]) -> Vec<(Option<OpenAt>, &OpenAction)> {
     v.iter().map(|a| (None, a)).collect()
 }
 
+/// `plan` is `other` with only `droppable` actions added, a mirrored arm compared
+/// the same way.
 fn actions_cover(
     plan: &[(Option<OpenAt>, &OpenAction)],
     other: &[(Option<OpenAt>, &OpenAction)],
