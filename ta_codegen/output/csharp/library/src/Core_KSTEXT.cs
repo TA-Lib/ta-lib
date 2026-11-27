@@ -56,6 +56,7 @@ public partial class Core
     *  100126 MF,CC  First version (#491).
     *  101126 MF,CC  Each lookback is asked once per call (#522).
     *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Kstext</c> consumes before it can produce
@@ -270,6 +271,10 @@ public partial class Core
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -411,24 +416,39 @@ public partial class Core
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       _rent_kstBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
       kstBuffer = _rent_kstBuffer.AsSpan(0, (int)(tempInteger * 1));
       _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
       tempBuffer = _rent_tempBuffer.AsSpan(0, (int)(tempInteger * 1));
-      OutRange _xr0 = Roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = Roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx = _xr0.BegIdx;
       rocNb = _xr0.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Ma(0, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = Ma(sigStart - rocStart1, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx = _xr1.BegIdx;
       kstNb = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = Roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = Roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx = _xr2.BegIdx;
       rocNb = _xr2.Count;
       retCode = RetCode.Success;
-      OutRange _xr3 = Ma(0, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = Ma(sigStart - rocStart2, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
@@ -449,11 +469,11 @@ public partial class Core
          }
          i += _wn;
       }
-      OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = Roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
       rocNb = _xr4.Count;
       retCode = RetCode.Success;
-      OutRange _xr5 = Ma(0, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = Ma(sigStart - rocStart3, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
@@ -474,11 +494,11 @@ public partial class Core
          }
          i += _wn;
       }
-      OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = Roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
       rocNb = _xr6.Count;
       retCode = RetCode.Success;
-      OutRange _xr7 = Ma(0, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = Ma(sigStart - rocStart4, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
@@ -539,6 +559,10 @@ public partial class Core
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -672,24 +696,36 @@ public partial class Core
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       _rent_kstBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
       kstBuffer = _rent_kstBuffer.AsSpan(0, (int)(tempInteger * 1));
       _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
       tempBuffer = _rent_tempBuffer.AsSpan(0, (int)(tempInteger * 1));
-      OutRange _xr0 = Roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = Roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx = _xr0.BegIdx;
       rocNb = _xr0.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Ma(0, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = Ma(sigStart - rocStart1, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx = _xr1.BegIdx;
       kstNb = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = Roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = Roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx = _xr2.BegIdx;
       rocNb = _xr2.Count;
       retCode = RetCode.Success;
-      OutRange _xr3 = Ma(0, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = Ma(sigStart - rocStart2, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
@@ -710,11 +746,11 @@ public partial class Core
          }
          i += _wn;
       }
-      OutRange _xr4 = Roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = Roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx = _xr4.BegIdx;
       rocNb = _xr4.Count;
       retCode = RetCode.Success;
-      OutRange _xr5 = Ma(0, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = Ma(sigStart - rocStart3, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr5.BegIdx;
       legNb = _xr5.Count;
       retCode = RetCode.Success;
@@ -735,11 +771,11 @@ public partial class Core
          }
          i += _wn;
       }
-      OutRange _xr6 = Roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = Roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx = _xr6.BegIdx;
       rocNb = _xr6.Count;
       retCode = RetCode.Success;
-      OutRange _xr7 = Ma(0, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = Ma(sigStart - rocStart4, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr7.BegIdx;
       legNb = _xr7.Count;
       retCode = RetCode.Success;
@@ -1287,6 +1323,10 @@ public partial class Core
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -1434,34 +1474,49 @@ public partial class Core
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
       /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub0 = RocOpenAndFillInternal(inReal, sigStart - lookbackMA1, optInROC1Period, out tempBegIdx, out rocNb, kstBuffer);
+      RocStream sub0 = RocOpenAndFillInternal(inReal, rocStart1, optInROC1Period, out tempBegIdx, out rocNb, kstBuffer);
       retCode = RetCode.Success;
       /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen1 = (rocNb - 1) + 1;
       double[] subSrc1_0 = new double[subLen1];
       kstBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
-      MaStream sub1 = MaOpenInternal(subSrc1_0, 0, optInMA1Period, optInROCMAType);
-      OutRange _xr0 = Ma(0, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      MaStream sub1 = MaOpenInternal(subSrc1_0, sigStart - rocStart1, optInMA1Period, optInROCMAType);
+      OutRange _xr0 = Ma(sigStart - rocStart1, rocNb - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx = _xr0.BegIdx;
       kstNb = _xr0.Count;
       retCode = RetCode.Success;
       /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub2 = RocOpenAndFillInternal(inReal, sigStart - lookbackMA2, optInROC2Period, out tempBegIdx, out rocNb, tempBuffer);
+      RocStream sub2 = RocOpenAndFillInternal(inReal, rocStart2, optInROC2Period, out tempBegIdx, out rocNb, tempBuffer);
       retCode = RetCode.Success;
       /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen3 = (rocNb - 1) + 1;
       double[] subSrc3_0 = new double[subLen3];
       tempBuffer.Slice(0, subLen3).CopyTo(subSrc3_0);
-      MaStream sub3 = MaOpenInternal(subSrc3_0, 0, optInMA2Period, optInROCMAType);
-      OutRange _xr1 = Ma(0, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      MaStream sub3 = MaOpenInternal(subSrc3_0, sigStart - rocStart2, optInMA2Period, optInROCMAType);
+      OutRange _xr1 = Ma(sigStart - rocStart2, rocNb - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr1.BegIdx;
       legNb = _xr1.Count;
       retCode = RetCode.Success;
@@ -1477,15 +1532,15 @@ public partial class Core
       }
       /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub4 = RocOpenAndFillInternal(inReal, sigStart - lookbackMA3, optInROC3Period, out tempBegIdx, out rocNb, tempBuffer);
+      RocStream sub4 = RocOpenAndFillInternal(inReal, rocStart3, optInROC3Period, out tempBegIdx, out rocNb, tempBuffer);
       retCode = RetCode.Success;
       /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen5 = (rocNb - 1) + 1;
       double[] subSrc5_0 = new double[subLen5];
       tempBuffer.Slice(0, subLen5).CopyTo(subSrc5_0);
-      MaStream sub5 = MaOpenInternal(subSrc5_0, 0, optInMA3Period, optInROCMAType);
-      OutRange _xr2 = Ma(0, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      MaStream sub5 = MaOpenInternal(subSrc5_0, sigStart - rocStart3, optInMA3Period, optInROCMAType);
+      OutRange _xr2 = Ma(sigStart - rocStart3, rocNb - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr2.BegIdx;
       legNb = _xr2.Count;
       retCode = RetCode.Success;
@@ -1501,15 +1556,15 @@ public partial class Core
       }
       /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub6 = RocOpenAndFillInternal(inReal, sigStart - lookbackMA4, optInROC4Period, out tempBegIdx, out rocNb, tempBuffer);
+      RocStream sub6 = RocOpenAndFillInternal(inReal, rocStart4, optInROC4Period, out tempBegIdx, out rocNb, tempBuffer);
       retCode = RetCode.Success;
       /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen7 = (rocNb - 1) + 1;
       double[] subSrc7_0 = new double[subLen7];
       tempBuffer.Slice(0, subLen7).CopyTo(subSrc7_0);
-      MaStream sub7 = MaOpenInternal(subSrc7_0, 0, optInMA4Period, optInROCMAType);
-      OutRange _xr3 = Ma(0, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      MaStream sub7 = MaOpenInternal(subSrc7_0, sigStart - rocStart4, optInMA4Period, optInROCMAType);
+      OutRange _xr3 = Ma(sigStart - rocStart4, rocNb - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;

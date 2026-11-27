@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -178,7 +180,15 @@ export function kcImpl(
    * calling TA_ATR directly. The typical price is a derived input, so it is
    * materialized only over the window the moving average reads.
    */
-  tpStartIdx = startIdx - emaLookback;
+  /* The first-bar seed: the typical price starts on bar 0 so the moving
+   * average seeds there, and is entered at startIdx itself.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    tpStartIdx = 0;
+    emaLookback = startIdx;
+  } else {
+    tpStartIdx = startIdx - emaLookback;
+  }
   tempTP = new Float64Array(endIdx - tpStartIdx + 1);
   tempATR = new Float64Array(endIdx - startIdx + 1);
   const _xr0 = typpricePositional(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP, core);
@@ -839,7 +849,15 @@ function kcOpenImpl(
    * calling TA_ATR directly. The typical price is a derived input, so it is
    * materialized only over the window the moving average reads.
    */
-  tpStartIdx = startIdx - emaLookback;
+  /* The first-bar seed: the typical price starts on bar 0 so the moving
+   * average seeds there, and is entered at startIdx itself.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    tpStartIdx = 0;
+    emaLookback = startIdx;
+  } else {
+    tpStartIdx = startIdx - emaLookback;
+  }
   tempTP = new Float64Array(endIdx - tpStartIdx + 1);
   tempATR = new Float64Array(endIdx - startIdx + 1);
   const sub0 = typpriceOpenAndFillInternal(core, inHigh, inLow, inClose, tpStartIdx, tempBegIdx, tempNbElement, tempTP);

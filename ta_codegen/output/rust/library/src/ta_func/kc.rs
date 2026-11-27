@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -215,7 +216,14 @@ impl Core {
         // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
         // calling TA_ATR directly. The typical price is a derived input, so it is
         // materialized only over the window the moving average reads.
-        tpStartIdx = startIdx - emaLookback;
+        // The first-bar seed: the typical price starts on bar 0 so the moving
+        // average seeds there, and is entered at startIdx itself.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            tpStartIdx = 0;
+            emaLookback = startIdx;
+        } else {
+            tpStartIdx = startIdx - emaLookback;
+        }
         tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
         tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         let _xr0 = match self.typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
@@ -538,7 +546,14 @@ impl Core {
         // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
         // calling TA_ATR directly. The typical price is a derived input, so it is
         // materialized only over the window the moving average reads.
-        tpStartIdx = startIdx - emaLookback;
+        // The first-bar seed: the typical price starts on bar 0 so the moving
+        // average seeds there, and is entered at startIdx itself.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            tpStartIdx = 0;
+            emaLookback = startIdx;
+        } else {
+            tpStartIdx = startIdx - emaLookback;
+        }
         tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
         tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the

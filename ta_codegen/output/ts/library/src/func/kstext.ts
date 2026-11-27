@@ -46,9 +46,10 @@
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
  *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { MAType, MATypes } from '../enums.ts';
+import { EMAVariation, MAType, MATypes } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -229,6 +230,10 @@ export function kstextImpl(
   let lookbackSignal = 0;
   let lookbackMA = 0;
   let sigStart = 0;
+  let rocStart1 = 0;
+  let rocStart2 = 0;
+  let rocStart3 = 0;
+  let rocStart4 = 0;
   let lookbackMA1 = 0;
   let lookbackMA2 = 0;
   let lookbackMA3 = 0;
@@ -365,28 +370,43 @@ export function kstextImpl(
   if (lookbackMA4 > lookbackMA) {
     lookbackMA = lookbackMA4;
   }
-  tempInteger = endIdx - sigStart + 1 + lookbackMA;
+  /* The first-bar seed: each rate of change starts on its first bar, so
+   * each leg average seeds there and is entered at sigStart.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    rocStart1 = optInROC1Period;
+    rocStart2 = optInROC2Period;
+    rocStart3 = optInROC3Period;
+    rocStart4 = optInROC4Period;
+    tempInteger = endIdx + 1;
+  } else {
+    rocStart1 = sigStart - lookbackMA1;
+    rocStart2 = sigStart - lookbackMA2;
+    rocStart3 = sigStart - lookbackMA3;
+    rocStart4 = sigStart - lookbackMA4;
+    tempInteger = endIdx - sigStart + 1 + lookbackMA;
+  }
   kstBuffer = new Float64Array(tempInteger);
   tempBuffer = new Float64Array(tempInteger);
-  const _xr0 = rocPositional(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer, core);
+  const _xr0 = rocPositional(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer, core);
   tempBegIdx.value = _xr0.begIdx;
   rocNb.value = _xr0.count;
-  const _xr1 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
+  const _xr1 = maPositional(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
   tempBegIdx.value = _xr1.begIdx;
   kstNb.value = _xr1.count;
-  const _xr2 = rocPositional(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer, core);
+  const _xr2 = rocPositional(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer, core);
   tempBegIdx.value = _xr2.begIdx;
   rocNb.value = _xr2.count;
-  const _xr3 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr3 = maPositional(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr3.begIdx;
   legNb.value = _xr3.count;
   for (i = 0; i < kstNb.value; i += 1) {
     kstBuffer[i] = kstBuffer[i] + 2.0 * tempBuffer[i];
   }
-  const _xr4 = rocPositional(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer, core);
+  const _xr4 = rocPositional(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer, core);
   tempBegIdx.value = _xr4.begIdx;
   rocNb.value = _xr4.count;
-  const _xr5 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr5 = maPositional(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr5.begIdx;
   legNb.value = _xr5.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -406,10 +426,10 @@ export function kstextImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  const _xr7 = rocPositional(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer, core);
+  const _xr7 = rocPositional(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer, core);
   tempBegIdx.value = _xr7.begIdx;
   rocNb.value = _xr7.count;
-  const _xr8 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr8 = maPositional(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr8.begIdx;
   legNb.value = _xr8.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -1076,6 +1096,10 @@ function kstextOpenImpl(
   let lookbackSignal = 0;
   let lookbackMA = 0;
   let sigStart = 0;
+  let rocStart1 = 0;
+  let rocStart2 = 0;
+  let rocStart3 = 0;
+  let rocStart4 = 0;
   let lookbackMA1 = 0;
   let lookbackMA2 = 0;
   let lookbackMA3 = 0;
@@ -1223,17 +1247,32 @@ function kstextOpenImpl(
   if (lookbackMA4 > lookbackMA) {
     lookbackMA = lookbackMA4;
   }
-  tempInteger = endIdx - sigStart + 1 + lookbackMA;
+  /* The first-bar seed: each rate of change starts on its first bar, so
+   * each leg average seeds there and is entered at sigStart.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    rocStart1 = optInROC1Period;
+    rocStart2 = optInROC2Period;
+    rocStart3 = optInROC3Period;
+    rocStart4 = optInROC4Period;
+    tempInteger = endIdx + 1;
+  } else {
+    rocStart1 = sigStart - lookbackMA1;
+    rocStart2 = sigStart - lookbackMA2;
+    rocStart3 = sigStart - lookbackMA3;
+    rocStart4 = sigStart - lookbackMA4;
+    tempInteger = endIdx - sigStart + 1 + lookbackMA;
+  }
   kstBuffer = new Float64Array(tempInteger);
   tempBuffer = new Float64Array(tempInteger);
-  const sub0 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
-  const sub1 = maOpenInternal(core, kstBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA1Period, (optInROCMAType as MAType));
-  const _xr2 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
+  const sub0 = rocOpenAndFillInternal(core, inReal, rocStart1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
+  const sub1 = maOpenInternal(core, kstBuffer.slice(0, (rocNb.value - 1) + 1), sigStart - rocStart1, optInMA1Period, (optInROCMAType as MAType));
+  const _xr2 = maPositional(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
   tempBegIdx.value = _xr2.begIdx;
   kstNb.value = _xr2.count;
-  const sub2 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
-  const sub3 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA2Period, (optInROCMAType as MAType));
-  const _xr3 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
+  const sub2 = rocOpenAndFillInternal(core, inReal, rocStart2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
+  const sub3 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), sigStart - rocStart2, optInMA2Period, (optInROCMAType as MAType));
+  const _xr3 = maPositional(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr3.begIdx;
   legNb.value = _xr3.count;
   lagNb0 = legNb.value;
@@ -1246,9 +1285,9 @@ function kstextOpenImpl(
   for (i = 0; i < kstNb.value; i += 1) {
     kstBuffer[i] = kstBuffer[i] + 2.0 * tempBuffer[i];
   }
-  const sub4 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
-  const sub5 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA3Period, (optInROCMAType as MAType));
-  const _xr4 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
+  const sub4 = rocOpenAndFillInternal(core, inReal, rocStart3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
+  const sub5 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), sigStart - rocStart3, optInMA3Period, (optInROCMAType as MAType));
+  const _xr4 = maPositional(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr4.begIdx;
   legNb.value = _xr4.count;
   lagNb1 = legNb.value;
@@ -1275,9 +1314,9 @@ function kstextOpenImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  const sub6 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
-  const sub7 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA4Period, (optInROCMAType as MAType));
-  const _xr6 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  const sub6 = rocOpenAndFillInternal(core, inReal, rocStart4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
+  const sub7 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), sigStart - rocStart4, optInMA4Period, (optInROCMAType as MAType));
+  const _xr6 = maPositional(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr6.begIdx;
   legNb.value = _xr6.count;
   lagNb2 = legNb.value;

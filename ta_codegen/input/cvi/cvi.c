@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #358).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int cvi_lookback(int optInTimePeriod, int optInROCPeriod)
@@ -62,15 +63,23 @@ TA_RetCode cvi(int startIdx, int endIdx,
    optInK_1 = 1.0 - emaBeta;
    if( emaBeta < 0.5 ) emaBeta = 1.0 - optInK_1;
 
-   today = startIdx-lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inHigh[today]-inLow[today];
-      today++;
+      prevEMA = inHigh[0]-inLow[0];
+      today = 1;
    }
-   prevEMA = tempReal / optInTimePeriod;
+   else
+   {
+      today = startIdx-lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inHigh[today]-inLow[today];
+         today++;
+      }
+      prevEMA = tempReal / optInTimePeriod;
+   }
 
    /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
     * value from the seed bar on leaves exactly the lagged terms the output

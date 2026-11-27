@@ -47,8 +47,10 @@
  *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
  *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
  *                any instrument quoted small enough to fall under it.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -252,114 +254,210 @@ export function smiImpl(
   lowest = 0.0;
   highestIdx = -1;
   lowestIdx = -1;
-  /* The first bar carrying a full high/low window. */
-  trailingIdx = startIdx - lookbackTotal;
-  today = trailingIdx + (optInTimePeriod - 1);
-  nBar = 0;
-  /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-   * that completes the signal seed, so it produces the first output pair.
+  /* The first-bar seed does not move with startIdx: the slow EMA starts on
+   * the first full window, each later stage on its feeder's value where the
+   * default seeds it.
    */
-  while (today <= startIdx) {
-    /* Set the lowest low */
-    tmp = inLow[today];
-    if (lowestIdx < trailingIdx) {
-      lowestIdx = trailingIdx;
-      lowest = inLow[lowestIdx];
-      i = lowestIdx;
-      while (++i <= today) {
-        tmp = inLow[i];
-        if (tmp < lowest) {
-          lowestIdx = i;
-          lowest = tmp;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    today = optInTimePeriod - 1;
+    nBar = 0;
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
+        }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
+        }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
+      }
+      den = highest - lowest;
+      num = inClose[today] - (highest + lowest) * 0.5;
+      if (nBar === 0) {
+        emaSlowNum = num;
+        emaSlowDen = den;
+      } else {
+        {
+          const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+        {
+          const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
-    } else if (tmp <= lowest) {
-      lowestIdx = today;
-      lowest = tmp;
-    }
-    /* Set the highest high */
-    tmp = inHigh[today];
-    if (highestIdx < trailingIdx) {
-      highestIdx = trailingIdx;
-      highest = inHigh[highestIdx];
-      i = highestIdx;
-      while (++i <= today) {
-        tmp = inHigh[i];
-        if (tmp > highest) {
-          highestIdx = i;
-          highest = tmp;
+      if (nBar >= startIdx - lookbackTotal + lookbackSlow) {
+        if (nBar === startIdx - lookbackTotal + lookbackSlow) {
+          emaFastNum = emaSlowNum;
+          emaFastDen = emaSlowDen;
+        } else {
+          {
+            const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
         }
       }
-    } else if (tmp >= highest) {
-      highestIdx = today;
-      highest = tmp;
+      if (nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast) {
+        halfDen = 0.5 * emaFastDen;
+        if (halfDen > 0.0) {
+          smiValue = 100.0 * emaFastNum / halfDen;
+        } else {
+          smiValue = 0.0;
+        }
+        if (nBar === startIdx - lookbackTotal + lookbackSlow + lookbackFast) {
+          prevSignal = smiValue;
+        } else {
+          {
+            const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            prevSignal = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
     }
-    den = highest - lowest;
-    num = inClose[today] - (highest + lowest) * 0.5;
-    /* Stage 1: the slow EMA, over the raw momentum. */
-    if (nBar < optInSlowPeriod) {
-      sumSlowNum = sumSlowNum + num;
-      sumSlowDen = sumSlowDen + den;
-      if (nBar === optInSlowPeriod - 1) {
-        emaSlowNum = sumSlowNum / optInSlowPeriod;
-        emaSlowDen = sumSlowDen / optInSlowPeriod;
-      }
-    } else {
-      {
-        const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-      {
-        const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* Stage 2: the fast EMA, over what stage 1 publishes.
-     *
-     * The stage counters are compared BEFORE they are subtracted, never
-     * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-     * is correct in C, where the counters are signed, and broken everywhere
-     * else: the Rust backend renders them as `usize`, so the subtraction
-     * underflows for the first lookbackSlow bars -- a panic in a debug build
-     * and a wrap in release. It would also be invisible to the cross-language
-     * gate, which runs release servers at unstable period 0, where the branch
-     * the wrap wrongly takes happens to be a no-op because both accumulators
-     * are still 0.0.
+  } else {
+    /* The first bar carrying a full high/low window. */
+    trailingIdx = startIdx - lookbackTotal;
+    today = trailingIdx + (optInTimePeriod - 1);
+    nBar = 0;
+    /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+     * that completes the signal seed, so it produces the first output pair.
      */
-    if (nBar >= lookbackSlow) {
-      nFast = nBar - lookbackSlow;
-      if (nFast < optInFastPeriod) {
-        sumFastNum = sumFastNum + emaSlowNum;
-        sumFastDen = sumFastDen + emaSlowDen;
-        if (nFast === optInFastPeriod - 1) {
-          emaFastNum = sumFastNum / optInFastPeriod;
-          emaFastDen = sumFastDen / optInFastPeriod;
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
+        }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
+        }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
+      }
+      den = highest - lowest;
+      num = inClose[today] - (highest + lowest) * 0.5;
+      /* Stage 1: the slow EMA, over the raw momentum. */
+      if (nBar < optInSlowPeriod) {
+        sumSlowNum = sumSlowNum + num;
+        sumSlowDen = sumSlowDen + den;
+        if (nBar === optInSlowPeriod - 1) {
+          emaSlowNum = sumSlowNum / optInSlowPeriod;
+          emaSlowDen = sumSlowDen / optInSlowPeriod;
         }
       } else {
         {
-          const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+          const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -369,12 +467,12 @@ export function smiImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+          emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
         {
-          const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+          const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -384,47 +482,101 @@ export function smiImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+          emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      /* Stage 2: the fast EMA, over what stage 1 publishes.
+       *
+       * The stage counters are compared BEFORE they are subtracted, never
+       * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+       * is correct in C, where the counters are signed, and broken everywhere
+       * else: the Rust backend renders them as `usize`, so the subtraction
+       * underflows for the first lookbackSlow bars -- a panic in a debug build
+       * and a wrap in release. It would also be invisible to the cross-language
+       * gate, which runs release servers at unstable period 0, where the branch
+       * the wrap wrongly takes happens to be a no-op because both accumulators
+       * are still 0.0.
+       */
+      if (nBar >= lookbackSlow) {
+        nFast = nBar - lookbackSlow;
+        if (nFast < optInFastPeriod) {
+          sumFastNum = sumFastNum + emaSlowNum;
+          sumFastDen = sumFastDen + emaSlowDen;
+          if (nFast === optInFastPeriod - 1) {
+            emaFastNum = sumFastNum / optInFastPeriod;
+            emaFastDen = sumFastDen / optInFastPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      /* Stage 3: the SMI line, then the signal EMA over it. */
+      if (nBar >= lookbackSlow + lookbackFast) {
+        nSignal = nBar - lookbackSlow - lookbackFast;
+        halfDen = 0.5 * emaFastDen;
+        if (halfDen > 0.0) {
+          smiValue = 100.0 * emaFastNum / halfDen;
+        } else {
+          smiValue = 0.0;
+        }
+        if (nSignal < optInSignalPeriod) {
+          sumSignal = sumSignal + smiValue;
+          if (nSignal === optInSignalPeriod - 1) {
+            prevSignal = sumSignal / optInSignalPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            prevSignal = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
     }
-    /* Stage 3: the SMI line, then the signal EMA over it. */
-    if (nBar >= lookbackSlow + lookbackFast) {
-      nSignal = nBar - lookbackSlow - lookbackFast;
-      halfDen = 0.5 * emaFastDen;
-      if (halfDen > 0.0) {
-        smiValue = 100.0 * emaFastNum / halfDen;
-      } else {
-        smiValue = 0.0;
-      }
-      if (nSignal < optInSignalPeriod) {
-        sumSignal = sumSignal + smiValue;
-        if (nSignal === optInSignalPeriod - 1) {
-          prevSignal = sumSignal / optInSignalPeriod;
-        }
-      } else {
-        {
-          const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
-          const _p = _a * _b;
-          let _t = 134217729 * _a;
-          const _ah = _t - (_t - _a), _al = _a - _ah;
-          _t = 134217729 * _b;
-          const _bh = _t - (_t - _b), _bl = _b - _bh;
-          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-          const _v = _tl + _pl, _v2 = _v + _v;
-          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          prevSignal = _w && (_pl === 0 || _v === 0) ? _th
-            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-        }
-      }
-    }
-    nBar = nBar + 1;
-    trailingIdx = trailingIdx + 1;
-    today = today + 1;
   }
   outSMI[0] = smiValue;
   outSMISignal[0] = prevSignal;
@@ -1555,114 +1707,210 @@ function smiOpenImpl(
   lowest = 0.0;
   highestIdx = -1;
   lowestIdx = -1;
-  /* The first bar carrying a full high/low window. */
-  trailingIdx = startIdx - lookbackTotal;
-  today = trailingIdx + (optInTimePeriod - 1);
-  nBar = 0;
-  /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-   * that completes the signal seed, so it produces the first output pair.
+  /* The first-bar seed does not move with startIdx: the slow EMA starts on
+   * the first full window, each later stage on its feeder's value where the
+   * default seeds it.
    */
-  while (today <= startIdx) {
-    /* Set the lowest low */
-    tmp = inLow[today];
-    if (lowestIdx < trailingIdx) {
-      lowestIdx = trailingIdx;
-      lowest = inLow[lowestIdx];
-      i = lowestIdx;
-      while (++i <= today) {
-        tmp = inLow[i];
-        if (tmp < lowest) {
-          lowestIdx = i;
-          lowest = tmp;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    today = optInTimePeriod - 1;
+    nBar = 0;
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
+        }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
+        }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
+      }
+      den = highest - lowest;
+      num = inClose[today] - (highest + lowest) * 0.5;
+      if (nBar === 0) {
+        emaSlowNum = num;
+        emaSlowDen = den;
+      } else {
+        {
+          const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+        {
+          const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
-    } else if (tmp <= lowest) {
-      lowestIdx = today;
-      lowest = tmp;
-    }
-    /* Set the highest high */
-    tmp = inHigh[today];
-    if (highestIdx < trailingIdx) {
-      highestIdx = trailingIdx;
-      highest = inHigh[highestIdx];
-      i = highestIdx;
-      while (++i <= today) {
-        tmp = inHigh[i];
-        if (tmp > highest) {
-          highestIdx = i;
-          highest = tmp;
+      if (nBar >= startIdx - lookbackTotal + lookbackSlow) {
+        if (nBar === startIdx - lookbackTotal + lookbackSlow) {
+          emaFastNum = emaSlowNum;
+          emaFastDen = emaSlowDen;
+        } else {
+          {
+            const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
         }
       }
-    } else if (tmp >= highest) {
-      highestIdx = today;
-      highest = tmp;
+      if (nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast) {
+        halfDen = 0.5 * emaFastDen;
+        if (halfDen > 0.0) {
+          smiValue = 100.0 * emaFastNum / halfDen;
+        } else {
+          smiValue = 0.0;
+        }
+        if (nBar === startIdx - lookbackTotal + lookbackSlow + lookbackFast) {
+          prevSignal = smiValue;
+        } else {
+          {
+            const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            prevSignal = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
     }
-    den = highest - lowest;
-    num = inClose[today] - (highest + lowest) * 0.5;
-    /* Stage 1: the slow EMA, over the raw momentum. */
-    if (nBar < optInSlowPeriod) {
-      sumSlowNum = sumSlowNum + num;
-      sumSlowDen = sumSlowDen + den;
-      if (nBar === optInSlowPeriod - 1) {
-        emaSlowNum = sumSlowNum / optInSlowPeriod;
-        emaSlowDen = sumSlowDen / optInSlowPeriod;
-      }
-    } else {
-      {
-        const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-      {
-        const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* Stage 2: the fast EMA, over what stage 1 publishes.
-     *
-     * The stage counters are compared BEFORE they are subtracted, never
-     * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-     * is correct in C, where the counters are signed, and broken everywhere
-     * else: the Rust backend renders them as `usize`, so the subtraction
-     * underflows for the first lookbackSlow bars -- a panic in a debug build
-     * and a wrap in release. It would also be invisible to the cross-language
-     * gate, which runs release servers at unstable period 0, where the branch
-     * the wrap wrongly takes happens to be a no-op because both accumulators
-     * are still 0.0.
+  } else {
+    /* The first bar carrying a full high/low window. */
+    trailingIdx = startIdx - lookbackTotal;
+    today = trailingIdx + (optInTimePeriod - 1);
+    nBar = 0;
+    /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+     * that completes the signal seed, so it produces the first output pair.
      */
-    if (nBar >= lookbackSlow) {
-      nFast = nBar - lookbackSlow;
-      if (nFast < optInFastPeriod) {
-        sumFastNum = sumFastNum + emaSlowNum;
-        sumFastDen = sumFastDen + emaSlowDen;
-        if (nFast === optInFastPeriod - 1) {
-          emaFastNum = sumFastNum / optInFastPeriod;
-          emaFastDen = sumFastDen / optInFastPeriod;
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
+        }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
+        }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
+      }
+      den = highest - lowest;
+      num = inClose[today] - (highest + lowest) * 0.5;
+      /* Stage 1: the slow EMA, over the raw momentum. */
+      if (nBar < optInSlowPeriod) {
+        sumSlowNum = sumSlowNum + num;
+        sumSlowDen = sumSlowDen + den;
+        if (nBar === optInSlowPeriod - 1) {
+          emaSlowNum = sumSlowNum / optInSlowPeriod;
+          emaSlowDen = sumSlowDen / optInSlowPeriod;
         }
       } else {
         {
-          const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+          const _a: number = betaSlow, _b: number = emaSlowNum, _c: number = kSlow * num;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1672,12 +1920,12 @@ function smiOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+          emaSlowNum = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
         {
-          const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+          const _a: number = betaSlow, _b: number = emaSlowDen, _c: number = kSlow * den;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1687,47 +1935,101 @@ function smiOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+          emaSlowDen = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      /* Stage 2: the fast EMA, over what stage 1 publishes.
+       *
+       * The stage counters are compared BEFORE they are subtracted, never
+       * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+       * is correct in C, where the counters are signed, and broken everywhere
+       * else: the Rust backend renders them as `usize`, so the subtraction
+       * underflows for the first lookbackSlow bars -- a panic in a debug build
+       * and a wrap in release. It would also be invisible to the cross-language
+       * gate, which runs release servers at unstable period 0, where the branch
+       * the wrap wrongly takes happens to be a no-op because both accumulators
+       * are still 0.0.
+       */
+      if (nBar >= lookbackSlow) {
+        nFast = nBar - lookbackSlow;
+        if (nFast < optInFastPeriod) {
+          sumFastNum = sumFastNum + emaSlowNum;
+          sumFastDen = sumFastDen + emaSlowDen;
+          if (nFast === optInFastPeriod - 1) {
+            emaFastNum = sumFastNum / optInFastPeriod;
+            emaFastDen = sumFastDen / optInFastPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaFast, _b: number = emaFastNum, _c: number = kFast * emaSlowNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaFast, _b: number = emaFastDen, _c: number = kFast * emaSlowDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaFastDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      /* Stage 3: the SMI line, then the signal EMA over it. */
+      if (nBar >= lookbackSlow + lookbackFast) {
+        nSignal = nBar - lookbackSlow - lookbackFast;
+        halfDen = 0.5 * emaFastDen;
+        if (halfDen > 0.0) {
+          smiValue = 100.0 * emaFastNum / halfDen;
+        } else {
+          smiValue = 0.0;
+        }
+        if (nSignal < optInSignalPeriod) {
+          sumSignal = sumSignal + smiValue;
+          if (nSignal === optInSignalPeriod - 1) {
+            prevSignal = sumSignal / optInSignalPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            prevSignal = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
     }
-    /* Stage 3: the SMI line, then the signal EMA over it. */
-    if (nBar >= lookbackSlow + lookbackFast) {
-      nSignal = nBar - lookbackSlow - lookbackFast;
-      halfDen = 0.5 * emaFastDen;
-      if (halfDen > 0.0) {
-        smiValue = 100.0 * emaFastNum / halfDen;
-      } else {
-        smiValue = 0.0;
-      }
-      if (nSignal < optInSignalPeriod) {
-        sumSignal = sumSignal + smiValue;
-        if (nSignal === optInSignalPeriod - 1) {
-          prevSignal = sumSignal / optInSignalPeriod;
-        }
-      } else {
-        {
-          const _a: number = betaSignal, _b: number = prevSignal, _c: number = kSignal * smiValue;
-          const _p = _a * _b;
-          let _t = 134217729 * _a;
-          const _ah = _t - (_t - _a), _al = _a - _ah;
-          _t = 134217729 * _b;
-          const _bh = _t - (_t - _b), _bl = _b - _bh;
-          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-          const _v = _tl + _pl, _v2 = _v + _v;
-          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          prevSignal = _w && (_pl === 0 || _v === 0) ? _th
-            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-        }
-      }
-    }
-    nBar = nBar + 1;
-    trailingIdx = trailingIdx + 1;
-    today = today + 1;
   }
   outSMI[((0 * outStride) | 0)] = smiValue;
   outSMISignal[((0 * outStride) | 0)] = prevSignal;

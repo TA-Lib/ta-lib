@@ -140,19 +140,24 @@ func (c *Core) eriImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	if beta < 0.5 {
 		beta = 1.0 - k
 	}
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C18 := i > 0
-		i--
-		if !_C18 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevMA = inClose[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C18 := i > 0
+			i--
+			if !_C18 {
+				break
+			}
+			tempReal += inClose[today]
+			today++
 		}
-		tempReal += inClose[today]
-		today++
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	if _n19 := int(startIdx) - int(today) + 1; _n19 > 0 {
 		_r21 := inClose[today:][:_n19]
 		for _k20 := range _r21 {
@@ -486,19 +491,24 @@ func (c *Core) eriOpenImpl(sp *ERIStream, inHigh, inLow, inClose []float64, star
 		if beta < 0.5 {
 			beta = 1.0 - k
 		}
-		today = startIdx - lookbackTotal
-		i = optInTimePeriod
-		tempReal = 0.0
-		for {
-			_C0 := i > 0
-			i--
-			if !_C0 {
-				break
+		if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+			prevMA = inClose[0]
+			today = 1
+		} else {
+			today = startIdx - lookbackTotal
+			i = optInTimePeriod
+			tempReal = 0.0
+			for {
+				_C0 := i > 0
+				i--
+				if !_C0 {
+					break
+				}
+				tempReal += inClose[today]
+				today++
 			}
-			tempReal += inClose[today]
-			today++
+			prevMA = tempReal / float64(optInTimePeriod)
 		}
-		prevMA = tempReal / float64(optInTimePeriod)
 		for today <= startIdx {
 			prevMA = math.FMA(beta, prevMA, float64(k*inClose[today]))
 			today++

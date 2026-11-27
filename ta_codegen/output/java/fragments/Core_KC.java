@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -155,7 +156,15 @@
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
@@ -248,7 +257,12 @@
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      tpStartIdx = startIdx - emaLookback;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
@@ -751,7 +765,15 @@
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the

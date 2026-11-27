@@ -114,21 +114,29 @@ func (c *Core) zlemaImpl(startIdx, endIdx int32, inReal []float64, optInTimePeri
 		return Success
 	}
 	*outBegIdx = startIdx
-	trailingIdx = startIdx - lookbackTotal
-	today = trailingIdx + lag
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C9 := i > 0
-		i--
-		if !_C9 {
-			break
-		}
-		tempReal += float64(2.0*inReal[today]) - inReal[trailingIdx]
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		today = lag
+		prevMA = float64(2.0*inReal[today]) - inReal[trailingIdx]
 		today += 1
 		trailingIdx += 1
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		today = trailingIdx + lag
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C9 := i > 0
+			i--
+			if !_C9 {
+				break
+			}
+			tempReal += float64(2.0*inReal[today]) - inReal[trailingIdx]
+			today += 1
+			trailingIdx += 1
+		}
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	if _n10 := int(startIdx) - int(today) + 1; _n10 > 0 {
 		_r12 := inReal[today:][:_n10]
 		_r13 := inReal[trailingIdx:][:_n10]
@@ -437,21 +445,29 @@ func (c *Core) zlemaOpenImpl(sp *ZLEMAStream, inReal []float64, startIdx, optInT
 		return InsufficientHistory
 	}
 	*outBegIdx = startIdx
-	trailingIdx = startIdx - lookbackTotal
-	today = trailingIdx + lag
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C1 := i > 0
-		i--
-		if !_C1 {
-			break
-		}
-		tempReal += float64(2.0*inReal[today]) - inReal[trailingIdx]
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		today = lag
+		prevMA = float64(2.0*inReal[today]) - inReal[trailingIdx]
 		today += 1
 		trailingIdx += 1
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		today = trailingIdx + lag
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C1 := i > 0
+			i--
+			if !_C1 {
+				break
+			}
+			tempReal += float64(2.0*inReal[today]) - inReal[trailingIdx]
+			today += 1
+			trailingIdx += 1
+		}
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	for today <= startIdx {
 		prevMA = math.FMA(emaBeta, prevMA, float64(optInK_1*(float64(2.0*inReal[today])-inReal[trailingIdx])))
 		today += 1

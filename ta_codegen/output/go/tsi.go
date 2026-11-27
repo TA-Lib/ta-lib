@@ -119,42 +119,73 @@ func (c *Core) tsiImpl(startIdx, endIdx int32, inReal []float64, optInFirstPerio
 	sumFirstDen = 0.0
 	sumSecondNum = 0.0
 	sumSecondDen = 0.0
-	today = startIdx - lookbackTotal + 1
-	prevClose = inReal[today-1]
-	nBar = 0
-	if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
-		_r2 := inReal[today:][:_n0]
-		for _k1 := range _r2 {
-			mom = _r2[_k1] - prevClose
-			prevClose = _r2[_k1]
-			absMom = math.Abs(mom)
-			if nBar+int32(_k1) < optInFirstPeriod {
-				sumFirstNum = sumFirstNum + mom
-				sumFirstDen = sumFirstDen + absMom
-				if nBar+int32(_k1) == optInFirstPeriod-1 {
-					emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
-					emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevClose = inReal[0]
+		today = 1
+		nBar = 0
+		if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inReal[today:][:_n0]
+			for _k1 := range _r2 {
+				mom = _r2[_k1] - prevClose
+				prevClose = _r2[_k1]
+				absMom = math.Abs(mom)
+				if nBar+int32(_k1) == 0 {
+					emaFirstNum = mom
+					emaFirstDen = absMom
+				} else {
+					emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+					emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
 				}
-			} else {
-				emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
-				emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
+				if nBar+int32(_k1) >= startIdx-lookbackTotal+lookbackFirst {
+					if nBar+int32(_k1) == startIdx-lookbackTotal+lookbackFirst {
+						emaSecondNum = emaFirstNum
+						emaSecondDen = emaFirstDen
+					} else {
+						emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+						emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+					}
+				}
 			}
-			if nBar+int32(_k1) >= lookbackFirst {
-				nSecond = nBar + int32(_k1) - lookbackFirst
-				if nSecond < optInSecondPeriod {
-					sumSecondNum = sumSecondNum + emaFirstNum
-					sumSecondDen = sumSecondDen + emaFirstDen
-					if nSecond == optInSecondPeriod-1 {
-						emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
-						emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+			today += int32(_n0)
+		}
+	} else {
+		today = startIdx - lookbackTotal + 1
+		prevClose = inReal[today-1]
+		nBar = 0
+		if _n3 := int(startIdx) - int(today) + 1; _n3 > 0 {
+			_r5 := inReal[today:][:_n3]
+			for _k4 := range _r5 {
+				mom = _r5[_k4] - prevClose
+				prevClose = _r5[_k4]
+				absMom = math.Abs(mom)
+				if nBar+int32(_k4) < optInFirstPeriod {
+					sumFirstNum = sumFirstNum + mom
+					sumFirstDen = sumFirstDen + absMom
+					if nBar+int32(_k4) == optInFirstPeriod-1 {
+						emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
+						emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
 					}
 				} else {
-					emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
-					emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+					emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+					emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
+				}
+				if nBar+int32(_k4) >= lookbackFirst {
+					nSecond = nBar + int32(_k4) - lookbackFirst
+					if nSecond < optInSecondPeriod {
+						sumSecondNum = sumSecondNum + emaFirstNum
+						sumSecondDen = sumSecondDen + emaFirstDen
+						if nSecond == optInSecondPeriod-1 {
+							emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
+							emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+						}
+					} else {
+						emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+						emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+					}
 				}
 			}
+			today += int32(_n3)
 		}
-		today += int32(_n0)
 	}
 	if emaSecondDen > 0.0 {
 		tsiValue = float64(100.0*emaSecondNum) / emaSecondDen
@@ -163,12 +194,12 @@ func (c *Core) tsiImpl(startIdx, endIdx int32, inReal []float64, optInFirstPerio
 	}
 	outReal[0] = tsiValue
 	outIdx = 1
-	if _n3 := int(endIdx) - int(today) + 1; _n3 > 0 {
-		_r5 := inReal[today:][:_n3]
-		_r6 := outReal[outIdx:][:_n3]
-		for _k4 := range _r5 {
-			mom = _r5[_k4] - prevClose
-			prevClose = _r5[_k4]
+	if _n6 := int(endIdx) - int(today) + 1; _n6 > 0 {
+		_r8 := inReal[today:][:_n6]
+		_r9 := outReal[outIdx:][:_n6]
+		for _k7 := range _r8 {
+			mom = _r8[_k7] - prevClose
+			prevClose = _r8[_k7]
 			absMom = math.Abs(mom)
 			emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
 			emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
@@ -179,9 +210,9 @@ func (c *Core) tsiImpl(startIdx, endIdx int32, inReal []float64, optInFirstPerio
 			} else {
 				tsiValue = 0.0
 			}
-			_r6[_k4] = tsiValue
+			_r9[_k7] = tsiValue
 		}
-		outIdx += int32(_n3)
+		outIdx += int32(_n6)
 	}
 	*outNBElement = outIdx
 	return Success
@@ -484,40 +515,69 @@ func (c *Core) tsiOpenImpl(sp *TSIStream, inReal []float64, startIdx, optInFirst
 	sumFirstDen = 0.0
 	sumSecondNum = 0.0
 	sumSecondDen = 0.0
-	today = startIdx - lookbackTotal + 1
-	prevClose = inReal[today-1]
-	nBar = 0
-	for today <= startIdx {
-		mom = inReal[today] - prevClose
-		prevClose = inReal[today]
-		absMom = math.Abs(mom)
-		if nBar < optInFirstPeriod {
-			sumFirstNum = sumFirstNum + mom
-			sumFirstDen = sumFirstDen + absMom
-			if nBar == optInFirstPeriod-1 {
-				emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
-				emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevClose = inReal[0]
+		today = 1
+		nBar = 0
+		for today <= startIdx {
+			mom = inReal[today] - prevClose
+			prevClose = inReal[today]
+			absMom = math.Abs(mom)
+			if nBar == 0 {
+				emaFirstNum = mom
+				emaFirstDen = absMom
+			} else {
+				emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+				emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
 			}
-		} else {
-			emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
-			emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
+			if nBar >= startIdx-lookbackTotal+lookbackFirst {
+				if nBar == startIdx-lookbackTotal+lookbackFirst {
+					emaSecondNum = emaFirstNum
+					emaSecondDen = emaFirstDen
+				} else {
+					emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+					emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+				}
+			}
+			nBar = nBar + 1
+			today = today + 1
 		}
-		if nBar >= lookbackFirst {
-			nSecond = nBar - lookbackFirst
-			if nSecond < optInSecondPeriod {
-				sumSecondNum = sumSecondNum + emaFirstNum
-				sumSecondDen = sumSecondDen + emaFirstDen
-				if nSecond == optInSecondPeriod-1 {
-					emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
-					emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+	} else {
+		today = startIdx - lookbackTotal + 1
+		prevClose = inReal[today-1]
+		nBar = 0
+		for today <= startIdx {
+			mom = inReal[today] - prevClose
+			prevClose = inReal[today]
+			absMom = math.Abs(mom)
+			if nBar < optInFirstPeriod {
+				sumFirstNum = sumFirstNum + mom
+				sumFirstDen = sumFirstDen + absMom
+				if nBar == optInFirstPeriod-1 {
+					emaFirstNum = sumFirstNum / float64(optInFirstPeriod)
+					emaFirstDen = sumFirstDen / float64(optInFirstPeriod)
 				}
 			} else {
-				emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
-				emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+				emaFirstNum = math.FMA(betaFirst, emaFirstNum, float64(kFirst*mom))
+				emaFirstDen = math.FMA(betaFirst, emaFirstDen, float64(kFirst*absMom))
 			}
+			if nBar >= lookbackFirst {
+				nSecond = nBar - lookbackFirst
+				if nSecond < optInSecondPeriod {
+					sumSecondNum = sumSecondNum + emaFirstNum
+					sumSecondDen = sumSecondDen + emaFirstDen
+					if nSecond == optInSecondPeriod-1 {
+						emaSecondNum = sumSecondNum / float64(optInSecondPeriod)
+						emaSecondDen = sumSecondDen / float64(optInSecondPeriod)
+					}
+				} else {
+					emaSecondNum = math.FMA(betaSecond, emaSecondNum, float64(kSecond*emaFirstNum))
+					emaSecondDen = math.FMA(betaSecond, emaSecondDen, float64(kSecond*emaFirstDen))
+				}
+			}
+			nBar = nBar + 1
+			today = today + 1
 		}
-		nBar = nBar + 1
-		today = today + 1
 	}
 	if emaSecondDen > 0.0 {
 		tsiValue = float64(100.0*emaSecondNum) / emaSecondDen

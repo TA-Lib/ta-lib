@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #359).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -257,61 +258,98 @@ impl Core {
         sum2 = 0.0;
         total = 0.0;
         tempReal = 0.0;
-        today = startIdx - lookbackTotal;
-        nBar = 0;
-        // Runs through startIdx inclusive: that last pass fills the summation
-        // window and so produces the first output.
-        while today <= startIdx {
-            hl = inHigh[today] - inLow[today];
-            if nBar < (optInFastPeriod as usize) {
-                sum1 = sum1 + hl;
-                if nBar == ((optInFastPeriod - 1) as usize) {
-                    ema1 = sum1 / (optInFastPeriod as f64);
+        // The first-bar seed does not move with startIdx: the first EMA starts on
+        // bar 0, the second on the first one's value where the default seeds it.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            today = 0;
+            while today <= startIdx {
+                hl = inHigh[today] - inLow[today];
+                if today == 0 {
+                    ema1 = hl;
+                } else {
+                    ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
                 }
-            } else {
-                ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
+                if today >= startIdx - lookbackTotal + lookbackEma {
+                    if today == startIdx - lookbackTotal + lookbackEma {
+                        ema2 = ema1;
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    }
+                }
+                if today >= startIdx - lookbackTotal + lookbackEma2 {
+                    if ema2 == 0.0 {
+                        ratio = 1.0;
+                    } else {
+                        ratio = ema1 / ema2;
+                    }
+                    ratioRing[ratioRing_Idx] = ratio;
+                    total = total + ratio;
+                    ratioRing_Idx += 1;
+                    if ratioRing_Idx >= ratioRing.len() { ratioRing_Idx = 0; }
+                    if today == startIdx {
+                        tempReal = total;
+                        total = total - ratioRing[ratioRing_Idx];
+                    }
+                }
+                today = today + 1;
             }
-            // The stage counter is compared BEFORE it is subtracted, never after.
-            // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-            // everywhere else: the Rust backend renders these as usize, so the
-            // subtraction underflows for the first lookbackEma bars.
-            if nBar >= lookbackEma {
-                n2 = nBar - lookbackEma;
-                if n2 < (optInFastPeriod as usize) {
-                    sum2 = sum2 + ema1;
-                    if n2 == ((optInFastPeriod - 1) as usize) {
-                        ema2 = sum2 / (optInFastPeriod as f64);
+        } else {
+            today = startIdx - lookbackTotal;
+            nBar = 0;
+            // Runs through startIdx inclusive: that last pass fills the summation
+            // window and so produces the first output.
+            while today <= startIdx {
+                hl = inHigh[today] - inLow[today];
+                if nBar < (optInFastPeriod as usize) {
+                    sum1 = sum1 + hl;
+                    if nBar == ((optInFastPeriod - 1) as usize) {
+                        ema1 = sum1 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
                 }
+                // The stage counter is compared BEFORE it is subtracted, never after.
+                // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+                // everywhere else: the Rust backend renders these as usize, so the
+                // subtraction underflows for the first lookbackEma bars.
+                if nBar >= lookbackEma {
+                    n2 = nBar - lookbackEma;
+                    if n2 < (optInFastPeriod as usize) {
+                        sum2 = sum2 + ema1;
+                        if n2 == ((optInFastPeriod - 1) as usize) {
+                            ema2 = sum2 / (optInFastPeriod as f64);
+                        }
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    }
+                }
+                if nBar >= lookbackEma2 {
+                    // A flat market is the ratio's continuous limit, 1.0, not the zero
+                    // that an oscillator centred on zero would report: MASSI's own
+                    // neutral is optInSlowPeriod. Test ema2 exactly and never through an
+                    // epsilon band -- a smoothed price range carries the quote unit, so a
+                    // fixed band would pin the whole index at optInSlowPeriod for any
+                    // instrument quoted under it (issue #253).
+                    if ema2 == 0.0 {
+                        ratio = 1.0;
+                    } else {
+                        ratio = ema1 / ema2;
+                    }
+                    // TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+                    // over a ring: the slot written here was emptied out of `total` at the
+                    // end of the previous bar, so nothing has to be read before the store.
+                    ratioRing[ratioRing_Idx] = ratio;
+                    total = total + ratio;
+                    ratioRing_Idx += 1;
+                    if ratioRing_Idx >= ratioRing.len() { ratioRing_Idx = 0; }
+                    if nBar == lookbackTotal {
+                        tempReal = total;
+                        total = total - ratioRing[ratioRing_Idx];
+                    }
+                }
+                nBar = nBar + 1;
+                today = today + 1;
             }
-            if nBar >= lookbackEma2 {
-                // A flat market is the ratio's continuous limit, 1.0, not the zero
-                // that an oscillator centred on zero would report: MASSI's own
-                // neutral is optInSlowPeriod. Test ema2 exactly and never through an
-                // epsilon band -- a smoothed price range carries the quote unit, so a
-                // fixed band would pin the whole index at optInSlowPeriod for any
-                // instrument quoted under it (issue #253).
-                if ema2 == 0.0 {
-                    ratio = 1.0;
-                } else {
-                    ratio = ema1 / ema2;
-                }
-                // TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-                // over a ring: the slot written here was emptied out of `total` at the
-                // end of the previous bar, so nothing has to be read before the store.
-                ratioRing[ratioRing_Idx] = ratio;
-                total = total + ratio;
-                ratioRing_Idx += 1;
-                if ratioRing_Idx >= ratioRing.len() { ratioRing_Idx = 0; }
-                if nBar == lookbackTotal {
-                    tempReal = total;
-                    total = total - ratioRing[ratioRing_Idx];
-                }
-            }
-            nBar = nBar + 1;
-            today = today + 1;
         }
         // In-place safe: this store lands lookbackTotal bars behind the input
         // cursor, so no bar is written under a read still owed to it.
@@ -637,61 +675,98 @@ impl Core {
         sum2 = 0.0;
         total = 0.0;
         tempReal = 0.0;
-        today = startIdx - lookbackTotal;
-        nBar = 0;
-        // Runs through startIdx inclusive: that last pass fills the summation
-        // window and so produces the first output.
-        while today <= startIdx {
-            hl = inHigh[today] - inLow[today];
-            if nBar < (optInFastPeriod as usize) {
-                sum1 = sum1 + hl;
-                if nBar == ((optInFastPeriod - 1) as usize) {
-                    ema1 = sum1 / (optInFastPeriod as f64);
+        // The first-bar seed does not move with startIdx: the first EMA starts on
+        // bar 0, the second on the first one's value where the default seeds it.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            today = 0;
+            while today <= startIdx {
+                hl = inHigh[today] - inLow[today];
+                if today == 0 {
+                    ema1 = hl;
+                } else {
+                    ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
                 }
-            } else {
-                ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
+                if today >= startIdx - lookbackTotal + lookbackEma {
+                    if today == startIdx - lookbackTotal + lookbackEma {
+                        ema2 = ema1;
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    }
+                }
+                if today >= startIdx - lookbackTotal + lookbackEma2 {
+                    if ema2 == 0.0 {
+                        ratio = 1.0;
+                    } else {
+                        ratio = ema1 / ema2;
+                    }
+                    ratioRing[ratioRing_Idx] = ratio;
+                    total = total + ratio;
+                    ratioRing_Idx += 1;
+                    if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
+                    if today == startIdx {
+                        tempReal = total;
+                        total = total - ratioRing[ratioRing_Idx];
+                    }
+                }
+                today = today + 1;
             }
-            // The stage counter is compared BEFORE it is subtracted, never after.
-            // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-            // everywhere else: the Rust backend renders these as usize, so the
-            // subtraction underflows for the first lookbackEma bars.
-            if nBar >= lookbackEma {
-                n2 = nBar - lookbackEma;
-                if n2 < (optInFastPeriod as usize) {
-                    sum2 = sum2 + ema1;
-                    if n2 == ((optInFastPeriod - 1) as usize) {
-                        ema2 = sum2 / (optInFastPeriod as f64);
+        } else {
+            today = startIdx - lookbackTotal;
+            nBar = 0;
+            // Runs through startIdx inclusive: that last pass fills the summation
+            // window and so produces the first output.
+            while today <= startIdx {
+                hl = inHigh[today] - inLow[today];
+                if nBar < (optInFastPeriod as usize) {
+                    sum1 = sum1 + hl;
+                    if nBar == ((optInFastPeriod - 1) as usize) {
+                        ema1 = sum1 / (optInFastPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    ema1 = fmadd!(emaBeta, ema1, (optInK_1 as f64) * hl);
                 }
+                // The stage counter is compared BEFORE it is subtracted, never after.
+                // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+                // everywhere else: the Rust backend renders these as usize, so the
+                // subtraction underflows for the first lookbackEma bars.
+                if nBar >= lookbackEma {
+                    n2 = nBar - lookbackEma;
+                    if n2 < (optInFastPeriod as usize) {
+                        sum2 = sum2 + ema1;
+                        if n2 == ((optInFastPeriod - 1) as usize) {
+                            ema2 = sum2 / (optInFastPeriod as f64);
+                        }
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, (optInK_1 as f64) * ema1);
+                    }
+                }
+                if nBar >= lookbackEma2 {
+                    // A flat market is the ratio's continuous limit, 1.0, not the zero
+                    // that an oscillator centred on zero would report: MASSI's own
+                    // neutral is optInSlowPeriod. Test ema2 exactly and never through an
+                    // epsilon band -- a smoothed price range carries the quote unit, so a
+                    // fixed band would pin the whole index at optInSlowPeriod for any
+                    // instrument quoted under it (issue #253).
+                    if ema2 == 0.0 {
+                        ratio = 1.0;
+                    } else {
+                        ratio = ema1 / ema2;
+                    }
+                    // TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+                    // over a ring: the slot written here was emptied out of `total` at the
+                    // end of the previous bar, so nothing has to be read before the store.
+                    ratioRing[ratioRing_Idx] = ratio;
+                    total = total + ratio;
+                    ratioRing_Idx += 1;
+                    if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
+                    if nBar == lookbackTotal {
+                        tempReal = total;
+                        total = total - ratioRing[ratioRing_Idx];
+                    }
+                }
+                nBar = nBar + 1;
+                today = today + 1;
             }
-            if nBar >= lookbackEma2 {
-                // A flat market is the ratio's continuous limit, 1.0, not the zero
-                // that an oscillator centred on zero would report: MASSI's own
-                // neutral is optInSlowPeriod. Test ema2 exactly and never through an
-                // epsilon band -- a smoothed price range carries the quote unit, so a
-                // fixed band would pin the whole index at optInSlowPeriod for any
-                // instrument quoted under it (issue #253).
-                if ema2 == 0.0 {
-                    ratio = 1.0;
-                } else {
-                    ratio = ema1 / ema2;
-                }
-                // TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-                // over a ring: the slot written here was emptied out of `total` at the
-                // end of the previous bar, so nothing has to be read before the store.
-                ratioRing[ratioRing_Idx] = ratio;
-                total = total + ratio;
-                ratioRing_Idx += 1;
-                if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
-                if nBar == lookbackTotal {
-                    tempReal = total;
-                    total = total - ratioRing[ratioRing_Idx];
-                }
-            }
-            nBar = nBar + 1;
-            today = today + 1;
         }
         // In-place safe: this store lands lookbackTotal bars behind the input
         // cursor, so no bar is written under a read still owed to it.

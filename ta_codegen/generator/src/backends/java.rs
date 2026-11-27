@@ -819,10 +819,15 @@ fn keyed_name(base: &str) -> String {
 
 /// The hand-off from a guarded core to its keyed twin. The range checked is
 /// the whole range the body reads: a twin fed one unkeyable value answers
-/// with wrong bits, not an error.
-fn key_guard(func: &FuncDef, base: &str, plan: &KeyPlan) -> String {
+/// with wrong bits, not an error. `first_bar` is the rendered test for the
+/// first-bar seed when the body reads the EMA variation: that seed scans from
+/// bar 0.
+fn key_guard(func: &FuncDef, base: &str, plan: &KeyPlan, first_bar: Option<&str>) -> String {
     let opts: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
-    let from = format!("startIdx - {base}Lookback({})", opts.join(", "));
+    let mut from = format!("startIdx - {base}Lookback({})", opts.join(", "));
+    if let Some(test) = first_bar {
+        from = format!("{test} ? 0 : {from}");
+    }
     let cond: Vec<String> =
         plan.sources.iter().map(|inp| format!("keyable({inp}, {from}, endIdx)")).collect();
     let mut args: Vec<&str> = vec!["startIdx", "endIdx"];
@@ -1117,10 +1122,13 @@ fn gen_func_inner(
     } else {
         body_name(&base_name)
     };
+    let reads_variation = crate::ring_lag::reads_ema_variation(&func.body);
     if keyed.is_some() {
-        out.push_str(
-            "   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */\n",
-        );
+        out.push_str(if reads_variation {
+            "   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx], from bar 0 under the first-bar seed. */\n"
+        } else {
+            "   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */\n"
+        });
     }
 
     // Build parameter list
@@ -1421,7 +1429,16 @@ fn gen_func_inner(
         // The range is clamped and known non-empty here, and nothing is allocated yet.
         if let (Some(plan), Statement::CircBuf(CircBuf::Init { id, .. })) = (guard, stmt) {
             if plan.arrays.contains(id) {
-                out.push_str(&key_guard(func, &base_name, plan));
+                let first_bar = reads_variation.then(|| {
+                    let prefix = enums.get("EMAVariation").map_or("", |e| e.c_prefix.as_str());
+                    let test = Expr::BinOp(
+                        Box::new(Expr::FuncCall(super::builtins::EMA_VARIATION.into(), vec![])),
+                        BinOp::Eq,
+                        Box::new(Expr::Var(format!("{prefix}FIRST_BAR_SEED"))),
+                    );
+                    render_expr(&test, &ctx, registry, helpers)
+                });
+                out.push_str(&key_guard(func, &base_name, plan, first_bar.as_deref()));
                 guard = None;
             }
         }

@@ -57,6 +57,7 @@ public partial class Core
     *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
     *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
     *                any instrument quoted small enough to fall under it.
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Smi</c> consumes before it can produce its
@@ -278,111 +279,193 @@ public partial class Core
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      /* The first bar carrying a full high/low window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the signal seed, so it produces the first output pair.
+      /* The first-bar seed does not move with startIdx: the slow EMA starts on
+       * the first full window, each later stage on its feeder's value where the
+       * default seeds it.
        */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else {
+               var _pk0 = MaskLe(tmp, lowest);
+               lowestIdx = Pick(_pk0, today, lowestIdx);
+               lowest = Pick(_pk0, tmp, lowest);
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else {
+               var _pk1 = MaskLe(highest, tmp);
+               highestIdx = Pick(_pk1, today, highestIdx);
+               highest = Pick(_pk1, tmp, highest);
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
                }
             }
-         } else {
-            var _pk0 = MaskLe(tmp, lowest);
-            lowestIdx = Pick(_pk0, today, lowestIdx);
-            lowest = Pick(_pk0, tmp, lowest);
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
                }
             }
-         } else {
-            var _pk1 = MaskLe(highest, tmp);
-            highestIdx = Pick(_pk1, today, highestIdx);
-            highest = Pick(_pk1, tmp, highest);
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         den = highest - lowest;
-         num = inClose[today] - (highest + lowest) * 0.5;
-         /* Stage 1: the slow EMA, over the raw momentum. */
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
-            }
-         } else {
-            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
-         }
-         /* Stage 2: the fast EMA, over what stage 1 publishes.
-          *
-          * The stage counters are compared BEFORE they are subtracted, never
-          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as `usize`, so the subtraction
-          * underflows for the first lookbackSlow bars -- a panic in a debug build
-          * and a wrap in release. It would also be invisible to the cross-language
-          * gate, which runs release servers at unstable period 0, where the branch
-          * the wrap wrongly takes happens to be a no-op because both accumulators
-          * are still 0.0.
+      } else {
+         /* The first bar carrying a full high/low window. */
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+          * that completes the signal seed, so it produces the first output pair.
           */
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               var _pk2 = MaskLe(tmp, lowest);
+               lowestIdx = Pick(_pk2, today, lowestIdx);
+               lowest = Pick(_pk2, tmp, lowest);
             }
-         }
-         /* Stage 3: the SMI line, then the signal EMA over it. */
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
                }
             } else {
-               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               var _pk3 = MaskLe(highest, tmp);
+               highestIdx = Pick(_pk3, today, highestIdx);
+               highest = Pick(_pk3, tmp, highest);
             }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            /* Stage 1: the slow EMA, over the raw momentum. */
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
+               }
+            } else {
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+            }
+            /* Stage 2: the fast EMA, over what stage 1 publishes.
+             *
+             * The stage counters are compared BEFORE they are subtracted, never
+             * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as `usize`, so the subtraction
+             * underflows for the first lookbackSlow bars -- a panic in a debug build
+             * and a wrap in release. It would also be invisible to the cross-language
+             * gate, which runs release servers at unstable period 0, where the branch
+             * the wrap wrongly takes happens to be a no-op because both accumulators
+             * are still 0.0.
+             */
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               }
+            }
+            /* Stage 3: the SMI line, then the signal EMA over it. */
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       outSMI[0] = smiValue;
       outSMISignal[0] = prevSignal;
@@ -403,9 +486,9 @@ public partial class Core
                }
             }
          } else {
-            var _pk2 = MaskLe(tmp, lowest);
-            lowestIdx = Pick(_pk2, today, lowestIdx);
-            lowest = Pick(_pk2, tmp, lowest);
+            var _pk4 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk4, today, lowestIdx);
+            lowest = Pick(_pk4, tmp, lowest);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -421,9 +504,9 @@ public partial class Core
                }
             }
          } else {
-            var _pk3 = MaskLe(highest, tmp);
-            highestIdx = Pick(_pk3, today, highestIdx);
-            highest = Pick(_pk3, tmp, highest);
+            var _pk5 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk5, today, highestIdx);
+            highest = Pick(_pk5, tmp, highest);
          }
          den = highest - lowest;
          num = inClose[today] - (highest + lowest) * 0.5;
@@ -583,91 +666,167 @@ public partial class Core
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      while( today <= startIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else {
-            var _pk0 = MaskLe(tmp, lowest);
-            lowestIdx = Pick(_pk0, today, lowestIdx);
-            lowest = Pick(_pk0, tmp, lowest);
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else {
-            var _pk1 = MaskLe(highest, tmp);
-            highestIdx = Pick(_pk1, today, highestIdx);
-            highest = Pick(_pk1, tmp, highest);
-         }
-         den = highest - lowest;
-         num = (double)inClose[today] - (highest + lowest) * 0.5;
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
-            }
-         } else {
-            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
-         }
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            tmp = (double)inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = (double)inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               var _pk0 = MaskLe(tmp, lowest);
+               lowestIdx = Pick(_pk0, today, lowestIdx);
+               lowest = Pick(_pk0, tmp, lowest);
             }
-         }
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            tmp = (double)inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = (double)inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
                }
             } else {
-               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               var _pk1 = MaskLe(highest, tmp);
+               highestIdx = Pick(_pk1, today, highestIdx);
+               highest = Pick(_pk1, tmp, highest);
             }
+            den = highest - lowest;
+            num = (double)inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               }
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         while( today <= startIdx ) {
+            tmp = (double)inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = (double)inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else {
+               var _pk2 = MaskLe(tmp, lowest);
+               lowestIdx = Pick(_pk2, today, lowestIdx);
+               lowest = Pick(_pk2, tmp, lowest);
+            }
+            tmp = (double)inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = (double)inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else {
+               var _pk3 = MaskLe(highest, tmp);
+               highestIdx = Pick(_pk3, today, highestIdx);
+               highest = Pick(_pk3, tmp, highest);
+            }
+            den = highest - lowest;
+            num = (double)inClose[today] - (highest + lowest) * 0.5;
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
+               }
+            } else {
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               }
+            }
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
+         }
       }
       outSMI[0] = smiValue;
       outSMISignal[0] = prevSignal;
@@ -686,9 +845,9 @@ public partial class Core
                }
             }
          } else {
-            var _pk2 = MaskLe(tmp, lowest);
-            lowestIdx = Pick(_pk2, today, lowestIdx);
-            lowest = Pick(_pk2, tmp, lowest);
+            var _pk4 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk4, today, lowestIdx);
+            lowest = Pick(_pk4, tmp, lowest);
          }
          tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
@@ -703,9 +862,9 @@ public partial class Core
                }
             }
          } else {
-            var _pk3 = MaskLe(highest, tmp);
-            highestIdx = Pick(_pk3, today, highestIdx);
-            highest = Pick(_pk3, tmp, highest);
+            var _pk5 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk5, today, highestIdx);
+            highest = Pick(_pk5, tmp, highest);
          }
          den = highest - lowest;
          num = (double)inClose[today] - (highest + lowest) * 0.5;
@@ -1454,109 +1613,189 @@ public partial class Core
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      /* The first bar carrying a full high/low window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the signal seed, so it produces the first output pair.
+      /* The first-bar seed does not move with startIdx: the slow EMA starts on
+       * the first full window, each later stage on its feeder's value where the
+       * default seeds it.
        */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         den = highest - lowest;
-         num = inClose[today] - (highest + lowest) * 0.5;
-         /* Stage 1: the slow EMA, over the raw momentum. */
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
-            }
-         } else {
-            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
-         }
-         /* Stage 2: the fast EMA, over what stage 1 publishes.
-          *
-          * The stage counters are compared BEFORE they are subtracted, never
-          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as `usize`, so the subtraction
-          * underflows for the first lookbackSlow bars -- a panic in a debug build
-          * and a wrap in release. It would also be invisible to the cross-language
-          * gate, which runs release servers at unstable period 0, where the branch
-          * the wrap wrongly takes happens to be a no-op because both accumulators
-          * are still 0.0.
+      } else {
+         /* The first bar carrying a full high/low window. */
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+          * that completes the signal seed, so it produces the first output pair.
           */
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            /* Stage 1: the slow EMA, over the raw momentum. */
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
+               emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
             }
-         }
-         /* Stage 3: the SMI line, then the signal EMA over it. */
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            /* Stage 2: the fast EMA, over what stage 1 publishes.
+             *
+             * The stage counters are compared BEFORE they are subtracted, never
+             * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as `usize`, so the subtraction
+             * underflows for the first lookbackSlow bars -- a panic in a debug build
+             * and a wrap in release. It would also be invisible to the cross-language
+             * gate, which runs release servers at unstable period 0, where the branch
+             * the wrap wrongly takes happens to be a no-op because both accumulators
+             * are still 0.0.
+             */
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
                }
-            } else {
-               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
             }
+            /* Stage 3: the SMI line, then the signal EMA over it. */
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       outSMI[0 * outStride] = smiValue;
       outSMISignal[0 * outStride] = prevSignal;

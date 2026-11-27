@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int kc_lookback(int optInTimePeriod, int optInATRPeriod, double optInNbDev)
@@ -76,7 +77,18 @@ TA_RetCode kc(int startIdx, int endIdx,
     * calling TA_ATR directly. The typical price is a derived input, so it is
     * materialized only over the window the moving average reads.
     */
-   tpStartIdx = startIdx - emaLookback;
+   /* The first-bar seed: the typical price starts on bar 0 so the moving
+    * average seeds there, and is entered at startIdx itself.
+    */
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      tpStartIdx = 0;
+      emaLookback = startIdx;
+   }
+   else
+   {
+      tpStartIdx = startIdx - emaLookback;
+   }
 
    tempTP = malloc((endIdx-tpStartIdx+1) * sizeof(double));
    if( !tempTP )

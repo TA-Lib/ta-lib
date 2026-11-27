@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  103126 MF,CC  Creation (#570).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -279,56 +281,98 @@ export function macdvImpl(
    * calling it directly.
    */
   lineIdx = startIdx - lookbackSignal;
-  /* Slow EMA. */
-  today = lineIdx - lookbackSlow;
-  tempReal = 0.0;
-  i = optInSlowPeriod;
-  while (i-- > 0) {
-    tempReal += inClose[today++];
-  }
-  prevSlow = tempReal / optInSlowPeriod;
-  while (today <= lineIdx) {
-    tempReal = inClose[today++];
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  /* The first-bar seed does not move with startIdx: both EMA start on
+   * inClose[0], the signal EMA on the first line value of the call.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSlow = inClose[0];
+    prevFast = inClose[0];
+    today = 1;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
-  }
-  /* Fast EMA. */
-  today = lineIdx - lookbackFast;
-  tempReal = 0.0;
-  i = optInFastPeriod;
-  while (i-- > 0) {
-    tempReal += inClose[today++];
-  }
-  prevFast = tempReal / optInFastPeriod;
-  while (today <= lineIdx) {
-    tempReal = inClose[today++];
-    {
-      const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevFast = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  } else {
+    /* Slow EMA. */
+    today = lineIdx - lookbackSlow;
+    tempReal = 0.0;
+    i = optInSlowPeriod;
+    while (i-- > 0) {
+      tempReal += inClose[today++];
+    }
+    prevSlow = tempReal / optInSlowPeriod;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+    }
+    /* Fast EMA. */
+    today = lineIdx - lookbackFast;
+    tempReal = 0.0;
+    i = optInFastPeriod;
+    while (i-- > 0) {
+      tempReal += inClose[today++];
+    }
+    prevFast = tempReal / optInFastPeriod;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
   }
   /* Average True Range: the first True Range consumes a previous close. */
@@ -402,86 +446,90 @@ export function macdvImpl(
   if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
     lineValue = spread / prevATR * 100.0;
   }
-  /* Seed the signal EMA with a simple average of the first 'signal period'
-   * line values, accumulated as they are produced.
-   */
-  prevSignal = 0.0;
-  prevSignal += lineValue;
-  i = optInSignalPeriod - 1;
-  while (i-- > 0) {
-    tempLT = inLow[today];
-    tempHT = inHigh[today];
-    tempCY = inClose[today - 1];
-    tempReal = inClose[today];
-    greatest = tempHT - tempLT;
-    /* val1 */
-    val2 = Math.abs(tempCY - tempHT);
-    if (val2 > greatest) {
-      greatest = val2;
-    }
-    val3 = Math.abs(tempCY - tempLT);
-    if (val3 > greatest) {
-      greatest = val3;
-    }
-    {
-      const _a: number = wBeta, _b: number = prevATR, _c: number = wAlpha * greatest;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevATR = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevFast = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    spread = prevFast - prevSlow;
-    bandScale = Math.abs(prevFast);
-    if (Math.abs(prevSlow) > bandScale) {
-      bandScale = Math.abs(prevSlow);
-    }
-    bandScale = bandScale * periodScale;
-    lineValue = 0.0;
-    if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
-      lineValue = spread / prevATR * 100.0;
-    }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSignal = lineValue;
+  } else {
+    /* Seed the signal EMA with a simple average of the first 'signal period'
+     * line values, accumulated as they are produced.
+     */
+    prevSignal = 0.0;
     prevSignal += lineValue;
-    today += 1;
+    i = optInSignalPeriod - 1;
+    while (i-- > 0) {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      tempReal = inClose[today];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = Math.abs(tempCY - tempHT);
+      if (val2 > greatest) {
+        greatest = val2;
+      }
+      val3 = Math.abs(tempCY - tempLT);
+      if (val3 > greatest) {
+        greatest = val3;
+      }
+      {
+        const _a: number = wBeta, _b: number = prevATR, _c: number = wAlpha * greatest;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevATR = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      spread = prevFast - prevSlow;
+      bandScale = Math.abs(prevFast);
+      if (Math.abs(prevSlow) > bandScale) {
+        bandScale = Math.abs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
+      lineValue = 0.0;
+      if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
+        lineValue = spread / prevATR * 100.0;
+      }
+      prevSignal += lineValue;
+      today += 1;
+    }
+    prevSignal = prevSignal / optInSignalPeriod;
   }
-  prevSignal = prevSignal / optInSignalPeriod;
   /* Advance everything in lockstep through the unstable period of the
    * signal EMA, up to the first output bar.
    */
@@ -1611,56 +1659,98 @@ function macdvOpenImpl(
    * calling it directly.
    */
   lineIdx = startIdx - lookbackSignal;
-  /* Slow EMA. */
-  today = lineIdx - lookbackSlow;
-  tempReal = 0.0;
-  i = optInSlowPeriod;
-  while (i-- > 0) {
-    tempReal += inClose[today++];
-  }
-  prevSlow = tempReal / optInSlowPeriod;
-  while (today <= lineIdx) {
-    tempReal = inClose[today++];
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  /* The first-bar seed does not move with startIdx: both EMA start on
+   * inClose[0], the signal EMA on the first line value of the call.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSlow = inClose[0];
+    prevFast = inClose[0];
+    today = 1;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
-  }
-  /* Fast EMA. */
-  today = lineIdx - lookbackFast;
-  tempReal = 0.0;
-  i = optInFastPeriod;
-  while (i-- > 0) {
-    tempReal += inClose[today++];
-  }
-  prevFast = tempReal / optInFastPeriod;
-  while (today <= lineIdx) {
-    tempReal = inClose[today++];
-    {
-      const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevFast = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  } else {
+    /* Slow EMA. */
+    today = lineIdx - lookbackSlow;
+    tempReal = 0.0;
+    i = optInSlowPeriod;
+    while (i-- > 0) {
+      tempReal += inClose[today++];
+    }
+    prevSlow = tempReal / optInSlowPeriod;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+    }
+    /* Fast EMA. */
+    today = lineIdx - lookbackFast;
+    tempReal = 0.0;
+    i = optInFastPeriod;
+    while (i-- > 0) {
+      tempReal += inClose[today++];
+    }
+    prevFast = tempReal / optInFastPeriod;
+    while (today <= lineIdx) {
+      tempReal = inClose[today++];
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
   }
   /* Average True Range: the first True Range consumes a previous close. */
@@ -1734,86 +1824,90 @@ function macdvOpenImpl(
   if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
     lineValue = spread / prevATR * 100.0;
   }
-  /* Seed the signal EMA with a simple average of the first 'signal period'
-   * line values, accumulated as they are produced.
-   */
-  prevSignal = 0.0;
-  prevSignal += lineValue;
-  i = optInSignalPeriod - 1;
-  while (i-- > 0) {
-    tempLT = inLow[today];
-    tempHT = inHigh[today];
-    tempCY = inClose[today - 1];
-    tempReal = inClose[today];
-    greatest = tempHT - tempLT;
-    /* val1 */
-    val2 = Math.abs(tempCY - tempHT);
-    if (val2 > greatest) {
-      greatest = val2;
-    }
-    val3 = Math.abs(tempCY - tempLT);
-    if (val3 > greatest) {
-      greatest = val3;
-    }
-    {
-      const _a: number = wBeta, _b: number = prevATR, _c: number = wAlpha * greatest;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevATR = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevFast = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    spread = prevFast - prevSlow;
-    bandScale = Math.abs(prevFast);
-    if (Math.abs(prevSlow) > bandScale) {
-      bandScale = Math.abs(prevSlow);
-    }
-    bandScale = bandScale * periodScale;
-    lineValue = 0.0;
-    if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
-      lineValue = spread / prevATR * 100.0;
-    }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSignal = lineValue;
+  } else {
+    /* Seed the signal EMA with a simple average of the first 'signal period'
+     * line values, accumulated as they are produced.
+     */
+    prevSignal = 0.0;
     prevSignal += lineValue;
-    today += 1;
+    i = optInSignalPeriod - 1;
+    while (i-- > 0) {
+      tempLT = inLow[today];
+      tempHT = inHigh[today];
+      tempCY = inClose[today - 1];
+      tempReal = inClose[today];
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = Math.abs(tempCY - tempHT);
+      if (val2 > greatest) {
+        greatest = val2;
+      }
+      val3 = Math.abs(tempCY - tempLT);
+      if (val3 > greatest) {
+        greatest = val3;
+      }
+      {
+        const _a: number = wBeta, _b: number = prevATR, _c: number = wAlpha * greatest;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevATR = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = fastBeta, _b: number = prevFast, _c: number = fastK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevFast = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      spread = prevFast - prevSlow;
+      bandScale = Math.abs(prevFast);
+      if (Math.abs(prevSlow) > bandScale) {
+        bandScale = Math.abs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
+      lineValue = 0.0;
+      if (!(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308) {
+        lineValue = spread / prevATR * 100.0;
+      }
+      prevSignal += lineValue;
+      today += 1;
+    }
+    prevSignal = prevSignal / optInSignalPeriod;
   }
-  prevSignal = prevSignal / optInSignalPeriod;
   /* Advance everything in lockstep through the unstable period of the
    * signal EMA, up to the first output bar.
    */

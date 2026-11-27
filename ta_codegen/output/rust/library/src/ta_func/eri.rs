@@ -51,6 +51,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #361).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -254,14 +255,19 @@ impl Core {
         if beta < 0.5 {
             beta = 1.0 - k;
         }
-        // Seed: ema.c's DEFAULT arm, op for op.
-        today = startIdx - lookbackTotal;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevMA = inClose[0];
+            today = 1;
+        } else {
+            // Seed: ema.c's DEFAULT arm, op for op.
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         // The warm-up also consumes the EMA unstable period.
         while today <= startIdx {
             prevMA = fmadd!(beta, prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
@@ -640,14 +646,19 @@ impl Core {
             if beta < 0.5 {
                 beta = 1.0 - k;
             }
-            // Seed: ema.c's DEFAULT arm, op for op.
-            today = startIdx - lookbackTotal;
-            i = optInTimePeriod as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+                prevMA = inClose[0];
+                today = 1;
+            } else {
+                // Seed: ema.c's DEFAULT arm, op for op.
+                today = startIdx - lookbackTotal;
+                i = optInTimePeriod as usize;
+                tempReal = 0.0;
+                while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                    tempReal += inClose[{ let _v = today; today += 1; _v }];
+                }
+                prevMA = tempReal / (optInTimePeriod as f64);
             }
-            prevMA = tempReal / (optInTimePeriod as f64);
             // The warm-up also consumes the EMA unstable period.
             while today <= startIdx {
                 prevMA = fmadd!(beta, prevMA, k * inClose[{ let _v = today; today += 1; _v }]);

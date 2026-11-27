@@ -4144,3 +4144,34 @@ fn ema_variation_read_is_refused_in_the_step() {
         streaming::analyze(&g).err()
     );
 }
+
+/// `name`'s shipped source with `from` replaced by `to`.
+fn source_variant(name: &str, from: &str, to: &str) -> FuncDef {
+    let src = std::fs::read_to_string(input_dir().join(name).join(format!("{name}.c"))).expect("source");
+    assert!(src.contains(from), "{name}.c no longer contains {from:?}");
+    load_with_source(name, &src.replacen(from, to, 1))
+}
+
+/// An EMA-variation arm moves where a series starts. Walked jointly, the two arms
+/// lose the distances the stream relies on; each setting walked alone keeps them,
+/// and a wrong arm is still refused.
+#[test]
+fn an_ema_variation_arm_is_proved_under_each_setting() {
+    let first_bar = "TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED";
+    // SMI's window cursor and start are set in each arm.
+    assert!(streaming::validate_streamable(&load("smi"), lookup()).is_ok());
+    let joined = source_variant("smi", first_bar, "optInTimePeriod > 50");
+    let Err(err) = streaming::validate_streamable(&joined, lookup()) else { panic!("a joined walk proved SMI") };
+    assert!(err.to_string().contains("not proved to stay at or after"), "{err}");
+    let wrong = source_variant("smi", "      trailingIdx = 0;\n", "      trailingIdx = optInTimePeriod;\n");
+    let Err(err) = streaming::validate_streamable(&wrong, lookup()) else { panic!("accepted a window starting after the cursor") };
+    assert!(err.to_string().contains("not proved to stay at or after"), "{err}");
+
+    // KC's typical price starts on bar 0, its average entered at startIdx.
+    assert!(streaming::analyze_composed(&load("kc"), lookup()).is_ok());
+    let refusal = |f: &FuncDef| streaming::analyze_composed(f, lookup()).err().map(|e| e.to_string()).unwrap_or_default();
+    let joined = refusal(&source_variant("kc", first_bar, "optInNbDev > 1000.0"));
+    assert!(joined.contains("depends on data or an unmodelled value"), "{joined}");
+    let wrong = refusal(&source_variant("kc", "      emaLookback = startIdx;\n", ""));
+    assert!(wrong.contains("depends on where the batch started"), "{wrong}");
+}

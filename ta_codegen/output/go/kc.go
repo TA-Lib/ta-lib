@@ -108,7 +108,12 @@ func (c *Core) kcImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64, 
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
 	}
-	tpStartIdx = startIdx - emaLookback
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		tpStartIdx = 0
+		emaLookback = startIdx
+	} else {
+		tpStartIdx = startIdx - emaLookback
+	}
 	tempTP = make([]float64, endIdx-tpStartIdx+1)
 	tempATR = make([]float64, endIdx-startIdx+1)
 	_, _E0 := c.TYPPRICE(int(tpStartIdx), int(endIdx), inHigh, inLow, inClose, tempTP)
@@ -473,7 +478,12 @@ func (c *Core) kcOpenImpl(sp *KCStream, inHigh, inLow, inClose []float64, startI
 	if startIdx < lookbackTotal {
 		startIdx = lookbackTotal
 	}
-	tpStartIdx = startIdx - emaLookback
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		tpStartIdx = 0
+		emaLookback = startIdx
+	} else {
+		tpStartIdx = startIdx - emaLookback
+	}
 	tempTP = make([]float64, endIdx-tpStartIdx+1)
 	tempATR = make([]float64, endIdx-startIdx+1)
 	sub0, _E0 := c.typpriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, &tempBegIdx, &tempNbElement, tempTP)

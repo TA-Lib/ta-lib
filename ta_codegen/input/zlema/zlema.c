@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#347).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  *
  */
 
@@ -83,19 +84,30 @@ TA_RetCode zlema(int startIdx, int endIdx,
     * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
     * read never reaches a slot already written.
     */
-   trailingIdx = startIdx - lookbackTotal;
-   today = trailingIdx + lag;
-
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      trailingIdx = 0;
+      today = lag;
+      prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
       today++;
       trailingIdx++;
    }
+   else
+   {
+      trailingIdx = startIdx - lookbackTotal;
+      today = trailingIdx + lag;
 
-   prevMA = tempReal / optInTimePeriod;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+         today++;
+         trailingIdx++;
+      }
+
+      prevMA = tempReal / optInTimePeriod;
+   }
 
    while( today <= startIdx )
    {

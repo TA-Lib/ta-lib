@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -175,7 +176,17 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
     * calling TA_ATR directly. The typical price is a derived input, so it is
     * materialized only over the window the moving average reads.
     */
-   tpStartIdx = startIdx - emaLookback;
+   /* The first-bar seed: the typical price starts on bar 0 so the moving
+    * average seeds there, and is entered at startIdx itself.
+    */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      tpStartIdx = 0;
+      emaLookback = startIdx;
+   } else 
+   {
+      tpStartIdx = startIdx - emaLookback;
+   }
    tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
    if( !tempTP )
    {
@@ -308,7 +319,14 @@ TA_RetCode TA_S_KC( int    startIdx,
    {
       startIdx = lookbackTotal;
    }
-   tpStartIdx = startIdx - emaLookback;
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      tpStartIdx = 0;
+      emaLookback = startIdx;
+   } else 
+   {
+      tpStartIdx = startIdx - emaLookback;
+   }
    tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
    if( !tempTP )
    {
@@ -497,7 +515,17 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+      {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else 
+      {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
       if( !tempTP )
       {

@@ -2637,7 +2637,7 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
         ("midprice", 6, 4, &["inHigh", "inLow"], "optInTimePeriod"),
         ("min", 3, 2, &["inReal"], "optInTimePeriod"),
         ("minmax", 6, 4, &["inReal"], "optInTimePeriod"),
-        ("pso", 6, 4, &["inHigh", "inLow"], "optInFastK_Period, optInEMAPeriod"),
+        ("pso", 8, 4, &["inHigh", "inLow"], "optInFastK_Period, optInEMAPeriod"),
         ("willr", 6, 4, &["inHigh", "inLow"], "optInTimePeriod"),
     ];
 
@@ -2680,7 +2680,9 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
         let (guarded, twins) = (named(&format!("{name}Impl")), named(&format!("{name}KeyedImpl")));
         assert_eq!((guarded.len(), twins.len()), (2, 2), "{name}: one twin per precision");
 
-        let from = format!("startIdx - {name}Lookback({args}), endIdx)");
+        // The first-bar seed's warm-up scans from bar 0.
+        let first_bar = if name == "pso" { "this.emaVariation == EMAVariation.FIRST_BAR_SEED ? 0 : " } else { "" };
+        let from = format!("{first_bar}startIdx - {name}Lookback({args}), endIdx)");
         let guard = format!(
             "      if( {} ) {{\n         return {name}KeyedImpl(startIdx, endIdx, ",
             scanned.iter().map(|i| format!("keyable({i}, {from}")).collect::<Vec<_>>().join(" && ")

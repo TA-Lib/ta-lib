@@ -56,6 +56,7 @@
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
  *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_KSTEXT_Lookback( int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType )
@@ -190,6 +191,10 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
    int lookbackSignal;
    int lookbackMA;
    int sigStart;
+   int rocStart1;
+   int rocStart2;
+   int rocStart3;
+   int rocStart4;
    int lookbackMA1;
    int lookbackMA2;
    int lookbackMA3;
@@ -336,7 +341,24 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
    {
       lookbackMA = lookbackMA4;
    }
-   tempInteger = endIdx - sigStart + 1 + lookbackMA;
+   /* The first-bar seed: each rate of change starts on its first bar, so
+    * each leg average seeds there and is entered at sigStart.
+    */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      rocStart1 = optInROC1Period;
+      rocStart2 = optInROC2Period;
+      rocStart3 = optInROC3Period;
+      rocStart4 = optInROC4Period;
+      tempInteger = endIdx + 1;
+   } else 
+   {
+      rocStart1 = sigStart - lookbackMA1;
+      rocStart2 = sigStart - lookbackMA2;
+      rocStart3 = sigStart - lookbackMA3;
+      rocStart4 = sigStart - lookbackMA4;
+      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+   }
    kstBuffer = malloc(tempInteger * sizeof(double));
    if( !kstBuffer )
    {
@@ -348,28 +370,28 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
       free(kstBuffer);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_ROC(sigStart - lookbackMA1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
+   retCode = TA_ROC(rocStart1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
+   retCode = TA_MA(sigStart - rocStart1,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_ROC(sigStart - lookbackMA2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_ROC(rocStart2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart2,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -380,14 +402,14 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
    {
       kstBuffer[i] = fma(2.0, tempBuffer[i], kstBuffer[i]);
    }
-   retCode = TA_ROC(sigStart - lookbackMA3,endIdx,inReal,optInROC3Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_ROC(rocStart3,endIdx,inReal,optInROC3Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart3,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -398,14 +420,14 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
    {
       kstBuffer[i] = fma(3.0, tempBuffer[i], kstBuffer[i]);
    }
-   retCode = TA_ROC(sigStart - lookbackMA4,endIdx,inReal,optInROC4Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_ROC(rocStart4,endIdx,inReal,optInROC4Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart4,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -457,6 +479,10 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
    int lookbackSignal;
    int lookbackMA;
    int sigStart;
+   int rocStart1;
+   int rocStart2;
+   int rocStart3;
+   int rocStart4;
    int lookbackMA1;
    int lookbackMA2;
    int lookbackMA3;
@@ -595,7 +621,21 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
    {
       lookbackMA = lookbackMA4;
    }
-   tempInteger = endIdx - sigStart + 1 + lookbackMA;
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      rocStart1 = optInROC1Period;
+      rocStart2 = optInROC2Period;
+      rocStart3 = optInROC3Period;
+      rocStart4 = optInROC4Period;
+      tempInteger = endIdx + 1;
+   } else 
+   {
+      rocStart1 = sigStart - lookbackMA1;
+      rocStart2 = sigStart - lookbackMA2;
+      rocStart3 = sigStart - lookbackMA3;
+      rocStart4 = sigStart - lookbackMA4;
+      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+   }
    kstBuffer = malloc(tempInteger * sizeof(double));
    if( !kstBuffer )
    {
@@ -607,28 +647,28 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
       free(kstBuffer);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_ROC(sigStart - lookbackMA1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
+   retCode = TA_S_ROC(rocStart1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
+   retCode = TA_MA(sigStart - rocStart1,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_S_ROC(sigStart - lookbackMA2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_S_ROC(rocStart2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart2,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -639,14 +679,14 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
    {
       kstBuffer[i] = fma(2.0, tempBuffer[i], kstBuffer[i]);
    }
-   retCode = TA_S_ROC(sigStart - lookbackMA3,endIdx,inReal,optInROC3Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_S_ROC(rocStart3,endIdx,inReal,optInROC3Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart3,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -657,14 +697,14 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
    {
       kstBuffer[i] = fma(3.0, tempBuffer[i], kstBuffer[i]);
    }
-   retCode = TA_S_ROC(sigStart - lookbackMA4,endIdx,inReal,optInROC4Period,&tempBegIdx,&rocNb,tempBuffer);
+   retCode = TA_S_ROC(rocStart4,endIdx,inReal,optInROC4Period,&tempBegIdx,&rocNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+   retCode = TA_MA(sigStart - rocStart4,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(kstBuffer);
@@ -895,6 +935,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       int lookbackSignal;
       int lookbackMA;
       int sigStart;
+      int rocStart1;
+      int rocStart2;
+      int rocStart3;
+      int rocStart4;
       int lookbackMA1;
       int lookbackMA2;
       int lookbackMA3;
@@ -987,7 +1031,24 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+      {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else 
+      {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = malloc(tempInteger * sizeof(double));
       if( !kstBuffer )
       {
@@ -1003,7 +1064,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ROC_OpenAndFillInternal( &sub0, inReal, (sigStart - lookbackMA1), (endIdx) + 1, optInROC1Period, &tempBegIdx, &rocNb, kstBuffer );
+         subRc = TA_ROC_OpenAndFillInternal( &sub0, inReal, (rocStart1), (endIdx) + 1, optInROC1Period, &tempBegIdx, &rocNb, kstBuffer );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1023,7 +1084,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub1, kstBuffer, (0), (rocNb - 1) + 1, optInMA1Period, optInROCMAType, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub1, kstBuffer, (sigStart - rocStart1), (rocNb - 1) + 1, optInMA1Period, optInROCMAType, &subOpenDummy );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1032,7 +1093,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
             return subRc;
          }
       }
-      retCode = TA_MA(0,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
+      retCode = TA_MA(sigStart - rocStart1,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(kstBuffer);
@@ -1043,7 +1104,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ROC_OpenAndFillInternal( &sub2, inReal, (sigStart - lookbackMA2), (endIdx) + 1, optInROC2Period, &tempBegIdx, &rocNb, tempBuffer );
+         subRc = TA_ROC_OpenAndFillInternal( &sub2, inReal, (rocStart2), (endIdx) + 1, optInROC2Period, &tempBegIdx, &rocNb, tempBuffer );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1063,7 +1124,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub3, tempBuffer, (0), (rocNb - 1) + 1, optInMA2Period, optInROCMAType, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub3, tempBuffer, (sigStart - rocStart2), (rocNb - 1) + 1, optInMA2Period, optInROCMAType, &subOpenDummy );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1072,7 +1133,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
             return subRc;
          }
       }
-      retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+      retCode = TA_MA(sigStart - rocStart2,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(kstBuffer);
@@ -1102,7 +1163,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ROC_OpenAndFillInternal( &sub4, inReal, (sigStart - lookbackMA3), (endIdx) + 1, optInROC3Period, &tempBegIdx, &rocNb, tempBuffer );
+         subRc = TA_ROC_OpenAndFillInternal( &sub4, inReal, (rocStart3), (endIdx) + 1, optInROC3Period, &tempBegIdx, &rocNb, tempBuffer );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1122,7 +1183,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub5, tempBuffer, (0), (rocNb - 1) + 1, optInMA3Period, optInROCMAType, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub5, tempBuffer, (sigStart - rocStart3), (rocNb - 1) + 1, optInMA3Period, optInROCMAType, &subOpenDummy );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1131,7 +1192,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
             return subRc;
          }
       }
-      retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+      retCode = TA_MA(sigStart - rocStart3,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(kstBuffer);
@@ -1161,7 +1222,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ROC_OpenAndFillInternal( &sub6, inReal, (sigStart - lookbackMA4), (endIdx) + 1, optInROC4Period, &tempBegIdx, &rocNb, tempBuffer );
+         subRc = TA_ROC_OpenAndFillInternal( &sub6, inReal, (rocStart4), (endIdx) + 1, optInROC4Period, &tempBegIdx, &rocNb, tempBuffer );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1181,7 +1242,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub7, tempBuffer, (0), (rocNb - 1) + 1, optInMA4Period, optInROCMAType, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub7, tempBuffer, (sigStart - rocStart4), (rocNb - 1) + 1, optInMA4Period, optInROCMAType, &subOpenDummy );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(kstBuffer);
@@ -1190,7 +1251,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
             return subRc;
          }
       }
-      retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+      retCode = TA_MA(sigStart - rocStart4,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(kstBuffer);

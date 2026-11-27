@@ -13,6 +13,7 @@
  *  100626 KL,CC  Initial version (#479).
  *  101026 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -254,59 +255,108 @@
       } else {
          rsiValue = 50.0;
       }
-      /* Warm-up. Feeds every RSI value before startIdx through the chain and
-       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-       * first bar whose signal window is full is startIdx, by construction of
-       * the lookback.
+      /* The first-bar seed: each EMA starts on its feeder's first value where
+       * the default seeds it. The RSI keeps its own seed and window.
        */
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         /* Warm-up. Feeds every RSI value before startIdx through the chain and
+          * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+          * first bar whose signal window is full is startIdx, by construction of
+          * the lookback.
+          */
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       /* The first output. Every stage is past its seed here, even at periods
        * 2/2/2/2, so the store below and the one in the stable loop are
@@ -481,54 +531,100 @@
       } else {
          rsiValue = 50.0;
       }
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = (double)inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = (double)inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = (double)inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
       ema2 = Math.fma(beta2, ema2, k2 * ema1);
@@ -1128,59 +1224,108 @@
       } else {
          rsiValue = 50.0;
       }
-      /* Warm-up. Feeds every RSI value before startIdx through the chain and
-       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-       * first bar whose signal window is full is startIdx, by construction of
-       * the lookback.
+      /* The first-bar seed: each EMA starts on its feeder's first value where
+       * the default seeds it. The RSI keeps its own seed and window.
        */
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         /* Warm-up. Feeds every RSI value before startIdx through the chain and
+          * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+          * first bar whose signal window is full is startIdx, by construction of
+          * the lookback.
+          */
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       /* The first output. Every stage is past its seed here, even at periods
        * 2/2/2/2, so the store below and the one in the stable loop are

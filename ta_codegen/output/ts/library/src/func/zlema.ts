@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#347).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -174,16 +176,24 @@ export function zlemaImpl(
    * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
    * read never reaches a slot already written.
    */
-  trailingIdx = startIdx - lookbackTotal;
-  today = trailingIdx + lag;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    today = lag;
+    prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
     today += 1;
     trailingIdx += 1;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    today = trailingIdx + lag;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      today += 1;
+      trailingIdx += 1;
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   while (today <= startIdx) {
     prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
     today += 1;
@@ -697,16 +707,24 @@ function zlemaOpenImpl(
    * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
    * read never reaches a slot already written.
    */
-  trailingIdx = startIdx - lookbackTotal;
-  today = trailingIdx + lag;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    today = lag;
+    prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
     today += 1;
     trailingIdx += 1;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    today = trailingIdx + lag;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      today += 1;
+      trailingIdx += 1;
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   while (today <= startIdx) {
     prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
     today += 1;

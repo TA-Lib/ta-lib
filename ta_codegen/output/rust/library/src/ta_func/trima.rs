@@ -257,7 +257,6 @@ impl Core {
         //
         // The update of numeratorAdd needs values from the input at
         // the middleIdx and todayIdx.
-        outIdx = 0;
         if optInTimePeriod % 2 == 1 {
             // Logic for Odd period
             // Calculate the factor which is 1 divided by the

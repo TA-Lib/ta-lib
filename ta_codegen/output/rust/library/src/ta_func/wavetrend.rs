@@ -56,6 +56,7 @@
  *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2. The fixpoint test waits for a seeded
  *                average.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -323,85 +324,135 @@ impl Core {
         nAp = 0;
         prevAp = 0.0;
         prevEsa = 0.0;
-        today = startIdx - lookbackTotal;
-        // Warm-up. Runs through startIdx inclusive: the last pass is the one that
-        // completes the signal window, so it leaves the first output in the state.
-        while today <= startIdx {
-            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            // Stage 1: the exponential average of the typical price.
-            if nAp < (optInChannelPeriod as usize) {
-                sumEsa = sumEsa + ap;
-                if nAp == ((optInChannelPeriod - 1) as usize) {
-                    esa = sumEsa / (optInChannelPeriod as f64);
+        // The first-bar seed does not move with startIdx: esa starts on bar 0,
+        // each later stage on its feeder's value where the default seeds it, and
+        // from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            today = 0;
+            while today <= startIdx {
+                ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+                if nAp == 0 {
+                    esa = ap;
+                } else {
+                    esa = fmadd!(beta1, esa, k1 * ap);
                 }
-            } else {
-                esa = fmadd!(beta1, esa, k1 * ap);
+                if nAp >= startIdx - lookbackTotal + lookbackChannel {
+                    num = ap - esa;
+                    if ap == prevAp && esa == prevEsa {
+                        num = 0.0;
+                    }
+                    dev = num.abs();
+                    if nAp == startIdx - lookbackTotal + lookbackChannel {
+                        d = dev;
+                    } else {
+                        d = fmadd!(beta1, d, k1 * dev);
+                    }
+                    if nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel {
+                        scaledDev = 0.015 * d;
+                        if scaledDev > 0.0 {
+                            ci = num / scaledDev;
+                        } else {
+                            ci = 0.0;
+                        }
+                        if nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel {
+                            wt1 = ci;
+                        } else {
+                            wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        }
+                        if nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage {
+                            wtBuffer[wtBuffer_Idx] = wt1;
+                            sumSignal = sumSignal + wt1;
+                            wtBuffer_Idx += 1;
+                            if wtBuffer_Idx >= wtBuffer.len() { wtBuffer_Idx = 0; }
+                        }
+                    }
+                }
+                prevAp = ap;
+                prevEsa = esa;
+                nAp = nAp + 1;
+                today = today + 1;
             }
-            // Stage 2: the exponential average of the absolute distance, over what
-            // stage 1 publishes. The counter is compared before it is subtracted,
-            // never after: the Rust backend renders these as usize.
-            if nAp >= lookbackChannel {
-                nDev = nAp - lookbackChannel;
-                // GUARD 1, the fixpoint test. With a constant input the exponential
-                // step stops moving once k*|ap - esa| falls under half an ulp, and
-                // esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-                // frozen residue is a real non-zero distance, so the naive form
-                // divides it by its own exponential average and walks to
-                // +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-                // but rounding. When the pair has not moved, the average has reached
-                // its fixpoint and the distance is exactly that residue, so the
-                // numerator is taken as zero. The test is exact, so it is
-                // independent of scale and period.
-                //
-                // Only once prevEsa is an average: on the bar that seeds esa it is
-                // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-                num = ap - esa;
-                if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
-                    num = 0.0;
-                }
-                dev = num.abs();
-                if nDev < (optInChannelPeriod as usize) {
-                    sumD = sumD + dev;
-                    if nDev == ((optInChannelPeriod - 1) as usize) {
-                        d = sumD / (optInChannelPeriod as f64);
+        } else {
+            today = startIdx - lookbackTotal;
+            // Warm-up. Runs through startIdx inclusive: the last pass is the one that
+            // completes the signal window, so it leaves the first output in the state.
+            while today <= startIdx {
+                ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+                // Stage 1: the exponential average of the typical price.
+                if nAp < (optInChannelPeriod as usize) {
+                    sumEsa = sumEsa + ap;
+                    if nAp == ((optInChannelPeriod - 1) as usize) {
+                        esa = sumEsa / (optInChannelPeriod as f64);
                     }
                 } else {
-                    d = fmadd!(beta1, d, k1 * dev);
+                    esa = fmadd!(beta1, esa, k1 * ap);
                 }
-                // Stage 3: the oscillator, then its own smoothing.
-                if nDev >= lookbackChannel {
-                    nCi = nDev - lookbackChannel;
-                    // GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                    // not the deviation: 0.015*d underflows to zero while d is still
-                    // non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                    // average distance -- so the oscillator reads its neutral 0.0
-                    // (#112), as tsi.c does.
-                    scaledDev = 0.015 * d;
-                    if scaledDev > 0.0 {
-                        ci = num / scaledDev;
-                    } else {
-                        ci = 0.0;
+                // Stage 2: the exponential average of the absolute distance, over what
+                // stage 1 publishes. The counter is compared before it is subtracted,
+                // never after: the Rust backend renders these as usize.
+                if nAp >= lookbackChannel {
+                    nDev = nAp - lookbackChannel;
+                    // GUARD 1, the fixpoint test. With a constant input the exponential
+                    // step stops moving once k*|ap - esa| falls under half an ulp, and
+                    // esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                    // frozen residue is a real non-zero distance, so the naive form
+                    // divides it by its own exponential average and walks to
+                    // +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                    // but rounding. When the pair has not moved, the average has reached
+                    // its fixpoint and the distance is exactly that residue, so the
+                    // numerator is taken as zero. The test is exact, so it is
+                    // independent of scale and period.
+                    //
+                    // Only once prevEsa is an average: on the bar that seeds esa it is
+                    // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+                    num = ap - esa;
+                    if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
+                        num = 0.0;
                     }
-                    if nCi < (optInAveragePeriod as usize) {
-                        sumCi = sumCi + ci;
-                        if nCi == ((optInAveragePeriod - 1) as usize) {
-                            wt1 = sumCi / (optInAveragePeriod as f64);
+                    dev = num.abs();
+                    if nDev < (optInChannelPeriod as usize) {
+                        sumD = sumD + dev;
+                        if nDev == ((optInChannelPeriod - 1) as usize) {
+                            d = sumD / (optInChannelPeriod as f64);
                         }
                     } else {
-                        wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        d = fmadd!(beta1, d, k1 * dev);
                     }
-                    if nCi >= lookbackAverage {
-                        wtBuffer[wtBuffer_Idx] = wt1;
-                        sumSignal = sumSignal + wt1;
-                        wtBuffer_Idx += 1;
-                        if wtBuffer_Idx >= wtBuffer.len() { wtBuffer_Idx = 0; }
+                    // Stage 3: the oscillator, then its own smoothing.
+                    if nDev >= lookbackChannel {
+                        nCi = nDev - lookbackChannel;
+                        // GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                        // not the deviation: 0.015*d underflows to zero while d is still
+                        // non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                        // average distance -- so the oscillator reads its neutral 0.0
+                        // (#112), as tsi.c does.
+                        scaledDev = 0.015 * d;
+                        if scaledDev > 0.0 {
+                            ci = num / scaledDev;
+                        } else {
+                            ci = 0.0;
+                        }
+                        if nCi < (optInAveragePeriod as usize) {
+                            sumCi = sumCi + ci;
+                            if nCi == ((optInAveragePeriod - 1) as usize) {
+                                wt1 = sumCi / (optInAveragePeriod as f64);
+                            }
+                        } else {
+                            wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        }
+                        if nCi >= lookbackAverage {
+                            wtBuffer[wtBuffer_Idx] = wt1;
+                            sumSignal = sumSignal + wt1;
+                            wtBuffer_Idx += 1;
+                            if wtBuffer_Idx >= wtBuffer.len() { wtBuffer_Idx = 0; }
+                        }
                     }
                 }
+                prevAp = ap;
+                prevEsa = esa;
+                nAp = nAp + 1;
+                today = today + 1;
             }
-            prevAp = ap;
-            prevEsa = esa;
-            nAp = nAp + 1;
-            today = today + 1;
         }
         // The first output. The warm-up's last pass stored this bar's WT1 into the
         // ring and added it to the running sum, so the average is ready here.
@@ -821,85 +872,135 @@ impl Core {
         nAp = 0;
         prevAp = 0.0;
         prevEsa = 0.0;
-        today = startIdx - lookbackTotal;
-        // Warm-up. Runs through startIdx inclusive: the last pass is the one that
-        // completes the signal window, so it leaves the first output in the state.
-        while today <= startIdx {
-            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            // Stage 1: the exponential average of the typical price.
-            if nAp < (optInChannelPeriod as usize) {
-                sumEsa = sumEsa + ap;
-                if nAp == ((optInChannelPeriod - 1) as usize) {
-                    esa = sumEsa / (optInChannelPeriod as f64);
+        // The first-bar seed does not move with startIdx: esa starts on bar 0,
+        // each later stage on its feeder's value where the default seeds it, and
+        // from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            today = 0;
+            while today <= startIdx {
+                ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+                if nAp == 0 {
+                    esa = ap;
+                } else {
+                    esa = fmadd!(beta1, esa, k1 * ap);
                 }
-            } else {
-                esa = fmadd!(beta1, esa, k1 * ap);
+                if nAp >= startIdx - lookbackTotal + lookbackChannel {
+                    num = ap - esa;
+                    if ap == prevAp && esa == prevEsa {
+                        num = 0.0;
+                    }
+                    dev = num.abs();
+                    if nAp == startIdx - lookbackTotal + lookbackChannel {
+                        d = dev;
+                    } else {
+                        d = fmadd!(beta1, d, k1 * dev);
+                    }
+                    if nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel {
+                        scaledDev = 0.015 * d;
+                        if scaledDev > 0.0 {
+                            ci = num / scaledDev;
+                        } else {
+                            ci = 0.0;
+                        }
+                        if nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel {
+                            wt1 = ci;
+                        } else {
+                            wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        }
+                        if nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage {
+                            wtBuffer[wtBuffer_Idx] = wt1;
+                            sumSignal = sumSignal + wt1;
+                            wtBuffer_Idx += 1;
+                            if wtBuffer_Idx > maxIdx_wtBuffer { wtBuffer_Idx = 0; }
+                        }
+                    }
+                }
+                prevAp = ap;
+                prevEsa = esa;
+                nAp = nAp + 1;
+                today = today + 1;
             }
-            // Stage 2: the exponential average of the absolute distance, over what
-            // stage 1 publishes. The counter is compared before it is subtracted,
-            // never after: the Rust backend renders these as usize.
-            if nAp >= lookbackChannel {
-                nDev = nAp - lookbackChannel;
-                // GUARD 1, the fixpoint test. With a constant input the exponential
-                // step stops moving once k*|ap - esa| falls under half an ulp, and
-                // esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-                // frozen residue is a real non-zero distance, so the naive form
-                // divides it by its own exponential average and walks to
-                // +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-                // but rounding. When the pair has not moved, the average has reached
-                // its fixpoint and the distance is exactly that residue, so the
-                // numerator is taken as zero. The test is exact, so it is
-                // independent of scale and period.
-                //
-                // Only once prevEsa is an average: on the bar that seeds esa it is
-                // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-                num = ap - esa;
-                if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
-                    num = 0.0;
-                }
-                dev = num.abs();
-                if nDev < (optInChannelPeriod as usize) {
-                    sumD = sumD + dev;
-                    if nDev == ((optInChannelPeriod - 1) as usize) {
-                        d = sumD / (optInChannelPeriod as f64);
+        } else {
+            today = startIdx - lookbackTotal;
+            // Warm-up. Runs through startIdx inclusive: the last pass is the one that
+            // completes the signal window, so it leaves the first output in the state.
+            while today <= startIdx {
+                ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+                // Stage 1: the exponential average of the typical price.
+                if nAp < (optInChannelPeriod as usize) {
+                    sumEsa = sumEsa + ap;
+                    if nAp == ((optInChannelPeriod - 1) as usize) {
+                        esa = sumEsa / (optInChannelPeriod as f64);
                     }
                 } else {
-                    d = fmadd!(beta1, d, k1 * dev);
+                    esa = fmadd!(beta1, esa, k1 * ap);
                 }
-                // Stage 3: the oscillator, then its own smoothing.
-                if nDev >= lookbackChannel {
-                    nCi = nDev - lookbackChannel;
-                    // GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                    // not the deviation: 0.015*d underflows to zero while d is still
-                    // non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                    // average distance -- so the oscillator reads its neutral 0.0
-                    // (#112), as tsi.c does.
-                    scaledDev = 0.015 * d;
-                    if scaledDev > 0.0 {
-                        ci = num / scaledDev;
-                    } else {
-                        ci = 0.0;
+                // Stage 2: the exponential average of the absolute distance, over what
+                // stage 1 publishes. The counter is compared before it is subtracted,
+                // never after: the Rust backend renders these as usize.
+                if nAp >= lookbackChannel {
+                    nDev = nAp - lookbackChannel;
+                    // GUARD 1, the fixpoint test. With a constant input the exponential
+                    // step stops moving once k*|ap - esa| falls under half an ulp, and
+                    // esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                    // frozen residue is a real non-zero distance, so the naive form
+                    // divides it by its own exponential average and walks to
+                    // +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                    // but rounding. When the pair has not moved, the average has reached
+                    // its fixpoint and the distance is exactly that residue, so the
+                    // numerator is taken as zero. The test is exact, so it is
+                    // independent of scale and period.
+                    //
+                    // Only once prevEsa is an average: on the bar that seeds esa it is
+                    // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+                    num = ap - esa;
+                    if nAp >= (optInChannelPeriod as usize) && ap == prevAp && esa == prevEsa {
+                        num = 0.0;
                     }
-                    if nCi < (optInAveragePeriod as usize) {
-                        sumCi = sumCi + ci;
-                        if nCi == ((optInAveragePeriod - 1) as usize) {
-                            wt1 = sumCi / (optInAveragePeriod as f64);
+                    dev = num.abs();
+                    if nDev < (optInChannelPeriod as usize) {
+                        sumD = sumD + dev;
+                        if nDev == ((optInChannelPeriod - 1) as usize) {
+                            d = sumD / (optInChannelPeriod as f64);
                         }
                     } else {
-                        wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        d = fmadd!(beta1, d, k1 * dev);
                     }
-                    if nCi >= lookbackAverage {
-                        wtBuffer[wtBuffer_Idx] = wt1;
-                        sumSignal = sumSignal + wt1;
-                        wtBuffer_Idx += 1;
-                        if wtBuffer_Idx > maxIdx_wtBuffer { wtBuffer_Idx = 0; }
+                    // Stage 3: the oscillator, then its own smoothing.
+                    if nDev >= lookbackChannel {
+                        nCi = nDev - lookbackChannel;
+                        // GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                        // not the deviation: 0.015*d underflows to zero while d is still
+                        // non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                        // average distance -- so the oscillator reads its neutral 0.0
+                        // (#112), as tsi.c does.
+                        scaledDev = 0.015 * d;
+                        if scaledDev > 0.0 {
+                            ci = num / scaledDev;
+                        } else {
+                            ci = 0.0;
+                        }
+                        if nCi < (optInAveragePeriod as usize) {
+                            sumCi = sumCi + ci;
+                            if nCi == ((optInAveragePeriod - 1) as usize) {
+                                wt1 = sumCi / (optInAveragePeriod as f64);
+                            }
+                        } else {
+                            wt1 = fmadd!(beta2, wt1, k2 * ci);
+                        }
+                        if nCi >= lookbackAverage {
+                            wtBuffer[wtBuffer_Idx] = wt1;
+                            sumSignal = sumSignal + wt1;
+                            wtBuffer_Idx += 1;
+                            if wtBuffer_Idx > maxIdx_wtBuffer { wtBuffer_Idx = 0; }
+                        }
                     }
                 }
+                prevAp = ap;
+                prevEsa = esa;
+                nAp = nAp + 1;
+                today = today + 1;
             }
-            prevAp = ap;
-            prevEsa = esa;
-            nAp = nAp + 1;
-            today = today + 1;
         }
         // The first output. The warm-up's last pass stored this bar's WT1 into the
         // ring and added it to the running sum, so the average is ready here.

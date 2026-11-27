@@ -214,39 +214,45 @@ func (c *Core) stcImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 	lastIdx = optInCyclePeriod - 1
 	lookbackSlow = c.emaLookback(optInSlowPeriod)
 	lineStart = startIdx - (lookbackTotal - lookbackSlow)
-	today = startIdx - lookbackTotal
-	tempReal = 0.0
-	i = optInSlowPeriod
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevSlow = inReal[0]
+		prevFast = inReal[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		tempReal = 0.0
+		i = optInSlowPeriod
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevSlow = tempReal / float64(optInSlowPeriod)
-	fastToday = startIdx - lookbackTotal + (lookbackSlow - c.emaLookback(optInFastPeriod))
-	prevFast = 0.0
-	i = optInFastPeriod
-	for {
-		_C1 := i > 0
-		i--
-		if !_C1 {
-			break
+		prevSlow = tempReal / float64(optInSlowPeriod)
+		fastToday = startIdx - lookbackTotal + (lookbackSlow - c.emaLookback(optInFastPeriod))
+		prevFast = 0.0
+		i = optInFastPeriod
+		for {
+			_C1 := i > 0
+			i--
+			if !_C1 {
+				break
+			}
+			prevFast += inReal[fastToday]
+			fastToday++
 		}
-		prevFast += inReal[fastToday]
-		fastToday++
-	}
-	prevFast = prevFast / float64(optInFastPeriod)
-	if _n2 := int(fastToday) - int(today); _n2 > 0 {
-		_r4 := inReal[today:][:_n2]
-		for _k3 := range _r4 {
-			tempReal = _r4[_k3]
-			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		prevFast = prevFast / float64(optInFastPeriod)
+		if _n2 := int(fastToday) - int(today); _n2 > 0 {
+			_r4 := inReal[today:][:_n2]
+			for _k3 := range _r4 {
+				tempReal = _r4[_k3]
+				prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			}
+			today += int32(_n2)
 		}
-		today += int32(_n2)
 	}
 	if _n5 := int(lineStart) - int(today) + 1; _n5 > 0 {
 		_r7 := inReal[today:][:_n5]
@@ -1128,36 +1134,42 @@ func (c *Core) stcOpenImpl(sp *STCStream, inReal []float64, startIdx, optInFastP
 	lastIdx = optInCyclePeriod - 1
 	lookbackSlow = c.emaLookback(optInSlowPeriod)
 	lineStart = startIdx - (lookbackTotal - lookbackSlow)
-	today = startIdx - lookbackTotal
-	tempReal = 0.0
-	i = optInSlowPeriod
-	for {
-		_C4 := i > 0
-		i--
-		if !_C4 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevSlow = inReal[0]
+		prevFast = inReal[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		tempReal = 0.0
+		i = optInSlowPeriod
+		for {
+			_C4 := i > 0
+			i--
+			if !_C4 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevSlow = tempReal / float64(optInSlowPeriod)
-	fastToday = startIdx - lookbackTotal + (lookbackSlow - c.emaLookback(optInFastPeriod))
-	prevFast = 0.0
-	i = optInFastPeriod
-	for {
-		_C5 := i > 0
-		i--
-		if !_C5 {
-			break
+		prevSlow = tempReal / float64(optInSlowPeriod)
+		fastToday = startIdx - lookbackTotal + (lookbackSlow - c.emaLookback(optInFastPeriod))
+		prevFast = 0.0
+		i = optInFastPeriod
+		for {
+			_C5 := i > 0
+			i--
+			if !_C5 {
+				break
+			}
+			prevFast += inReal[fastToday]
+			fastToday++
 		}
-		prevFast += inReal[fastToday]
-		fastToday++
-	}
-	prevFast = prevFast / float64(optInFastPeriod)
-	for today < fastToday {
-		tempReal = inReal[today]
-		today++
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		prevFast = prevFast / float64(optInFastPeriod)
+		for today < fastToday {
+			tempReal = inReal[today]
+			today++
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		}
 	}
 	for today <= lineStart {
 		tempReal = inReal[today]

@@ -51,6 +51,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  081226 KL   Initial version (#206).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -256,25 +257,33 @@ impl Core {
             return RetCode::Success;
         }
         *outBegIdx = startIdx;
-        // The first EMA value is a simple average of the first 'period' force
-        // values; it then seeds the recursion. This is ema.c's seeding applied
-        // to the force series rather than to the input array.
-        today = startIdx - lookbackTotal + 1;
-        prevClose = inClose[today - 1];
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        if i > 0 {
-            let _wn: usize = i;
-            let _w0 = &inClose[today..][.._wn];
-            let _w1 = &inVolume[today..][.._wn];
-            for _wk in 0.._wn {
-                force = (_w0[_wk] - prevClose) * _w1[_wk];
-                prevClose = _w0[_wk];
-                tempReal += force;
-                today = today + 1;
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevClose = inClose[0];
+            force = (inClose[1] - prevClose) * inVolume[1];
+            prevClose = inClose[1];
+            prevMA = force;
+            today = 2;
+        } else {
+            // The first EMA value is a simple average of the first 'period' force
+            // values; it then seeds the recursion. This is ema.c's seeding applied
+            // to the force series rather than to the input array.
+            today = startIdx - lookbackTotal + 1;
+            prevClose = inClose[today - 1];
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            if i > 0 {
+                let _wn: usize = i;
+                let _w0 = &inClose[today..][.._wn];
+                let _w1 = &inVolume[today..][.._wn];
+                for _wk in 0.._wn {
+                    force = (_w0[_wk] - prevClose) * _w1[_wk];
+                    prevClose = _w0[_wk];
+                    tempReal += force;
+                    today = today + 1;
+                }
             }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
@@ -662,20 +671,28 @@ impl Core {
             // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
             // not keep the sign of a -0.0 force: a down bar on zero volume.
             *outBegIdx = startIdx;
-            // The first EMA value is a simple average of the first 'period' force
-            // values; it then seeds the recursion. This is ema.c's seeding applied
-            // to the force series rather than to the input array.
-            today = startIdx - lookbackTotal + 1;
-            prevClose = inClose[today - 1];
-            i = optInTimePeriod as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                force = (inClose[today] - prevClose) * inVolume[today];
-                prevClose = inClose[today];
-                tempReal += force;
-                today = today + 1;
+            if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+                prevClose = inClose[0];
+                force = (inClose[1] - prevClose) * inVolume[1];
+                prevClose = inClose[1];
+                prevMA = force;
+                today = 2;
+            } else {
+                // The first EMA value is a simple average of the first 'period' force
+                // values; it then seeds the recursion. This is ema.c's seeding applied
+                // to the force series rather than to the input array.
+                today = startIdx - lookbackTotal + 1;
+                prevClose = inClose[today - 1];
+                i = optInTimePeriod as usize;
+                tempReal = 0.0;
+                while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                    force = (inClose[today] - prevClose) * inVolume[today];
+                    prevClose = inClose[today];
+                    tempReal += force;
+                    today = today + 1;
+                }
+                prevMA = tempReal / (optInTimePeriod as f64);
             }
-            prevMA = tempReal / (optInTimePeriod as f64);
             while today <= startIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];

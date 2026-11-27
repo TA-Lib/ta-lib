@@ -58,6 +58,7 @@
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
  *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -346,23 +347,31 @@ impl Core {
         // line and both smoothers.
         lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
         lineStart = startIdx - (lookbackTotal - lookbackSlow);
-        today = startIdx - lookbackTotal;
-        tempReal = 0.0;
-        i = optInSlowPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevSlow = tempReal / (optInSlowPeriod as f64);
-        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX));
-        prevFast = 0.0;
-        i = optInFastPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
-        }
-        prevFast = prevFast / (optInFastPeriod as f64);
-        while today < fastToday {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+        // The first-bar seed does not move with startIdx: both EMA start on
+        // inReal[0]. The chain still starts at lineStart.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSlow = inReal[0];
+            prevFast = inReal[0];
+            today = 1;
+        } else {
+            today = startIdx - lookbackTotal;
+            tempReal = 0.0;
+            i = optInSlowPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevSlow = tempReal / (optInSlowPeriod as f64);
+            fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX));
+            prevFast = 0.0;
+            i = optInFastPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+            }
+            prevFast = prevFast / (optInFastPeriod as f64);
+            while today < fastToday {
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
@@ -1038,23 +1047,31 @@ impl Core {
         // line and both smoothers.
         lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
         lineStart = startIdx - (lookbackTotal - lookbackSlow);
-        today = startIdx - lookbackTotal;
-        tempReal = 0.0;
-        i = optInSlowPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevSlow = tempReal / (optInSlowPeriod as f64);
-        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod)?);
-        prevFast = 0.0;
-        i = optInFastPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
-        }
-        prevFast = prevFast / (optInFastPeriod as f64);
-        while today < fastToday {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+        // The first-bar seed does not move with startIdx: both EMA start on
+        // inReal[0]. The chain still starts at lineStart.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSlow = inReal[0];
+            prevFast = inReal[0];
+            today = 1;
+        } else {
+            today = startIdx - lookbackTotal;
+            tempReal = 0.0;
+            i = optInSlowPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevSlow = tempReal / (optInSlowPeriod as f64);
+            fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod)?);
+            prevFast = 0.0;
+            i = optInFastPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+            }
+            prevFast = prevFast / (optInFastPeriod as f64);
+            while today < fastToday {
+                tempReal = inReal[{ let _v = today; today += 1; _v }];
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];

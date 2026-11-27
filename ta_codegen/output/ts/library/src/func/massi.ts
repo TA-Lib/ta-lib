@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #359).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -179,50 +181,18 @@ export function massiImpl(
   sum2 = 0.0;
   total = 0.0;
   tempReal = 0.0;
-  today = startIdx - lookbackTotal;
-  nBar = 0;
-  /* Runs through startIdx inclusive: that last pass fills the summation
-   * window and so produces the first output.
+  /* The first-bar seed does not move with startIdx: the first EMA starts on
+   * bar 0, the second on the first one's value where the default seeds it.
    */
-  while (today <= startIdx) {
-    hl = inHigh[today] - inLow[today];
-    if (nBar < optInFastPeriod) {
-      sum1 = sum1 + hl;
-      if (nBar === optInFastPeriod - 1) {
-        ema1 = sum1 / optInFastPeriod;
-      }
-    } else {
-      {
-        const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        ema1 = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* The stage counter is compared BEFORE it is subtracted, never after.
-     * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-     * everywhere else: the Rust backend renders these as usize, so the
-     * subtraction underflows for the first lookbackEma bars.
-     */
-    if (nBar >= lookbackEma) {
-      n2 = nBar - lookbackEma;
-      if (n2 < optInFastPeriod) {
-        sum2 = sum2 + ema1;
-        if (n2 === optInFastPeriod - 1) {
-          ema2 = sum2 / optInFastPeriod;
-        }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    today = 0;
+    while (today <= startIdx) {
+      hl = inHigh[today] - inLow[today];
+      if (today === 0) {
+        ema1 = hl;
       } else {
         {
-          const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+          const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -232,42 +202,142 @@ export function massiImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          ema2 = _w && (_pl === 0 || _v === 0) ? _th
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      if (today >= startIdx - lookbackTotal + lookbackEma) {
+        if (today === startIdx - lookbackTotal + lookbackEma) {
+          ema2 = ema1;
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      if (today >= startIdx - lookbackTotal + lookbackEma2) {
+        if (ema2 === 0.0) {
+          ratio = 1.0;
+        } else {
+          ratio = ema1 / ema2;
+        }
+        ratioRing[ratioRing_Idx] = ratio;
+        total = total + ratio;
+        ratioRing_Idx++;
+        if (ratioRing_Idx > maxIdx_ratioRing) {
+          ratioRing_Idx = 0;
+        }
+        if (today === startIdx) {
+          tempReal = total;
+          total = total - ratioRing[ratioRing_Idx];
+        }
+      }
+      today = today + 1;
     }
-    if (nBar >= lookbackEma2) {
-      /* A flat market is the ratio's continuous limit, 1.0, not the zero
-       * that an oscillator centred on zero would report: MASSI's own
-       * neutral is optInSlowPeriod. Test ema2 exactly and never through an
-       * epsilon band -- a smoothed price range carries the quote unit, so a
-       * fixed band would pin the whole index at optInSlowPeriod for any
-       * instrument quoted under it (issue #253).
-       */
-      if (ema2 === 0.0) {
-        ratio = 1.0;
+  } else {
+    today = startIdx - lookbackTotal;
+    nBar = 0;
+    /* Runs through startIdx inclusive: that last pass fills the summation
+     * window and so produces the first output.
+     */
+    while (today <= startIdx) {
+      hl = inHigh[today] - inLow[today];
+      if (nBar < optInFastPeriod) {
+        sum1 = sum1 + hl;
+        if (nBar === optInFastPeriod - 1) {
+          ema1 = sum1 / optInFastPeriod;
+        }
       } else {
-        ratio = ema1 / ema2;
+        {
+          const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
-      /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-       * over a ring: the slot written here was emptied out of `total` at the
-       * end of the previous bar, so nothing has to be read before the store.
+      /* The stage counter is compared BEFORE it is subtracted, never after.
+       * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+       * everywhere else: the Rust backend renders these as usize, so the
+       * subtraction underflows for the first lookbackEma bars.
        */
-      ratioRing[ratioRing_Idx] = ratio;
-      total = total + ratio;
-      ratioRing_Idx++;
-      if (ratioRing_Idx > maxIdx_ratioRing) {
-        ratioRing_Idx = 0;
+      if (nBar >= lookbackEma) {
+        n2 = nBar - lookbackEma;
+        if (n2 < optInFastPeriod) {
+          sum2 = sum2 + ema1;
+          if (n2 === optInFastPeriod - 1) {
+            ema2 = sum2 / optInFastPeriod;
+          }
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
       }
-      if (nBar === lookbackTotal) {
-        tempReal = total;
-        total = total - ratioRing[ratioRing_Idx];
+      if (nBar >= lookbackEma2) {
+        /* A flat market is the ratio's continuous limit, 1.0, not the zero
+         * that an oscillator centred on zero would report: MASSI's own
+         * neutral is optInSlowPeriod. Test ema2 exactly and never through an
+         * epsilon band -- a smoothed price range carries the quote unit, so a
+         * fixed band would pin the whole index at optInSlowPeriod for any
+         * instrument quoted under it (issue #253).
+         */
+        if (ema2 === 0.0) {
+          ratio = 1.0;
+        } else {
+          ratio = ema1 / ema2;
+        }
+        /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+         * over a ring: the slot written here was emptied out of `total` at the
+         * end of the previous bar, so nothing has to be read before the store.
+         */
+        ratioRing[ratioRing_Idx] = ratio;
+        total = total + ratio;
+        ratioRing_Idx++;
+        if (ratioRing_Idx > maxIdx_ratioRing) {
+          ratioRing_Idx = 0;
+        }
+        if (nBar === lookbackTotal) {
+          tempReal = total;
+          total = total - ratioRing[ratioRing_Idx];
+        }
       }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    nBar = nBar + 1;
-    today = today + 1;
   }
   /* In-place safe: this store lands lookbackTotal bars behind the input
    * cursor, so no bar is written under a read still owed to it.
@@ -862,50 +932,18 @@ function massiOpenImpl(
   sum2 = 0.0;
   total = 0.0;
   tempReal = 0.0;
-  today = startIdx - lookbackTotal;
-  nBar = 0;
-  /* Runs through startIdx inclusive: that last pass fills the summation
-   * window and so produces the first output.
+  /* The first-bar seed does not move with startIdx: the first EMA starts on
+   * bar 0, the second on the first one's value where the default seeds it.
    */
-  while (today <= startIdx) {
-    hl = inHigh[today] - inLow[today];
-    if (nBar < optInFastPeriod) {
-      sum1 = sum1 + hl;
-      if (nBar === optInFastPeriod - 1) {
-        ema1 = sum1 / optInFastPeriod;
-      }
-    } else {
-      {
-        const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        ema1 = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* The stage counter is compared BEFORE it is subtracted, never after.
-     * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-     * everywhere else: the Rust backend renders these as usize, so the
-     * subtraction underflows for the first lookbackEma bars.
-     */
-    if (nBar >= lookbackEma) {
-      n2 = nBar - lookbackEma;
-      if (n2 < optInFastPeriod) {
-        sum2 = sum2 + ema1;
-        if (n2 === optInFastPeriod - 1) {
-          ema2 = sum2 / optInFastPeriod;
-        }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    today = 0;
+    while (today <= startIdx) {
+      hl = inHigh[today] - inLow[today];
+      if (today === 0) {
+        ema1 = hl;
       } else {
         {
-          const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+          const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -915,42 +953,142 @@ function massiOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          ema2 = _w && (_pl === 0 || _v === 0) ? _th
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      if (today >= startIdx - lookbackTotal + lookbackEma) {
+        if (today === startIdx - lookbackTotal + lookbackEma) {
+          ema2 = ema1;
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      if (today >= startIdx - lookbackTotal + lookbackEma2) {
+        if (ema2 === 0.0) {
+          ratio = 1.0;
+        } else {
+          ratio = ema1 / ema2;
+        }
+        ratioRing[ratioRing_Idx] = ratio;
+        total = total + ratio;
+        ratioRing_Idx++;
+        if (ratioRing_Idx > maxIdx_ratioRing) {
+          ratioRing_Idx = 0;
+        }
+        if (today === startIdx) {
+          tempReal = total;
+          total = total - ratioRing[ratioRing_Idx];
+        }
+      }
+      today = today + 1;
     }
-    if (nBar >= lookbackEma2) {
-      /* A flat market is the ratio's continuous limit, 1.0, not the zero
-       * that an oscillator centred on zero would report: MASSI's own
-       * neutral is optInSlowPeriod. Test ema2 exactly and never through an
-       * epsilon band -- a smoothed price range carries the quote unit, so a
-       * fixed band would pin the whole index at optInSlowPeriod for any
-       * instrument quoted under it (issue #253).
-       */
-      if (ema2 === 0.0) {
-        ratio = 1.0;
+  } else {
+    today = startIdx - lookbackTotal;
+    nBar = 0;
+    /* Runs through startIdx inclusive: that last pass fills the summation
+     * window and so produces the first output.
+     */
+    while (today <= startIdx) {
+      hl = inHigh[today] - inLow[today];
+      if (nBar < optInFastPeriod) {
+        sum1 = sum1 + hl;
+        if (nBar === optInFastPeriod - 1) {
+          ema1 = sum1 / optInFastPeriod;
+        }
       } else {
-        ratio = ema1 / ema2;
+        {
+          const _a: number = emaBeta, _b: number = ema1, _c: number = optInK_1 * hl;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
-      /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-       * over a ring: the slot written here was emptied out of `total` at the
-       * end of the previous bar, so nothing has to be read before the store.
+      /* The stage counter is compared BEFORE it is subtracted, never after.
+       * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+       * everywhere else: the Rust backend renders these as usize, so the
+       * subtraction underflows for the first lookbackEma bars.
        */
-      ratioRing[ratioRing_Idx] = ratio;
-      total = total + ratio;
-      ratioRing_Idx++;
-      if (ratioRing_Idx > maxIdx_ratioRing) {
-        ratioRing_Idx = 0;
+      if (nBar >= lookbackEma) {
+        n2 = nBar - lookbackEma;
+        if (n2 < optInFastPeriod) {
+          sum2 = sum2 + ema1;
+          if (n2 === optInFastPeriod - 1) {
+            ema2 = sum2 / optInFastPeriod;
+          }
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = optInK_1 * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
       }
-      if (nBar === lookbackTotal) {
-        tempReal = total;
-        total = total - ratioRing[ratioRing_Idx];
+      if (nBar >= lookbackEma2) {
+        /* A flat market is the ratio's continuous limit, 1.0, not the zero
+         * that an oscillator centred on zero would report: MASSI's own
+         * neutral is optInSlowPeriod. Test ema2 exactly and never through an
+         * epsilon band -- a smoothed price range carries the quote unit, so a
+         * fixed band would pin the whole index at optInSlowPeriod for any
+         * instrument quoted under it (issue #253).
+         */
+        if (ema2 === 0.0) {
+          ratio = 1.0;
+        } else {
+          ratio = ema1 / ema2;
+        }
+        /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+         * over a ring: the slot written here was emptied out of `total` at the
+         * end of the previous bar, so nothing has to be read before the store.
+         */
+        ratioRing[ratioRing_Idx] = ratio;
+        total = total + ratio;
+        ratioRing_Idx++;
+        if (ratioRing_Idx > maxIdx_ratioRing) {
+          ratioRing_Idx = 0;
+        }
+        if (nBar === lookbackTotal) {
+          tempReal = total;
+          total = total - ratioRing[ratioRing_Idx];
+        }
       }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    nBar = nBar + 1;
-    today = today + 1;
   }
   /* In-place safe: this store lands lookbackTotal bars behind the input
    * cursor, so no bar is written under a read still owed to it.

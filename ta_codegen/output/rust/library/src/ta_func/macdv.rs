@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  103126 MF,CC  Creation (#570).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -352,29 +353,42 @@ impl Core {
         // leg converged sets that function's unstable period, exactly as when
         // calling it directly.
         lineIdx = startIdx - lookbackSignal;
-        // Slow EMA.
-        today = lineIdx - lookbackSlow;
-        tempReal = 0.0;
-        i = optInSlowPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
-        }
-        prevSlow = tempReal / (optInSlowPeriod as f64);
-        while today <= lineIdx {
-            tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
-        }
-        // Fast EMA.
-        today = lineIdx - lookbackFast;
-        tempReal = 0.0;
-        i = optInFastPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = tempReal / (optInFastPeriod as f64);
-        while today <= lineIdx {
-            tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+        // The first-bar seed does not move with startIdx: both EMA start on
+        // inClose[0], the signal EMA on the first line value of the call.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSlow = inClose[0];
+            prevFast = inClose[0];
+            today = 1;
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
+        } else {
+            // Slow EMA.
+            today = lineIdx - lookbackSlow;
+            tempReal = 0.0;
+            i = optInSlowPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevSlow = tempReal / (optInSlowPeriod as f64);
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
+            // Fast EMA.
+            today = lineIdx - lookbackFast;
+            tempReal = 0.0;
+            i = optInFastPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevFast = tempReal / (optInFastPeriod as f64);
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            }
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
@@ -436,39 +450,43 @@ impl Core {
         if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
             lineValue = spread / prevATR * 100.0;
         }
-        // Seed the signal EMA with a simple average of the first 'signal period'
-        // line values, accumulated as they are produced.
-        prevSignal = 0.0;
-        prevSignal += lineValue;
-        i = (optInSignalPeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            tempReal = inClose[today];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            greatest = c_max(val2, greatest);
-            val3 = (tempCY - tempLT).abs();
-            greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
-            spread = prevFast - prevSlow;
-            bandScale = prevFast.abs();
-            if prevSlow.abs() > bandScale {
-                bandScale = prevSlow.abs();
-            }
-            bandScale = bandScale * periodScale;
-            lineValue = 0.0;
-            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
-                lineValue = spread / prevATR * 100.0;
-            }
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSignal = lineValue;
+        } else {
+            // Seed the signal EMA with a simple average of the first 'signal period'
+            // line values, accumulated as they are produced.
+            prevSignal = 0.0;
             prevSignal += lineValue;
-            today += 1;
+            i = (optInSignalPeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempLT = inLow[today];
+                tempHT = inHigh[today];
+                tempCY = inClose[today - 1];
+                tempReal = inClose[today];
+                greatest = tempHT - tempLT;
+                // val1
+                val2 = (tempCY - tempHT).abs();
+                greatest = c_max(val2, greatest);
+                val3 = (tempCY - tempLT).abs();
+                greatest = c_max(val3, greatest);
+                prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+                spread = prevFast - prevSlow;
+                bandScale = prevFast.abs();
+                if prevSlow.abs() > bandScale {
+                    bandScale = prevSlow.abs();
+                }
+                bandScale = bandScale * periodScale;
+                lineValue = 0.0;
+                if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
+                    lineValue = spread / prevATR * 100.0;
+                }
+                prevSignal += lineValue;
+                today += 1;
+            }
+            prevSignal = prevSignal / (optInSignalPeriod as f64);
         }
-        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period of the
         // signal EMA, up to the first output bar.
         while today <= startIdx {
@@ -966,29 +984,42 @@ impl Core {
         // leg converged sets that function's unstable period, exactly as when
         // calling it directly.
         lineIdx = startIdx - lookbackSignal;
-        // Slow EMA.
-        today = lineIdx - lookbackSlow;
-        tempReal = 0.0;
-        i = optInSlowPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
-        }
-        prevSlow = tempReal / (optInSlowPeriod as f64);
-        while today <= lineIdx {
-            tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
-        }
-        // Fast EMA.
-        today = lineIdx - lookbackFast;
-        tempReal = 0.0;
-        i = optInFastPeriod as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = tempReal / (optInFastPeriod as f64);
-        while today <= lineIdx {
-            tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+        // The first-bar seed does not move with startIdx: both EMA start on
+        // inClose[0], the signal EMA on the first line value of the call.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSlow = inClose[0];
+            prevFast = inClose[0];
+            today = 1;
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
+        } else {
+            // Slow EMA.
+            today = lineIdx - lookbackSlow;
+            tempReal = 0.0;
+            i = optInSlowPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevSlow = tempReal / (optInSlowPeriod as f64);
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+            }
+            // Fast EMA.
+            today = lineIdx - lookbackFast;
+            tempReal = 0.0;
+            i = optInFastPeriod as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevFast = tempReal / (optInFastPeriod as f64);
+            while today <= lineIdx {
+                tempReal = inClose[{ let _v = today; today += 1; _v }];
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+            }
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
@@ -1038,39 +1069,43 @@ impl Core {
         if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
             lineValue = spread / prevATR * 100.0;
         }
-        // Seed the signal EMA with a simple average of the first 'signal period'
-        // line values, accumulated as they are produced.
-        prevSignal = 0.0;
-        prevSignal += lineValue;
-        i = (optInSignalPeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            tempReal = inClose[today];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            greatest = c_max(val2, greatest);
-            val3 = (tempCY - tempLT).abs();
-            greatest = c_max(val3, greatest);
-            prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
-            prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
-            prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
-            spread = prevFast - prevSlow;
-            bandScale = prevFast.abs();
-            if prevSlow.abs() > bandScale {
-                bandScale = prevSlow.abs();
-            }
-            bandScale = bandScale * periodScale;
-            lineValue = 0.0;
-            if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
-                lineValue = spread / prevATR * 100.0;
-            }
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevSignal = lineValue;
+        } else {
+            // Seed the signal EMA with a simple average of the first 'signal period'
+            // line values, accumulated as they are produced.
+            prevSignal = 0.0;
             prevSignal += lineValue;
-            today += 1;
+            i = (optInSignalPeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempLT = inLow[today];
+                tempHT = inHigh[today];
+                tempCY = inClose[today - 1];
+                tempReal = inClose[today];
+                greatest = tempHT - tempLT;
+                // val1
+                val2 = (tempCY - tempHT).abs();
+                greatest = c_max(val2, greatest);
+                val3 = (tempCY - tempLT).abs();
+                greatest = c_max(val3, greatest);
+                prevATR = fmadd!(wBeta, prevATR, wAlpha * greatest);
+                prevFast = fmadd!(fastBeta, prevFast, fastK * tempReal);
+                prevSlow = fmadd!(slowBeta, prevSlow, slowK * tempReal);
+                spread = prevFast - prevSlow;
+                bandScale = prevFast.abs();
+                if prevSlow.abs() > bandScale {
+                    bandScale = prevSlow.abs();
+                }
+                bandScale = bandScale * periodScale;
+                lineValue = 0.0;
+                if !(spread.abs() <= 1e-14 * bandScale) && !(prevATR.abs() <= 1e-14 * bandScale) && prevATR >= 2.2250738585072014e-308 {
+                    lineValue = spread / prevATR * 100.0;
+                }
+                prevSignal += lineValue;
+                today += 1;
+            }
+            prevSignal = prevSignal / (optInSignalPeriod as f64);
         }
-        prevSignal = prevSignal / (optInSignalPeriod as f64);
         // Advance everything in lockstep through the unstable period of the
         // signal EMA, up to the first output bar.
         while today <= startIdx {

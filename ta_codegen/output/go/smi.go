@@ -168,97 +168,179 @@ func (c *Core) smiImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float64,
 	lowest = 0.0
 	highestIdx = -1
 	lowestIdx = -1
-	trailingIdx = startIdx - lookbackTotal
-	today = trailingIdx + (optInTimePeriod - 1)
-	nBar = 0
-	for today <= startIdx {
-		tmp = inLow[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		today = optInTimePeriod - 1
+		nBar = 0
+		for today <= startIdx {
+			tmp = inLow[today]
+			if lowestIdx < trailingIdx {
+				lowestIdx = trailingIdx
+				lowest = inLow[lowestIdx]
+				i = lowestIdx
+				for {
+					i++
+					if !(i <= today) {
+						break
+					}
+					tmp = inLow[i]
+					if tmp < lowest {
+						lowestIdx = i
+						lowest = tmp
+					}
 				}
-				tmp = inLow[i]
-				if tmp < lowest {
-					lowestIdx = i
-					lowest = tmp
+			} else if tmp <= lowest {
+				lowestIdx = today
+				lowest = tmp
+			}
+			tmp = inHigh[today]
+			if highestIdx < trailingIdx {
+				highestIdx = trailingIdx
+				highest = inHigh[highestIdx]
+				i = highestIdx
+				for {
+					i++
+					if !(i <= today) {
+						break
+					}
+					tmp = inHigh[i]
+					if tmp > highest {
+						highestIdx = i
+						highest = tmp
+					}
+				}
+			} else if tmp >= highest {
+				highestIdx = today
+				highest = tmp
+			}
+			den = highest - lowest
+			num = inClose[today] - float64((highest+lowest)*0.5)
+			if nBar == 0 {
+				emaSlowNum = num
+				emaSlowDen = den
+			} else {
+				emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
+				emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
+			}
+			if nBar >= startIdx-lookbackTotal+lookbackSlow {
+				if nBar == startIdx-lookbackTotal+lookbackSlow {
+					emaFastNum = emaSlowNum
+					emaFastDen = emaSlowDen
+				} else {
+					emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
+					emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
 				}
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
-		}
-		tmp = inHigh[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			for {
-				i++
-				if !(i <= today) {
-					break
+			if nBar >= startIdx-lookbackTotal+lookbackSlow+lookbackFast {
+				halfDen = float64(0.5 * emaFastDen)
+				if halfDen > 0.0 {
+					smiValue = float64(100.0*emaFastNum) / halfDen
+				} else {
+					smiValue = 0.0
 				}
-				tmp = inHigh[i]
-				if tmp > highest {
-					highestIdx = i
-					highest = tmp
+				if nBar == startIdx-lookbackTotal+lookbackSlow+lookbackFast {
+					prevSignal = smiValue
+				} else {
+					prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
 				}
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
+			nBar = nBar + 1
+			trailingIdx = trailingIdx + 1
+			today = today + 1
 		}
-		den = highest - lowest
-		num = inClose[today] - float64((highest+lowest)*0.5)
-		if nBar < optInSlowPeriod {
-			sumSlowNum = sumSlowNum + num
-			sumSlowDen = sumSlowDen + den
-			if nBar == optInSlowPeriod-1 {
-				emaSlowNum = sumSlowNum / float64(optInSlowPeriod)
-				emaSlowDen = sumSlowDen / float64(optInSlowPeriod)
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		today = trailingIdx + (optInTimePeriod - 1)
+		nBar = 0
+		for today <= startIdx {
+			tmp = inLow[today]
+			if lowestIdx < trailingIdx {
+				lowestIdx = trailingIdx
+				lowest = inLow[lowestIdx]
+				i = lowestIdx
+				for {
+					i++
+					if !(i <= today) {
+						break
+					}
+					tmp = inLow[i]
+					if tmp < lowest {
+						lowestIdx = i
+						lowest = tmp
+					}
+				}
+			} else if tmp <= lowest {
+				lowestIdx = today
+				lowest = tmp
 			}
-		} else {
-			emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
-			emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
-		}
-		if nBar >= lookbackSlow {
-			nFast = nBar - lookbackSlow
-			if nFast < optInFastPeriod {
-				sumFastNum = sumFastNum + emaSlowNum
-				sumFastDen = sumFastDen + emaSlowDen
-				if nFast == optInFastPeriod-1 {
-					emaFastNum = sumFastNum / float64(optInFastPeriod)
-					emaFastDen = sumFastDen / float64(optInFastPeriod)
+			tmp = inHigh[today]
+			if highestIdx < trailingIdx {
+				highestIdx = trailingIdx
+				highest = inHigh[highestIdx]
+				i = highestIdx
+				for {
+					i++
+					if !(i <= today) {
+						break
+					}
+					tmp = inHigh[i]
+					if tmp > highest {
+						highestIdx = i
+						highest = tmp
+					}
+				}
+			} else if tmp >= highest {
+				highestIdx = today
+				highest = tmp
+			}
+			den = highest - lowest
+			num = inClose[today] - float64((highest+lowest)*0.5)
+			if nBar < optInSlowPeriod {
+				sumSlowNum = sumSlowNum + num
+				sumSlowDen = sumSlowDen + den
+				if nBar == optInSlowPeriod-1 {
+					emaSlowNum = sumSlowNum / float64(optInSlowPeriod)
+					emaSlowDen = sumSlowDen / float64(optInSlowPeriod)
 				}
 			} else {
-				emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
-				emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
+				emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
+				emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
 			}
-		}
-		if nBar >= lookbackSlow+lookbackFast {
-			nSignal = nBar - lookbackSlow - lookbackFast
-			halfDen = float64(0.5 * emaFastDen)
-			if halfDen > 0.0 {
-				smiValue = float64(100.0*emaFastNum) / halfDen
-			} else {
-				smiValue = 0.0
-			}
-			if nSignal < optInSignalPeriod {
-				sumSignal = sumSignal + smiValue
-				if nSignal == optInSignalPeriod-1 {
-					prevSignal = sumSignal / float64(optInSignalPeriod)
+			if nBar >= lookbackSlow {
+				nFast = nBar - lookbackSlow
+				if nFast < optInFastPeriod {
+					sumFastNum = sumFastNum + emaSlowNum
+					sumFastDen = sumFastDen + emaSlowDen
+					if nFast == optInFastPeriod-1 {
+						emaFastNum = sumFastNum / float64(optInFastPeriod)
+						emaFastDen = sumFastDen / float64(optInFastPeriod)
+					}
+				} else {
+					emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
+					emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
 				}
-			} else {
-				prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
 			}
+			if nBar >= lookbackSlow+lookbackFast {
+				nSignal = nBar - lookbackSlow - lookbackFast
+				halfDen = float64(0.5 * emaFastDen)
+				if halfDen > 0.0 {
+					smiValue = float64(100.0*emaFastNum) / halfDen
+				} else {
+					smiValue = 0.0
+				}
+				if nSignal < optInSignalPeriod {
+					sumSignal = sumSignal + smiValue
+					if nSignal == optInSignalPeriod-1 {
+						prevSignal = sumSignal / float64(optInSignalPeriod)
+					}
+				} else {
+					prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
+				}
+			}
+			nBar = nBar + 1
+			trailingIdx = trailingIdx + 1
+			today = today + 1
 		}
-		nBar = nBar + 1
-		trailingIdx = trailingIdx + 1
-		today = today + 1
 	}
 	outSMI[0] = smiValue
 	outSMISignal[0] = prevSignal
@@ -925,101 +1007,187 @@ func (c *Core) smiOpenImpl(sp *SMIStream, inHigh, inLow, inClose []float64, star
 	lowest = 0.0
 	highestIdx = -1
 	lowestIdx = -1
-	trailingIdx = startIdx - lookbackTotal
-	today = trailingIdx + (optInTimePeriod - 1)
-	nBar = 0
-	for today <= startIdx {
-		tmp = inLow[today]
-		if lowestIdx < trailingIdx {
-			lowestIdx = trailingIdx
-			lowest = inLow[lowestIdx]
-			i = lowestIdx
-			i++
-		scan4:
-			if i <= today {
-				tmp = inLow[i]
-				if tmp < lowest {
-					lowestIdx = i
-					lowest = tmp
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		today = optInTimePeriod - 1
+		nBar = 0
+		for today <= startIdx {
+			tmp = inLow[today]
+			if lowestIdx < trailingIdx {
+				lowestIdx = trailingIdx
+				lowest = inLow[lowestIdx]
+				i = lowestIdx
+				i++
+			scan4:
+				if i <= today {
+					tmp = inLow[i]
+					if tmp < lowest {
+						lowestIdx = i
+						lowest = tmp
+						i++
+						goto scan4
+					}
 					i++
 					goto scan4
 				}
-				i++
-				goto scan4
+			} else if tmp <= lowest {
+				lowestIdx = today
+				lowest = tmp
 			}
-		} else if tmp <= lowest {
-			lowestIdx = today
-			lowest = tmp
-		}
-		tmp = inHigh[today]
-		if highestIdx < trailingIdx {
-			highestIdx = trailingIdx
-			highest = inHigh[highestIdx]
-			i = highestIdx
-			i++
-		scan5:
-			if i <= today {
-				tmp = inHigh[i]
-				if tmp > highest {
-					highestIdx = i
-					highest = tmp
+			tmp = inHigh[today]
+			if highestIdx < trailingIdx {
+				highestIdx = trailingIdx
+				highest = inHigh[highestIdx]
+				i = highestIdx
+				i++
+			scan5:
+				if i <= today {
+					tmp = inHigh[i]
+					if tmp > highest {
+						highestIdx = i
+						highest = tmp
+						i++
+						goto scan5
+					}
 					i++
 					goto scan5
 				}
+			} else if tmp >= highest {
+				highestIdx = today
+				highest = tmp
+			}
+			den = highest - lowest
+			num = inClose[today] - float64((highest+lowest)*0.5)
+			if nBar == 0 {
+				emaSlowNum = num
+				emaSlowDen = den
+			} else {
+				emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
+				emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
+			}
+			if nBar >= startIdx-lookbackTotal+lookbackSlow {
+				if nBar == startIdx-lookbackTotal+lookbackSlow {
+					emaFastNum = emaSlowNum
+					emaFastDen = emaSlowDen
+				} else {
+					emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
+					emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
+				}
+			}
+			if nBar >= startIdx-lookbackTotal+lookbackSlow+lookbackFast {
+				halfDen = float64(0.5 * emaFastDen)
+				if halfDen > 0.0 {
+					smiValue = float64(100.0*emaFastNum) / halfDen
+				} else {
+					smiValue = 0.0
+				}
+				if nBar == startIdx-lookbackTotal+lookbackSlow+lookbackFast {
+					prevSignal = smiValue
+				} else {
+					prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
+				}
+			}
+			nBar = nBar + 1
+			trailingIdx = trailingIdx + 1
+			today = today + 1
+		}
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		today = trailingIdx + (optInTimePeriod - 1)
+		nBar = 0
+		for today <= startIdx {
+			tmp = inLow[today]
+			if lowestIdx < trailingIdx {
+				lowestIdx = trailingIdx
+				lowest = inLow[lowestIdx]
+				i = lowestIdx
 				i++
-				goto scan5
+			scan6:
+				if i <= today {
+					tmp = inLow[i]
+					if tmp < lowest {
+						lowestIdx = i
+						lowest = tmp
+						i++
+						goto scan6
+					}
+					i++
+					goto scan6
+				}
+			} else if tmp <= lowest {
+				lowestIdx = today
+				lowest = tmp
 			}
-		} else if tmp >= highest {
-			highestIdx = today
-			highest = tmp
-		}
-		den = highest - lowest
-		num = inClose[today] - float64((highest+lowest)*0.5)
-		if nBar < optInSlowPeriod {
-			sumSlowNum = sumSlowNum + num
-			sumSlowDen = sumSlowDen + den
-			if nBar == optInSlowPeriod-1 {
-				emaSlowNum = sumSlowNum / float64(optInSlowPeriod)
-				emaSlowDen = sumSlowDen / float64(optInSlowPeriod)
+			tmp = inHigh[today]
+			if highestIdx < trailingIdx {
+				highestIdx = trailingIdx
+				highest = inHigh[highestIdx]
+				i = highestIdx
+				i++
+			scan7:
+				if i <= today {
+					tmp = inHigh[i]
+					if tmp > highest {
+						highestIdx = i
+						highest = tmp
+						i++
+						goto scan7
+					}
+					i++
+					goto scan7
+				}
+			} else if tmp >= highest {
+				highestIdx = today
+				highest = tmp
 			}
-		} else {
-			emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
-			emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
-		}
-		if nBar >= lookbackSlow {
-			nFast = nBar - lookbackSlow
-			if nFast < optInFastPeriod {
-				sumFastNum = sumFastNum + emaSlowNum
-				sumFastDen = sumFastDen + emaSlowDen
-				if nFast == optInFastPeriod-1 {
-					emaFastNum = sumFastNum / float64(optInFastPeriod)
-					emaFastDen = sumFastDen / float64(optInFastPeriod)
+			den = highest - lowest
+			num = inClose[today] - float64((highest+lowest)*0.5)
+			if nBar < optInSlowPeriod {
+				sumSlowNum = sumSlowNum + num
+				sumSlowDen = sumSlowDen + den
+				if nBar == optInSlowPeriod-1 {
+					emaSlowNum = sumSlowNum / float64(optInSlowPeriod)
+					emaSlowDen = sumSlowDen / float64(optInSlowPeriod)
 				}
 			} else {
-				emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
-				emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
+				emaSlowNum = math.FMA(betaSlow, emaSlowNum, float64(kSlow*num))
+				emaSlowDen = math.FMA(betaSlow, emaSlowDen, float64(kSlow*den))
 			}
-		}
-		if nBar >= lookbackSlow+lookbackFast {
-			nSignal = nBar - lookbackSlow - lookbackFast
-			halfDen = float64(0.5 * emaFastDen)
-			if halfDen > 0.0 {
-				smiValue = float64(100.0*emaFastNum) / halfDen
-			} else {
-				smiValue = 0.0
-			}
-			if nSignal < optInSignalPeriod {
-				sumSignal = sumSignal + smiValue
-				if nSignal == optInSignalPeriod-1 {
-					prevSignal = sumSignal / float64(optInSignalPeriod)
+			if nBar >= lookbackSlow {
+				nFast = nBar - lookbackSlow
+				if nFast < optInFastPeriod {
+					sumFastNum = sumFastNum + emaSlowNum
+					sumFastDen = sumFastDen + emaSlowDen
+					if nFast == optInFastPeriod-1 {
+						emaFastNum = sumFastNum / float64(optInFastPeriod)
+						emaFastDen = sumFastDen / float64(optInFastPeriod)
+					}
+				} else {
+					emaFastNum = math.FMA(betaFast, emaFastNum, float64(kFast*emaSlowNum))
+					emaFastDen = math.FMA(betaFast, emaFastDen, float64(kFast*emaSlowDen))
 				}
-			} else {
-				prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
 			}
+			if nBar >= lookbackSlow+lookbackFast {
+				nSignal = nBar - lookbackSlow - lookbackFast
+				halfDen = float64(0.5 * emaFastDen)
+				if halfDen > 0.0 {
+					smiValue = float64(100.0*emaFastNum) / halfDen
+				} else {
+					smiValue = 0.0
+				}
+				if nSignal < optInSignalPeriod {
+					sumSignal = sumSignal + smiValue
+					if nSignal == optInSignalPeriod-1 {
+						prevSignal = sumSignal / float64(optInSignalPeriod)
+					}
+				} else {
+					prevSignal = math.FMA(betaSignal, prevSignal, float64(kSignal*smiValue))
+				}
+			}
+			nBar = nBar + 1
+			trailingIdx = trailingIdx + 1
+			today = today + 1
 		}
-		nBar = nBar + 1
-		trailingIdx = trailingIdx + 1
-		today = today + 1
 	}
 	outSMI[0*outStride] = smiValue
 	outSMISignal[0*outStride] = prevSignal
@@ -1031,17 +1199,17 @@ func (c *Core) smiOpenImpl(sp *SMIStream, inHigh, inLow, inClose []float64, star
 			lowest = inLow[lowestIdx]
 			i = lowestIdx
 			i++
-		scan6:
+		scan8:
 			if i <= today {
 				tmp = inLow[i]
 				if tmp < lowest {
 					lowestIdx = i
 					lowest = tmp
 					i++
-					goto scan6
+					goto scan8
 				}
 				i++
-				goto scan6
+				goto scan8
 			}
 		} else if tmp <= lowest {
 			lowestIdx = today
@@ -1053,17 +1221,17 @@ func (c *Core) smiOpenImpl(sp *SMIStream, inHigh, inLow, inClose []float64, star
 			highest = inHigh[highestIdx]
 			i = highestIdx
 			i++
-		scan7:
+		scan9:
 			if i <= today {
 				tmp = inHigh[i]
 				if tmp > highest {
 					highestIdx = i
 					highest = tmp
 					i++
-					goto scan7
+					goto scan9
 				}
 				i++
-				goto scan7
+				goto scan9
 			}
 		} else if tmp >= highest {
 			highestIdx = today

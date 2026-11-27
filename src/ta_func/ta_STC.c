@@ -60,6 +60,7 @@
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
  *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
@@ -327,26 +328,37 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
     */
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lineStart = startIdx - (lookbackTotal - lookbackSlow);
-   today = startIdx - lookbackTotal;
-   tempReal = 0.0;
-   i = optInSlowPeriod;
-   while( i-- > 0 )
+   /* The first-bar seed does not move with startIdx: both EMA start on
+    * inReal[0]. The chain still starts at lineStart.
+    */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inReal[today++];
-   }
-   prevSlow = tempReal / optInSlowPeriod;
-   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
-   prevFast = 0.0;
-   i = optInFastPeriod;
-   while( i-- > 0 )
+      prevSlow = inReal[0];
+      prevFast = inReal[0];
+      today = 1;
+   } else 
    {
-      prevFast += inReal[fastToday++];
-   }
-   prevFast = prevFast / optInFastPeriod;
-   while( today < fastToday )
-   {
-      tempReal = inReal[today++];
-      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      today = startIdx - lookbackTotal;
+      tempReal = 0.0;
+      i = optInSlowPeriod;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 )
+      {
+         prevFast += inReal[fastToday++];
+      }
+      prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday )
+      {
+         tempReal = inReal[today++];
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      }
    }
    while( today <= lineStart )
    {
@@ -886,26 +898,34 @@ TA_RetCode TA_S_STC( int    startIdx,
    lastIdx = optInCyclePeriod - 1;
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lineStart = startIdx - (lookbackTotal - lookbackSlow);
-   today = startIdx - lookbackTotal;
-   tempReal = 0.0;
-   i = optInSlowPeriod;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += (double)inReal[today++];
-   }
-   prevSlow = tempReal / optInSlowPeriod;
-   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
-   prevFast = 0.0;
-   i = optInFastPeriod;
-   while( i-- > 0 )
+      prevSlow = (double)inReal[0];
+      prevFast = (double)inReal[0];
+      today = 1;
+   } else 
    {
-      prevFast += (double)inReal[fastToday++];
-   }
-   prevFast = prevFast / optInFastPeriod;
-   while( today < fastToday )
-   {
-      tempReal = (double)inReal[today++];
-      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      today = startIdx - lookbackTotal;
+      tempReal = 0.0;
+      i = optInSlowPeriod;
+      while( i-- > 0 )
+      {
+         tempReal += (double)inReal[today++];
+      }
+      prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 )
+      {
+         prevFast += (double)inReal[fastToday++];
+      }
+      prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday )
+      {
+         tempReal = (double)inReal[today++];
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      }
    }
    while( today <= lineStart )
    {
@@ -1683,26 +1703,37 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **str
        */
       lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 )
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inReal[0]. The chain still starts at lineStart.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 )
+         prevSlow = inReal[0];
+         prevFast = inReal[0];
+         today = 1;
+      } else 
       {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday )
-      {
-         tempReal = inReal[today++];
-         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 )
+         {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday )
+         {
+            tempReal = inReal[today++];
+            prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart )
       {

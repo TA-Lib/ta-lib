@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #361).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_ERI_Lookback( int optInTimePeriod )
@@ -181,15 +182,22 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
    {
       beta = 1.0 - k;
    }
-   /* Seed: ema.c's DEFAULT arm, op for op. */
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inClose[today++];
+      prevMA = inClose[0];
+      today = 1;
+   } else 
+   {
+      /* Seed: ema.c's DEFAULT arm, op for op. */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inClose[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    /* The warm-up also consumes the EMA unstable period. */
    while( today <= startIdx )
    {
@@ -302,14 +310,21 @@ TA_RetCode TA_S_ERI( int    startIdx,
    {
       beta = 1.0 - k;
    }
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += (double)inClose[today++];
+      prevMA = (double)inClose[0];
+      today = 1;
+   } else 
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += (double)inClose[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevMA = fma(beta, prevMA, k * (double)inClose[today++]);
@@ -533,15 +548,22 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **str
       {
          beta = 1.0 - k;
       }
-      /* Seed: ema.c's DEFAULT arm, op for op. */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         tempReal += inClose[today++];
+         prevMA = inClose[0];
+         today = 1;
+      } else 
+      {
+         /* Seed: ema.c's DEFAULT arm, op for op. */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inClose[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       /* The warm-up also consumes the EMA unstable period. */
       while( today <= startIdx )
       {

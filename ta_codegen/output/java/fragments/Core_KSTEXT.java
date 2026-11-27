@@ -12,6 +12,7 @@
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
  *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -222,6 +223,10 @@
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -354,44 +359,59 @@
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
-      OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       rocNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr1.begIdx();
       kstNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       rocNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx.value = _xr4.begIdx();
       rocNb.value = _xr4.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr5.begIdx();
       legNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx.value = _xr6.begIdx();
       rocNb.value = _xr6.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr7.begIdx();
       legNb.value = _xr7.count();
       retCode = RetCode.SUCCESS;
@@ -434,6 +454,10 @@
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -558,44 +582,56 @@
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
-      OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       rocNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr1.begIdx();
       kstNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       rocNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx.value = _xr4.begIdx();
       rocNb.value = _xr4.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr5.begIdx();
       legNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx.value = _xr6.begIdx();
       rocNb.value = _xr6.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr7.begIdx();
       legNb.value = _xr7.count();
       retCode = RetCode.SUCCESS;
@@ -1102,6 +1138,10 @@
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -1245,28 +1285,43 @@
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
       /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub0 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
+      RocStream sub0 = rocOpenAndFillInternal(inReal, rocStart1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub1 = maOpenInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA1Period, optInROCMAType);
-      OutRange _xr0 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      MaStream sub1 = maOpenInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart1, optInMA1Period, optInROCMAType);
+      OutRange _xr0 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       kstNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub2 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub2 = rocOpenAndFillInternal(inReal, rocStart2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub3 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA2Period, optInROCMAType);
-      OutRange _xr1 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      MaStream sub3 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart2, optInMA2Period, optInROCMAType);
+      OutRange _xr1 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr1.begIdx();
       legNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
@@ -1282,12 +1337,12 @@
       }
       /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub4 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub4 = rocOpenAndFillInternal(inReal, rocStart3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub5 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA3Period, optInROCMAType);
-      OutRange _xr2 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      MaStream sub5 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart3, optInMA3Period, optInROCMAType);
+      OutRange _xr2 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       legNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -1303,12 +1358,12 @@
       }
       /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub6 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub6 = rocOpenAndFillInternal(inReal, rocStart4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub7 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA4Period, optInROCMAType);
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      MaStream sub7 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart4, optInMA4Period, optInROCMAType);
+      OutRange _xr3 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;

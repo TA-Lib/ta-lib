@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #358).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -162,14 +164,19 @@ export function cviImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - optInK_1;
   }
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inHigh[today] - inLow[today];
-    today += 1;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA = inHigh[0] - inLow[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inHigh[today] - inLow[today];
+      today += 1;
+    }
+    prevEMA = tempReal / optInTimePeriod;
   }
-  prevEMA = tempReal / optInTimePeriod;
   /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
    * value from the seed bar on leaves exactly the lagged terms the output
    * loop reads.
@@ -714,14 +721,19 @@ function cviOpenImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - optInK_1;
   }
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inHigh[today] - inLow[today];
-    today += 1;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA = inHigh[0] - inLow[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inHigh[today] - inLow[today];
+      today += 1;
+    }
+    prevEMA = tempReal / optInTimePeriod;
   }
-  prevEMA = tempReal / optInTimePeriod;
   /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
    * value from the seed bar on leaves exactly the lagged terms the output
    * loop reads.

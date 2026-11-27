@@ -453,7 +453,6 @@ impl Core {
                         tempReal2 = _w1[_wk];
                         _w2[_wk] = tempReal2 + tempReal;
                         _w0[_wk] = tempReal2 - tempReal;
-                        i += 1;
                     }
                 }
             } else {
@@ -468,7 +467,6 @@ impl Core {
                         tempReal2 = _w1[_wk];
                         _w2[_wk] = fmadd!(tempReal, optInNbDevUp, tempReal2);
                         _w0[_wk] = tempReal2 - tempReal * optInNbDevDn;
-                        i += 1;
                     }
                 }
             }

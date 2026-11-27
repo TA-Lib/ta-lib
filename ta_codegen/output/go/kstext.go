@@ -139,6 +139,10 @@ func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Per
 	var lookbackSignal int32
 	var lookbackMA int32
 	var sigStart int32
+	var rocStart1 int32
+	var rocStart2 int32
+	var rocStart3 int32
+	var rocStart4 int32
 	var lookbackMA1 int32
 	var lookbackMA2 int32
 	var lookbackMA3 int32
@@ -265,49 +269,61 @@ func (c *Core) kstextImpl(startIdx, endIdx int32, inReal []float64, optInROC1Per
 	if lookbackMA4 > lookbackMA {
 		lookbackMA = lookbackMA4
 	}
-	tempInteger = endIdx - sigStart + 1 + lookbackMA
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		rocStart1 = optInROC1Period
+		rocStart2 = optInROC2Period
+		rocStart3 = optInROC3Period
+		rocStart4 = optInROC4Period
+		tempInteger = endIdx + 1
+	} else {
+		rocStart1 = sigStart - lookbackMA1
+		rocStart2 = sigStart - lookbackMA2
+		rocStart3 = sigStart - lookbackMA3
+		rocStart4 = sigStart - lookbackMA4
+		tempInteger = endIdx - sigStart + 1 + lookbackMA
+	}
 	kstBuffer = make([]float64, tempInteger)
 	tempBuffer = make([]float64, tempInteger)
-	_X0, _E0 := c.ROC(int(sigStart-lookbackMA1), int(endIdx), inReal, int(optInROC1Period), kstBuffer)
+	_X0, _E0 := c.ROC(int(rocStart1), int(endIdx), inReal, int(optInROC1Period), kstBuffer)
 	if _E0 != nil {
 		return _E0.(RetCode)
 	}
 	rocNb = int32(_X0.NBElement)
-	_X1, _E1 := c.MA(0, int(rocNb-1), kstBuffer, int(optInMA1Period), MAType(optInROCMAType), kstBuffer)
+	_X1, _E1 := c.MA(int(sigStart-rocStart1), int(rocNb-1), kstBuffer, int(optInMA1Period), MAType(optInROCMAType), kstBuffer)
 	if _E1 != nil {
 		return _E1.(RetCode)
 	}
 	kstNb = int32(_X1.NBElement)
-	_X2, _E2 := c.ROC(int(sigStart-lookbackMA2), int(endIdx), inReal, int(optInROC2Period), tempBuffer)
+	_X2, _E2 := c.ROC(int(rocStart2), int(endIdx), inReal, int(optInROC2Period), tempBuffer)
 	if _E2 != nil {
 		return _E2.(RetCode)
 	}
 	rocNb = int32(_X2.NBElement)
-	_, _E3 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA2Period), MAType(optInROCMAType), tempBuffer)
+	_, _E3 := c.MA(int(sigStart-rocStart2), int(rocNb-1), tempBuffer, int(optInMA2Period), MAType(optInROCMAType), tempBuffer)
 	if _E3 != nil {
 		return _E3.(RetCode)
 	}
 	for i = 0; i < kstNb; i += 1 {
 		kstBuffer[i] = kstBuffer[i] + float64(2.0*tempBuffer[i])
 	}
-	_X4, _E4 := c.ROC(int(sigStart-lookbackMA3), int(endIdx), inReal, int(optInROC3Period), tempBuffer)
+	_X4, _E4 := c.ROC(int(rocStart3), int(endIdx), inReal, int(optInROC3Period), tempBuffer)
 	if _E4 != nil {
 		return _E4.(RetCode)
 	}
 	rocNb = int32(_X4.NBElement)
-	_, _E5 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA3Period), MAType(optInROCMAType), tempBuffer)
+	_, _E5 := c.MA(int(sigStart-rocStart3), int(rocNb-1), tempBuffer, int(optInMA3Period), MAType(optInROCMAType), tempBuffer)
 	if _E5 != nil {
 		return _E5.(RetCode)
 	}
 	for i = 0; i < kstNb; i += 1 {
 		kstBuffer[i] = math.FMA(3.0, tempBuffer[i], kstBuffer[i])
 	}
-	_X6, _E6 := c.ROC(int(sigStart-lookbackMA4), int(endIdx), inReal, int(optInROC4Period), tempBuffer)
+	_X6, _E6 := c.ROC(int(rocStart4), int(endIdx), inReal, int(optInROC4Period), tempBuffer)
 	if _E6 != nil {
 		return _E6.(RetCode)
 	}
 	rocNb = int32(_X6.NBElement)
-	_, _E7 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA4Period), MAType(optInROCMAType), tempBuffer)
+	_, _E7 := c.MA(int(sigStart-rocStart4), int(rocNb-1), tempBuffer, int(optInMA4Period), MAType(optInROCMAType), tempBuffer)
 	if _E7 != nil {
 		return _E7.(RetCode)
 	}
@@ -690,6 +706,10 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 	var lookbackSignal int32
 	var lookbackMA int32
 	var sigStart int32
+	var rocStart1 int32
+	var rocStart2 int32
+	var rocStart3 int32
+	var rocStart4 int32
 	var lookbackMA1 int32
 	var lookbackMA2 int32
 	var lookbackMA3 int32
@@ -839,32 +859,44 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 	if lookbackMA4 > lookbackMA {
 		lookbackMA = lookbackMA4
 	}
-	tempInteger = endIdx - sigStart + 1 + lookbackMA
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		rocStart1 = optInROC1Period
+		rocStart2 = optInROC2Period
+		rocStart3 = optInROC3Period
+		rocStart4 = optInROC4Period
+		tempInteger = endIdx + 1
+	} else {
+		rocStart1 = sigStart - lookbackMA1
+		rocStart2 = sigStart - lookbackMA2
+		rocStart3 = sigStart - lookbackMA3
+		rocStart4 = sigStart - lookbackMA4
+		tempInteger = endIdx - sigStart + 1 + lookbackMA
+	}
 	kstBuffer = make([]float64, tempInteger)
 	tempBuffer = make([]float64, tempInteger)
-	sub0, _E0 := c.rocOpenAndFillInternal(inReal, sigStart-lookbackMA1, optInROC1Period, &tempBegIdx, &rocNb, kstBuffer)
+	sub0, _E0 := c.rocOpenAndFillInternal(inReal, rocStart1, optInROC1Period, &tempBegIdx, &rocNb, kstBuffer)
 	if _E0 != nil {
 		return _E0.(RetCode)
 	}
-	sub1, _E1 := c.maOpenInternal(kstBuffer[:rocNb-1+1], 0, optInMA1Period, optInROCMAType)
+	sub1, _E1 := c.maOpenInternal(kstBuffer[:rocNb-1+1], sigStart-rocStart1, optInMA1Period, optInROCMAType)
 	if _E1 != nil {
 		return _E1.(RetCode)
 	}
-	_X9, _E9 := c.MA(0, int(rocNb-1), kstBuffer, int(optInMA1Period), MAType(optInROCMAType), kstBuffer)
+	_X9, _E9 := c.MA(int(sigStart-rocStart1), int(rocNb-1), kstBuffer, int(optInMA1Period), MAType(optInROCMAType), kstBuffer)
 	if _E9 != nil {
 		return _E9.(RetCode)
 	}
 	tempBegIdx = int32(_X9.BegIdx)
 	kstNb = int32(_X9.NBElement)
-	sub2, _E2 := c.rocOpenAndFillInternal(inReal, sigStart-lookbackMA2, optInROC2Period, &tempBegIdx, &rocNb, tempBuffer)
+	sub2, _E2 := c.rocOpenAndFillInternal(inReal, rocStart2, optInROC2Period, &tempBegIdx, &rocNb, tempBuffer)
 	if _E2 != nil {
 		return _E2.(RetCode)
 	}
-	sub3, _E3 := c.maOpenInternal(tempBuffer[:rocNb-1+1], 0, optInMA2Period, optInROCMAType)
+	sub3, _E3 := c.maOpenInternal(tempBuffer[:rocNb-1+1], sigStart-rocStart2, optInMA2Period, optInROCMAType)
 	if _E3 != nil {
 		return _E3.(RetCode)
 	}
-	_X10, _E10 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA2Period), MAType(optInROCMAType), tempBuffer)
+	_X10, _E10 := c.MA(int(sigStart-rocStart2), int(rocNb-1), tempBuffer, int(optInMA2Period), MAType(optInROCMAType), tempBuffer)
 	if _E10 != nil {
 		return _E10.(RetCode)
 	}
@@ -880,15 +912,15 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 	for i = 0; i < kstNb; i += 1 {
 		kstBuffer[i] = kstBuffer[i] + float64(2.0*tempBuffer[i])
 	}
-	sub4, _E4 := c.rocOpenAndFillInternal(inReal, sigStart-lookbackMA3, optInROC3Period, &tempBegIdx, &rocNb, tempBuffer)
+	sub4, _E4 := c.rocOpenAndFillInternal(inReal, rocStart3, optInROC3Period, &tempBegIdx, &rocNb, tempBuffer)
 	if _E4 != nil {
 		return _E4.(RetCode)
 	}
-	sub5, _E5 := c.maOpenInternal(tempBuffer[:rocNb-1+1], 0, optInMA3Period, optInROCMAType)
+	sub5, _E5 := c.maOpenInternal(tempBuffer[:rocNb-1+1], sigStart-rocStart3, optInMA3Period, optInROCMAType)
 	if _E5 != nil {
 		return _E5.(RetCode)
 	}
-	_X11, _E11 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA3Period), MAType(optInROCMAType), tempBuffer)
+	_X11, _E11 := c.MA(int(sigStart-rocStart3), int(rocNb-1), tempBuffer, int(optInMA3Period), MAType(optInROCMAType), tempBuffer)
 	if _E11 != nil {
 		return _E11.(RetCode)
 	}
@@ -904,15 +936,15 @@ func (c *Core) kstextOpenImpl(sp *KSTEXTStream, inReal []float64, startIdx, optI
 	for i = 0; i < kstNb; i += 1 {
 		kstBuffer[i] = math.FMA(3.0, tempBuffer[i], kstBuffer[i])
 	}
-	sub6, _E6 := c.rocOpenAndFillInternal(inReal, sigStart-lookbackMA4, optInROC4Period, &tempBegIdx, &rocNb, tempBuffer)
+	sub6, _E6 := c.rocOpenAndFillInternal(inReal, rocStart4, optInROC4Period, &tempBegIdx, &rocNb, tempBuffer)
 	if _E6 != nil {
 		return _E6.(RetCode)
 	}
-	sub7, _E7 := c.maOpenInternal(tempBuffer[:rocNb-1+1], 0, optInMA4Period, optInROCMAType)
+	sub7, _E7 := c.maOpenInternal(tempBuffer[:rocNb-1+1], sigStart-rocStart4, optInMA4Period, optInROCMAType)
 	if _E7 != nil {
 		return _E7.(RetCode)
 	}
-	_X12, _E12 := c.MA(0, int(rocNb-1), tempBuffer, int(optInMA4Period), MAType(optInROCMAType), tempBuffer)
+	_X12, _E12 := c.MA(int(sigStart-rocStart4), int(rocNb-1), tempBuffer, int(optInMA4Period), MAType(optInROCMAType), tempBuffer)
 	if _E12 != nil {
 		return _E12.(RetCode)
 	}

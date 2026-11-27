@@ -43,8 +43,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #361).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -201,14 +203,19 @@ export function eriImpl(
   if (beta < 0.5) {
     beta = 1.0 - k;
   }
-  /* Seed: ema.c's DEFAULT arm, op for op. */
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inClose[today++];
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevMA = inClose[0];
+    today = 1;
+  } else {
+    /* Seed: ema.c's DEFAULT arm, op for op. */
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inClose[today++];
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   /* The warm-up also consumes the EMA unstable period. */
   while (today <= startIdx) {
     prevMA = fma(beta, prevMA, k * inClose[today++]);
@@ -849,14 +856,19 @@ function eriOpenImpl(
     if (beta < 0.5) {
       beta = 1.0 - k;
     }
-    /* Seed: ema.c's DEFAULT arm, op for op. */
-    today = startIdx - lookbackTotal;
-    i = optInTimePeriod;
-    tempReal = 0.0;
-    while (i-- > 0) {
-      tempReal += inClose[today++];
+    if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+      prevMA = inClose[0];
+      today = 1;
+    } else {
+      /* Seed: ema.c's DEFAULT arm, op for op. */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while (i-- > 0) {
+        tempReal += inClose[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
     }
-    prevMA = tempReal / optInTimePeriod;
     /* The warm-up also consumes the EMA unstable period. */
     while (today <= startIdx) {
       prevMA = fma(beta, prevMA, k * inClose[today++]);

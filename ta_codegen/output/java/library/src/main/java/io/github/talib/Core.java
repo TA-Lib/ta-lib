@@ -102910,6 +102910,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #358).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -103038,14 +103039,19 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inHigh[today] - inLow[today];
-         today += 1;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA = inHigh[0] - inLow[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inHigh[today] - inLow[today];
+            today += 1;
+         }
+         prevEMA = tempReal / optInTimePeriod;
       }
-      prevEMA = tempReal / optInTimePeriod;
       /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
        * value from the seed bar on leaves exactly the lagged terms the output
        * loop reads.
@@ -103139,14 +103145,19 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inHigh[today] - (double)inLow[today];
-         today += 1;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA = (double)inHigh[0] - (double)inLow[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inHigh[today] - (double)inLow[today];
+            today += 1;
+         }
+         prevEMA = tempReal / optInTimePeriod;
       }
-      prevEMA = tempReal / optInTimePeriod;
       emaRing[emaRing_Idx] = prevEMA;
       emaRing_Idx++;
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
@@ -103600,14 +103611,19 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inHigh[today] - inLow[today];
-         today += 1;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA = inHigh[0] - inLow[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inHigh[today] - inLow[today];
+            today += 1;
+         }
+         prevEMA = tempReal / optInTimePeriod;
       }
-      prevEMA = tempReal / optInTimePeriod;
       /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
        * value from the seed bar on leaves exactly the lagged terms the output
        * loop reads.
@@ -106048,6 +106064,7 @@ public final class Core {
  *  100626 KL,CC  Initial version (#479).
  *  101026 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -106289,59 +106306,108 @@ public final class Core {
       } else {
          rsiValue = 50.0;
       }
-      /* Warm-up. Feeds every RSI value before startIdx through the chain and
-       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-       * first bar whose signal window is full is startIdx, by construction of
-       * the lookback.
+      /* The first-bar seed: each EMA starts on its feeder's first value where
+       * the default seeds it. The RSI keeps its own seed and window.
        */
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         /* Warm-up. Feeds every RSI value before startIdx through the chain and
+          * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+          * first bar whose signal window is full is startIdx, by construction of
+          * the lookback.
+          */
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       /* The first output. Every stage is past its seed here, even at periods
        * 2/2/2/2, so the store below and the one in the stable loop are
@@ -106516,54 +106582,100 @@ public final class Core {
       } else {
          rsiValue = 50.0;
       }
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = (double)inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = (double)inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = (double)inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
       ema2 = Math.fma(beta2, ema2, k2 * ema1);
@@ -107163,59 +107275,108 @@ public final class Core {
       } else {
          rsiValue = 50.0;
       }
-      /* Warm-up. Feeds every RSI value before startIdx through the chain and
-       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-       * first bar whose signal window is full is startIdx, by construction of
-       * the lookback.
+      /* The first-bar seed: each EMA starts on its feeder's first value where
+       * the default seeds it. The RSI keeps its own seed and window.
        */
-      while( rsiBar < startIdx ) {
-         if( nRsi >= skipRSI ) {
-            n1 = nRsi - skipRSI;
-            if( n1 < optInFirstPeriod ) {
-               sum1 = sum1 + rsiValue;
-               if( n1 == optInFirstPeriod - 1 ) {
-                  ema1 = sum1 / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 == 0 ) {
+                  ema1 = rsiValue;
+               } else {
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-            } else {
-               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 == 0 ) {
+                     ema2 = ema1;
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
+               }
             }
-            if( n1 >= lookbackEMA1 ) {
-               n2 = n1 - lookbackEMA1;
-               if( n2 < optInSecondPeriod ) {
-                  sum2 = sum2 + ema1;
-                  if( n2 == optInSecondPeriod - 1 ) {
-                     ema2 = sum2 / optInSecondPeriod;
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
+         }
+      } else {
+         /* Warm-up. Feeds every RSI value before startIdx through the chain and
+          * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+          * first bar whose signal window is full is startIdx, by construction of
+          * the lookback.
+          */
+         while( rsiBar < startIdx ) {
+            if( nRsi >= skipRSI ) {
+               n1 = nRsi - skipRSI;
+               if( n1 < optInFirstPeriod ) {
+                  sum1 = sum1 + rsiValue;
+                  if( n1 == optInFirstPeriod - 1 ) {
+                     ema1 = sum1 / optInFirstPeriod;
                   }
                } else {
-                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
                }
-               if( n2 >= lookbackEMA2 ) {
-                  dsBuffer[dsBuffer_Idx] = ema2;
-                  sumSignal = sumSignal + ema2;
-                  dsBuffer_Idx++;
-                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               if( n1 >= lookbackEMA1 ) {
+                  n2 = n1 - lookbackEMA1;
+                  if( n2 < optInSecondPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInSecondPeriod - 1 ) {
+                        ema2 = sum2 / optInSecondPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                  }
+                  if( n2 >= lookbackEMA2 ) {
+                     dsBuffer[dsBuffer_Idx] = ema2;
+                     sumSignal = sumSignal + ema2;
+                     dsBuffer_Idx++;
+                     if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                  }
                }
             }
+            nRsi = nRsi + 1;
+            tempValue1 = inReal[today];
+            today = today + 1;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
+            tempValue1 = prevGain + prevLoss;
+            if( tempValue1 > 0.0 ) {
+               rsiValue = 100.0 * (prevGain / tempValue1);
+            } else {
+               rsiValue = 50.0;
+            }
+            rsiBar = rsiBar + 1;
          }
-         nRsi = nRsi + 1;
-         tempValue1 = inReal[today];
-         today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= (double)(optInTimePeriod - 1);
-         prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-         prevGain += gainDelta;
-         prevLoss += gainDelta - tempValue2;
-         prevLoss *= invPeriod;
-         prevGain *= invPeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( tempValue1 > 0.0 ) {
-            rsiValue = 100.0 * (prevGain / tempValue1);
-         } else {
-            rsiValue = 50.0;
-         }
-         rsiBar = rsiBar + 1;
       }
       /* The first output. Every stage is past its seed here, even at periods
        * 2/2/2/2, so the store below and the one in the stable loop are
@@ -109500,6 +109661,7 @@ public final class Core {
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  081226 KL   Initial version (#206).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -109647,21 +109809,29 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      /* The first EMA value is a simple average of the first 'period' force
-       * values; it then seeds the recursion. This is ema.c's seeding applied
-       * to the force series rather than to the input array.
-       */
-      today = startIdx - lookbackTotal + 1;
-      prevClose = inClose[today - 1];
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         force = (inClose[today] - prevClose) * inVolume[today];
-         prevClose = inClose[today];
-         tempReal += force;
-         today = today + 1;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevClose = inClose[0];
+         force = (inClose[1] - prevClose) * inVolume[1];
+         prevClose = inClose[1];
+         prevMA = force;
+         today = 2;
+      } else {
+         /* The first EMA value is a simple average of the first 'period' force
+          * values; it then seeds the recursion. This is ema.c's seeding applied
+          * to the force series rather than to the input array.
+          */
+         today = startIdx - lookbackTotal + 1;
+         prevClose = inClose[today - 1];
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            force = (inClose[today] - prevClose) * inVolume[today];
+            prevClose = inClose[today];
+            tempReal += force;
+            today = today + 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          force = (inClose[today] - prevClose) * inVolume[today];
          prevClose = inClose[today];
@@ -109741,17 +109911,25 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal + 1;
-      prevClose = (double)inClose[today - 1];
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
-         prevClose = (double)inClose[today];
-         tempReal += force;
-         today = today + 1;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevClose = (double)inClose[0];
+         force = ((double)inClose[1] - prevClose) * (double)inVolume[1];
+         prevClose = (double)inClose[1];
+         prevMA = force;
+         today = 2;
+      } else {
+         today = startIdx - lookbackTotal + 1;
+         prevClose = (double)inClose[today - 1];
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+            prevClose = (double)inClose[today];
+            tempReal += force;
+            today = today + 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
          prevClose = (double)inClose[today];
@@ -110261,21 +110439,29 @@ public final class Core {
           * not keep the sign of a -0.0 force: a down bar on zero volume.
           */
          outBegIdx.value = startIdx;
-         /* The first EMA value is a simple average of the first 'period' force
-          * values; it then seeds the recursion. This is ema.c's seeding applied
-          * to the force series rather than to the input array.
-          */
-         today = startIdx - lookbackTotal + 1;
-         prevClose = inClose[today - 1];
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            force = (inClose[today] - prevClose) * inVolume[today];
-            prevClose = inClose[today];
-            tempReal += force;
-            today = today + 1;
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            prevClose = inClose[0];
+            force = (inClose[1] - prevClose) * inVolume[1];
+            prevClose = inClose[1];
+            prevMA = force;
+            today = 2;
+         } else {
+            /* The first EMA value is a simple average of the first 'period' force
+             * values; it then seeds the recursion. This is ema.c's seeding applied
+             * to the force series rather than to the input array.
+             */
+            today = startIdx - lookbackTotal + 1;
+            prevClose = inClose[today - 1];
+            i = optInTimePeriod;
+            tempReal = 0.0;
+            while( i-- > 0 ) {
+               force = (inClose[today] - prevClose) * inVolume[today];
+               prevClose = inClose[today];
+               tempReal += force;
+               today = today + 1;
+            }
+            prevMA = tempReal / optInTimePeriod;
          }
-         prevMA = tempReal / optInTimePeriod;
          while( today <= startIdx ) {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
@@ -112921,6 +113107,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #361).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -113057,14 +113244,19 @@ public final class Core {
       if( beta < 0.5 ) {
          beta = 1.0 - k;
       }
-      /* Seed: ema.c's DEFAULT arm, op for op. */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevMA = inClose[0];
+         today = 1;
+      } else {
+         /* Seed: ema.c's DEFAULT arm, op for op. */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       /* The warm-up also consumes the EMA unstable period. */
       while( today <= startIdx ) {
          prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
@@ -113157,13 +113349,18 @@ public final class Core {
       if( beta < 0.5 ) {
          beta = 1.0 - k;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inClose[today++];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevMA = (double)inClose[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inClose[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(beta, prevMA, k * (double)inClose[today++]);
       }
@@ -113679,14 +113876,19 @@ public final class Core {
          if( beta < 0.5 ) {
             beta = 1.0 - k;
          }
-         /* Seed: ema.c's DEFAULT arm, op for op. */
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 ) {
-            tempReal += inClose[today++];
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            prevMA = inClose[0];
+            today = 1;
+         } else {
+            /* Seed: ema.c's DEFAULT arm, op for op. */
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod;
+            tempReal = 0.0;
+            while( i-- > 0 ) {
+               tempReal += inClose[today++];
+            }
+            prevMA = tempReal / optInTimePeriod;
          }
-         prevMA = tempReal / optInTimePeriod;
          /* The warm-up also consumes the EMA unstable period. */
          while( today <= startIdx ) {
             prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
@@ -139655,6 +139857,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  083126 MF,CC  First version (issue #273).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -139800,7 +140003,15 @@ public final class Core {
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
@@ -139893,7 +140104,12 @@ public final class Core {
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      tpStartIdx = startIdx - emaLookback;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
@@ -140396,7 +140612,15 @@ public final class Core {
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
@@ -143298,6 +143522,7 @@ public final class Core {
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
  *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -143508,6 +143733,10 @@ public final class Core {
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -143640,44 +143869,59 @@ public final class Core {
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
-      OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       rocNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr1.begIdx();
       kstNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       rocNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx.value = _xr4.begIdx();
       rocNb.value = _xr4.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr5.begIdx();
       legNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx.value = _xr6.begIdx();
       rocNb.value = _xr6.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr7.begIdx();
       legNb.value = _xr7.count();
       retCode = RetCode.SUCCESS;
@@ -143720,6 +143964,10 @@ public final class Core {
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -143844,44 +144092,56 @@ public final class Core {
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
-      OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
+      OutRange _xr0 = roc(rocStart1, endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       rocNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      OutRange _xr1 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr1.begIdx();
       kstNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
+      OutRange _xr2 = roc(rocStart2, endIdx, inReal, optInROC2Period, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       rocNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      OutRange _xr3 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
+      OutRange _xr4 = roc(rocStart3, endIdx, inReal, optInROC3Period, tempBuffer);
       tempBegIdx.value = _xr4.begIdx();
       rocNb.value = _xr4.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr5 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      OutRange _xr5 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr5.begIdx();
       legNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
       }
-      OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
+      OutRange _xr6 = roc(rocStart4, endIdx, inReal, optInROC4Period, tempBuffer);
       tempBegIdx.value = _xr6.begIdx();
       rocNb.value = _xr6.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      OutRange _xr7 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr7.begIdx();
       legNb.value = _xr7.count();
       retCode = RetCode.SUCCESS;
@@ -144388,6 +144648,10 @@ public final class Core {
       int lookbackSignal = 0;
       int lookbackMA = 0;
       int sigStart = 0;
+      int rocStart1 = 0;
+      int rocStart2 = 0;
+      int rocStart3 = 0;
+      int rocStart4 = 0;
       int lookbackMA1 = 0;
       int lookbackMA2 = 0;
       int lookbackMA3 = 0;
@@ -144531,28 +144795,43 @@ public final class Core {
       if( lookbackMA4 > lookbackMA ) {
          lookbackMA = lookbackMA4;
       }
-      tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      /* The first-bar seed: each rate of change starts on its first bar, so
+       * each leg average seeds there and is entered at sigStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         rocStart1 = optInROC1Period;
+         rocStart2 = optInROC2Period;
+         rocStart3 = optInROC3Period;
+         rocStart4 = optInROC4Period;
+         tempInteger = endIdx + 1;
+      } else {
+         rocStart1 = sigStart - lookbackMA1;
+         rocStart2 = sigStart - lookbackMA2;
+         rocStart3 = sigStart - lookbackMA3;
+         rocStart4 = sigStart - lookbackMA4;
+         tempInteger = endIdx - sigStart + 1 + lookbackMA;
+      }
       kstBuffer = new double[(int)(tempInteger * 1)];
       tempBuffer = new double[(int)(tempInteger * 1)];
       /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub0 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
+      RocStream sub0 = rocOpenAndFillInternal(inReal, rocStart1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub1 = maOpenInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA1Period, optInROCMAType);
-      OutRange _xr0 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
+      MaStream sub1 = maOpenInternal(java.util.Arrays.copyOfRange(kstBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart1, optInMA1Period, optInROCMAType);
+      OutRange _xr0 = ma(sigStart - rocStart1, rocNb.value - 1, kstBuffer, optInMA1Period, optInROCMAType, kstBuffer);
       tempBegIdx.value = _xr0.begIdx();
       kstNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub2 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub2 = rocOpenAndFillInternal(inReal, rocStart2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub3 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA2Period, optInROCMAType);
-      OutRange _xr1 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
+      MaStream sub3 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart2, optInMA2Period, optInROCMAType);
+      OutRange _xr1 = ma(sigStart - rocStart2, rocNb.value - 1, tempBuffer, optInMA2Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr1.begIdx();
       legNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
@@ -144568,12 +144847,12 @@ public final class Core {
       }
       /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub4 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub4 = rocOpenAndFillInternal(inReal, rocStart3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub5 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA3Period, optInROCMAType);
-      OutRange _xr2 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
+      MaStream sub5 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart3, optInMA3Period, optInROCMAType);
+      OutRange _xr2 = ma(sigStart - rocStart3, rocNb.value - 1, tempBuffer, optInMA3Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr2.begIdx();
       legNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -144589,12 +144868,12 @@ public final class Core {
       }
       /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      RocStream sub6 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
+      RocStream sub6 = rocOpenAndFillInternal(inReal, rocStart4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub7 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), 0, optInMA4Period, optInROCMAType);
-      OutRange _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
+      MaStream sub7 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (rocNb.value - 1) + 1), sigStart - rocStart4, optInMA4Period, optInROCMAType);
+      OutRange _xr3 = ma(sigStart - rocStart4, rocNb.value - 1, tempBuffer, optInMA4Period, optInROCMAType, tempBuffer);
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
@@ -157755,6 +158034,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  103126 MF,CC  Creation (#570).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -158001,29 +158281,43 @@ public final class Core {
        * calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
-      /* Slow EMA. */
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Fast EMA. */
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inClose[0], the signal EMA on the first line value of the call.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inClose[0];
+         prevFast = inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         /* Slow EMA. */
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Fast EMA. */
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       /* Average True Range: the first True Range consumes a previous close. */
       today = lineIdx - lookbackATR + 1;
@@ -158082,44 +158376,48 @@ public final class Core {
       if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      /* Seed the signal EMA with a simple average of the first 'signal period'
-       * line values, accumulated as they are produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         tempReal = inClose[today];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.abs(prevFast);
-         if( Math.abs(prevSlow) > bandScale ) {
-            bandScale = Math.abs(prevSlow);
-         }
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         /* Seed the signal EMA with a simple average of the first 'signal period'
+          * line values, accumulated as they are produced.
+          */
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            tempReal = inClose[today];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.abs(tempCY - tempHT);
+            if( val2 > greatest ) {
+               greatest = val2;
+            }
+            val3 = Math.abs(tempCY - tempLT);
+            if( val3 > greatest ) {
+               greatest = val3;
+            }
+            prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.abs(prevFast);
+            if( Math.abs(prevSlow) > bandScale ) {
+               bandScale = Math.abs(prevSlow);
+            }
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period of the
        * signal EMA, up to the first output bar.
        */
@@ -158316,27 +158614,38 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       lineIdx = startIdx - lookbackSignal;
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = (double)inClose[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = (double)inClose[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = (double)inClose[0];
+         prevFast = (double)inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       today = lineIdx - lookbackATR + 1;
       periodTotal = 0.0;
@@ -158384,40 +158693,44 @@ public final class Core {
       if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = (double)inLow[today];
-         tempHT = (double)inHigh[today];
-         tempCY = (double)inClose[today - 1];
-         tempReal = (double)inClose[today];
-         greatest = tempHT - tempLT;
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.abs(prevFast);
-         if( Math.abs(prevSlow) > bandScale ) {
-            bandScale = Math.abs(prevSlow);
-         }
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = (double)inLow[today];
+            tempHT = (double)inHigh[today];
+            tempCY = (double)inClose[today - 1];
+            tempReal = (double)inClose[today];
+            greatest = tempHT - tempLT;
+            val2 = Math.abs(tempCY - tempHT);
+            if( val2 > greatest ) {
+               greatest = val2;
+            }
+            val3 = Math.abs(tempCY - tempLT);
+            if( val3 > greatest ) {
+               greatest = val3;
+            }
+            prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.abs(prevFast);
+            if( Math.abs(prevSlow) > bandScale ) {
+               bandScale = Math.abs(prevSlow);
+            }
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -159151,29 +159464,43 @@ public final class Core {
        * calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
-      /* Slow EMA. */
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Fast EMA. */
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inClose[0], the signal EMA on the first line value of the call.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inClose[0];
+         prevFast = inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         /* Slow EMA. */
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Fast EMA. */
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       /* Average True Range: the first True Range consumes a previous close. */
       today = lineIdx - lookbackATR + 1;
@@ -159232,44 +159559,48 @@ public final class Core {
       if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      /* Seed the signal EMA with a simple average of the first 'signal period'
-       * line values, accumulated as they are produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         tempReal = inClose[today];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.abs(prevFast);
-         if( Math.abs(prevSlow) > bandScale ) {
-            bandScale = Math.abs(prevSlow);
-         }
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         /* Seed the signal EMA with a simple average of the first 'signal period'
+          * line values, accumulated as they are produced.
+          */
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            tempReal = inClose[today];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.abs(tempCY - tempHT);
+            if( val2 > greatest ) {
+               greatest = val2;
+            }
+            val3 = Math.abs(tempCY - tempLT);
+            if( val3 > greatest ) {
+               greatest = val3;
+            }
+            prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.abs(prevFast);
+            if( Math.abs(prevSlow) > bandScale ) {
+               bandScale = Math.abs(prevSlow);
+            }
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period of the
        * signal EMA, up to the first output bar.
        */
@@ -163246,6 +163577,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #359).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -163390,65 +163722,103 @@ public final class Core {
       sum2 = 0.0;
       total = 0.0;
       tempReal = 0.0;
-      today = startIdx - lookbackTotal;
-      nBar = 0;
-      /* Runs through startIdx inclusive: that last pass fills the summation
-       * window and so produces the first output.
+      /* The first-bar seed does not move with startIdx: the first EMA starts on
+       * bar 0, the second on the first one's value where the default seeds it.
        */
-      while( today <= startIdx ) {
-         hl = inHigh[today] - inLow[today];
-         if( nBar < optInFastPeriod ) {
-            sum1 = sum1 + hl;
-            if( nBar == optInFastPeriod - 1 ) {
-               ema1 = sum1 / optInFastPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            hl = inHigh[today] - inLow[today];
+            if( today == 0 ) {
+               ema1 = hl;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+            if( today >= startIdx - lookbackTotal + lookbackEma ) {
+               if( today == startIdx - lookbackTotal + lookbackEma ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
+            }
+            if( today >= startIdx - lookbackTotal + lookbackEma2 ) {
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( today == startIdx ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
+            }
+            today = today + 1;
          }
-         /* The stage counter is compared BEFORE it is subtracted, never after.
-          * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-          * everywhere else: the Rust backend renders these as usize, so the
-          * subtraction underflows for the first lookbackEma bars.
+      } else {
+         today = startIdx - lookbackTotal;
+         nBar = 0;
+         /* Runs through startIdx inclusive: that last pass fills the summation
+          * window and so produces the first output.
           */
-         if( nBar >= lookbackEma ) {
-            n2 = nBar - lookbackEma;
-            if( n2 < optInFastPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInFastPeriod - 1 ) {
-                  ema2 = sum2 / optInFastPeriod;
+         while( today <= startIdx ) {
+            hl = inHigh[today] - inLow[today];
+            if( nBar < optInFastPeriod ) {
+               sum1 = sum1 + hl;
+               if( nBar == optInFastPeriod - 1 ) {
+                  ema1 = sum1 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
-         }
-         if( nBar >= lookbackEma2 ) {
-            /* A flat market is the ratio's continuous limit, 1.0, not the zero
-             * that an oscillator centred on zero would report: MASSI's own
-             * neutral is optInSlowPeriod. Test ema2 exactly and never through an
-             * epsilon band -- a smoothed price range carries the quote unit, so a
-             * fixed band would pin the whole index at optInSlowPeriod for any
-             * instrument quoted under it (issue #253).
+            /* The stage counter is compared BEFORE it is subtracted, never after.
+             * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+             * everywhere else: the Rust backend renders these as usize, so the
+             * subtraction underflows for the first lookbackEma bars.
              */
-            if( ema2 == 0.0 ) {
-               ratio = 1.0;
-            } else {
-               ratio = ema1 / ema2;
+            if( nBar >= lookbackEma ) {
+               n2 = nBar - lookbackEma;
+               if( n2 < optInFastPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInFastPeriod - 1 ) {
+                     ema2 = sum2 / optInFastPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
             }
-            /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-             * over a ring: the slot written here was emptied out of `total` at the
-             * end of the previous bar, so nothing has to be read before the store.
-             */
-            ratioRing[ratioRing_Idx] = ratio;
-            total = total + ratio;
-            ratioRing_Idx++;
-            if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
-            if( nBar == lookbackTotal ) {
-               tempReal = total;
-               total = total - ratioRing[ratioRing_Idx];
+            if( nBar >= lookbackEma2 ) {
+               /* A flat market is the ratio's continuous limit, 1.0, not the zero
+                * that an oscillator centred on zero would report: MASSI's own
+                * neutral is optInSlowPeriod. Test ema2 exactly and never through an
+                * epsilon band -- a smoothed price range carries the quote unit, so a
+                * fixed band would pin the whole index at optInSlowPeriod for any
+                * instrument quoted under it (issue #253).
+                */
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+                * over a ring: the slot written here was emptied out of `total` at the
+                * end of the previous bar, so nothing has to be read before the store.
+                */
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( nBar == lookbackTotal ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
             }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       /* In-place safe: this store lands lookbackTotal bars behind the input
        * cursor, so no bar is written under a read still owed to it.
@@ -163550,46 +163920,81 @@ public final class Core {
       sum2 = 0.0;
       total = 0.0;
       tempReal = 0.0;
-      today = startIdx - lookbackTotal;
-      nBar = 0;
-      while( today <= startIdx ) {
-         hl = (double)inHigh[today] - (double)inLow[today];
-         if( nBar < optInFastPeriod ) {
-            sum1 = sum1 + hl;
-            if( nBar == optInFastPeriod - 1 ) {
-               ema1 = sum1 / optInFastPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            hl = (double)inHigh[today] - (double)inLow[today];
+            if( today == 0 ) {
+               ema1 = hl;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+            if( today >= startIdx - lookbackTotal + lookbackEma ) {
+               if( today == startIdx - lookbackTotal + lookbackEma ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
+            }
+            if( today >= startIdx - lookbackTotal + lookbackEma2 ) {
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( today == startIdx ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
+            }
+            today = today + 1;
          }
-         if( nBar >= lookbackEma ) {
-            n2 = nBar - lookbackEma;
-            if( n2 < optInFastPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInFastPeriod - 1 ) {
-                  ema2 = sum2 / optInFastPeriod;
+      } else {
+         today = startIdx - lookbackTotal;
+         nBar = 0;
+         while( today <= startIdx ) {
+            hl = (double)inHigh[today] - (double)inLow[today];
+            if( nBar < optInFastPeriod ) {
+               sum1 = sum1 + hl;
+               if( nBar == optInFastPeriod - 1 ) {
+                  ema1 = sum1 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
+            if( nBar >= lookbackEma ) {
+               n2 = nBar - lookbackEma;
+               if( n2 < optInFastPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInFastPeriod - 1 ) {
+                     ema2 = sum2 / optInFastPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
+            }
+            if( nBar >= lookbackEma2 ) {
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( nBar == lookbackTotal ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         if( nBar >= lookbackEma2 ) {
-            if( ema2 == 0.0 ) {
-               ratio = 1.0;
-            } else {
-               ratio = ema1 / ema2;
-            }
-            ratioRing[ratioRing_Idx] = ratio;
-            total = total + ratio;
-            ratioRing_Idx++;
-            if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
-            if( nBar == lookbackTotal ) {
-               tempReal = total;
-               total = total - ratioRing[ratioRing_Idx];
-            }
-         }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       outReal[0] = tempReal;
       outIdx = 1;
@@ -164072,65 +164477,103 @@ public final class Core {
       sum2 = 0.0;
       total = 0.0;
       tempReal = 0.0;
-      today = startIdx - lookbackTotal;
-      nBar = 0;
-      /* Runs through startIdx inclusive: that last pass fills the summation
-       * window and so produces the first output.
+      /* The first-bar seed does not move with startIdx: the first EMA starts on
+       * bar 0, the second on the first one's value where the default seeds it.
        */
-      while( today <= startIdx ) {
-         hl = inHigh[today] - inLow[today];
-         if( nBar < optInFastPeriod ) {
-            sum1 = sum1 + hl;
-            if( nBar == optInFastPeriod - 1 ) {
-               ema1 = sum1 / optInFastPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            hl = inHigh[today] - inLow[today];
+            if( today == 0 ) {
+               ema1 = hl;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+            if( today >= startIdx - lookbackTotal + lookbackEma ) {
+               if( today == startIdx - lookbackTotal + lookbackEma ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
+            }
+            if( today >= startIdx - lookbackTotal + lookbackEma2 ) {
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( today == startIdx ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
+            }
+            today = today + 1;
          }
-         /* The stage counter is compared BEFORE it is subtracted, never after.
-          * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
-          * everywhere else: the Rust backend renders these as usize, so the
-          * subtraction underflows for the first lookbackEma bars.
+      } else {
+         today = startIdx - lookbackTotal;
+         nBar = 0;
+         /* Runs through startIdx inclusive: that last pass fills the summation
+          * window and so produces the first output.
           */
-         if( nBar >= lookbackEma ) {
-            n2 = nBar - lookbackEma;
-            if( n2 < optInFastPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInFastPeriod - 1 ) {
-                  ema2 = sum2 / optInFastPeriod;
+         while( today <= startIdx ) {
+            hl = inHigh[today] - inLow[today];
+            if( nBar < optInFastPeriod ) {
+               sum1 = sum1 + hl;
+               if( nBar == optInFastPeriod - 1 ) {
+                  ema1 = sum1 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
             }
-         }
-         if( nBar >= lookbackEma2 ) {
-            /* A flat market is the ratio's continuous limit, 1.0, not the zero
-             * that an oscillator centred on zero would report: MASSI's own
-             * neutral is optInSlowPeriod. Test ema2 exactly and never through an
-             * epsilon band -- a smoothed price range carries the quote unit, so a
-             * fixed band would pin the whole index at optInSlowPeriod for any
-             * instrument quoted under it (issue #253).
+            /* The stage counter is compared BEFORE it is subtracted, never after.
+             * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
+             * everywhere else: the Rust backend renders these as usize, so the
+             * subtraction underflows for the first lookbackEma bars.
              */
-            if( ema2 == 0.0 ) {
-               ratio = 1.0;
-            } else {
-               ratio = ema1 / ema2;
+            if( nBar >= lookbackEma ) {
+               n2 = nBar - lookbackEma;
+               if( n2 < optInFastPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInFastPeriod - 1 ) {
+                     ema2 = sum2 / optInFastPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
+               }
             }
-            /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
-             * over a ring: the slot written here was emptied out of `total` at the
-             * end of the previous bar, so nothing has to be read before the store.
-             */
-            ratioRing[ratioRing_Idx] = ratio;
-            total = total + ratio;
-            ratioRing_Idx++;
-            if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
-            if( nBar == lookbackTotal ) {
-               tempReal = total;
-               total = total - ratioRing[ratioRing_Idx];
+            if( nBar >= lookbackEma2 ) {
+               /* A flat market is the ratio's continuous limit, 1.0, not the zero
+                * that an oscillator centred on zero would report: MASSI's own
+                * neutral is optInSlowPeriod. Test ema2 exactly and never through an
+                * epsilon band -- a smoothed price range carries the quote unit, so a
+                * fixed band would pin the whole index at optInSlowPeriod for any
+                * instrument quoted under it (issue #253).
+                */
+               if( ema2 == 0.0 ) {
+                  ratio = 1.0;
+               } else {
+                  ratio = ema1 / ema2;
+               }
+               /* TA_SUM's accumulation order -- add, publish, subtract -- reproduced
+                * over a ring: the slot written here was emptied out of `total` at the
+                * end of the previous bar, so nothing has to be read before the store.
+                */
+               ratioRing[ratioRing_Idx] = ratio;
+               total = total + ratio;
+               ratioRing_Idx++;
+               if( ratioRing_Idx > maxIdx_ratioRing ) { ratioRing_Idx = 0; }
+               if( nBar == lookbackTotal ) {
+                  tempReal = total;
+                  total = total - ratioRing[ratioRing_Idx];
+               }
             }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       /* In-place safe: this store lands lookbackTotal bars behind the input
        * cursor, so no bar is written under a read still owed to it.
@@ -189889,6 +190332,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Initial version (#473).
  *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -190050,7 +190494,7 @@ public final class Core {
       today = startIdx - warmBars;
       blockStart = today - (optInFastK_Period - 1);
       outIdx = 0;
-      if( keyable(inHigh, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
+      if( keyable(inHigh, this.emaVariation == EMAVariation.FIRST_BAR_SEED ? 0 : startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, this.emaVariation == EMAVariation.FIRST_BAR_SEED ? 0 : startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
          return psoKeyedImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
       }
       if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
@@ -190069,6 +190513,50 @@ public final class Core {
       preLowest = new double[optInFastK_Period];
       maxIdx_preLowest = (optInFastK_Period)-1;
       preLowest_Idx = 0;
+      /* The first-bar seed: both passes run up to the bar before startIdx here,
+       * as pso_ALT1 runs them, and the scan below enters on its recursion.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = optInFastK_Period - 1;
+         while( today < startIdx ) {
+            i = today - (optInFastK_Period - 1);
+            highest = inHigh[i];
+            lowest = inLow[i];
+            while( i < today ) {
+               i += 1;
+               tmp = inHigh[i];
+               if( tmp > highest ) {
+                  highest = tmp;
+               }
+               tmp = inLow[i];
+               if( tmp < lowest ) {
+                  lowest = tmp;
+               }
+            }
+            tempReal = highest - lowest;
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = (inClose[today] - lowest) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( today == optInFastK_Period - 1 ) {
+               ema1 = nsk;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+            }
+            if( today >= startIdx - lookbackEMA ) {
+               if( today == startIdx - lookbackEMA ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               }
+            }
+            today = today + 1;
+         }
+         blockStart = today - (optInFastK_Period - 1);
+         nBar = warmBars + 1;
+      }
       while( today <= endIdx ) {
          /* Suffix extrema of the block [blockStart, today]. */
          i = today;
@@ -190189,7 +190677,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx], from bar 0 under the first-bar seed. */
    RetCode psoKeyedImpl( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -190278,6 +190766,43 @@ public final class Core {
       preLowest = new long[optInFastK_Period];
       maxIdx_preLowest = (optInFastK_Period)-1;
       preLowest_Idx = 0;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = optInFastK_Period - 1;
+         while( today < startIdx ) {
+            i = today - (optInFastK_Period - 1);
+            highest = Double.doubleToRawLongBits(inHigh[i]);
+            lowest = Double.doubleToRawLongBits(inLow[i]);
+            while( i < today ) {
+               i += 1;
+               tmp = Double.doubleToRawLongBits(inHigh[i]);
+               highest = keyMax(highest, tmp);
+               tmp = Double.doubleToRawLongBits(inLow[i]);
+               lowest = keyMin(lowest, tmp);
+            }
+            tempReal = Double.longBitsToDouble(highest) - Double.longBitsToDouble(lowest);
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(Double.longBitsToDouble(highest)) + Math.abs(Double.longBitsToDouble(lowest)))) ) {
+               fastK = (inClose[today] - Double.longBitsToDouble(lowest)) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( today == optInFastK_Period - 1 ) {
+               ema1 = nsk;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+            }
+            if( today >= startIdx - lookbackEMA ) {
+               if( today == startIdx - lookbackEMA ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               }
+            }
+            today = today + 1;
+         }
+         blockStart = today - (optInFastK_Period - 1);
+         nBar = warmBars + 1;
+      }
       while( today <= endIdx ) {
          i = today;
          highest = Double.doubleToRawLongBits(inHigh[i]);
@@ -190464,7 +190989,7 @@ public final class Core {
       today = startIdx - warmBars;
       blockStart = today - (optInFastK_Period - 1);
       outIdx = 0;
-      if( keyable(inHigh, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
+      if( keyable(inHigh, this.emaVariation == EMAVariation.FIRST_BAR_SEED ? 0 : startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, this.emaVariation == EMAVariation.FIRST_BAR_SEED ? 0 : startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
          return psoKeyedImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
       }
       if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
@@ -190483,6 +191008,47 @@ public final class Core {
       preLowest = new double[optInFastK_Period];
       maxIdx_preLowest = (optInFastK_Period)-1;
       preLowest_Idx = 0;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = optInFastK_Period - 1;
+         while( today < startIdx ) {
+            i = today - (optInFastK_Period - 1);
+            highest = (double)inHigh[i];
+            lowest = (double)inLow[i];
+            while( i < today ) {
+               i += 1;
+               tmp = (double)inHigh[i];
+               if( tmp > highest ) {
+                  highest = tmp;
+               }
+               tmp = (double)inLow[i];
+               if( tmp < lowest ) {
+                  lowest = tmp;
+               }
+            }
+            tempReal = highest - lowest;
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = ((double)inClose[today] - lowest) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( today == optInFastK_Period - 1 ) {
+               ema1 = nsk;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+            }
+            if( today >= startIdx - lookbackEMA ) {
+               if( today == startIdx - lookbackEMA ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               }
+            }
+            today = today + 1;
+         }
+         blockStart = today - (optInFastK_Period - 1);
+         nBar = warmBars + 1;
+      }
       while( today <= endIdx ) {
          i = today;
          highest = (double)inHigh[i];
@@ -190593,7 +191159,7 @@ public final class Core {
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx], from bar 0 under the first-bar seed. */
    RetCode psoKeyedImpl( int startIdx,
                          int endIdx,
                          float inHigh[],
@@ -190682,6 +191248,43 @@ public final class Core {
       preLowest = new long[optInFastK_Period];
       maxIdx_preLowest = (optInFastK_Period)-1;
       preLowest_Idx = 0;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = optInFastK_Period - 1;
+         while( today < startIdx ) {
+            i = today - (optInFastK_Period - 1);
+            highest = Double.doubleToRawLongBits((double)inHigh[i]);
+            lowest = Double.doubleToRawLongBits((double)inLow[i]);
+            while( i < today ) {
+               i += 1;
+               tmp = Double.doubleToRawLongBits((double)inHigh[i]);
+               highest = keyMax(highest, tmp);
+               tmp = Double.doubleToRawLongBits((double)inLow[i]);
+               lowest = keyMin(lowest, tmp);
+            }
+            tempReal = Double.longBitsToDouble(highest) - Double.longBitsToDouble(lowest);
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(Double.longBitsToDouble(highest)) + Math.abs(Double.longBitsToDouble(lowest)))) ) {
+               fastK = ((double)inClose[today] - Double.longBitsToDouble(lowest)) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( today == optInFastK_Period - 1 ) {
+               ema1 = nsk;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+            }
+            if( today >= startIdx - lookbackEMA ) {
+               if( today == startIdx - lookbackEMA ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               }
+            }
+            today = today + 1;
+         }
+         blockStart = today - (optInFastK_Period - 1);
+         nBar = warmBars + 1;
+      }
       while( today <= endIdx ) {
          i = today;
          highest = Double.doubleToRawLongBits((double)inHigh[i]);
@@ -191327,90 +191930,156 @@ public final class Core {
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      /* The first bar carrying a full Fast-K window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInFastK_Period - 1);
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: its last pass produces the
-       * first output.
+      /* The first-bar seed does not move with startIdx: pass 1 starts on the
+       * first full window, pass 2 on pass 1's value where the default seeds it.
        */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInFastK_Period - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( nBar == 0 ) {
+               ema1 = nsk;
+            } else {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackEMA ) {
+               if( nBar == startIdx - lookbackTotal + lookbackEMA ) {
+                  ema2 = ema1;
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+      } else {
+         /* The first bar carrying a full Fast-K window. */
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInFastK_Period - 1);
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: its last pass produces the
+          * first output.
+          */
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
                }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         /* Fast-K, spelled as stochf.c spells it: divide by the range itself and
-          * scale by 100.0 after, guarded by the very expression the division
-          * uses, against ITS OWN two extremes rather than a fixed constant
-          * (issue #253).
-          *
-          * Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
-          * Fast-K midpoint, so that a flat market reads PSO 0 instead of
-          * -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
-          * the window supports (#473 Q4, the neutral-point rule of #112).
-          */
-         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-         } else {
-            fastK = 50.0;
-         }
-         nsk = 0.1 * (fastK - 50.0);
-         /* Pass 1, over the normalised Fast-K. */
-         if( nBar < optInEMAPeriod ) {
-            sum1 = sum1 + nsk;
-            if( nBar == optInEMAPeriod - 1 ) {
-               ema1 = sum1 / optInEMAPeriod;
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
             }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
-         }
-         /* Pass 2, over what pass 1 publishes. Keep the comparison ahead of
-          * the subtraction: the counters are unsigned in Rust.
-          */
-         if( nBar >= lookbackEMA ) {
-            n2 = nBar - lookbackEMA;
-            if( n2 < optInEMAPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInEMAPeriod - 1 ) {
-                  ema2 = sum2 / optInEMAPeriod;
+            /* Fast-K, spelled as stochf.c spells it: divide by the range itself and
+             * scale by 100.0 after, guarded by the very expression the division
+             * uses, against ITS OWN two extremes rather than a fixed constant
+             * (issue #253).
+             *
+             * Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
+             * Fast-K midpoint, so that a flat market reads PSO 0 instead of
+             * -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
+             * the window supports (#473 Q4, the neutral-point rule of #112).
+             */
+            if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            /* Pass 1, over the normalised Fast-K. */
+            if( nBar < optInEMAPeriod ) {
+               sum1 = sum1 + nsk;
+               if( nBar == optInEMAPeriod - 1 ) {
+                  ema1 = sum1 / optInEMAPeriod;
                }
             } else {
-               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
             }
+            /* Pass 2, over what pass 1 publishes. Keep the comparison ahead of
+             * the subtraction: the counters are unsigned in Rust.
+             */
+            if( nBar >= lookbackEMA ) {
+               n2 = nBar - lookbackEMA;
+               if( n2 < optInEMAPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInEMAPeriod - 1 ) {
+                     ema2 = sum2 / optInEMAPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       /* tanh(ss/2) rather than the published (e^ss - 1)/(e^ss + 1): the same
        * function, equal within 2.2e-16 on normal data, exactly odd and well
@@ -211082,6 +211751,7 @@ public final class Core {
  *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
  *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
  *                any instrument quoted small enough to fall under it.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -211302,109 +211972,189 @@ public final class Core {
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      /* The first bar carrying a full high/low window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the signal seed, so it produces the first output pair.
+      /* The first-bar seed does not move with startIdx: the slow EMA starts on
+       * the first full window, each later stage on its feeder's value where the
+       * default seeds it.
        */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         den = highest - lowest;
-         num = inClose[today] - (highest + lowest) * 0.5;
-         /* Stage 1: the slow EMA, over the raw momentum. */
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
-            }
-         } else {
-            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
-         }
-         /* Stage 2: the fast EMA, over what stage 1 publishes.
-          *
-          * The stage counters are compared BEFORE they are subtracted, never
-          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as `usize`, so the subtraction
-          * underflows for the first lookbackSlow bars -- a panic in a debug build
-          * and a wrap in release. It would also be invisible to the cross-language
-          * gate, which runs release servers at unstable period 0, where the branch
-          * the wrap wrongly takes happens to be a no-op because both accumulators
-          * are still 0.0.
+      } else {
+         /* The first bar carrying a full high/low window. */
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+          * that completes the signal seed, so it produces the first output pair.
           */
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            /* Stage 1: the slow EMA, over the raw momentum. */
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
                }
             } else {
-               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
             }
-         }
-         /* Stage 3: the SMI line, then the signal EMA over it. */
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            /* Stage 2: the fast EMA, over what stage 1 publishes.
+             *
+             * The stage counters are compared BEFORE they are subtracted, never
+             * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as `usize`, so the subtraction
+             * underflows for the first lookbackSlow bars -- a panic in a debug build
+             * and a wrap in release. It would also be invisible to the cross-language
+             * gate, which runs release servers at unstable period 0, where the branch
+             * the wrap wrongly takes happens to be a no-op because both accumulators
+             * are still 0.0.
+             */
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
-            } else {
-               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
+            /* Stage 3: the SMI line, then the signal EMA over it. */
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       outSMI[0] = smiValue;
       outSMISignal[0] = prevSignal;
@@ -211598,89 +212348,163 @@ public final class Core {
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      while( today <= startIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            tmp = (double)inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = (double)inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            tmp = (double)inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = (double)inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = (double)inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         den = highest - lowest;
-         num = (double)inClose[today] - (highest + lowest) * 0.5;
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         while( today <= startIdx ) {
+            tmp = (double)inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = (double)inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
             }
-         } else {
-            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
-         }
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+            tmp = (double)inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = (double)inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = (double)inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = (double)inClose[today] - (highest + lowest) * 0.5;
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
                }
             } else {
-               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
             }
-         }
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
-            } else {
-               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       outSMI[0] = smiValue;
       outSMISignal[0] = prevSignal;
@@ -212437,109 +213261,189 @@ public final class Core {
       lowest = 0.0;
       highestIdx = -1;
       lowestIdx = -1;
-      /* The first bar carrying a full high/low window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInTimePeriod - 1);
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the signal seed, so it produces the first output pair.
+      /* The first-bar seed does not move with startIdx: the slow EMA starts on
+       * the first full window, each later stage on its feeder's value where the
+       * default seeds it.
        */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = optInTimePeriod - 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            if( nBar == 0 ) {
+               emaSlowNum = num;
+               emaSlowDen = den;
+            } else {
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+            }
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow ) {
+               if( nBar == startIdx - lookbackTotal + lookbackSlow ) {
+                  emaFastNum = emaSlowNum;
+                  emaFastDen = emaSlowDen;
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
+            if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast ) {
+                  prevSignal = smiValue;
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         den = highest - lowest;
-         num = inClose[today] - (highest + lowest) * 0.5;
-         /* Stage 1: the slow EMA, over the raw momentum. */
-         if( nBar < optInSlowPeriod ) {
-            sumSlowNum = sumSlowNum + num;
-            sumSlowDen = sumSlowDen + den;
-            if( nBar == optInSlowPeriod - 1 ) {
-               emaSlowNum = sumSlowNum / optInSlowPeriod;
-               emaSlowDen = sumSlowDen / optInSlowPeriod;
-            }
-         } else {
-            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
-            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
-         }
-         /* Stage 2: the fast EMA, over what stage 1 publishes.
-          *
-          * The stage counters are compared BEFORE they are subtracted, never
-          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as `usize`, so the subtraction
-          * underflows for the first lookbackSlow bars -- a panic in a debug build
-          * and a wrap in release. It would also be invisible to the cross-language
-          * gate, which runs release servers at unstable period 0, where the branch
-          * the wrap wrongly takes happens to be a no-op because both accumulators
-          * are still 0.0.
+      } else {
+         /* The first bar carrying a full high/low window. */
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + (optInTimePeriod - 1);
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+          * that completes the signal seed, so it produces the first output pair.
           */
-         if( nBar >= lookbackSlow ) {
-            nFast = nBar - lookbackSlow;
-            if( nFast < optInFastPeriod ) {
-               sumFastNum = sumFastNum + emaSlowNum;
-               sumFastDen = sumFastDen + emaSlowDen;
-               if( nFast == optInFastPeriod - 1 ) {
-                  emaFastNum = sumFastNum / optInFastPeriod;
-                  emaFastDen = sumFastDen / optInFastPeriod;
+         while( today <= startIdx ) {
+            /* Set the lowest low */
+            tmp = inLow[today];
+            if( lowestIdx < trailingIdx ) {
+               lowestIdx = trailingIdx;
+               lowest = inLow[lowestIdx];
+               i = lowestIdx;
+               while( ++i <= today ) {
+                  tmp = inLow[i];
+                  if( tmp < lowest ) {
+                     lowestIdx = i;
+                     lowest = tmp;
+                  }
+               }
+            } else if( tmp <= lowest ) {
+               lowestIdx = today;
+               lowest = tmp;
+            }
+            /* Set the highest high */
+            tmp = inHigh[today];
+            if( highestIdx < trailingIdx ) {
+               highestIdx = trailingIdx;
+               highest = inHigh[highestIdx];
+               i = highestIdx;
+               while( ++i <= today ) {
+                  tmp = inHigh[i];
+                  if( tmp > highest ) {
+                     highestIdx = i;
+                     highest = tmp;
+                  }
+               }
+            } else if( tmp >= highest ) {
+               highestIdx = today;
+               highest = tmp;
+            }
+            den = highest - lowest;
+            num = inClose[today] - (highest + lowest) * 0.5;
+            /* Stage 1: the slow EMA, over the raw momentum. */
+            if( nBar < optInSlowPeriod ) {
+               sumSlowNum = sumSlowNum + num;
+               sumSlowDen = sumSlowDen + den;
+               if( nBar == optInSlowPeriod - 1 ) {
+                  emaSlowNum = sumSlowNum / optInSlowPeriod;
+                  emaSlowDen = sumSlowDen / optInSlowPeriod;
                }
             } else {
-               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
-               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
+               emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+               emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
             }
-         }
-         /* Stage 3: the SMI line, then the signal EMA over it. */
-         if( nBar >= lookbackSlow + lookbackFast ) {
-            nSignal = nBar - lookbackSlow - lookbackFast;
-            halfDen = 0.5 * emaFastDen;
-            if( halfDen > 0.0 ) {
-               smiValue = 100.0 * emaFastNum / halfDen;
-            } else {
-               smiValue = 0.0;
-            }
-            if( nSignal < optInSignalPeriod ) {
-               sumSignal = sumSignal + smiValue;
-               if( nSignal == optInSignalPeriod - 1 ) {
-                  prevSignal = sumSignal / optInSignalPeriod;
+            /* Stage 2: the fast EMA, over what stage 1 publishes.
+             *
+             * The stage counters are compared BEFORE they are subtracted, never
+             * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as `usize`, so the subtraction
+             * underflows for the first lookbackSlow bars -- a panic in a debug build
+             * and a wrap in release. It would also be invisible to the cross-language
+             * gate, which runs release servers at unstable period 0, where the branch
+             * the wrap wrongly takes happens to be a no-op because both accumulators
+             * are still 0.0.
+             */
+            if( nBar >= lookbackSlow ) {
+               nFast = nBar - lookbackSlow;
+               if( nFast < optInFastPeriod ) {
+                  sumFastNum = sumFastNum + emaSlowNum;
+                  sumFastDen = sumFastDen + emaSlowDen;
+                  if( nFast == optInFastPeriod - 1 ) {
+                     emaFastNum = sumFastNum / optInFastPeriod;
+                     emaFastDen = sumFastDen / optInFastPeriod;
+                  }
+               } else {
+                  emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+                  emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
                }
-            } else {
-               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
+            /* Stage 3: the SMI line, then the signal EMA over it. */
+            if( nBar >= lookbackSlow + lookbackFast ) {
+               nSignal = nBar - lookbackSlow - lookbackFast;
+               halfDen = 0.5 * emaFastDen;
+               if( halfDen > 0.0 ) {
+                  smiValue = 100.0 * emaFastNum / halfDen;
+               } else {
+                  smiValue = 0.0;
+               }
+               if( nSignal < optInSignalPeriod ) {
+                  sumSignal = sumSignal + smiValue;
+                  if( nSignal == optInSignalPeriod - 1 ) {
+                     prevSignal = sumSignal / optInSignalPeriod;
+                  }
+               } else {
+                  prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
+               }
+            }
+            nBar = nBar + 1;
+            trailingIdx = trailingIdx + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
       }
       outSMI[0 * outStride] = smiValue;
       outSMISignal[0 * outStride] = prevSignal;
@@ -216742,6 +217646,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
  *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -216965,23 +217870,32 @@ public final class Core {
        */
       lookbackSlow = emaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inReal[0]. The chain still starts at lineStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inReal[0];
+         prevFast = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
@@ -217376,23 +218290,29 @@ public final class Core {
       lastIdx = optInCyclePeriod - 1;
       lookbackSlow = emaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = (double)inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = (double)inReal[0];
+         prevFast = (double)inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = (double)inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
@@ -218401,23 +219321,32 @@ public final class Core {
        */
       lookbackSlow = emaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inReal[0]. The chain still starts at lineStart.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inReal[0];
+         prevFast = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
@@ -236176,6 +237105,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (#360).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -236333,57 +237263,89 @@ public final class Core {
       sumFirstDen = 0.0;
       sumSecondNum = 0.0;
       sumSecondDen = 0.0;
-      /* The first bar carrying a close-to-close change. */
-      today = startIdx - lookbackTotal + 1;
-      prevClose = inReal[today - 1];
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here completes
-       * the second stage's seed, so it produces the first output.
+      /* The first-bar seed does not move with startIdx: stage 1 starts on the
+       * first change, stage 2 on stage 1's value where the default seeds it.
        */
-      while( today <= startIdx ) {
-         mom = inReal[today] - prevClose;
-         prevClose = inReal[today];
-         absMom = Math.abs(mom);
-         /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
-         if( nBar < optInFirstPeriod ) {
-            sumFirstNum = sumFirstNum + mom;
-            sumFirstDen = sumFirstDen + absMom;
-            if( nBar == optInFirstPeriod - 1 ) {
-               emaFirstNum = sumFirstNum / optInFirstPeriod;
-               emaFirstDen = sumFirstDen / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevClose = inReal[0];
+         today = 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            mom = inReal[today] - prevClose;
+            prevClose = inReal[today];
+            absMom = Math.abs(mom);
+            if( nBar == 0 ) {
+               emaFirstNum = mom;
+               emaFirstDen = absMom;
+            } else {
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
-         } else {
-            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
-            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+            if( nBar >= startIdx - lookbackTotal + lookbackFirst ) {
+               if( nBar == startIdx - lookbackTotal + lookbackFirst ) {
+                  emaSecondNum = emaFirstNum;
+                  emaSecondDen = emaFirstDen;
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         /* Stage 2: the second EMA, over what stage 1 publishes.
-          *
-          * The stage counter is compared BEFORE it is subtracted, never after.
-          * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as usize, so the subtraction
-          * underflows for the first lookbackFirst bars -- a panic in a debug
-          * build and a wrap in release. It would also be invisible to the
-          * cross-language gate, which runs release servers at unstable period 0,
-          * where the branch the wrap wrongly takes happens to be a no-op because
-          * both accumulators are still 0.0. smi.c states the same rule.
+      } else {
+         /* The first bar carrying a close-to-close change. */
+         today = startIdx - lookbackTotal + 1;
+         prevClose = inReal[today - 1];
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+          * the second stage's seed, so it produces the first output.
           */
-         if( nBar >= lookbackFirst ) {
-            nSecond = nBar - lookbackFirst;
-            if( nSecond < optInSecondPeriod ) {
-               sumSecondNum = sumSecondNum + emaFirstNum;
-               sumSecondDen = sumSecondDen + emaFirstDen;
-               if( nSecond == optInSecondPeriod - 1 ) {
-                  emaSecondNum = sumSecondNum / optInSecondPeriod;
-                  emaSecondDen = sumSecondDen / optInSecondPeriod;
+         while( today <= startIdx ) {
+            mom = inReal[today] - prevClose;
+            prevClose = inReal[today];
+            absMom = Math.abs(mom);
+            /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+            if( nBar < optInFirstPeriod ) {
+               sumFirstNum = sumFirstNum + mom;
+               sumFirstDen = sumFirstDen + absMom;
+               if( nBar == optInFirstPeriod - 1 ) {
+                  emaFirstNum = sumFirstNum / optInFirstPeriod;
+                  emaFirstDen = sumFirstDen / optInFirstPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
-               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
+            /* Stage 2: the second EMA, over what stage 1 publishes.
+             *
+             * The stage counter is compared BEFORE it is subtracted, never after.
+             * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as usize, so the subtraction
+             * underflows for the first lookbackFirst bars -- a panic in a debug
+             * build and a wrap in release. It would also be invisible to the
+             * cross-language gate, which runs release servers at unstable period 0,
+             * where the branch the wrap wrongly takes happens to be a no-op because
+             * both accumulators are still 0.0. smi.c states the same rule.
+             */
+            if( nBar >= lookbackFirst ) {
+               nSecond = nBar - lookbackFirst;
+               if( nSecond < optInSecondPeriod ) {
+                  sumSecondNum = sumSecondNum + emaFirstNum;
+                  sumSecondDen = sumSecondDen + emaFirstDen;
+                  if( nSecond == optInSecondPeriod - 1 ) {
+                     emaSecondNum = sumSecondNum / optInSecondPeriod;
+                     emaSecondDen = sumSecondDen / optInSecondPeriod;
+                  }
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       /* The denominator is an EMA of an EMA of |momentum|: every term is
        * non-negative and every weight positive, so it is zero only when every
@@ -236497,40 +237459,69 @@ public final class Core {
       sumFirstDen = 0.0;
       sumSecondNum = 0.0;
       sumSecondDen = 0.0;
-      today = startIdx - lookbackTotal + 1;
-      prevClose = (double)inReal[today - 1];
-      nBar = 0;
-      while( today <= startIdx ) {
-         mom = (double)inReal[today] - prevClose;
-         prevClose = (double)inReal[today];
-         absMom = Math.abs(mom);
-         if( nBar < optInFirstPeriod ) {
-            sumFirstNum = sumFirstNum + mom;
-            sumFirstDen = sumFirstDen + absMom;
-            if( nBar == optInFirstPeriod - 1 ) {
-               emaFirstNum = sumFirstNum / optInFirstPeriod;
-               emaFirstDen = sumFirstDen / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevClose = (double)inReal[0];
+         today = 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            mom = (double)inReal[today] - prevClose;
+            prevClose = (double)inReal[today];
+            absMom = Math.abs(mom);
+            if( nBar == 0 ) {
+               emaFirstNum = mom;
+               emaFirstDen = absMom;
+            } else {
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
-         } else {
-            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
-            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+            if( nBar >= startIdx - lookbackTotal + lookbackFirst ) {
+               if( nBar == startIdx - lookbackTotal + lookbackFirst ) {
+                  emaSecondNum = emaFirstNum;
+                  emaSecondDen = emaFirstDen;
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         if( nBar >= lookbackFirst ) {
-            nSecond = nBar - lookbackFirst;
-            if( nSecond < optInSecondPeriod ) {
-               sumSecondNum = sumSecondNum + emaFirstNum;
-               sumSecondDen = sumSecondDen + emaFirstDen;
-               if( nSecond == optInSecondPeriod - 1 ) {
-                  emaSecondNum = sumSecondNum / optInSecondPeriod;
-                  emaSecondDen = sumSecondDen / optInSecondPeriod;
+      } else {
+         today = startIdx - lookbackTotal + 1;
+         prevClose = (double)inReal[today - 1];
+         nBar = 0;
+         while( today <= startIdx ) {
+            mom = (double)inReal[today] - prevClose;
+            prevClose = (double)inReal[today];
+            absMom = Math.abs(mom);
+            if( nBar < optInFirstPeriod ) {
+               sumFirstNum = sumFirstNum + mom;
+               sumFirstDen = sumFirstDen + absMom;
+               if( nBar == optInFirstPeriod - 1 ) {
+                  emaFirstNum = sumFirstNum / optInFirstPeriod;
+                  emaFirstDen = sumFirstDen / optInFirstPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
-               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
+            if( nBar >= lookbackFirst ) {
+               nSecond = nBar - lookbackFirst;
+               if( nSecond < optInSecondPeriod ) {
+                  sumSecondNum = sumSecondNum + emaFirstNum;
+                  sumSecondDen = sumSecondDen + emaFirstDen;
+                  if( nSecond == optInSecondPeriod - 1 ) {
+                     emaSecondNum = sumSecondNum / optInSecondPeriod;
+                     emaSecondDen = sumSecondDen / optInSecondPeriod;
+                  }
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       if( emaSecondDen > 0.0 ) {
          tsiValue = 100.0 * emaSecondNum / emaSecondDen;
@@ -237010,57 +238001,89 @@ public final class Core {
       sumFirstDen = 0.0;
       sumSecondNum = 0.0;
       sumSecondDen = 0.0;
-      /* The first bar carrying a close-to-close change. */
-      today = startIdx - lookbackTotal + 1;
-      prevClose = inReal[today - 1];
-      nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here completes
-       * the second stage's seed, so it produces the first output.
+      /* The first-bar seed does not move with startIdx: stage 1 starts on the
+       * first change, stage 2 on stage 1's value where the default seeds it.
        */
-      while( today <= startIdx ) {
-         mom = inReal[today] - prevClose;
-         prevClose = inReal[today];
-         absMom = Math.abs(mom);
-         /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
-         if( nBar < optInFirstPeriod ) {
-            sumFirstNum = sumFirstNum + mom;
-            sumFirstDen = sumFirstDen + absMom;
-            if( nBar == optInFirstPeriod - 1 ) {
-               emaFirstNum = sumFirstNum / optInFirstPeriod;
-               emaFirstDen = sumFirstDen / optInFirstPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevClose = inReal[0];
+         today = 1;
+         nBar = 0;
+         while( today <= startIdx ) {
+            mom = inReal[today] - prevClose;
+            prevClose = inReal[today];
+            absMom = Math.abs(mom);
+            if( nBar == 0 ) {
+               emaFirstNum = mom;
+               emaFirstDen = absMom;
+            } else {
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
-         } else {
-            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
-            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+            if( nBar >= startIdx - lookbackTotal + lookbackFirst ) {
+               if( nBar == startIdx - lookbackTotal + lookbackFirst ) {
+                  emaSecondNum = emaFirstNum;
+                  emaSecondDen = emaFirstDen;
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         /* Stage 2: the second EMA, over what stage 1 publishes.
-          *
-          * The stage counter is compared BEFORE it is subtracted, never after.
-          * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
-          * is correct in C, where the counters are signed, and broken everywhere
-          * else: the Rust backend renders them as usize, so the subtraction
-          * underflows for the first lookbackFirst bars -- a panic in a debug
-          * build and a wrap in release. It would also be invisible to the
-          * cross-language gate, which runs release servers at unstable period 0,
-          * where the branch the wrap wrongly takes happens to be a no-op because
-          * both accumulators are still 0.0. smi.c states the same rule.
+      } else {
+         /* The first bar carrying a close-to-close change. */
+         today = startIdx - lookbackTotal + 1;
+         prevClose = inReal[today - 1];
+         nBar = 0;
+         /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+          * the second stage's seed, so it produces the first output.
           */
-         if( nBar >= lookbackFirst ) {
-            nSecond = nBar - lookbackFirst;
-            if( nSecond < optInSecondPeriod ) {
-               sumSecondNum = sumSecondNum + emaFirstNum;
-               sumSecondDen = sumSecondDen + emaFirstDen;
-               if( nSecond == optInSecondPeriod - 1 ) {
-                  emaSecondNum = sumSecondNum / optInSecondPeriod;
-                  emaSecondDen = sumSecondDen / optInSecondPeriod;
+         while( today <= startIdx ) {
+            mom = inReal[today] - prevClose;
+            prevClose = inReal[today];
+            absMom = Math.abs(mom);
+            /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+            if( nBar < optInFirstPeriod ) {
+               sumFirstNum = sumFirstNum + mom;
+               sumFirstDen = sumFirstDen + absMom;
+               if( nBar == optInFirstPeriod - 1 ) {
+                  emaFirstNum = sumFirstNum / optInFirstPeriod;
+                  emaFirstDen = sumFirstDen / optInFirstPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
-               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+               emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
             }
+            /* Stage 2: the second EMA, over what stage 1 publishes.
+             *
+             * The stage counter is compared BEFORE it is subtracted, never after.
+             * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+             * is correct in C, where the counters are signed, and broken everywhere
+             * else: the Rust backend renders them as usize, so the subtraction
+             * underflows for the first lookbackFirst bars -- a panic in a debug
+             * build and a wrap in release. It would also be invisible to the
+             * cross-language gate, which runs release servers at unstable period 0,
+             * where the branch the wrap wrongly takes happens to be a no-op because
+             * both accumulators are still 0.0. smi.c states the same rule.
+             */
+            if( nBar >= lookbackFirst ) {
+               nSecond = nBar - lookbackFirst;
+               if( nSecond < optInSecondPeriod ) {
+                  sumSecondNum = sumSecondNum + emaFirstNum;
+                  sumSecondDen = sumSecondDen + emaFirstDen;
+                  if( nSecond == optInSecondPeriod - 1 ) {
+                     emaSecondNum = sumSecondNum / optInSecondPeriod;
+                     emaSecondDen = sumSecondDen / optInSecondPeriod;
+                  }
+               } else {
+                  emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+                  emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+               }
+            }
+            nBar = nBar + 1;
+            today = today + 1;
          }
-         nBar = nBar + 1;
-         today = today + 1;
       }
       /* The denominator is an EMA of an EMA of |momentum|: every term is
        * non-negative and every weight positive, so it is zero only when every
@@ -246484,6 +247507,7 @@ public final class Core {
  *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2. The fixpoint test waits for a seeded
  *                average.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -246688,89 +247712,140 @@ public final class Core {
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-       * completes the signal window, so it leaves the first output in the state.
+      /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+       * each later stage on its feeder's value where the default seeds it, and
+       * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
        */
-      while( today <= startIdx ) {
-         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         /* Stage 1: the exponential average of the typical price. */
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.fma(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.fma(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         /* Stage 2: the exponential average of the absolute distance, over what
-          * stage 1 publishes. The counter is compared before it is subtracted,
-          * never after: the Rust backend renders these as usize.
+      } else {
+         today = startIdx - lookbackTotal;
+         /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+          * completes the signal window, so it leaves the first output in the state.
           */
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            /* GUARD 1, the fixpoint test. With a constant input the exponential
-             * step stops moving once k*|ap - esa| falls under half an ulp, and
-             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-             * frozen residue is a real non-zero distance, so the naive form
-             * divides it by its own exponential average and walks to
-             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-             * but rounding. When the pair has not moved, the average has reached
-             * its fixpoint and the distance is exactly that residue, so the
-             * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period.
-             *
-             * Only once prevEsa is an average: on the bar that seeds esa it is
-             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-             */
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            /* Stage 1: the exponential average of the typical price. */
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.fma(beta1, d, k1 * dev);
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-            /* Stage 3: the oscillator, then its own smoothing. */
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                * not the deviation: 0.015*d underflows to zero while d is still
-                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                * average distance -- so the oscillator reads its neutral 0.0
-                * (#112), as tsi.c does.
+            /* Stage 2: the exponential average of the absolute distance, over what
+             * stage 1 publishes. The counter is compared before it is subtracted,
+             * never after: the Rust backend renders these as usize.
+             */
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               /* GUARD 1, the fixpoint test. With a constant input the exponential
+                * step stops moving once k*|ap - esa| falls under half an ulp, and
+                * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                * frozen residue is a real non-zero distance, so the naive form
+                * divides it by its own exponential average and walks to
+                * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                * but rounding. When the pair has not moved, the average has reached
+                * its fixpoint and the distance is exactly that residue, so the
+                * numerator is taken as zero. The test is exact, so it is
+                * independent of scale and period.
+                *
+                * Only once prevEsa is an average: on the bar that seeds esa it is
+                * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 */
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  d = Math.fma(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               /* Stage 3: the oscillator, then its own smoothing. */
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                   * not the deviation: 0.015*d underflows to zero while d is still
+                   * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                   * average distance -- so the oscillator reads its neutral 0.0
+                   * (#112), as tsi.c does.
+                   */
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       /* The first output. The warm-up's last pass stored this bar's WT1 into the
        * ring and added it to the running sum, so the average is ready here.
@@ -246920,60 +247995,107 @@ public final class Core {
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      while( today <= startIdx ) {
-         ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.fma(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.fma(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+      } else {
+         today = startIdx - lookbackTotal;
+         while( today <= startIdx ) {
+            ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.fma(beta1, d, k1 * dev);
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  d = Math.fma(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       outWT1[0] = wt1;
       outWT2[0] = sumSignal / (double)optInSignalPeriod;
@@ -247584,89 +248706,140 @@ public final class Core {
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-       * completes the signal window, so it leaves the first output in the state.
+      /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+       * each later stage on its feeder's value where the default seeds it, and
+       * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
        */
-      while( today <= startIdx ) {
-         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         /* Stage 1: the exponential average of the typical price. */
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.fma(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.fma(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         /* Stage 2: the exponential average of the absolute distance, over what
-          * stage 1 publishes. The counter is compared before it is subtracted,
-          * never after: the Rust backend renders these as usize.
+      } else {
+         today = startIdx - lookbackTotal;
+         /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+          * completes the signal window, so it leaves the first output in the state.
           */
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            /* GUARD 1, the fixpoint test. With a constant input the exponential
-             * step stops moving once k*|ap - esa| falls under half an ulp, and
-             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-             * frozen residue is a real non-zero distance, so the naive form
-             * divides it by its own exponential average and walks to
-             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-             * but rounding. When the pair has not moved, the average has reached
-             * its fixpoint and the distance is exactly that residue, so the
-             * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period.
-             *
-             * Only once prevEsa is an average: on the bar that seeds esa it is
-             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-             */
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            /* Stage 1: the exponential average of the typical price. */
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.fma(beta1, d, k1 * dev);
+               esa = Math.fma(beta1, esa, k1 * ap);
             }
-            /* Stage 3: the oscillator, then its own smoothing. */
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                * not the deviation: 0.015*d underflows to zero while d is still
-                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                * average distance -- so the oscillator reads its neutral 0.0
-                * (#112), as tsi.c does.
+            /* Stage 2: the exponential average of the absolute distance, over what
+             * stage 1 publishes. The counter is compared before it is subtracted,
+             * never after: the Rust backend renders these as usize.
+             */
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               /* GUARD 1, the fixpoint test. With a constant input the exponential
+                * step stops moving once k*|ap - esa| falls under half an ulp, and
+                * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                * frozen residue is a real non-zero distance, so the naive form
+                * divides it by its own exponential average and walks to
+                * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                * but rounding. When the pair has not moved, the average has reached
+                * its fixpoint and the distance is exactly that residue, so the
+                * numerator is taken as zero. The test is exact, so it is
+                * independent of scale and period.
+                *
+                * Only once prevEsa is an average: on the bar that seeds esa it is
+                * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 */
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  d = Math.fma(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               /* Stage 3: the oscillator, then its own smoothing. */
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                   * not the deviation: 0.015*d underflows to zero while d is still
+                   * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                   * average distance -- so the oscillator reads its neutral 0.0
+                   * (#112), as tsi.c does.
+                   */
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.fma(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       /* The first output. The warm-up's last pass stored this bar's WT1 into the
        * ring and added it to the running sum, so the average is ready here.
@@ -252014,6 +253187,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#347).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -252141,16 +253315,24 @@ public final class Core {
        * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
        * read never reaches a slot already written.
        */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
@@ -252222,16 +253404,24 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
@@ -252677,16 +253867,24 @@ public final class Core {
        * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
        * read never reaches a slot already written.
        */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;

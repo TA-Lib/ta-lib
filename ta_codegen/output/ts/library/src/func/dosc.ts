@@ -47,8 +47,10 @@
  *  100626 KL,CC  Initial version (#479).
  *  101026 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -275,46 +277,18 @@ export function doscImpl(
   } else {
     rsiValue = 50.0;
   }
-  /* Warm-up. Feeds every RSI value before startIdx through the chain and
-   * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-   * first bar whose signal window is full is startIdx, by construction of
-   * the lookback.
+  /* The first-bar seed: each EMA starts on its feeder's first value where
+   * the default seeds it. The RSI keeps its own seed and window.
    */
-  while (rsiBar < startIdx) {
-    if (nRsi >= skipRSI) {
-      n1 = nRsi - skipRSI;
-      if (n1 < optInFirstPeriod) {
-        sum1 = sum1 + rsiValue;
-        if (n1 === optInFirstPeriod - 1) {
-          ema1 = sum1 / optInFirstPeriod;
-        }
-      } else {
-        {
-          const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
-          const _p = _a * _b;
-          let _t = 134217729 * _a;
-          const _ah = _t - (_t - _a), _al = _a - _ah;
-          _t = 134217729 * _b;
-          const _bh = _t - (_t - _b), _bl = _b - _bh;
-          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-          const _v = _tl + _pl, _v2 = _v + _v;
-          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          ema1 = _w && (_pl === 0 || _v === 0) ? _th
-            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-        }
-      }
-      if (n1 >= lookbackEMA1) {
-        n2 = n1 - lookbackEMA1;
-        if (n2 < optInSecondPeriod) {
-          sum2 = sum2 + ema1;
-          if (n2 === optInSecondPeriod - 1) {
-            ema2 = sum2 / optInSecondPeriod;
-          }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    while (rsiBar < startIdx) {
+      if (nRsi >= skipRSI) {
+        n1 = nRsi - skipRSI;
+        if (n1 === 0) {
+          ema1 = rsiValue;
         } else {
           {
-            const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+            const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
             const _p = _a * _b;
             let _t = 134217729 * _a;
             const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -324,40 +298,147 @@ export function doscImpl(
             const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
             const _v = _tl + _pl, _v2 = _v + _v;
             const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+            ema1 = _w && (_pl === 0 || _v === 0) ? _th
               : _w && _v2 !== (_th + _v2) - _th ? _th + _v
               : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
           }
         }
-        if (n2 >= lookbackEMA2) {
-          dsBuffer[dsBuffer_Idx] = ema2;
-          sumSignal = sumSignal + ema2;
-          dsBuffer_Idx++;
-          if (dsBuffer_Idx > maxIdx_dsBuffer) {
-            dsBuffer_Idx = 0;
+        if (n1 >= lookbackEMA1) {
+          n2 = n1 - lookbackEMA1;
+          if (n2 === 0) {
+            ema2 = ema1;
+          } else {
+            {
+              const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              ema2 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (n2 >= lookbackEMA2) {
+            dsBuffer[dsBuffer_Idx] = ema2;
+            sumSignal = sumSignal + ema2;
+            dsBuffer_Idx++;
+            if (dsBuffer_Idx > maxIdx_dsBuffer) {
+              dsBuffer_Idx = 0;
+            }
           }
         }
       }
+      nRsi = nRsi + 1;
+      tempValue1 = inReal[today];
+      today = today + 1;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (optInTimePeriod - 1);
+      prevGain *= (optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if (tempValue1 > 0.0) {
+        rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+        rsiValue = 50.0;
+      }
+      rsiBar = rsiBar + 1;
     }
-    nRsi = nRsi + 1;
-    tempValue1 = inReal[today];
-    today = today + 1;
-    tempValue2 = tempValue1 - prevValue;
-    prevValue = tempValue1;
-    prevLoss *= (optInTimePeriod - 1);
-    prevGain *= (optInTimePeriod - 1);
-    gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-    prevGain += gainDelta;
-    prevLoss += gainDelta - tempValue2;
-    prevLoss *= invPeriod;
-    prevGain *= invPeriod;
-    tempValue1 = prevGain + prevLoss;
-    if (tempValue1 > 0.0) {
-      rsiValue = 100.0 * (prevGain / tempValue1);
-    } else {
-      rsiValue = 50.0;
+  } else {
+    /* Warm-up. Feeds every RSI value before startIdx through the chain and
+     * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+     * first bar whose signal window is full is startIdx, by construction of
+     * the lookback.
+     */
+    while (rsiBar < startIdx) {
+      if (nRsi >= skipRSI) {
+        n1 = nRsi - skipRSI;
+        if (n1 < optInFirstPeriod) {
+          sum1 = sum1 + rsiValue;
+          if (n1 === optInFirstPeriod - 1) {
+            ema1 = sum1 / optInFirstPeriod;
+          }
+        } else {
+          {
+            const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema1 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+        if (n1 >= lookbackEMA1) {
+          n2 = n1 - lookbackEMA1;
+          if (n2 < optInSecondPeriod) {
+            sum2 = sum2 + ema1;
+            if (n2 === optInSecondPeriod - 1) {
+              ema2 = sum2 / optInSecondPeriod;
+            }
+          } else {
+            {
+              const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              ema2 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (n2 >= lookbackEMA2) {
+            dsBuffer[dsBuffer_Idx] = ema2;
+            sumSignal = sumSignal + ema2;
+            dsBuffer_Idx++;
+            if (dsBuffer_Idx > maxIdx_dsBuffer) {
+              dsBuffer_Idx = 0;
+            }
+          }
+        }
+      }
+      nRsi = nRsi + 1;
+      tempValue1 = inReal[today];
+      today = today + 1;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (optInTimePeriod - 1);
+      prevGain *= (optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if (tempValue1 > 0.0) {
+        rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+        rsiValue = 50.0;
+      }
+      rsiBar = rsiBar + 1;
     }
-    rsiBar = rsiBar + 1;
   }
   /* The first output. Every stage is past its seed here, even at periods
    * 2/2/2/2, so the store below and the one in the stable loop are
@@ -1086,46 +1167,18 @@ function doscOpenImpl(
   } else {
     rsiValue = 50.0;
   }
-  /* Warm-up. Feeds every RSI value before startIdx through the chain and
-   * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
-   * first bar whose signal window is full is startIdx, by construction of
-   * the lookback.
+  /* The first-bar seed: each EMA starts on its feeder's first value where
+   * the default seeds it. The RSI keeps its own seed and window.
    */
-  while (rsiBar < startIdx) {
-    if (nRsi >= skipRSI) {
-      n1 = nRsi - skipRSI;
-      if (n1 < optInFirstPeriod) {
-        sum1 = sum1 + rsiValue;
-        if (n1 === optInFirstPeriod - 1) {
-          ema1 = sum1 / optInFirstPeriod;
-        }
-      } else {
-        {
-          const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
-          const _p = _a * _b;
-          let _t = 134217729 * _a;
-          const _ah = _t - (_t - _a), _al = _a - _ah;
-          _t = 134217729 * _b;
-          const _bh = _t - (_t - _b), _bl = _b - _bh;
-          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-          const _v = _tl + _pl, _v2 = _v + _v;
-          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          ema1 = _w && (_pl === 0 || _v === 0) ? _th
-            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-        }
-      }
-      if (n1 >= lookbackEMA1) {
-        n2 = n1 - lookbackEMA1;
-        if (n2 < optInSecondPeriod) {
-          sum2 = sum2 + ema1;
-          if (n2 === optInSecondPeriod - 1) {
-            ema2 = sum2 / optInSecondPeriod;
-          }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    while (rsiBar < startIdx) {
+      if (nRsi >= skipRSI) {
+        n1 = nRsi - skipRSI;
+        if (n1 === 0) {
+          ema1 = rsiValue;
         } else {
           {
-            const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+            const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
             const _p = _a * _b;
             let _t = 134217729 * _a;
             const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1135,40 +1188,147 @@ function doscOpenImpl(
             const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
             const _v = _tl + _pl, _v2 = _v + _v;
             const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+            ema1 = _w && (_pl === 0 || _v === 0) ? _th
               : _w && _v2 !== (_th + _v2) - _th ? _th + _v
               : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
           }
         }
-        if (n2 >= lookbackEMA2) {
-          dsBuffer[dsBuffer_Idx] = ema2;
-          sumSignal = sumSignal + ema2;
-          dsBuffer_Idx++;
-          if (dsBuffer_Idx > maxIdx_dsBuffer) {
-            dsBuffer_Idx = 0;
+        if (n1 >= lookbackEMA1) {
+          n2 = n1 - lookbackEMA1;
+          if (n2 === 0) {
+            ema2 = ema1;
+          } else {
+            {
+              const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              ema2 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (n2 >= lookbackEMA2) {
+            dsBuffer[dsBuffer_Idx] = ema2;
+            sumSignal = sumSignal + ema2;
+            dsBuffer_Idx++;
+            if (dsBuffer_Idx > maxIdx_dsBuffer) {
+              dsBuffer_Idx = 0;
+            }
           }
         }
       }
+      nRsi = nRsi + 1;
+      tempValue1 = inReal[today];
+      today = today + 1;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (optInTimePeriod - 1);
+      prevGain *= (optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if (tempValue1 > 0.0) {
+        rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+        rsiValue = 50.0;
+      }
+      rsiBar = rsiBar + 1;
     }
-    nRsi = nRsi + 1;
-    tempValue1 = inReal[today];
-    today = today + 1;
-    tempValue2 = tempValue1 - prevValue;
-    prevValue = tempValue1;
-    prevLoss *= (optInTimePeriod - 1);
-    prevGain *= (optInTimePeriod - 1);
-    gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
-    prevGain += gainDelta;
-    prevLoss += gainDelta - tempValue2;
-    prevLoss *= invPeriod;
-    prevGain *= invPeriod;
-    tempValue1 = prevGain + prevLoss;
-    if (tempValue1 > 0.0) {
-      rsiValue = 100.0 * (prevGain / tempValue1);
-    } else {
-      rsiValue = 50.0;
+  } else {
+    /* Warm-up. Feeds every RSI value before startIdx through the chain and
+     * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+     * first bar whose signal window is full is startIdx, by construction of
+     * the lookback.
+     */
+    while (rsiBar < startIdx) {
+      if (nRsi >= skipRSI) {
+        n1 = nRsi - skipRSI;
+        if (n1 < optInFirstPeriod) {
+          sum1 = sum1 + rsiValue;
+          if (n1 === optInFirstPeriod - 1) {
+            ema1 = sum1 / optInFirstPeriod;
+          }
+        } else {
+          {
+            const _a: number = beta1, _b: number = ema1, _c: number = k1 * rsiValue;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema1 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+        if (n1 >= lookbackEMA1) {
+          n2 = n1 - lookbackEMA1;
+          if (n2 < optInSecondPeriod) {
+            sum2 = sum2 + ema1;
+            if (n2 === optInSecondPeriod - 1) {
+              ema2 = sum2 / optInSecondPeriod;
+            }
+          } else {
+            {
+              const _a: number = beta2, _b: number = ema2, _c: number = k2 * ema1;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              ema2 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (n2 >= lookbackEMA2) {
+            dsBuffer[dsBuffer_Idx] = ema2;
+            sumSignal = sumSignal + ema2;
+            dsBuffer_Idx++;
+            if (dsBuffer_Idx > maxIdx_dsBuffer) {
+              dsBuffer_Idx = 0;
+            }
+          }
+        }
+      }
+      nRsi = nRsi + 1;
+      tempValue1 = inReal[today];
+      today = today + 1;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (optInTimePeriod - 1);
+      prevGain *= (optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if (tempValue1 > 0.0) {
+        rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+        rsiValue = 50.0;
+      }
+      rsiBar = rsiBar + 1;
     }
-    rsiBar = rsiBar + 1;
   }
   /* The first output. Every stage is past its seed here, even at periods
    * 2/2/2/2, so the store below and the one in the stable loop are

@@ -445,6 +445,45 @@ struct Cx<'p, 'a> {
 }
 
 pub(super) fn classify_plan(cp: &ComposedPlan, lookup: &dyn CalleeLookup) -> Result<Classified, StreamError> {
+    let joined = classify_in(cp, lookup, None);
+    if joined.is_ok() || !crate::ring_lag::reads_ema_variation(cp.func.stream_source()) {
+        return joined;
+    }
+    // Each setting moves only where a series starts. A plan serves both when every
+    // read it proves same-bar is same-bar under the other too, which Open then
+    // presumes where only one proved it.
+    match (classify_in(cp, lookup, Some(false)), classify_in(cp, lookup, Some(true))) {
+        (Ok(sma), Ok(first)) => {
+            if covers(&sma, &first) {
+                Ok(sma)
+            } else if covers(&first, &sma) {
+                Ok(first)
+            } else {
+                Err(StreamError::Unsupported(
+                    "composed body: the EMA variation changes the stream's delay plan".into(),
+                ))
+            }
+        }
+        (Err(e), _) | (_, Err(e)) => Err(e),
+    }
+}
+
+/// `plan` serves `other`'s setting too: the same series and lines, and each edge of
+/// the same class, or presumed same-bar where `other` proves it.
+fn covers(plan: &Classified, other: &Classified) -> bool {
+    let same = |a: &dyn std::fmt::Debug, b: &dyn std::fmt::Debug| format!("{a:?}") == format!("{b:?}");
+    same(&plan.alias_keys, &other.alias_keys)
+        && same(&plan.defs, &other.defs)
+        && same(&plan.lines, &other.lines)
+        && plan.edges.len() == other.edges.len()
+        && plan.edges.iter().zip(&other.edges).all(|(p, o)| {
+            p.def == o.def
+                && p.consumer == o.consumer
+                && (p.class == o.class || (matches!(p.class, EdgeClass::ZeroPresumed { .. }) && o.class == EdgeClass::Zero))
+        })
+}
+
+fn classify_in(cp: &ComposedPlan, lookup: &dyn CalleeLookup, ema_world: Option<bool>) -> Result<Classified, StreamError> {
     let func = cp.func;
     let body = func.stream_source();
     let region_full = &body[..body.len() - cp.tail.len()];
@@ -454,7 +493,7 @@ pub(super) fn classify_plan(cp: &ComposedPlan, lookup: &dyn CalleeLookup) -> Res
     }
     let mut cx = Cx {
         cp,
-        walk: ComposedWalk::new(func, lookup),
+        walk: ComposedWalk::new(func, lookup, ema_world),
         al: aliases(func, &stmts),
         defs: Vec::new(),
         counts: Vec::new(),

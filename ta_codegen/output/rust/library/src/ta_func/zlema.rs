@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#347).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -227,21 +228,29 @@ impl Core {
         // In-place safe (outReal == inReal): both of a bar's reads precede its
         // write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
         // read never reaches a slot already written.
-        trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + lag;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        if i > 0 {
-            let _wn: usize = i;
-            let _w0 = &inReal[today..][.._wn];
-            let _w1 = &inReal[trailingIdx..][.._wn];
-            for _wk in 0.._wn {
-                tempReal += 2.0 * _w0[_wk] - _w1[_wk];
-                today += 1;
-                trailingIdx += 1;
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            today = lag;
+            prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            today = trailingIdx + lag;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            if i > 0 {
+                let _wn: usize = i;
+                let _w0 = &inReal[today..][.._wn];
+                let _w1 = &inReal[trailingIdx..][.._wn];
+                for _wk in 0.._wn {
+                    tempReal += 2.0 * _w0[_wk] - _w1[_wk];
+                    today += 1;
+                    trailingIdx += 1;
+                }
             }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         if today <= startIdx {
             let _wn: usize = startIdx - today + 1;
             let _w0 = &inReal[today..][.._wn];
@@ -560,16 +569,24 @@ impl Core {
         // In-place safe (outReal == inReal): both of a bar's reads precede its
         // write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
         // read never reaches a slot already written.
-        trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + lag;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            today = lag;
+            prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
             today += 1;
             trailingIdx += 1;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            today = trailingIdx + lag;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+                today += 1;
+                trailingIdx += 1;
+            }
+            prevMA = tempReal / (optInTimePeriod as f64);
         }
-        prevMA = tempReal / (optInTimePeriod as f64);
         while today <= startIdx {
             prevMA = fmadd!(emaBeta, prevMA, (optInK_1 as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;

@@ -44,8 +44,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (#360).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -188,81 +190,115 @@ export function tsiImpl(
   sumFirstDen = 0.0;
   sumSecondNum = 0.0;
   sumSecondDen = 0.0;
-  /* The first bar carrying a close-to-close change. */
-  today = startIdx - lookbackTotal + 1;
-  prevClose = inReal[today - 1];
-  nBar = 0;
-  /* Warm-up. Runs through startIdx inclusive: the last pass here completes
-   * the second stage's seed, so it produces the first output.
+  /* The first-bar seed does not move with startIdx: stage 1 starts on the
+   * first change, stage 2 on stage 1's value where the default seeds it.
    */
-  while (today <= startIdx) {
-    mom = inReal[today] - prevClose;
-    prevClose = inReal[today];
-    absMom = Math.abs(mom);
-    /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
-    if (nBar < optInFirstPeriod) {
-      sumFirstNum = sumFirstNum + mom;
-      sumFirstDen = sumFirstDen + absMom;
-      if (nBar === optInFirstPeriod - 1) {
-        emaFirstNum = sumFirstNum / optInFirstPeriod;
-        emaFirstDen = sumFirstDen / optInFirstPeriod;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevClose = inReal[0];
+    today = 1;
+    nBar = 0;
+    while (today <= startIdx) {
+      mom = inReal[today] - prevClose;
+      prevClose = inReal[today];
+      absMom = Math.abs(mom);
+      if (nBar === 0) {
+        emaFirstNum = mom;
+        emaFirstDen = absMom;
+      } else {
+        {
+          const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+        {
+          const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
-    } else {
-      {
-        const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      if (nBar >= startIdx - lookbackTotal + lookbackFirst) {
+        if (nBar === startIdx - lookbackTotal + lookbackFirst) {
+          emaSecondNum = emaFirstNum;
+          emaSecondDen = emaFirstDen;
+        } else {
+          {
+            const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
       }
-      {
-        const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    /* Stage 2: the second EMA, over what stage 1 publishes.
-     *
-     * The stage counter is compared BEFORE it is subtracted, never after.
-     * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
-     * is correct in C, where the counters are signed, and broken everywhere
-     * else: the Rust backend renders them as usize, so the subtraction
-     * underflows for the first lookbackFirst bars -- a panic in a debug
-     * build and a wrap in release. It would also be invisible to the
-     * cross-language gate, which runs release servers at unstable period 0,
-     * where the branch the wrap wrongly takes happens to be a no-op because
-     * both accumulators are still 0.0. smi.c states the same rule.
+  } else {
+    /* The first bar carrying a close-to-close change. */
+    today = startIdx - lookbackTotal + 1;
+    prevClose = inReal[today - 1];
+    nBar = 0;
+    /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+     * the second stage's seed, so it produces the first output.
      */
-    if (nBar >= lookbackFirst) {
-      nSecond = nBar - lookbackFirst;
-      if (nSecond < optInSecondPeriod) {
-        sumSecondNum = sumSecondNum + emaFirstNum;
-        sumSecondDen = sumSecondDen + emaFirstDen;
-        if (nSecond === optInSecondPeriod - 1) {
-          emaSecondNum = sumSecondNum / optInSecondPeriod;
-          emaSecondDen = sumSecondDen / optInSecondPeriod;
+    while (today <= startIdx) {
+      mom = inReal[today] - prevClose;
+      prevClose = inReal[today];
+      absMom = Math.abs(mom);
+      /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+      if (nBar < optInFirstPeriod) {
+        sumFirstNum = sumFirstNum + mom;
+        sumFirstDen = sumFirstDen + absMom;
+        if (nBar === optInFirstPeriod - 1) {
+          emaFirstNum = sumFirstNum / optInFirstPeriod;
+          emaFirstDen = sumFirstDen / optInFirstPeriod;
         }
       } else {
         {
-          const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+          const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -272,12 +308,12 @@ export function tsiImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+          emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
         {
-          const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+          const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -287,14 +323,68 @@ export function tsiImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+          emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      /* Stage 2: the second EMA, over what stage 1 publishes.
+       *
+       * The stage counter is compared BEFORE it is subtracted, never after.
+       * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+       * is correct in C, where the counters are signed, and broken everywhere
+       * else: the Rust backend renders them as usize, so the subtraction
+       * underflows for the first lookbackFirst bars -- a panic in a debug
+       * build and a wrap in release. It would also be invisible to the
+       * cross-language gate, which runs release servers at unstable period 0,
+       * where the branch the wrap wrongly takes happens to be a no-op because
+       * both accumulators are still 0.0. smi.c states the same rule.
+       */
+      if (nBar >= lookbackFirst) {
+        nSecond = nBar - lookbackFirst;
+        if (nSecond < optInSecondPeriod) {
+          sumSecondNum = sumSecondNum + emaFirstNum;
+          sumSecondDen = sumSecondDen + emaFirstDen;
+          if (nSecond === optInSecondPeriod - 1) {
+            emaSecondNum = sumSecondNum / optInSecondPeriod;
+            emaSecondDen = sumSecondDen / optInSecondPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    nBar = nBar + 1;
-    today = today + 1;
   }
   /* The denominator is an EMA of an EMA of |momentum|: every term is
    * non-negative and every weight positive, so it is zero only when every
@@ -1016,81 +1106,115 @@ function tsiOpenImpl(
   sumFirstDen = 0.0;
   sumSecondNum = 0.0;
   sumSecondDen = 0.0;
-  /* The first bar carrying a close-to-close change. */
-  today = startIdx - lookbackTotal + 1;
-  prevClose = inReal[today - 1];
-  nBar = 0;
-  /* Warm-up. Runs through startIdx inclusive: the last pass here completes
-   * the second stage's seed, so it produces the first output.
+  /* The first-bar seed does not move with startIdx: stage 1 starts on the
+   * first change, stage 2 on stage 1's value where the default seeds it.
    */
-  while (today <= startIdx) {
-    mom = inReal[today] - prevClose;
-    prevClose = inReal[today];
-    absMom = Math.abs(mom);
-    /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
-    if (nBar < optInFirstPeriod) {
-      sumFirstNum = sumFirstNum + mom;
-      sumFirstDen = sumFirstDen + absMom;
-      if (nBar === optInFirstPeriod - 1) {
-        emaFirstNum = sumFirstNum / optInFirstPeriod;
-        emaFirstDen = sumFirstDen / optInFirstPeriod;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevClose = inReal[0];
+    today = 1;
+    nBar = 0;
+    while (today <= startIdx) {
+      mom = inReal[today] - prevClose;
+      prevClose = inReal[today];
+      absMom = Math.abs(mom);
+      if (nBar === 0) {
+        emaFirstNum = mom;
+        emaFirstDen = absMom;
+      } else {
+        {
+          const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+        {
+          const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
-    } else {
-      {
-        const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      if (nBar >= startIdx - lookbackTotal + lookbackFirst) {
+        if (nBar === startIdx - lookbackTotal + lookbackFirst) {
+          emaSecondNum = emaFirstNum;
+          emaSecondDen = emaFirstDen;
+        } else {
+          {
+            const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
       }
-      {
-        const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    /* Stage 2: the second EMA, over what stage 1 publishes.
-     *
-     * The stage counter is compared BEFORE it is subtracted, never after.
-     * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
-     * is correct in C, where the counters are signed, and broken everywhere
-     * else: the Rust backend renders them as usize, so the subtraction
-     * underflows for the first lookbackFirst bars -- a panic in a debug
-     * build and a wrap in release. It would also be invisible to the
-     * cross-language gate, which runs release servers at unstable period 0,
-     * where the branch the wrap wrongly takes happens to be a no-op because
-     * both accumulators are still 0.0. smi.c states the same rule.
+  } else {
+    /* The first bar carrying a close-to-close change. */
+    today = startIdx - lookbackTotal + 1;
+    prevClose = inReal[today - 1];
+    nBar = 0;
+    /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+     * the second stage's seed, so it produces the first output.
      */
-    if (nBar >= lookbackFirst) {
-      nSecond = nBar - lookbackFirst;
-      if (nSecond < optInSecondPeriod) {
-        sumSecondNum = sumSecondNum + emaFirstNum;
-        sumSecondDen = sumSecondDen + emaFirstDen;
-        if (nSecond === optInSecondPeriod - 1) {
-          emaSecondNum = sumSecondNum / optInSecondPeriod;
-          emaSecondDen = sumSecondDen / optInSecondPeriod;
+    while (today <= startIdx) {
+      mom = inReal[today] - prevClose;
+      prevClose = inReal[today];
+      absMom = Math.abs(mom);
+      /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+      if (nBar < optInFirstPeriod) {
+        sumFirstNum = sumFirstNum + mom;
+        sumFirstDen = sumFirstDen + absMom;
+        if (nBar === optInFirstPeriod - 1) {
+          emaFirstNum = sumFirstNum / optInFirstPeriod;
+          emaFirstDen = sumFirstDen / optInFirstPeriod;
         }
       } else {
         {
-          const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+          const _a: number = betaFirst, _b: number = emaFirstNum, _c: number = kFirst * mom;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1100,12 +1224,12 @@ function tsiOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+          emaFirstNum = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
         {
-          const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+          const _a: number = betaFirst, _b: number = emaFirstDen, _c: number = kFirst * absMom;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1115,14 +1239,68 @@ function tsiOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+          emaFirstDen = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      /* Stage 2: the second EMA, over what stage 1 publishes.
+       *
+       * The stage counter is compared BEFORE it is subtracted, never after.
+       * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+       * is correct in C, where the counters are signed, and broken everywhere
+       * else: the Rust backend renders them as usize, so the subtraction
+       * underflows for the first lookbackFirst bars -- a panic in a debug
+       * build and a wrap in release. It would also be invisible to the
+       * cross-language gate, which runs release servers at unstable period 0,
+       * where the branch the wrap wrongly takes happens to be a no-op because
+       * both accumulators are still 0.0. smi.c states the same rule.
+       */
+      if (nBar >= lookbackFirst) {
+        nSecond = nBar - lookbackFirst;
+        if (nSecond < optInSecondPeriod) {
+          sumSecondNum = sumSecondNum + emaFirstNum;
+          sumSecondDen = sumSecondDen + emaFirstDen;
+          if (nSecond === optInSecondPeriod - 1) {
+            emaSecondNum = sumSecondNum / optInSecondPeriod;
+            emaSecondDen = sumSecondDen / optInSecondPeriod;
+          }
+        } else {
+          {
+            const _a: number = betaSecond, _b: number = emaSecondNum, _c: number = kSecond * emaFirstNum;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondNum = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+          {
+            const _a: number = betaSecond, _b: number = emaSecondDen, _c: number = kSecond * emaFirstDen;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            emaSecondDen = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      today = today + 1;
     }
-    nBar = nBar + 1;
-    today = today + 1;
   }
   /* The denominator is an EMA of an EMA of |momentum|: every term is
    * non-negative and every weight positive, so it is zero only when every

@@ -154,79 +154,132 @@ func (c *Core) wavetrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []fl
 	nAp = 0
 	prevAp = 0.0
 	prevEsa = 0.0
-	today = startIdx - lookbackTotal
-	if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
-		_r2 := inHigh[today:][:_n0]
-		_r3 := inLow[today:][:_n0]
-		_r4 := inClose[today:][:_n0]
-		for _k1 := range _r2 {
-			ap = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
-			if nAp+int32(_k1) < optInChannelPeriod {
-				sumEsa = sumEsa + ap
-				if nAp+int32(_k1) == optInChannelPeriod-1 {
-					esa = sumEsa / float64(optInChannelPeriod)
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		today = 0
+		if _n0 := int(startIdx) - int(today) + 1; _n0 > 0 {
+			_r2 := inHigh[today:][:_n0]
+			_r3 := inLow[today:][:_n0]
+			_r4 := inClose[today:][:_n0]
+			for _k1 := range _r2 {
+				ap = (_r2[_k1] + _r3[_k1] + _r4[_k1]) / 3.0
+				if nAp+int32(_k1) == 0 {
+					esa = ap
+				} else {
+					esa = math.FMA(beta1, esa, float64(k1*ap))
 				}
-			} else {
-				esa = math.FMA(beta1, esa, float64(k1*ap))
+				if nAp+int32(_k1) >= startIdx-lookbackTotal+lookbackChannel {
+					num = ap - esa
+					if ap == prevAp && esa == prevEsa {
+						num = 0.0
+					}
+					dev = math.Abs(num)
+					if nAp+int32(_k1) == startIdx-lookbackTotal+lookbackChannel {
+						d = dev
+					} else {
+						d = math.FMA(beta1, d, float64(k1*dev))
+					}
+					if nAp+int32(_k1) >= startIdx-lookbackTotal+lookbackChannel+lookbackChannel {
+						scaledDev = float64(0.015 * d)
+						if scaledDev > 0.0 {
+							ci = num / scaledDev
+						} else {
+							ci = 0.0
+						}
+						if nAp+int32(_k1) == startIdx-lookbackTotal+lookbackChannel+lookbackChannel {
+							wt1 = ci
+						} else {
+							wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+						}
+						if nAp+int32(_k1) >= startIdx-lookbackTotal+lookbackChannel+lookbackChannel+lookbackAverage {
+							wtBuffer[wtBuffer_Idx] = wt1
+							sumSignal = sumSignal + wt1
+							wtBuffer_Idx++
+							if wtBuffer_Idx > maxIdx_wtBuffer {
+								wtBuffer_Idx = 0
+							}
+						}
+					}
+				}
+				prevAp = ap
+				prevEsa = esa
 			}
-			if nAp+int32(_k1) >= lookbackChannel {
-				nDev = nAp + int32(_k1) - lookbackChannel
-				num = ap - esa
-				if nAp+int32(_k1) >= optInChannelPeriod && ap == prevAp && esa == prevEsa {
-					num = 0.0
-				}
-				dev = math.Abs(num)
-				if nDev < optInChannelPeriod {
-					sumD = sumD + dev
-					if nDev == optInChannelPeriod-1 {
-						d = sumD / float64(optInChannelPeriod)
+			today += int32(_n0)
+		}
+	} else {
+		today = startIdx - lookbackTotal
+		if _n5 := int(startIdx) - int(today) + 1; _n5 > 0 {
+			_r7 := inHigh[today:][:_n5]
+			_r8 := inLow[today:][:_n5]
+			_r9 := inClose[today:][:_n5]
+			for _k6 := range _r7 {
+				ap = (_r7[_k6] + _r8[_k6] + _r9[_k6]) / 3.0
+				if nAp+int32(_k6) < optInChannelPeriod {
+					sumEsa = sumEsa + ap
+					if nAp+int32(_k6) == optInChannelPeriod-1 {
+						esa = sumEsa / float64(optInChannelPeriod)
 					}
 				} else {
-					d = math.FMA(beta1, d, float64(k1*dev))
+					esa = math.FMA(beta1, esa, float64(k1*ap))
 				}
-				if nDev >= lookbackChannel {
-					nCi = nDev - lookbackChannel
-					scaledDev = float64(0.015 * d)
-					if scaledDev > 0.0 {
-						ci = num / scaledDev
-					} else {
-						ci = 0.0
+				if nAp+int32(_k6) >= lookbackChannel {
+					nDev = nAp + int32(_k6) - lookbackChannel
+					num = ap - esa
+					if nAp+int32(_k6) >= optInChannelPeriod && ap == prevAp && esa == prevEsa {
+						num = 0.0
 					}
-					if nCi < optInAveragePeriod {
-						sumCi = sumCi + ci
-						if nCi == optInAveragePeriod-1 {
-							wt1 = sumCi / float64(optInAveragePeriod)
+					dev = math.Abs(num)
+					if nDev < optInChannelPeriod {
+						sumD = sumD + dev
+						if nDev == optInChannelPeriod-1 {
+							d = sumD / float64(optInChannelPeriod)
 						}
 					} else {
-						wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+						d = math.FMA(beta1, d, float64(k1*dev))
 					}
-					if nCi >= lookbackAverage {
-						wtBuffer[wtBuffer_Idx] = wt1
-						sumSignal = sumSignal + wt1
-						wtBuffer_Idx++
-						if wtBuffer_Idx > maxIdx_wtBuffer {
-							wtBuffer_Idx = 0
+					if nDev >= lookbackChannel {
+						nCi = nDev - lookbackChannel
+						scaledDev = float64(0.015 * d)
+						if scaledDev > 0.0 {
+							ci = num / scaledDev
+						} else {
+							ci = 0.0
+						}
+						if nCi < optInAveragePeriod {
+							sumCi = sumCi + ci
+							if nCi == optInAveragePeriod-1 {
+								wt1 = sumCi / float64(optInAveragePeriod)
+							}
+						} else {
+							wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+						}
+						if nCi >= lookbackAverage {
+							wtBuffer[wtBuffer_Idx] = wt1
+							sumSignal = sumSignal + wt1
+							wtBuffer_Idx++
+							if wtBuffer_Idx > maxIdx_wtBuffer {
+								wtBuffer_Idx = 0
+							}
 						}
 					}
 				}
+				prevAp = ap
+				prevEsa = esa
 			}
-			prevAp = ap
-			prevEsa = esa
+			today += int32(_n5)
 		}
-		today += int32(_n0)
 	}
 	outWT1[0] = wt1
 	outWT2[0] = sumSignal / float64(optInSignalPeriod)
 	outIdx = 1
 	sumSignal = sumSignal - wtBuffer[wtBuffer_Idx]
-	if _n5 := int(endIdx) - int(today) + 1; _n5 > 0 {
-		_r7 := inHigh[today:][:_n5]
-		_r8 := inLow[today:][:_n5]
-		_r9 := inClose[today:][:_n5]
-		_r10 := outWT1[outIdx:][:_n5]
-		_r11 := outWT2[outIdx:][:_n5]
-		for _k6 := range _r7 {
-			ap = (_r7[_k6] + _r8[_k6] + _r9[_k6]) / 3.0
+	if _n10 := int(endIdx) - int(today) + 1; _n10 > 0 {
+		_r12 := inHigh[today:][:_n10]
+		_r13 := inLow[today:][:_n10]
+		_r14 := inClose[today:][:_n10]
+		_r15 := outWT1[outIdx:][:_n10]
+		_r16 := outWT2[outIdx:][:_n10]
+		for _k11 := range _r12 {
+			ap = (_r12[_k11] + _r13[_k11] + _r14[_k11]) / 3.0
 			esa = math.FMA(beta1, esa, float64(k1*ap))
 			num = ap - esa
 			if ap == prevAp && esa == prevEsa {
@@ -243,8 +296,8 @@ func (c *Core) wavetrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []fl
 			wt1 = math.FMA(beta2, wt1, float64(k2*ci))
 			wtBuffer[wtBuffer_Idx] = wt1
 			sumSignal = sumSignal + wt1
-			_r10[_k6] = wt1
-			_r11[_k6] = sumSignal / float64(optInSignalPeriod)
+			_r15[_k11] = wt1
+			_r16[_k11] = sumSignal / float64(optInSignalPeriod)
 			wtBuffer_Idx++
 			if wtBuffer_Idx > maxIdx_wtBuffer {
 				wtBuffer_Idx = 0
@@ -253,7 +306,7 @@ func (c *Core) wavetrendImpl(startIdx, endIdx int32, inHigh, inLow, inClose []fl
 			prevAp = ap
 			prevEsa = esa
 		}
-		outIdx += int32(_n5)
+		outIdx += int32(_n10)
 	}
 	*outNBElement = outIdx
 	*outBegIdx = startIdx
@@ -639,62 +692,111 @@ func (c *Core) wavetrendOpenImpl(sp *WAVETRENDStream, inHigh, inLow, inClose []f
 	nAp = 0
 	prevAp = 0.0
 	prevEsa = 0.0
-	today = startIdx - lookbackTotal
-	for today <= startIdx {
-		ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0
-		if nAp < optInChannelPeriod {
-			sumEsa = sumEsa + ap
-			if nAp == optInChannelPeriod-1 {
-				esa = sumEsa / float64(optInChannelPeriod)
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		today = 0
+		for today <= startIdx {
+			ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0
+			if nAp == 0 {
+				esa = ap
+			} else {
+				esa = math.FMA(beta1, esa, float64(k1*ap))
 			}
-		} else {
-			esa = math.FMA(beta1, esa, float64(k1*ap))
+			if nAp >= startIdx-lookbackTotal+lookbackChannel {
+				num = ap - esa
+				if ap == prevAp && esa == prevEsa {
+					num = 0.0
+				}
+				dev = math.Abs(num)
+				if nAp == startIdx-lookbackTotal+lookbackChannel {
+					d = dev
+				} else {
+					d = math.FMA(beta1, d, float64(k1*dev))
+				}
+				if nAp >= startIdx-lookbackTotal+lookbackChannel+lookbackChannel {
+					scaledDev = float64(0.015 * d)
+					if scaledDev > 0.0 {
+						ci = num / scaledDev
+					} else {
+						ci = 0.0
+					}
+					if nAp == startIdx-lookbackTotal+lookbackChannel+lookbackChannel {
+						wt1 = ci
+					} else {
+						wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+					}
+					if nAp >= startIdx-lookbackTotal+lookbackChannel+lookbackChannel+lookbackAverage {
+						wtBuffer[wtBuffer_Idx] = wt1
+						sumSignal = sumSignal + wt1
+						wtBuffer_Idx++
+						if wtBuffer_Idx > maxIdx_wtBuffer {
+							wtBuffer_Idx = 0
+						}
+					}
+				}
+			}
+			prevAp = ap
+			prevEsa = esa
+			nAp = nAp + 1
+			today = today + 1
 		}
-		if nAp >= lookbackChannel {
-			nDev = nAp - lookbackChannel
-			num = ap - esa
-			if nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa {
-				num = 0.0
-			}
-			dev = math.Abs(num)
-			if nDev < optInChannelPeriod {
-				sumD = sumD + dev
-				if nDev == optInChannelPeriod-1 {
-					d = sumD / float64(optInChannelPeriod)
+	} else {
+		today = startIdx - lookbackTotal
+		for today <= startIdx {
+			ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0
+			if nAp < optInChannelPeriod {
+				sumEsa = sumEsa + ap
+				if nAp == optInChannelPeriod-1 {
+					esa = sumEsa / float64(optInChannelPeriod)
 				}
 			} else {
-				d = math.FMA(beta1, d, float64(k1*dev))
+				esa = math.FMA(beta1, esa, float64(k1*ap))
 			}
-			if nDev >= lookbackChannel {
-				nCi = nDev - lookbackChannel
-				scaledDev = float64(0.015 * d)
-				if scaledDev > 0.0 {
-					ci = num / scaledDev
-				} else {
-					ci = 0.0
+			if nAp >= lookbackChannel {
+				nDev = nAp - lookbackChannel
+				num = ap - esa
+				if nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa {
+					num = 0.0
 				}
-				if nCi < optInAveragePeriod {
-					sumCi = sumCi + ci
-					if nCi == optInAveragePeriod-1 {
-						wt1 = sumCi / float64(optInAveragePeriod)
+				dev = math.Abs(num)
+				if nDev < optInChannelPeriod {
+					sumD = sumD + dev
+					if nDev == optInChannelPeriod-1 {
+						d = sumD / float64(optInChannelPeriod)
 					}
 				} else {
-					wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+					d = math.FMA(beta1, d, float64(k1*dev))
 				}
-				if nCi >= lookbackAverage {
-					wtBuffer[wtBuffer_Idx] = wt1
-					sumSignal = sumSignal + wt1
-					wtBuffer_Idx++
-					if wtBuffer_Idx > maxIdx_wtBuffer {
-						wtBuffer_Idx = 0
+				if nDev >= lookbackChannel {
+					nCi = nDev - lookbackChannel
+					scaledDev = float64(0.015 * d)
+					if scaledDev > 0.0 {
+						ci = num / scaledDev
+					} else {
+						ci = 0.0
+					}
+					if nCi < optInAveragePeriod {
+						sumCi = sumCi + ci
+						if nCi == optInAveragePeriod-1 {
+							wt1 = sumCi / float64(optInAveragePeriod)
+						}
+					} else {
+						wt1 = math.FMA(beta2, wt1, float64(k2*ci))
+					}
+					if nCi >= lookbackAverage {
+						wtBuffer[wtBuffer_Idx] = wt1
+						sumSignal = sumSignal + wt1
+						wtBuffer_Idx++
+						if wtBuffer_Idx > maxIdx_wtBuffer {
+							wtBuffer_Idx = 0
+						}
 					}
 				}
 			}
+			prevAp = ap
+			prevEsa = esa
+			nAp = nAp + 1
+			today = today + 1
 		}
-		prevAp = ap
-		prevEsa = esa
-		nAp = nAp + 1
-		today = today + 1
 	}
 	outWT1[0*outStride] = wt1
 	outWT2[0*outStride] = sumSignal / float64(optInSignalPeriod)

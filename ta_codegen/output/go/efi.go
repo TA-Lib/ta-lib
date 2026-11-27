@@ -102,22 +102,30 @@ func (c *Core) efiImpl(startIdx, endIdx int32, inClose, inVolume []float64, optI
 		return Success
 	}
 	*outBegIdx = startIdx
-	today = startIdx - lookbackTotal + 1
-	prevClose = inClose[today-1]
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C5 := i > 0
-		i--
-		if !_C5 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevClose = inClose[0]
+		force = float64((inClose[1] - prevClose) * inVolume[1])
+		prevClose = inClose[1]
+		prevMA = force
+		today = 2
+	} else {
+		today = startIdx - lookbackTotal + 1
+		prevClose = inClose[today-1]
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C5 := i > 0
+			i--
+			if !_C5 {
+				break
+			}
+			force = float64((inClose[today] - prevClose) * inVolume[today])
+			prevClose = inClose[today]
+			tempReal += force
+			today = today + 1
 		}
-		force = float64((inClose[today] - prevClose) * inVolume[today])
-		prevClose = inClose[today]
-		tempReal += force
-		today = today + 1
+		prevMA = tempReal / float64(optInTimePeriod)
 	}
-	prevMA = tempReal / float64(optInTimePeriod)
 	if _n6 := int(startIdx) - int(today) + 1; _n6 > 0 {
 		_r8 := inClose[today:][:_n6]
 		_r9 := inVolume[today:][:_n6]
@@ -429,22 +437,30 @@ func (c *Core) efiOpenImpl(sp *EFIStream, inClose, inVolume []float64, startIdx,
 			return InsufficientHistory
 		}
 		*outBegIdx = startIdx
-		today = startIdx - lookbackTotal + 1
-		prevClose = inClose[today-1]
-		i = optInTimePeriod
-		tempReal = 0.0
-		for {
-			_C0 := i > 0
-			i--
-			if !_C0 {
-				break
+		if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+			prevClose = inClose[0]
+			force = float64((inClose[1] - prevClose) * inVolume[1])
+			prevClose = inClose[1]
+			prevMA = force
+			today = 2
+		} else {
+			today = startIdx - lookbackTotal + 1
+			prevClose = inClose[today-1]
+			i = optInTimePeriod
+			tempReal = 0.0
+			for {
+				_C0 := i > 0
+				i--
+				if !_C0 {
+					break
+				}
+				force = float64((inClose[today] - prevClose) * inVolume[today])
+				prevClose = inClose[today]
+				tempReal += force
+				today = today + 1
 			}
-			force = float64((inClose[today] - prevClose) * inVolume[today])
-			prevClose = inClose[today]
-			tempReal += force
-			today = today + 1
+			prevMA = tempReal / float64(optInTimePeriod)
 		}
-		prevMA = tempReal / float64(optInTimePeriod)
 		for today <= startIdx {
 			force = float64((inClose[today] - prevClose) * inVolume[today])
 			prevClose = inClose[today]

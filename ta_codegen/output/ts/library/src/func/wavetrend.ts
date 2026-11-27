@@ -48,8 +48,10 @@
  *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
  *                period of 2. The fixpoint test waits for a seeded
  *                average.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -241,68 +243,19 @@ export function wavetrendImpl(
   nAp = 0;
   prevAp = 0.0;
   prevEsa = 0.0;
-  today = startIdx - lookbackTotal;
-  /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-   * completes the signal window, so it leaves the first output in the state.
+  /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+   * each later stage on its feeder's value where the default seeds it, and
+   * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
    */
-  while (today <= startIdx) {
-    ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-    /* Stage 1: the exponential average of the typical price. */
-    if (nAp < optInChannelPeriod) {
-      sumEsa = sumEsa + ap;
-      if (nAp === optInChannelPeriod - 1) {
-        esa = sumEsa / optInChannelPeriod;
-      }
-    } else {
-      {
-        const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        esa = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* Stage 2: the exponential average of the absolute distance, over what
-     * stage 1 publishes. The counter is compared before it is subtracted,
-     * never after: the Rust backend renders these as usize.
-     */
-    if (nAp >= lookbackChannel) {
-      nDev = nAp - lookbackChannel;
-      /* GUARD 1, the fixpoint test. With a constant input the exponential
-       * step stops moving once k*|ap - esa| falls under half an ulp, and
-       * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-       * frozen residue is a real non-zero distance, so the naive form
-       * divides it by its own exponential average and walks to
-       * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-       * but rounding. When the pair has not moved, the average has reached
-       * its fixpoint and the distance is exactly that residue, so the
-       * numerator is taken as zero. The test is exact, so it is
-       * independent of scale and period.
-       *
-       * Only once prevEsa is an average: on the bar that seeds esa it is
-       * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-       */
-      num = ap - esa;
-      if (nAp >= optInChannelPeriod && ap === prevAp && esa === prevEsa) {
-        num = 0.0;
-      }
-      dev = Math.abs(num);
-      if (nDev < optInChannelPeriod) {
-        sumD = sumD + dev;
-        if (nDev === optInChannelPeriod - 1) {
-          d = sumD / optInChannelPeriod;
-        }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    today = 0;
+    while (today <= startIdx) {
+      ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+      if (nAp === 0) {
+        esa = ap;
       } else {
         {
-          const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
+          const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -312,34 +265,22 @@ export function wavetrendImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          d = _w && (_pl === 0 || _v === 0) ? _th
+          esa = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
-      /* Stage 3: the oscillator, then its own smoothing. */
-      if (nDev >= lookbackChannel) {
-        nCi = nDev - lookbackChannel;
-        /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-         * not the deviation: 0.015*d underflows to zero while d is still
-         * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-         * average distance -- so the oscillator reads its neutral 0.0
-         * (#112), as tsi.c does.
-         */
-        scaledDev = 0.015 * d;
-        if (scaledDev > 0.0) {
-          ci = num / scaledDev;
-        } else {
-          ci = 0.0;
+      if (nAp >= startIdx - lookbackTotal + lookbackChannel) {
+        num = ap - esa;
+        if (ap === prevAp && esa === prevEsa) {
+          num = 0.0;
         }
-        if (nCi < optInAveragePeriod) {
-          sumCi = sumCi + ci;
-          if (nCi === optInAveragePeriod - 1) {
-            wt1 = sumCi / optInAveragePeriod;
-          }
+        dev = Math.abs(num);
+        if (nAp === startIdx - lookbackTotal + lookbackChannel) {
+          d = dev;
         } else {
           {
-            const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+            const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
             const _p = _a * _b;
             let _t = 134217729 * _a;
             const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -349,25 +290,181 @@ export function wavetrendImpl(
             const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
             const _v = _tl + _pl, _v2 = _v + _v;
             const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-            wt1 = _w && (_pl === 0 || _v === 0) ? _th
+            d = _w && (_pl === 0 || _v === 0) ? _th
               : _w && _v2 !== (_th + _v2) - _th ? _th + _v
               : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
           }
         }
-        if (nCi >= lookbackAverage) {
-          wtBuffer[wtBuffer_Idx] = wt1;
-          sumSignal = sumSignal + wt1;
-          wtBuffer_Idx++;
-          if (wtBuffer_Idx > maxIdx_wtBuffer) {
-            wtBuffer_Idx = 0;
+        if (nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel) {
+          scaledDev = 0.015 * d;
+          if (scaledDev > 0.0) {
+            ci = num / scaledDev;
+          } else {
+            ci = 0.0;
+          }
+          if (nAp === startIdx - lookbackTotal + lookbackChannel + lookbackChannel) {
+            wt1 = ci;
+          } else {
+            {
+              const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              wt1 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage) {
+            wtBuffer[wtBuffer_Idx] = wt1;
+            sumSignal = sumSignal + wt1;
+            wtBuffer_Idx++;
+            if (wtBuffer_Idx > maxIdx_wtBuffer) {
+              wtBuffer_Idx = 0;
+            }
           }
         }
       }
+      prevAp = ap;
+      prevEsa = esa;
+      nAp = nAp + 1;
+      today = today + 1;
     }
-    prevAp = ap;
-    prevEsa = esa;
-    nAp = nAp + 1;
-    today = today + 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+     * completes the signal window, so it leaves the first output in the state.
+     */
+    while (today <= startIdx) {
+      ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+      /* Stage 1: the exponential average of the typical price. */
+      if (nAp < optInChannelPeriod) {
+        sumEsa = sumEsa + ap;
+        if (nAp === optInChannelPeriod - 1) {
+          esa = sumEsa / optInChannelPeriod;
+        }
+      } else {
+        {
+          const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          esa = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+      }
+      /* Stage 2: the exponential average of the absolute distance, over what
+       * stage 1 publishes. The counter is compared before it is subtracted,
+       * never after: the Rust backend renders these as usize.
+       */
+      if (nAp >= lookbackChannel) {
+        nDev = nAp - lookbackChannel;
+        /* GUARD 1, the fixpoint test. With a constant input the exponential
+         * step stops moving once k*|ap - esa| falls under half an ulp, and
+         * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+         * frozen residue is a real non-zero distance, so the naive form
+         * divides it by its own exponential average and walks to
+         * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+         * but rounding. When the pair has not moved, the average has reached
+         * its fixpoint and the distance is exactly that residue, so the
+         * numerator is taken as zero. The test is exact, so it is
+         * independent of scale and period.
+         *
+         * Only once prevEsa is an average: on the bar that seeds esa it is
+         * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+         */
+        num = ap - esa;
+        if (nAp >= optInChannelPeriod && ap === prevAp && esa === prevEsa) {
+          num = 0.0;
+        }
+        dev = Math.abs(num);
+        if (nDev < optInChannelPeriod) {
+          sumD = sumD + dev;
+          if (nDev === optInChannelPeriod - 1) {
+            d = sumD / optInChannelPeriod;
+          }
+        } else {
+          {
+            const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            d = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+        /* Stage 3: the oscillator, then its own smoothing. */
+        if (nDev >= lookbackChannel) {
+          nCi = nDev - lookbackChannel;
+          /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+           * not the deviation: 0.015*d underflows to zero while d is still
+           * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+           * average distance -- so the oscillator reads its neutral 0.0
+           * (#112), as tsi.c does.
+           */
+          scaledDev = 0.015 * d;
+          if (scaledDev > 0.0) {
+            ci = num / scaledDev;
+          } else {
+            ci = 0.0;
+          }
+          if (nCi < optInAveragePeriod) {
+            sumCi = sumCi + ci;
+            if (nCi === optInAveragePeriod - 1) {
+              wt1 = sumCi / optInAveragePeriod;
+            }
+          } else {
+            {
+              const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              wt1 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (nCi >= lookbackAverage) {
+            wtBuffer[wtBuffer_Idx] = wt1;
+            sumSignal = sumSignal + wt1;
+            wtBuffer_Idx++;
+            if (wtBuffer_Idx > maxIdx_wtBuffer) {
+              wtBuffer_Idx = 0;
+            }
+          }
+        }
+      }
+      prevAp = ap;
+      prevEsa = esa;
+      nAp = nAp + 1;
+      today = today + 1;
+    }
   }
   /* The first output. The warm-up's last pass stored this bar's WT1 into the
    * ring and added it to the running sum, so the average is ready here.
@@ -1259,68 +1356,19 @@ function wavetrendOpenImpl(
   nAp = 0;
   prevAp = 0.0;
   prevEsa = 0.0;
-  today = startIdx - lookbackTotal;
-  /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-   * completes the signal window, so it leaves the first output in the state.
+  /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+   * each later stage on its feeder's value where the default seeds it, and
+   * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
    */
-  while (today <= startIdx) {
-    ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-    /* Stage 1: the exponential average of the typical price. */
-    if (nAp < optInChannelPeriod) {
-      sumEsa = sumEsa + ap;
-      if (nAp === optInChannelPeriod - 1) {
-        esa = sumEsa / optInChannelPeriod;
-      }
-    } else {
-      {
-        const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        esa = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* Stage 2: the exponential average of the absolute distance, over what
-     * stage 1 publishes. The counter is compared before it is subtracted,
-     * never after: the Rust backend renders these as usize.
-     */
-    if (nAp >= lookbackChannel) {
-      nDev = nAp - lookbackChannel;
-      /* GUARD 1, the fixpoint test. With a constant input the exponential
-       * step stops moving once k*|ap - esa| falls under half an ulp, and
-       * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-       * frozen residue is a real non-zero distance, so the naive form
-       * divides it by its own exponential average and walks to
-       * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-       * but rounding. When the pair has not moved, the average has reached
-       * its fixpoint and the distance is exactly that residue, so the
-       * numerator is taken as zero. The test is exact, so it is
-       * independent of scale and period.
-       *
-       * Only once prevEsa is an average: on the bar that seeds esa it is
-       * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-       */
-      num = ap - esa;
-      if (nAp >= optInChannelPeriod && ap === prevAp && esa === prevEsa) {
-        num = 0.0;
-      }
-      dev = Math.abs(num);
-      if (nDev < optInChannelPeriod) {
-        sumD = sumD + dev;
-        if (nDev === optInChannelPeriod - 1) {
-          d = sumD / optInChannelPeriod;
-        }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    today = 0;
+    while (today <= startIdx) {
+      ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+      if (nAp === 0) {
+        esa = ap;
       } else {
         {
-          const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
+          const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1330,34 +1378,22 @@ function wavetrendOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          d = _w && (_pl === 0 || _v === 0) ? _th
+          esa = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
-      /* Stage 3: the oscillator, then its own smoothing. */
-      if (nDev >= lookbackChannel) {
-        nCi = nDev - lookbackChannel;
-        /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-         * not the deviation: 0.015*d underflows to zero while d is still
-         * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-         * average distance -- so the oscillator reads its neutral 0.0
-         * (#112), as tsi.c does.
-         */
-        scaledDev = 0.015 * d;
-        if (scaledDev > 0.0) {
-          ci = num / scaledDev;
-        } else {
-          ci = 0.0;
+      if (nAp >= startIdx - lookbackTotal + lookbackChannel) {
+        num = ap - esa;
+        if (ap === prevAp && esa === prevEsa) {
+          num = 0.0;
         }
-        if (nCi < optInAveragePeriod) {
-          sumCi = sumCi + ci;
-          if (nCi === optInAveragePeriod - 1) {
-            wt1 = sumCi / optInAveragePeriod;
-          }
+        dev = Math.abs(num);
+        if (nAp === startIdx - lookbackTotal + lookbackChannel) {
+          d = dev;
         } else {
           {
-            const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+            const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
             const _p = _a * _b;
             let _t = 134217729 * _a;
             const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1367,25 +1403,181 @@ function wavetrendOpenImpl(
             const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
             const _v = _tl + _pl, _v2 = _v + _v;
             const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-            wt1 = _w && (_pl === 0 || _v === 0) ? _th
+            d = _w && (_pl === 0 || _v === 0) ? _th
               : _w && _v2 !== (_th + _v2) - _th ? _th + _v
               : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
           }
         }
-        if (nCi >= lookbackAverage) {
-          wtBuffer[wtBuffer_Idx] = wt1;
-          sumSignal = sumSignal + wt1;
-          wtBuffer_Idx++;
-          if (wtBuffer_Idx > maxIdx_wtBuffer) {
-            wtBuffer_Idx = 0;
+        if (nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel) {
+          scaledDev = 0.015 * d;
+          if (scaledDev > 0.0) {
+            ci = num / scaledDev;
+          } else {
+            ci = 0.0;
+          }
+          if (nAp === startIdx - lookbackTotal + lookbackChannel + lookbackChannel) {
+            wt1 = ci;
+          } else {
+            {
+              const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              wt1 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage) {
+            wtBuffer[wtBuffer_Idx] = wt1;
+            sumSignal = sumSignal + wt1;
+            wtBuffer_Idx++;
+            if (wtBuffer_Idx > maxIdx_wtBuffer) {
+              wtBuffer_Idx = 0;
+            }
           }
         }
       }
+      prevAp = ap;
+      prevEsa = esa;
+      nAp = nAp + 1;
+      today = today + 1;
     }
-    prevAp = ap;
-    prevEsa = esa;
-    nAp = nAp + 1;
-    today = today + 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+     * completes the signal window, so it leaves the first output in the state.
+     */
+    while (today <= startIdx) {
+      ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+      /* Stage 1: the exponential average of the typical price. */
+      if (nAp < optInChannelPeriod) {
+        sumEsa = sumEsa + ap;
+        if (nAp === optInChannelPeriod - 1) {
+          esa = sumEsa / optInChannelPeriod;
+        }
+      } else {
+        {
+          const _a: number = beta1, _b: number = esa, _c: number = k1 * ap;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          esa = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+      }
+      /* Stage 2: the exponential average of the absolute distance, over what
+       * stage 1 publishes. The counter is compared before it is subtracted,
+       * never after: the Rust backend renders these as usize.
+       */
+      if (nAp >= lookbackChannel) {
+        nDev = nAp - lookbackChannel;
+        /* GUARD 1, the fixpoint test. With a constant input the exponential
+         * step stops moving once k*|ap - esa| falls under half an ulp, and
+         * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+         * frozen residue is a real non-zero distance, so the naive form
+         * divides it by its own exponential average and walks to
+         * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+         * but rounding. When the pair has not moved, the average has reached
+         * its fixpoint and the distance is exactly that residue, so the
+         * numerator is taken as zero. The test is exact, so it is
+         * independent of scale and period.
+         *
+         * Only once prevEsa is an average: on the bar that seeds esa it is
+         * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+         */
+        num = ap - esa;
+        if (nAp >= optInChannelPeriod && ap === prevAp && esa === prevEsa) {
+          num = 0.0;
+        }
+        dev = Math.abs(num);
+        if (nDev < optInChannelPeriod) {
+          sumD = sumD + dev;
+          if (nDev === optInChannelPeriod - 1) {
+            d = sumD / optInChannelPeriod;
+          }
+        } else {
+          {
+            const _a: number = beta1, _b: number = d, _c: number = k1 * dev;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            d = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+        /* Stage 3: the oscillator, then its own smoothing. */
+        if (nDev >= lookbackChannel) {
+          nCi = nDev - lookbackChannel;
+          /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+           * not the deviation: 0.015*d underflows to zero while d is still
+           * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+           * average distance -- so the oscillator reads its neutral 0.0
+           * (#112), as tsi.c does.
+           */
+          scaledDev = 0.015 * d;
+          if (scaledDev > 0.0) {
+            ci = num / scaledDev;
+          } else {
+            ci = 0.0;
+          }
+          if (nCi < optInAveragePeriod) {
+            sumCi = sumCi + ci;
+            if (nCi === optInAveragePeriod - 1) {
+              wt1 = sumCi / optInAveragePeriod;
+            }
+          } else {
+            {
+              const _a: number = beta2, _b: number = wt1, _c: number = k2 * ci;
+              const _p = _a * _b;
+              let _t = 134217729 * _a;
+              const _ah = _t - (_t - _a), _al = _a - _ah;
+              _t = 134217729 * _b;
+              const _bh = _t - (_t - _b), _bl = _b - _bh;
+              const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+              const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+              const _v = _tl + _pl, _v2 = _v + _v;
+              const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+              wt1 = _w && (_pl === 0 || _v === 0) ? _th
+                : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+                : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+            }
+          }
+          if (nCi >= lookbackAverage) {
+            wtBuffer[wtBuffer_Idx] = wt1;
+            sumSignal = sumSignal + wt1;
+            wtBuffer_Idx++;
+            if (wtBuffer_Idx > maxIdx_wtBuffer) {
+              wtBuffer_Idx = 0;
+            }
+          }
+        }
+      }
+      prevAp = ap;
+      prevEsa = esa;
+      nAp = nAp + 1;
+      today = today + 1;
+    }
   }
   /* The first output. The warm-up's last pass stored this bar's WT1 into the
    * ring and added it to the running sum, so the average is ready here.

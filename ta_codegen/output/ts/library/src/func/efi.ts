@@ -43,8 +43,10 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  081226 KL   Initial version (#206).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -182,21 +184,29 @@ export function efiImpl(
     return RetCode.SUCCESS;
   }
   outBegIdx.value = startIdx;
-  /* The first EMA value is a simple average of the first 'period' force
-   * values; it then seeds the recursion. This is ema.c's seeding applied
-   * to the force series rather than to the input array.
-   */
-  today = startIdx - lookbackTotal + 1;
-  prevClose = inClose[today - 1];
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    force = (inClose[today] - prevClose) * inVolume[today];
-    prevClose = inClose[today];
-    tempReal += force;
-    today = today + 1;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevClose = inClose[0];
+    force = (inClose[1] - prevClose) * inVolume[1];
+    prevClose = inClose[1];
+    prevMA = force;
+    today = 2;
+  } else {
+    /* The first EMA value is a simple average of the first 'period' force
+     * values; it then seeds the recursion. This is ema.c's seeding applied
+     * to the force series rather than to the input array.
+     */
+    today = startIdx - lookbackTotal + 1;
+    prevClose = inClose[today - 1];
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      force = (inClose[today] - prevClose) * inVolume[today];
+      prevClose = inClose[today];
+      tempReal += force;
+      today = today + 1;
+    }
+    prevMA = tempReal / optInTimePeriod;
   }
-  prevMA = tempReal / optInTimePeriod;
   while (today <= startIdx) {
     force = (inClose[today] - prevClose) * inVolume[today];
     prevClose = inClose[today];
@@ -762,21 +772,29 @@ function efiOpenImpl(
      * not keep the sign of a -0.0 force: a down bar on zero volume.
      */
     outBegIdx.value = startIdx;
-    /* The first EMA value is a simple average of the first 'period' force
-     * values; it then seeds the recursion. This is ema.c's seeding applied
-     * to the force series rather than to the input array.
-     */
-    today = startIdx - lookbackTotal + 1;
-    prevClose = inClose[today - 1];
-    i = optInTimePeriod;
-    tempReal = 0.0;
-    while (i-- > 0) {
-      force = (inClose[today] - prevClose) * inVolume[today];
-      prevClose = inClose[today];
-      tempReal += force;
-      today = today + 1;
+    if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+      prevClose = inClose[0];
+      force = (inClose[1] - prevClose) * inVolume[1];
+      prevClose = inClose[1];
+      prevMA = force;
+      today = 2;
+    } else {
+      /* The first EMA value is a simple average of the first 'period' force
+       * values; it then seeds the recursion. This is ema.c's seeding applied
+       * to the force series rather than to the input array.
+       */
+      today = startIdx - lookbackTotal + 1;
+      prevClose = inClose[today - 1];
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while (i-- > 0) {
+        force = (inClose[today] - prevClose) * inVolume[today];
+        prevClose = inClose[today];
+        tempReal += force;
+        today = today + 1;
+      }
+      prevMA = tempReal / optInTimePeriod;
     }
-    prevMA = tempReal / optInTimePeriod;
     while (today <= startIdx) {
       force = (inClose[today] - prevClose) * inVolume[today];
       prevClose = inClose[today];

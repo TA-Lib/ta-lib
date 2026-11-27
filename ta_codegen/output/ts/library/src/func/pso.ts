@@ -46,8 +46,10 @@
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Initial version (#473).
  *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -206,6 +208,78 @@ export function psoImpl(
     return RetCode.INTERNAL_ERROR;
   }
   preLowest = new Float64Array(optInFastK_Period);
+  /* The first-bar seed: both passes run up to the bar before startIdx here,
+   * as pso_ALT1 runs them, and the scan below enters on its recursion.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    today = optInFastK_Period - 1;
+    while (today < startIdx) {
+      i = today - (optInFastK_Period - 1);
+      highest = inHigh[i];
+      lowest = inLow[i];
+      while (i < today) {
+        i += 1;
+        tmp = inHigh[i];
+        if (tmp > highest) {
+          highest = tmp;
+        }
+        tmp = inLow[i];
+        if (tmp < lowest) {
+          lowest = tmp;
+        }
+      }
+      tempReal = highest - lowest;
+      if (!(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest)))) {
+        fastK = (inClose[today] - lowest) / tempReal * 100.0;
+      } else {
+        fastK = 50.0;
+      }
+      nsk = 0.1 * (fastK - 50.0);
+      if (today === optInFastK_Period - 1) {
+        ema1 = nsk;
+      } else {
+        {
+          const _a: number = emaBeta, _b: number = ema1, _c: number = emaK * nsk;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+      }
+      if (today >= startIdx - lookbackEMA) {
+        if (today === startIdx - lookbackEMA) {
+          ema2 = ema1;
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = emaK * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      today = today + 1;
+    }
+    blockStart = today - (optInFastK_Period - 1);
+    nBar = warmBars + 1;
+  }
   while (today <= endIdx) {
     /* Suffix extrema of the block [blockStart, today]. */
     i = today;
@@ -1026,100 +1100,59 @@ function psoOpenImpl(
   lowest = 0.0;
   highestIdx = -1;
   lowestIdx = -1;
-  /* The first bar carrying a full Fast-K window. */
-  trailingIdx = startIdx - lookbackTotal;
-  today = trailingIdx + (optInFastK_Period - 1);
-  nBar = 0;
-  /* Warm-up. Runs through startIdx inclusive: its last pass produces the
-   * first output.
+  /* The first-bar seed does not move with startIdx: pass 1 starts on the
+   * first full window, pass 2 on pass 1's value where the default seeds it.
    */
-  while (today <= startIdx) {
-    /* Set the lowest low */
-    tmp = inLow[today];
-    if (lowestIdx < trailingIdx) {
-      lowestIdx = trailingIdx;
-      lowest = inLow[lowestIdx];
-      i = lowestIdx;
-      while (++i <= today) {
-        tmp = inLow[i];
-        if (tmp < lowest) {
-          lowestIdx = i;
-          lowest = tmp;
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    today = optInFastK_Period - 1;
+    nBar = 0;
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
         }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
       }
-    } else if (tmp <= lowest) {
-      lowestIdx = today;
-      lowest = tmp;
-    }
-    /* Set the highest high */
-    tmp = inHigh[today];
-    if (highestIdx < trailingIdx) {
-      highestIdx = trailingIdx;
-      highest = inHigh[highestIdx];
-      i = highestIdx;
-      while (++i <= today) {
-        tmp = inHigh[i];
-        if (tmp > highest) {
-          highestIdx = i;
-          highest = tmp;
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
         }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
       }
-    } else if (tmp >= highest) {
-      highestIdx = today;
-      highest = tmp;
-    }
-    /* Fast-K, spelled as stochf.c spells it: divide by the range itself and
-     * scale by 100.0 after, guarded by the very expression the division
-     * uses, against ITS OWN two extremes rather than a fixed constant
-     * (issue #253).
-     *
-     * Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
-     * Fast-K midpoint, so that a flat market reads PSO 0 instead of
-     * -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
-     * the window supports (#473 Q4, the neutral-point rule of #112).
-     */
-    if (!(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest)))) {
-      fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-    } else {
-      fastK = 50.0;
-    }
-    nsk = 0.1 * (fastK - 50.0);
-    /* Pass 1, over the normalised Fast-K. */
-    if (nBar < optInEMAPeriod) {
-      sum1 = sum1 + nsk;
-      if (nBar === optInEMAPeriod - 1) {
-        ema1 = sum1 / optInEMAPeriod;
+      if (!(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest)))) {
+        fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+      } else {
+        fastK = 50.0;
       }
-    } else {
-      {
-        const _a: number = emaBeta, _b: number = ema1, _c: number = emaK * nsk;
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        ema1 = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-      }
-    }
-    /* Pass 2, over what pass 1 publishes. Keep the comparison ahead of
-     * the subtraction: the counters are unsigned in Rust.
-     */
-    if (nBar >= lookbackEMA) {
-      n2 = nBar - lookbackEMA;
-      if (n2 < optInEMAPeriod) {
-        sum2 = sum2 + ema1;
-        if (n2 === optInEMAPeriod - 1) {
-          ema2 = sum2 / optInEMAPeriod;
-        }
+      nsk = 0.1 * (fastK - 50.0);
+      if (nBar === 0) {
+        ema1 = nsk;
       } else {
         {
-          const _a: number = emaBeta, _b: number = ema2, _c: number = emaK * ema1;
+          const _a: number = emaBeta, _b: number = ema1, _c: number = emaK * nsk;
           const _p = _a * _b;
           let _t = 134217729 * _a;
           const _ah = _t - (_t - _a), _al = _a - _ah;
@@ -1129,15 +1162,150 @@ function psoOpenImpl(
           const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
           const _v = _tl + _pl, _v2 = _v + _v;
           const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-          ema2 = _w && (_pl === 0 || _v === 0) ? _th
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
             : _w && _v2 !== (_th + _v2) - _th ? _th + _v
             : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
         }
       }
+      if (nBar >= startIdx - lookbackTotal + lookbackEMA) {
+        if (nBar === startIdx - lookbackTotal + lookbackEMA) {
+          ema2 = ema1;
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = emaK * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
     }
-    nBar = nBar + 1;
-    trailingIdx = trailingIdx + 1;
-    today = today + 1;
+  } else {
+    /* The first bar carrying a full Fast-K window. */
+    trailingIdx = startIdx - lookbackTotal;
+    today = trailingIdx + (optInFastK_Period - 1);
+    nBar = 0;
+    /* Warm-up. Runs through startIdx inclusive: its last pass produces the
+     * first output.
+     */
+    while (today <= startIdx) {
+      /* Set the lowest low */
+      tmp = inLow[today];
+      if (lowestIdx < trailingIdx) {
+        lowestIdx = trailingIdx;
+        lowest = inLow[lowestIdx];
+        i = lowestIdx;
+        while (++i <= today) {
+          tmp = inLow[i];
+          if (tmp < lowest) {
+            lowestIdx = i;
+            lowest = tmp;
+          }
+        }
+      } else if (tmp <= lowest) {
+        lowestIdx = today;
+        lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = inHigh[today];
+      if (highestIdx < trailingIdx) {
+        highestIdx = trailingIdx;
+        highest = inHigh[highestIdx];
+        i = highestIdx;
+        while (++i <= today) {
+          tmp = inHigh[i];
+          if (tmp > highest) {
+            highestIdx = i;
+            highest = tmp;
+          }
+        }
+      } else if (tmp >= highest) {
+        highestIdx = today;
+        highest = tmp;
+      }
+      /* Fast-K, spelled as stochf.c spells it: divide by the range itself and
+       * scale by 100.0 after, guarded by the very expression the division
+       * uses, against ITS OWN two extremes rather than a fixed constant
+       * (issue #253).
+       *
+       * Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
+       * Fast-K midpoint, so that a flat market reads PSO 0 instead of
+       * -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
+       * the window supports (#473 Q4, the neutral-point rule of #112).
+       */
+      if (!(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest)))) {
+        fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+      } else {
+        fastK = 50.0;
+      }
+      nsk = 0.1 * (fastK - 50.0);
+      /* Pass 1, over the normalised Fast-K. */
+      if (nBar < optInEMAPeriod) {
+        sum1 = sum1 + nsk;
+        if (nBar === optInEMAPeriod - 1) {
+          ema1 = sum1 / optInEMAPeriod;
+        }
+      } else {
+        {
+          const _a: number = emaBeta, _b: number = ema1, _c: number = emaK * nsk;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          ema1 = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+      }
+      /* Pass 2, over what pass 1 publishes. Keep the comparison ahead of
+       * the subtraction: the counters are unsigned in Rust.
+       */
+      if (nBar >= lookbackEMA) {
+        n2 = nBar - lookbackEMA;
+        if (n2 < optInEMAPeriod) {
+          sum2 = sum2 + ema1;
+          if (n2 === optInEMAPeriod - 1) {
+            ema2 = sum2 / optInEMAPeriod;
+          }
+        } else {
+          {
+            const _a: number = emaBeta, _b: number = ema2, _c: number = emaK * ema1;
+            const _p = _a * _b;
+            let _t = 134217729 * _a;
+            const _ah = _t - (_t - _a), _al = _a - _ah;
+            _t = 134217729 * _b;
+            const _bh = _t - (_t - _b), _bl = _b - _bh;
+            const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+            const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+            const _v = _tl + _pl, _v2 = _v + _v;
+            const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+            ema2 = _w && (_pl === 0 || _v === 0) ? _th
+              : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+              : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+          }
+        }
+      }
+      nBar = nBar + 1;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
+    }
   }
   /* tanh(ss/2) rather than the published (e^ss - 1)/(e^ss + 1): the same
    * function, equal within 2.2e-16 on normal data, exactly odd and well

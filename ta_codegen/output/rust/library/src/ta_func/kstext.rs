@@ -54,6 +54,7 @@
  *  100126 MF,CC  First version (#491).
  *  101126 MF,CC  Each lookback is asked once per call (#522).
  *  112426 MF,CC  A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -367,6 +368,10 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
         let mut sigStart: usize = 0_usize;
+        let mut rocStart1: usize = 0_usize;
+        let mut rocStart2: usize = 0_usize;
+        let mut rocStart3: usize = 0_usize;
+        let mut rocStart4: usize = 0_usize;
         let mut lookbackMA1: usize = 0_usize;
         let mut lookbackMA2: usize = 0_usize;
         let mut lookbackMA3: usize = 0_usize;
@@ -420,16 +425,30 @@ impl Core {
         if lookbackMA4 > lookbackMA {
             lookbackMA = lookbackMA4;
         }
-        tempInteger = endIdx - sigStart + 1 + lookbackMA;
+        // The first-bar seed: each rate of change starts on its first bar, so
+        // each leg average seeds there and is entered at sigStart.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            rocStart1 = optInROC1Period as usize;
+            rocStart2 = optInROC2Period as usize;
+            rocStart3 = optInROC3Period as usize;
+            rocStart4 = optInROC4Period as usize;
+            tempInteger = endIdx + 1;
+        } else {
+            rocStart1 = sigStart - lookbackMA1;
+            rocStart2 = sigStart - lookbackMA2;
+            rocStart3 = sigStart - lookbackMA3;
+            rocStart4 = sigStart - lookbackMA4;
+            tempInteger = endIdx - sigStart + 1 + lookbackMA;
+        }
         kstBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        let _xr0 = match self.roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, &mut kstBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.roc(rocStart1, endIdx, inReal, optInROC1Period, &mut kstBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         rocNb = _xr0.count;
-        let _xr1 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr1 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(sigStart - rocStart1, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
         kstNb = _xr1.count;
-        let _xr2 = match self.roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr2 = match self.roc(rocStart2, endIdx, inReal, optInROC2Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         rocNb = _xr2.count;
-        let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart2, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -439,9 +458,9 @@ impl Core {
                 _w0[_wk] = fmadd!(2.0 as f64, _w1[_wk], _w0[_wk]);
             }
         }
-        let _xr4 = match self.roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr4 = match self.roc(rocStart3, endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         rocNb = _xr4.count;
-        let _xr5 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr5 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart3, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -451,9 +470,9 @@ impl Core {
                 _w0[_wk] = fmadd!(3.0 as f64, _w1[_wk], _w0[_wk]);
             }
         }
-        let _xr6 = match self.roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr6 = match self.roc(rocStart4, endIdx, inReal, optInROC4Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         rocNb = _xr6.count;
-        let _xr7 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr7 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart4, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
         i = 0;
         if i < kstNb {
             let _wn: usize = kstNb - i;
@@ -806,6 +825,10 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
         let mut sigStart: usize = 0_usize;
+        let mut rocStart1: usize = 0_usize;
+        let mut rocStart2: usize = 0_usize;
+        let mut rocStart3: usize = 0_usize;
+        let mut rocStart4: usize = 0_usize;
         let mut lookbackMA1: usize = 0_usize;
         let mut lookbackMA2: usize = 0_usize;
         let mut lookbackMA3: usize = 0_usize;
@@ -861,25 +884,39 @@ impl Core {
         if lookbackMA4 > lookbackMA {
             lookbackMA = lookbackMA4;
         }
-        tempInteger = endIdx - sigStart + 1 + lookbackMA;
+        // The first-bar seed: each rate of change starts on its first bar, so
+        // each leg average seeds there and is entered at sigStart.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            rocStart1 = optInROC1Period as usize;
+            rocStart2 = optInROC2Period as usize;
+            rocStart3 = optInROC3Period as usize;
+            rocStart4 = optInROC4Period as usize;
+            tempInteger = endIdx + 1;
+        } else {
+            rocStart1 = sigStart - lookbackMA1;
+            rocStart2 = sigStart - lookbackMA2;
+            rocStart3 = sigStart - lookbackMA3;
+            rocStart4 = sigStart - lookbackMA4;
+            tempInteger = endIdx - sigStart + 1 + lookbackMA;
+        }
         kstBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         // Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA1 as usize), optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
+        let sub0 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], rocStart1 as usize, optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
         // Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&kstBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA1Period, optInROCMAType)?;
-        let _xr0 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        let (sub1, _) = self.ma_open_internal(&kstBuffer[..((rocNb - 1) as usize) + 1], (sigStart as usize).saturating_sub(rocStart1 as usize), optInMA1Period, optInROCMAType)?;
+        let _xr0 = match ({ let mut _kstBuffer_alias: Vec<f64> = vec![0.0_f64; kstBuffer.len()]; let _rc = self.ma(sigStart - rocStart1, rocNb - 1, &kstBuffer, optInMA1Period, optInROCMAType, &mut _kstBuffer_alias[..]); std::mem::swap(&mut kstBuffer, &mut _kstBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr0.beg_idx;
         kstNb = _xr0.count;
         // Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA2 as usize), optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub2 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], rocStart2 as usize, optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub3, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA2Period, optInROCMAType)?;
-        let _xr1 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        let (sub3, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], (sigStart as usize).saturating_sub(rocStart2 as usize), optInMA2Period, optInROCMAType)?;
+        let _xr1 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart2, rocNb - 1, &tempBuffer, optInMA2Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr1.beg_idx;
         legNb = _xr1.count;
         lagNb0 = legNb as i64;
@@ -897,11 +934,11 @@ impl Core {
         }
         // Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub4 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA3 as usize), optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub4 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], rocStart3 as usize, optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub5, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA3Period, optInROCMAType)?;
-        let _xr2 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        let (sub5, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], (sigStart as usize).saturating_sub(rocStart3 as usize), optInMA3Period, optInROCMAType)?;
+        let _xr2 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart3, rocNb - 1, &tempBuffer, optInMA3Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr2.beg_idx;
         legNb = _xr2.count;
         lagNb1 = legNb as i64;
@@ -919,11 +956,11 @@ impl Core {
         }
         // Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub6 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], (sigStart as usize).saturating_sub(lookbackMA4 as usize), optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub6 = self.roc_open_and_fill_internal(&inReal[..(endIdx as usize) + 1], rocStart4 as usize, optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         // Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub7, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], 0 as usize, optInMA4Period, optInROCMAType)?;
-        let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        let (sub7, _) = self.ma_open_internal(&tempBuffer[..((rocNb - 1) as usize) + 1], (sigStart as usize).saturating_sub(rocStart4 as usize), optInMA4Period, optInROCMAType)?;
+        let _xr3 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(sigStart - rocStart4, rocNb - 1, &tempBuffer, optInMA4Period, optInROCMAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr3.beg_idx;
         legNb = _xr3.count;
         lagNb2 = legNb as i64;

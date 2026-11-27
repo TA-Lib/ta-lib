@@ -13,6 +13,7 @@
  *  082326 MF,CC  Fix #253. Test the smoothed range exactly instead of against
  *                the fixed TA_IS_ZERO band, which zeroed the oscillator for
  *                any instrument quoted small enough to fall under it.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  *
  */
 
@@ -114,136 +115,243 @@ TA_RetCode smi(int startIdx, int endIdx,
    highestIdx = -1;
    lowestIdx  = -1;
 
-   /* The first bar carrying a full high/low window. */
-   trailingIdx = startIdx - lookbackTotal;
-   today       = trailingIdx + (optInTimePeriod - 1);
-   nBar        = 0;
-
-   /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-    * that completes the signal seed, so it produces the first output pair.
+   /* The first-bar seed does not move with startIdx: the slow EMA starts on
+    * the first full window, each later stage on its feeder's value where the
+    * default seeds it.
     */
-   while( today <= startIdx )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      /* Set the lowest low */
-      tmp = inLow[today];
-      if( lowestIdx < trailingIdx )
+      trailingIdx = 0;
+      today       = optInTimePeriod - 1;
+      nBar        = 0;
+      while( today <= startIdx )
       {
-         lowestIdx = trailingIdx;
-         lowest = inLow[lowestIdx];
-         i = lowestIdx;
-         while( ++i<=today )
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
          {
-            tmp = inLow[i];
-            if( tmp < lowest )
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i<=today )
             {
-               lowestIdx = i;
-               lowest = tmp;
+               tmp = inLow[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
             }
          }
-      }
-      else if( tmp <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmp;
-      }
-
-      /* Set the highest high */
-      tmp = inHigh[today];
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = inHigh[highestIdx];
-         i = highestIdx;
-         while( ++i<=today )
+         else if( tmp <= lowest )
          {
-            tmp = inHigh[i];
-            if( tmp > highest )
+            lowestIdx = today;
+            lowest = tmp;
+         }
+
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i<=today )
             {
-               highestIdx = i;
-               highest = tmp;
+               tmp = inHigh[i];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
             }
          }
-      }
-      else if( tmp >= highest )
-      {
-         highestIdx = today;
-         highest = tmp;
-      }
-
-      den = highest - lowest;
-      num = inClose[today] - ((highest + lowest) * 0.5);
-
-      /* Stage 1: the slow EMA, over the raw momentum. */
-      if( nBar < optInSlowPeriod )
-      {
-         sumSlowNum = sumSlowNum + num;
-         sumSlowDen = sumSlowDen + den;
-         if( nBar == optInSlowPeriod - 1 )
+         else if( tmp >= highest )
          {
-            emaSlowNum = sumSlowNum / optInSlowPeriod;
-            emaSlowDen = sumSlowDen / optInSlowPeriod;
+            highestIdx = today;
+            highest = tmp;
          }
-      }
-      else
-      {
-         emaSlowNum = kSlow * num + betaSlow * emaSlowNum;
-         emaSlowDen = kSlow * den + betaSlow * emaSlowDen;
-      }
 
-      /* Stage 2: the fast EMA, over what stage 1 publishes.
-       *
-       * The stage counters are compared BEFORE they are subtracted, never
-       * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
-       * is correct in C, where the counters are signed, and broken everywhere
-       * else: the Rust backend renders them as `usize`, so the subtraction
-       * underflows for the first lookbackSlow bars -- a panic in a debug build
-       * and a wrap in release. It would also be invisible to the cross-language
-       * gate, which runs release servers at unstable period 0, where the branch
-       * the wrap wrongly takes happens to be a no-op because both accumulators
-       * are still 0.0. */
-      if( nBar >= lookbackSlow )
-      {
-         nFast = nBar - lookbackSlow;
-         if( nFast < optInFastPeriod )
+         den = highest - lowest;
+         num = inClose[today] - ((highest + lowest) * 0.5);
+
+         if( nBar == 0 )
          {
-            sumFastNum = sumFastNum + emaSlowNum;
-            sumFastDen = sumFastDen + emaSlowDen;
-            if( nFast == optInFastPeriod - 1 )
+            emaSlowNum = num;
+            emaSlowDen = den;
+         }
+         else
+         {
+            emaSlowNum = kSlow * num + betaSlow * emaSlowNum;
+            emaSlowDen = kSlow * den + betaSlow * emaSlowDen;
+         }
+
+         if( nBar >= startIdx - lookbackTotal + lookbackSlow )
+         {
+            if( nBar == startIdx - lookbackTotal + lookbackSlow )
             {
-               emaFastNum = sumFastNum / optInFastPeriod;
-               emaFastDen = sumFastDen / optInFastPeriod;
+               emaFastNum = emaSlowNum;
+               emaFastDen = emaSlowDen;
+            }
+            else
+            {
+               emaFastNum = kFast * emaSlowNum + betaFast * emaFastNum;
+               emaFastDen = kFast * emaSlowDen + betaFast * emaFastDen;
+            }
+         }
+
+         if( nBar >= startIdx - lookbackTotal + lookbackSlow + lookbackFast )
+         {
+            halfDen = 0.5 * emaFastDen;
+            if( halfDen > 0.0 )
+               smiValue = (100.0 * emaFastNum) / halfDen;
+            else
+               smiValue = 0.0;
+
+            if( nBar == startIdx - lookbackTotal + lookbackSlow + lookbackFast )
+               prevSignal = smiValue;
+            else
+               prevSignal = kSignal * smiValue + betaSignal * prevSignal;
+         }
+
+         nBar = nBar + 1;
+         trailingIdx = trailingIdx + 1;
+         today = today + 1;
+      }
+   }
+   else
+   {
+      /* The first bar carrying a full high/low window. */
+      trailingIdx = startIdx - lookbackTotal;
+      today       = trailingIdx + (optInTimePeriod - 1);
+      nBar        = 0;
+
+      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+       * that completes the signal seed, so it produces the first output pair.
+       */
+      while( today <= startIdx )
+      {
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i<=today )
+            {
+               tmp = inLow[i];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         }
+         else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i<=today )
+            {
+               tmp = inHigh[i];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         }
+         else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+         }
+
+         den = highest - lowest;
+         num = inClose[today] - ((highest + lowest) * 0.5);
+
+         /* Stage 1: the slow EMA, over the raw momentum. */
+         if( nBar < optInSlowPeriod )
+         {
+            sumSlowNum = sumSlowNum + num;
+            sumSlowDen = sumSlowDen + den;
+            if( nBar == optInSlowPeriod - 1 )
+            {
+               emaSlowNum = sumSlowNum / optInSlowPeriod;
+               emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          }
          else
          {
-            emaFastNum = kFast * emaSlowNum + betaFast * emaFastNum;
-            emaFastDen = kFast * emaSlowDen + betaFast * emaFastDen;
+            emaSlowNum = kSlow * num + betaSlow * emaSlowNum;
+            emaSlowDen = kSlow * den + betaSlow * emaSlowDen;
          }
-      }
 
-      /* Stage 3: the SMI line, then the signal EMA over it. */
-      if( nBar >= lookbackSlow + lookbackFast )
-      {
-         nSignal = (nBar - lookbackSlow) - lookbackFast;
-         halfDen = 0.5 * emaFastDen;
-         if( halfDen > 0.0 )
-            smiValue = (100.0 * emaFastNum) / halfDen;
-         else
-            smiValue = 0.0;
-
-         if( nSignal < optInSignalPeriod )
+         /* Stage 2: the fast EMA, over what stage 1 publishes.
+          *
+          * The stage counters are compared BEFORE they are subtracted, never
+          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+          * is correct in C, where the counters are signed, and broken everywhere
+          * else: the Rust backend renders them as `usize`, so the subtraction
+          * underflows for the first lookbackSlow bars -- a panic in a debug build
+          * and a wrap in release. It would also be invisible to the cross-language
+          * gate, which runs release servers at unstable period 0, where the branch
+          * the wrap wrongly takes happens to be a no-op because both accumulators
+          * are still 0.0. */
+         if( nBar >= lookbackSlow )
          {
-            sumSignal = sumSignal + smiValue;
-            if( nSignal == optInSignalPeriod - 1 )
-               prevSignal = sumSignal / optInSignalPeriod;
+            nFast = nBar - lookbackSlow;
+            if( nFast < optInFastPeriod )
+            {
+               sumFastNum = sumFastNum + emaSlowNum;
+               sumFastDen = sumFastDen + emaSlowDen;
+               if( nFast == optInFastPeriod - 1 )
+               {
+                  emaFastNum = sumFastNum / optInFastPeriod;
+                  emaFastDen = sumFastDen / optInFastPeriod;
+               }
+            }
+            else
+            {
+               emaFastNum = kFast * emaSlowNum + betaFast * emaFastNum;
+               emaFastDen = kFast * emaSlowDen + betaFast * emaFastDen;
+            }
          }
-         else
-            prevSignal = kSignal * smiValue + betaSignal * prevSignal;
-      }
 
-      nBar = nBar + 1;
-      trailingIdx = trailingIdx + 1;
-      today = today + 1;
+         /* Stage 3: the SMI line, then the signal EMA over it. */
+         if( nBar >= lookbackSlow + lookbackFast )
+         {
+            nSignal = (nBar - lookbackSlow) - lookbackFast;
+            halfDen = 0.5 * emaFastDen;
+            if( halfDen > 0.0 )
+               smiValue = (100.0 * emaFastNum) / halfDen;
+            else
+               smiValue = 0.0;
+
+            if( nSignal < optInSignalPeriod )
+            {
+               sumSignal = sumSignal + smiValue;
+               if( nSignal == optInSignalPeriod - 1 )
+                  prevSignal = sumSignal / optInSignalPeriod;
+            }
+            else
+               prevSignal = kSignal * smiValue + betaSignal * prevSignal;
+         }
+
+         nBar = nBar + 1;
+         trailingIdx = trailingIdx + 1;
+         today = today + 1;
+      }
    }
 
    outSMI[0] = smiValue;

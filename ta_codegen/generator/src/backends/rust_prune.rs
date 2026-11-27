@@ -500,6 +500,63 @@ fn next_reachable_use(lines: &[String], w: usize, end: usize, name: &str) -> Opt
     None
 }
 
+/// When `next`, the next use of `name` after line `store`, sits in an `if` chain that
+/// every path out of `store` enters and that ends in a plain `else`: the line up to
+/// which the value stored there may still be read. Each arm must overwrite
+/// the local before any read, or leave it alone with the local dead after the
+/// chain.
+fn chain_overwrite(lines: &[String], store: usize, next: usize, end: usize, name: &str) -> Option<usize> {
+    let opens_if = |k: usize| trim_lead(&lines[k]).starts_with("if ") && code_of(&lines[k]).trim_end().ends_with('{');
+    let head = (store + 1..next).find(|&k| opens_if(k) && statement_end(lines, k, end) > next)?;
+    let depth = indent_of(&lines[head]);
+    let entered = depth <= indent_of(&lines[store])
+        && (store + 1..head).all(|k| is_blank(&lines[k]) || indent_of(&lines[k]) >= depth)
+        && (store + 1..head).all(|k| jumps_stay_before(lines, k, head));
+    if !entered {
+        return None;
+    }
+    let close = statement_end(lines, head, end) - 1;
+    let arms: Vec<usize> = (head..close)
+        .filter(|&k| k == head || (indent_of(&lines[k]) == depth && code_of(&lines[k]).trim().starts_with("} else")))
+        .collect();
+    if arms.len() < 2 || code_of(&lines[arms[arms.len() - 1]]).trim() != "} else {" {
+        return None;
+    }
+    let mut passes = false;
+    for (i, &arm) in arms.iter().enumerate() {
+        if occurs(&lines[arm], name) {
+            return None;
+        }
+        let arm_end = arms.get(i + 1).copied().unwrap_or(close);
+        let Some(&first) = uses_in(lines, arm + 1, arm_end, name).first() else {
+            passes = true;
+            continue;
+        };
+        let body = indent_of(&lines[first]);
+        let overwrites = matches!(write_value(&lines[first], name), Some(("=", _)))
+            && body > depth
+            && (arm + 1..first).all(|k| is_blank(&lines[k]) || indent_of(&lines[k]) >= body)
+            && (arm + 1..first).all(|k| jumps_stay_before(lines, k, first));
+        if !overwrites {
+            return None;
+        }
+    }
+    if !passes {
+        return Some(head);
+    }
+    match next_reachable_use(lines, close, end, name) {
+        None => Some(end),
+        Some(after) => {
+            let at = indent_of(&lines[after]);
+            let overwrites = matches!(write_value(&lines[after], name), Some(("=", _)))
+                && at <= depth
+                && (close + 1..after).all(|k| is_blank(&lines[k]) || indent_of(&lines[k]) >= at)
+                && (close + 1..after).all(|k| jumps_stay_before(lines, k, after));
+            overwrites.then_some(after)
+        }
+    }
+}
+
 /// Whether each `break` or `continue` on line `k` leaves for a point before
 /// line `n`: its loop closes before `n`. A loop around the store that jumps
 /// back is [`dead_store`]'s own check. A jump on a line that also opens a
@@ -543,10 +600,13 @@ fn dead_store(lines: &[String], decl: usize, w: usize, end: usize, name: &str) -
             let reached = d <= indent_of(&lines[w])
                 && (w + 1..n).all(|k| is_blank(&lines[k]) || indent_of(&lines[k]) >= d)
                 && (w + 1..n).all(|k| jumps_stay_before(lines, k, n));
-            if !(overwrites && reached) {
+            if overwrites && reached {
+                n
+            } else if let Some(u) = chain_overwrite(lines, w, n, end, name) {
+                u
+            } else {
                 return false;
             }
-            n
         }
     };
     let mut depth = indent_of(&lines[w]);
@@ -1295,6 +1355,21 @@ mod tests {
     fn an_emptied_negated_guard_goes() {
         let src = "fn f() {\n    let mut t: f64 = g();\n    h(t);\n    if !(t.abs() <= 1e-14) {\n        t = 0.0;\n    }\n}\n";
         assert_eq!(tidy(src), "fn f() {\n    let t: f64 = g();\n    h(t);\n}\n");
+    }
+
+    #[test]
+    fn a_store_every_arm_of_the_next_chain_overwrites_goes() {
+        let src = |then_: &str, else_: &str, after: &str| {
+            format!("fn f(a: i32, c: bool) -> i32 {{\n    let mut t: i32 = 0;\n    t = a + 1;\n    if c {{\n{then_}    }}{else_}\n{after}    return 0;\n}}\n")
+        };
+        let kept = |s: &str| tidy(s).contains("t = a + 1;");
+        let over = "        t = 2;\n        h(t);\n";
+        assert!(!kept(&src(over, " else {\n        t = 3;\n        h(t);\n    }", "")));
+        assert!(!kept(&src(over, " else {\n        k();\n    }", "")), "an arm leaving it alone, dead after");
+        assert!(kept(&src("        h(t);\n", " else {\n        t = 3;\n        h(t);\n    }", "")), "an arm reads it first");
+        assert!(kept(&src(over, "", "")), "no else arm");
+        assert!(kept(&src(over, " else {\n        k();\n    }", "    h(t);\n")), "read after the chain");
+        assert!(kept(&src("        if a > 0 {\n            t = 2;\n        }\n        h(t);\n", " else {\n        t = 3;\n    }", "")), "overwritten on one path of the arm only");
     }
 
     #[test]

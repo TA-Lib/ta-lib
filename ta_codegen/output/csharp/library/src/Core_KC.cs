@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  083126 MF,CC  First version (issue #273).
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Kc</c> consumes before it can produce its
@@ -204,7 +205,15 @@ public partial class Core
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       _rent_tempTP = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - tpStartIdx + 1) * 1));
       tempTP = _rent_tempTP.AsSpan(0, (int)((endIdx - tpStartIdx + 1) * 1));
       _rent_tempATR = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
@@ -310,7 +319,12 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      tpStartIdx = startIdx - emaLookback;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       _rent_tempTP = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - tpStartIdx + 1) * 1));
       tempTP = _rent_tempTP.AsSpan(0, (int)((endIdx - tpStartIdx + 1) * 1));
       _rent_tempATR = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
@@ -844,7 +858,15 @@ public partial class Core
        * calling TA_ATR directly. The typical price is a derived input, so it is
        * materialized only over the window the moving average reads.
        */
-      tpStartIdx = startIdx - emaLookback;
+      /* The first-bar seed: the typical price starts on bar 0 so the moving
+       * average seeds there, and is entered at startIdx itself.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         tpStartIdx = 0;
+         emaLookback = startIdx;
+      } else {
+         tpStartIdx = startIdx - emaLookback;
+      }
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the

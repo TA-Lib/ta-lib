@@ -50,9 +50,10 @@
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
  *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { FuncUnstId } from '../enums.ts';
+import { EMAVariation, FuncUnstId } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -257,36 +258,45 @@ export function stcImpl(
    */
   lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lineStart = startIdx - (lookbackTotal - lookbackSlow);
-  today = startIdx - lookbackTotal;
-  tempReal = 0.0;
-  i = optInSlowPeriod;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
-  }
-  prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
-  prevFast = 0.0;
-  i = optInFastPeriod;
-  while (i-- > 0) {
-    prevFast += inReal[fastToday++];
-  }
-  prevFast = prevFast / optInFastPeriod;
-  while (today < fastToday) {
-    tempReal = inReal[today++];
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  /* The first-bar seed does not move with startIdx: both EMA start on
+   * inReal[0]. The chain still starts at lineStart.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSlow = inReal[0];
+    prevFast = inReal[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    tempReal = 0.0;
+    i = optInSlowPeriod;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
+    }
+    prevSlow = tempReal / optInSlowPeriod;
+    fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
+    prevFast = 0.0;
+    i = optInFastPeriod;
+    while (i-- > 0) {
+      prevFast += inReal[fastToday++];
+    }
+    prevFast = prevFast / optInFastPeriod;
+    while (today < fastToday) {
+      tempReal = inReal[today++];
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
   }
   while (today <= lineStart) {
@@ -1687,36 +1697,45 @@ function stcOpenImpl(
    */
   lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lineStart = startIdx - (lookbackTotal - lookbackSlow);
-  today = startIdx - lookbackTotal;
-  tempReal = 0.0;
-  i = optInSlowPeriod;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
-  }
-  prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
-  prevFast = 0.0;
-  i = optInFastPeriod;
-  while (i-- > 0) {
-    prevFast += inReal[fastToday++];
-  }
-  prevFast = prevFast / optInFastPeriod;
-  while (today < fastToday) {
-    tempReal = inReal[today++];
-    {
-      const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevSlow = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  /* The first-bar seed does not move with startIdx: both EMA start on
+   * inReal[0]. The chain still starts at lineStart.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevSlow = inReal[0];
+    prevFast = inReal[0];
+    today = 1;
+  } else {
+    today = startIdx - lookbackTotal;
+    tempReal = 0.0;
+    i = optInSlowPeriod;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
+    }
+    prevSlow = tempReal / optInSlowPeriod;
+    fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
+    prevFast = 0.0;
+    i = optInFastPeriod;
+    while (i-- > 0) {
+      prevFast += inReal[fastToday++];
+    }
+    prevFast = prevFast / optInFastPeriod;
+    while (today < fastToday) {
+      tempReal = inReal[today++];
+      {
+        const _a: number = slowBeta, _b: number = prevSlow, _c: number = slowK * tempReal;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevSlow = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
   }
   while (today <= lineStart) {

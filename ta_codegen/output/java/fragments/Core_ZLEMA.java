@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#347).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -137,16 +138,24 @@
        * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
        * read never reaches a slot already written.
        */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
@@ -218,16 +227,24 @@
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * (double)inReal[today] - (double)inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
@@ -673,16 +690,24 @@
        * write, and trailingIdx >= outIdx + optInTimePeriod - 1, so the trailing
        * read never reaches a slot already written.
        */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lag;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         today = lag;
+         prevMA = 2.0 * inReal[today] - inReal[trailingIdx];
          today += 1;
          trailingIdx += 1;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         today = trailingIdx + lag;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
+            today += 1;
+            trailingIdx += 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;

@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #358).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_CVI_Lookback( int optInTimePeriod, int optInROCPeriod )
@@ -171,15 +172,22 @@ TA_LIB_API TA_RetCode TA_CVI( int    startIdx,
    {
       emaBeta = 1.0 - optInK_1;
    }
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inHigh[today] - inLow[today];
-      today += 1;
+      prevEMA = inHigh[0] - inLow[0];
+      today = 1;
+   } else 
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inHigh[today] - inLow[today];
+         today += 1;
+      }
+      prevEMA = tempReal / optInTimePeriod;
    }
-   prevEMA = tempReal / optInTimePeriod;
    /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
     * value from the seed bar on leaves exactly the lagged terms the output
     * loop reads.
@@ -302,15 +310,22 @@ TA_RetCode TA_S_CVI( int    startIdx,
    {
       emaBeta = 1.0 - optInK_1;
    }
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += (double)inHigh[today] - (double)inLow[today];
-      today += 1;
+      prevEMA = (double)inHigh[0] - (double)inLow[0];
+      today = 1;
+   } else 
+   {
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += (double)inHigh[today] - (double)inLow[today];
+         today += 1;
+      }
+      prevEMA = tempReal / optInTimePeriod;
    }
-   prevEMA = tempReal / optInTimePeriod;
    emaRing[emaRing_Idx] = prevEMA;
    emaRing_Idx++;
    if( emaRing_Idx > maxIdx_emaRing ) emaRing_Idx = 0;
@@ -489,15 +504,22 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CVI_OpenImpl( struct TA_CVI_Stream **str
       {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         tempReal += inHigh[today] - inLow[today];
-         today += 1;
+         prevEMA = inHigh[0] - inLow[0];
+         today = 1;
+      } else 
+      {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inHigh[today] - inLow[today];
+            today += 1;
+         }
+         prevEMA = tempReal / optInTimePeriod;
       }
-      prevEMA = tempReal / optInTimePeriod;
       /* The ring keeps only the newest optInROCPeriod values, so pushing every EMA
        * value from the seed bar on leaves exactly the lagged terms the output
        * loop reads.

@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Initial version (#473).
  *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -303,6 +304,50 @@ impl Core {
         } else {
             heap_preLowest = vec![0.0_f64; (optInFastK_Period) as usize];
             preLowest = &mut heap_preLowest;
+        }
+        // The first-bar seed: both passes run up to the bar before startIdx here,
+        // as pso_ALT1 runs them, and the scan below enters on its recursion.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            today = (optInFastK_Period - 1) as usize;
+            while today < startIdx {
+                i = today - ((optInFastK_Period - 1) as usize);
+                highest = inHigh[i];
+                lowest = inLow[i];
+                if i < today {
+                    let _wn: usize = today - i;
+                    let _w0 = &inHigh[i + 1..][.._wn];
+                    let _w1 = &inLow[i + 1..][.._wn];
+                    for _wk in 0.._wn {
+                        i += 1;
+                        tmp = _w0[_wk];
+                        highest = c_max(tmp, highest);
+                        tmp = _w1[_wk];
+                        lowest = c_min(tmp, lowest);
+                    }
+                }
+                tempReal = highest - lowest;
+                if !(tempReal.abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
+                    fastK = (inClose[today] - lowest) / tempReal * 100.0;
+                } else {
+                    fastK = 50.0;
+                }
+                nsk = 0.1 * (fastK - 50.0);
+                if today == ((optInFastK_Period - 1) as usize) {
+                    ema1 = nsk;
+                } else {
+                    ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
+                }
+                if today >= startIdx - lookbackEMA {
+                    if today == startIdx - lookbackEMA {
+                        ema2 = ema1;
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
+                    }
+                }
+                today = today + 1;
+            }
+            blockStart = today - ((optInFastK_Period - 1) as usize);
+            nBar = warmBars + 1;
         }
         while today <= endIdx {
             // Suffix extrema of the block [blockStart, today].
@@ -777,87 +822,152 @@ impl Core {
         lowest = 0.0;
         highestIdx = -1;
         lowestIdx = -1;
-        // The first bar carrying a full Fast-K window.
-        trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + ((optInFastK_Period - 1) as usize);
-        nBar = 0;
-        // Warm-up. Runs through startIdx inclusive: its last pass produces the
-        // first output.
-        while today <= startIdx {
-            // Set the lowest low
-            tmp = inLow[today];
-            if lowestIdx < (trailingIdx as i32) {
-                lowestIdx = trailingIdx as i32;
-                lowest = inLow[lowestIdx as usize];
-                i = lowestIdx as usize;
-                while { i += 1; i } <= today {
-                    tmp = inLow[i];
-                    if tmp < lowest {
-                        lowestIdx = i as i32;
-                        lowest = tmp;
+        // The first-bar seed does not move with startIdx: pass 1 starts on the
+        // first full window, pass 2 on pass 1's value where the default seeds it.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            today = (optInFastK_Period - 1) as usize;
+            nBar = 0;
+            while today <= startIdx {
+                // Set the lowest low
+                tmp = inLow[today];
+                if lowestIdx < (trailingIdx as i32) {
+                    lowestIdx = trailingIdx as i32;
+                    lowest = inLow[lowestIdx as usize];
+                    i = lowestIdx as usize;
+                    while { i += 1; i } <= today {
+                        tmp = inLow[i];
+                        if tmp < lowest {
+                            lowestIdx = i as i32;
+                            lowest = tmp;
+                        }
+                    }
+                } else if tmp <= lowest {
+                    lowestIdx = today as i32;
+                    lowest = tmp;
+                }
+                // Set the highest high
+                tmp = inHigh[today];
+                if highestIdx < (trailingIdx as i32) {
+                    highestIdx = trailingIdx as i32;
+                    highest = inHigh[highestIdx as usize];
+                    i = highestIdx as usize;
+                    while { i += 1; i } <= today {
+                        tmp = inHigh[i];
+                        if tmp > highest {
+                            highestIdx = i as i32;
+                            highest = tmp;
+                        }
+                    }
+                } else if tmp >= highest {
+                    highestIdx = today as i32;
+                    highest = tmp;
+                }
+                if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
+                    fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+                } else {
+                    fastK = 50.0;
+                }
+                nsk = 0.1 * (fastK - 50.0);
+                if nBar == 0 {
+                    ema1 = nsk;
+                } else {
+                    ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
+                }
+                if nBar >= startIdx - lookbackTotal + lookbackEMA {
+                    if nBar == startIdx - lookbackTotal + lookbackEMA {
+                        ema2 = ema1;
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
                     }
                 }
-            } else if tmp <= lowest {
-                lowestIdx = today as i32;
-                lowest = tmp;
+                nBar = nBar + 1;
+                trailingIdx = trailingIdx + 1;
+                today = today + 1;
             }
-            // Set the highest high
-            tmp = inHigh[today];
-            if highestIdx < (trailingIdx as i32) {
-                highestIdx = trailingIdx as i32;
-                highest = inHigh[highestIdx as usize];
-                i = highestIdx as usize;
-                while { i += 1; i } <= today {
-                    tmp = inHigh[i];
-                    if tmp > highest {
-                        highestIdx = i as i32;
-                        highest = tmp;
+        } else {
+            // The first bar carrying a full Fast-K window.
+            trailingIdx = startIdx - lookbackTotal;
+            today = trailingIdx + ((optInFastK_Period - 1) as usize);
+            nBar = 0;
+            // Warm-up. Runs through startIdx inclusive: its last pass produces the
+            // first output.
+            while today <= startIdx {
+                // Set the lowest low
+                tmp = inLow[today];
+                if lowestIdx < (trailingIdx as i32) {
+                    lowestIdx = trailingIdx as i32;
+                    lowest = inLow[lowestIdx as usize];
+                    i = lowestIdx as usize;
+                    while { i += 1; i } <= today {
+                        tmp = inLow[i];
+                        if tmp < lowest {
+                            lowestIdx = i as i32;
+                            lowest = tmp;
+                        }
                     }
+                } else if tmp <= lowest {
+                    lowestIdx = today as i32;
+                    lowest = tmp;
                 }
-            } else if tmp >= highest {
-                highestIdx = today as i32;
-                highest = tmp;
-            }
-            // Fast-K, spelled as stochf.c spells it: divide by the range itself and
-            // scale by 100.0 after, guarded by the very expression the division
-            // uses, against ITS OWN two extremes rather than a fixed constant
-            // (issue #253).
-            //
-            // Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
-            // Fast-K midpoint, so that a flat market reads PSO 0 instead of
-            // -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
-            // the window supports (#473 Q4, the neutral-point rule of #112).
-            if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
-                fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-            } else {
-                fastK = 50.0;
-            }
-            nsk = 0.1 * (fastK - 50.0);
-            // Pass 1, over the normalised Fast-K.
-            if nBar < (optInEMAPeriod as usize) {
-                sum1 = sum1 + nsk;
-                if nBar == ((optInEMAPeriod - 1) as usize) {
-                    ema1 = sum1 / (optInEMAPeriod as f64);
+                // Set the highest high
+                tmp = inHigh[today];
+                if highestIdx < (trailingIdx as i32) {
+                    highestIdx = trailingIdx as i32;
+                    highest = inHigh[highestIdx as usize];
+                    i = highestIdx as usize;
+                    while { i += 1; i } <= today {
+                        tmp = inHigh[i];
+                        if tmp > highest {
+                            highestIdx = i as i32;
+                            highest = tmp;
+                        }
+                    }
+                } else if tmp >= highest {
+                    highestIdx = today as i32;
+                    highest = tmp;
                 }
-            } else {
-                ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
-            }
-            // Pass 2, over what pass 1 publishes. Keep the comparison ahead of
-            // the subtraction: the counters are unsigned in Rust.
-            if nBar >= lookbackEMA {
-                n2 = nBar - lookbackEMA;
-                if n2 < (optInEMAPeriod as usize) {
-                    sum2 = sum2 + ema1;
-                    if n2 == ((optInEMAPeriod - 1) as usize) {
-                        ema2 = sum2 / (optInEMAPeriod as f64);
+                // Fast-K, spelled as stochf.c spells it: divide by the range itself and
+                // scale by 100.0 after, guarded by the very expression the division
+                // uses, against ITS OWN two extremes rather than a fixed constant
+                // (issue #253).
+                //
+                // Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
+                // Fast-K midpoint, so that a flat market reads PSO 0 instead of
+                // -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
+                // the window supports (#473 Q4, the neutral-point rule of #112).
+                if !((highest - lowest).abs() <= 1e-14 * (highest.abs() + lowest.abs())) {
+                    fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
+                } else {
+                    fastK = 50.0;
+                }
+                nsk = 0.1 * (fastK - 50.0);
+                // Pass 1, over the normalised Fast-K.
+                if nBar < (optInEMAPeriod as usize) {
+                    sum1 = sum1 + nsk;
+                    if nBar == ((optInEMAPeriod - 1) as usize) {
+                        ema1 = sum1 / (optInEMAPeriod as f64);
                     }
                 } else {
-                    ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
+                    ema1 = fmadd!(emaBeta, ema1, emaK * nsk);
                 }
+                // Pass 2, over what pass 1 publishes. Keep the comparison ahead of
+                // the subtraction: the counters are unsigned in Rust.
+                if nBar >= lookbackEMA {
+                    n2 = nBar - lookbackEMA;
+                    if n2 < (optInEMAPeriod as usize) {
+                        sum2 = sum2 + ema1;
+                        if n2 == ((optInEMAPeriod - 1) as usize) {
+                            ema2 = sum2 / (optInEMAPeriod as f64);
+                        }
+                    } else {
+                        ema2 = fmadd!(emaBeta, ema2, emaK * ema1);
+                    }
+                }
+                nBar = nBar + 1;
+                trailingIdx = trailingIdx + 1;
+                today = today + 1;
             }
-            nBar = nBar + 1;
-            trailingIdx = trailingIdx + 1;
-            today = today + 1;
         }
         // tanh(ss/2) rather than the published (e^ss - 1)/(e^ss + 1): the same
         // function, equal within 2.2e-16 on normal data, exactly odd and well

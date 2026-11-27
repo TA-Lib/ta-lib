@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  103126 MF,CC  Creation (#570).
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Macdv</c> consumes before it can produce
@@ -303,29 +304,43 @@ public partial class Core
        * calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
-      /* Slow EMA. */
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Fast EMA. */
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inClose[0], the signal EMA on the first line value of the call.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inClose[0];
+         prevFast = inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         /* Slow EMA. */
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Fast EMA. */
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       /* Average True Range: the first True Range consumes a previous close. */
       today = lineIdx - lookbackATR + 1;
@@ -374,38 +389,42 @@ public partial class Core
       if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      /* Seed the signal EMA with a simple average of the first 'signal period'
-       * line values, accumulated as they are produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         tempReal = inClose[today];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.Abs(tempCY - tempHT);
-         greatest = MaxGt(val2, greatest);
-         val3 = Math.Abs(tempCY - tempLT);
-         greatest = MaxGt(val3, greatest);
-         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.Abs(prevFast);
-         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         /* Seed the signal EMA with a simple average of the first 'signal period'
+          * line values, accumulated as they are produced.
+          */
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            tempReal = inClose[today];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.Abs(prevFast);
+            bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period of the
        * signal EMA, up to the first output bar.
        */
@@ -595,27 +614,38 @@ public partial class Core
          return RetCode.Success ;
       }
       lineIdx = startIdx - lookbackSignal;
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = (double)inClose[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-      }
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = (double)inClose[today++];
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = (double)inClose[0];
+         prevFast = (double)inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = (double)inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       today = lineIdx - lookbackATR + 1;
       periodTotal = 0.0;
@@ -653,34 +683,38 @@ public partial class Core
       if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = (double)inLow[today];
-         tempHT = (double)inHigh[today];
-         tempCY = (double)inClose[today - 1];
-         tempReal = (double)inClose[today];
-         greatest = tempHT - tempLT;
-         val2 = Math.Abs(tempCY - tempHT);
-         greatest = MaxGt(val2, greatest);
-         val3 = Math.Abs(tempCY - tempLT);
-         greatest = MaxGt(val3, greatest);
-         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.Abs(prevFast);
-         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = (double)inLow[today];
+            tempHT = (double)inHigh[today];
+            tempCY = (double)inClose[today - 1];
+            tempReal = (double)inClose[today];
+            greatest = tempHT - tempLT;
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.Abs(prevFast);
+            bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -1413,29 +1447,43 @@ public partial class Core
        * calling it directly.
        */
       lineIdx = startIdx - lookbackSignal;
-      /* Slow EMA. */
-      today = lineIdx - lookbackSlow;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Fast EMA. */
-      today = lineIdx - lookbackFast;
-      tempReal = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inClose[today++];
-      }
-      prevFast = tempReal / optInFastPeriod;
-      while( today <= lineIdx ) {
-         tempReal = inClose[today++];
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inClose[0], the signal EMA on the first line value of the call.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inClose[0];
+         prevFast = inClose[0];
+         today = 1;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+      } else {
+         /* Slow EMA. */
+         today = lineIdx - lookbackSlow;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Fast EMA. */
+         today = lineIdx - lookbackFast;
+         tempReal = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevFast = tempReal / optInFastPeriod;
+         while( today <= lineIdx ) {
+            tempReal = inClose[today++];
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         }
       }
       /* Average True Range: the first True Range consumes a previous close. */
       today = lineIdx - lookbackATR + 1;
@@ -1484,38 +1532,42 @@ public partial class Core
       if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
          lineValue = spread / prevATR * 100.0;
       }
-      /* Seed the signal EMA with a simple average of the first 'signal period'
-       * line values, accumulated as they are produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += lineValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         tempReal = inClose[today];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.Abs(tempCY - tempHT);
-         greatest = MaxGt(val2, greatest);
-         val3 = Math.Abs(tempCY - tempLT);
-         greatest = MaxGt(val3, greatest);
-         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
-         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
-         spread = prevFast - prevSlow;
-         bandScale = Math.Abs(prevFast);
-         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
-         bandScale = bandScale * periodScale;
-         lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
-            lineValue = spread / prevATR * 100.0;
-         }
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSignal = lineValue;
+      } else {
+         /* Seed the signal EMA with a simple average of the first 'signal period'
+          * line values, accumulated as they are produced.
+          */
+         prevSignal = 0.0;
          prevSignal += lineValue;
-         today += 1;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempLT = inLow[today];
+            tempHT = inHigh[today];
+            tempCY = inClose[today - 1];
+            tempReal = inClose[today];
+            greatest = tempHT - tempLT;
+            /* val1 */
+            val2 = Math.Abs(tempCY - tempHT);
+            greatest = MaxGt(val2, greatest);
+            val3 = Math.Abs(tempCY - tempLT);
+            greatest = MaxGt(val3, greatest);
+            prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
+            prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            bandScale = Math.Abs(prevFast);
+            bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+            bandScale = bandScale * periodScale;
+            lineValue = 0.0;
+            if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
+               lineValue = spread / prevATR * 100.0;
+            }
+            prevSignal += lineValue;
+            today += 1;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period of the
        * signal EMA, up to the first output bar.
        */

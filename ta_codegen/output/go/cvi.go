@@ -106,19 +106,24 @@ func (c *Core) cviImpl(startIdx, endIdx int32, inHigh, inLow []float64, optInTim
 	if emaBeta < 0.5 {
 		emaBeta = 1.0 - optInK_1
 	}
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevEMA = inHigh[0] - inLow[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inHigh[today] - inLow[today]
+			today += 1
 		}
-		tempReal += inHigh[today] - inLow[today]
-		today += 1
+		prevEMA = tempReal / float64(optInTimePeriod)
 	}
-	prevEMA = tempReal / float64(optInTimePeriod)
 	emaRing[emaRing_Idx] = prevEMA
 	emaRing_Idx++
 	if emaRing_Idx > maxIdx_emaRing {
@@ -440,19 +445,24 @@ func (c *Core) cviOpenImpl(sp *CVIStream, inHigh, inLow []float64, startIdx, opt
 	if emaBeta < 0.5 {
 		emaBeta = 1.0 - optInK_1
 	}
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevEMA = inHigh[0] - inLow[0]
+		today = 1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inHigh[today] - inLow[today]
+			today += 1
 		}
-		tempReal += inHigh[today] - inLow[today]
-		today += 1
+		prevEMA = tempReal / float64(optInTimePeriod)
 	}
-	prevEMA = tempReal / float64(optInTimePeriod)
 	emaRing[emaRing_Idx] = prevEMA
 	emaRing_Idx++
 	if emaRing_Idx > maxIdx_emaRing {

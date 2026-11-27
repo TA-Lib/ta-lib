@@ -120,6 +120,9 @@ struct Ctx<'a> {
     reals: BTreeSet<String>,
     /// Other functions' lookbacks, by lowercase name.
     callees: BTreeMap<String, CalleeLookback>,
+    /// The `EMAVariation` the walk assumes, `Some(true)` for the first-bar seed; `None`
+    /// joins both arms of a test on it.
+    ema_world: Option<bool>,
 }
 
 fn conjuncts(e: &Expr, out: &mut Vec<Expr>) {
@@ -212,6 +215,7 @@ impl<'a> Ctx<'a> {
             types,
             reals,
             callees,
+            ema_world: None,
         };
         for p in &func.optional_inputs {
             if p.param_type == ParamType::Integer {
@@ -581,6 +585,36 @@ impl<'a> Ctx<'a> {
     fn is_int(&self, name: &str) -> bool {
         matches!(self.types.get(name), Some(Some(VarType::Integer)))
     }
+}
+
+/// The truth of a test on the EMA variation, `first_bar` being whether the setting is
+/// the first-bar seed; `None` when `cond` is not one.
+fn ema_variation_verdict(cond: &Expr, first_bar: bool) -> Option<bool> {
+    let is_read = |e: &Expr| matches!(e, Expr::FuncCall(n, a) if n == crate::backends::builtins::EMA_VARIATION && a.is_empty());
+    let names_first = |e: &Expr| match e {
+        Expr::Var(n) if n.ends_with("_FIRST_BAR_SEED") => Some(true),
+        Expr::Var(n) if n.ends_with("_SMA_SEED") => Some(false),
+        _ => None,
+    };
+    match cond {
+        Expr::Not(x) => ema_variation_verdict(x, first_bar).map(|v| !v),
+        Expr::BinOp(l, op @ (BinOp::Eq | BinOp::NotEq), r) => {
+            let named = if is_read(l) {
+                names_first(r)?
+            } else if is_read(r) {
+                names_first(l)?
+            } else {
+                return None;
+            };
+            Some((named == first_bar) == matches!(op, BinOp::Eq))
+        }
+        _ => None,
+    }
+}
+
+/// Whether any statement reads the EMA variation.
+pub(crate) fn reads_ema_variation(stmts: &[Statement]) -> bool {
+    format!("{stmts:?}").contains(&format!("FuncCall(\"{}\"", crate::backends::builtins::EMA_VARIATION))
 }
 
 fn decided(always: bool, never: bool) -> (i128, i128) {
@@ -1403,7 +1437,10 @@ impl<'a> Tracker<'a> {
                 }
                 let pure = self.pure_expr(condition, &env);
                 let clean = pure.is_some() || self.cond_clean(condition, &env);
-                let verdict = pure.as_ref().and_then(|c| self.ctx.decide(c));
+                let verdict = match self.ctx.ema_world.and_then(|w| ema_variation_verdict(condition, w)) {
+                    Some(v) => Some(v),
+                    None => pure.as_ref().and_then(|c| self.ctx.decide(c)),
+                };
                 let guard = if self.composed {
                     self.guard_pairs(condition, &env)
                 } else {
@@ -1996,7 +2033,19 @@ pub fn reach_lower_bounds(func: &FuncDef, input: &LagProofInput, queries: &[(&st
     if let Some(hit) = memo.lock().expect("lag memo").get(&key) {
         return hit.clone();
     }
-    let out = prove(func, input, queries, callees);
+    let mut out = prove(func, input, queries, callees.clone(), None);
+    // A query the joined arms of an EMA-variation test leave unproved holds when it
+    // holds under each setting.
+    let read = [input.prologue, input.region, input.epilogue].iter().any(|s| reads_ema_variation(s));
+    if read && out.iter().any(Option::is_none) {
+        let sma = prove(func, input, queries, callees.clone(), Some(false));
+        let first = prove(func, input, queries, callees, Some(true));
+        for ((o, a), b) in out.iter_mut().zip(sma).zip(first) {
+            if o.is_none() {
+                *o = a.zip(b).map(|(a, b)| a.min(b));
+            }
+        }
+    }
     memo.lock().expect("lag memo").insert(key, out.clone());
     out
 }
@@ -2006,9 +2055,12 @@ fn prove(
     input: &LagProofInput,
     queries: &[(&str, &Expr)],
     callees: BTreeMap<String, CalleeLookback>,
+    ema_world: Option<bool>,
 ) -> Vec<Option<i64>> {
     let none = vec![None; queries.len()];
-    let mut t = Tracker::new(Ctx::new(func, &input.facts, callees), false);
+    let mut ctx = Ctx::new(func, &input.facts, callees);
+    ctx.ema_world = ema_world;
+    let mut t = Tracker::new(ctx, false);
     let all: Vec<&Statement> = input
         .prologue
         .iter()
@@ -2127,8 +2179,11 @@ pub(crate) struct ComposedWalk<'a> {
 }
 
 impl<'a> ComposedWalk<'a> {
-    pub(crate) fn new(func: &'a FuncDef, lookup: &dyn CalleeLookup) -> Self {
-        let mut t = Tracker::new(Ctx::new(func, &[], resolve_callees(func, lookup, true)), true);
+    /// `ema_world` selects the arm of every EMA-variation test; `None` joins both.
+    pub(crate) fn new(func: &'a FuncDef, lookup: &dyn CalleeLookup, ema_world: Option<bool>) -> Self {
+        let mut ctx = Ctx::new(func, &[], resolve_callees(func, lookup, true));
+        ctx.ema_world = ema_world;
+        let mut t = Tracker::new(ctx, true);
         let (start_id, start) = t.mint(Tag::S);
         t.floors.insert(start_id, vec![Val::konst(0)]);
         let end = t.mint(Tag::V).1;
@@ -2575,7 +2630,7 @@ mod tests {
         lookup: &dyn CalleeLookup,
         body: &[Statement],
     ) -> (ComposedWalk<'a>, Vec<SubFacts>) {
-        let mut w = ComposedWalk::new(func, lookup);
+        let mut w = ComposedWalk::new(func, lookup, None);
         let mut subs = Vec::new();
         for st in body {
             if let Some(sub) = sub_step(st, lookup) {
@@ -2817,7 +2872,7 @@ mod tests {
     #[test]
     fn a_truncated_real_parameter_is_not_the_real() {
         let bbands = load("bbands");
-        let mut w = ComposedWalk::new(&bbands, &crate::streaming::FuncsLookup(&[]));
+        let mut w = ComposedWalk::new(&bbands, &crate::streaming::FuncsLookup(&[]), None);
         let real = w.value(&var("optInNbDevUp"));
         let cast = w.value(&Expr::Cast(VarType::Integer, Box::new(var("optInNbDevUp"))));
         assert!(real.is_param() && cast.is_param() && !real.same(&cast));
@@ -2849,9 +2904,22 @@ mod tests {
     }
 
     #[test]
+    fn a_test_on_the_ema_variation_is_decided_per_setting() {
+        let read = || Box::new(Expr::FuncCall(crate::backends::builtins::EMA_VARIATION.into(), vec![]));
+        let cmp = |op: BinOp, name: &str| Expr::BinOp(read(), op, Box::new(var(name)));
+        let first = cmp(BinOp::Eq, "TA_EMAVariation_FIRST_BAR_SEED");
+        assert_eq!(ema_variation_verdict(&first, true), Some(true));
+        assert_eq!(ema_variation_verdict(&first, false), Some(false));
+        assert_eq!(ema_variation_verdict(&cmp(BinOp::NotEq, "TA_EMAVariation_FIRST_BAR_SEED"), true), Some(false));
+        assert_eq!(ema_variation_verdict(&cmp(BinOp::Eq, "TA_EMAVariation_SMA_SEED"), false), Some(true));
+        assert_eq!(ema_variation_verdict(&Expr::Not(Box::new(first)), true), Some(false));
+        assert_eq!(ema_variation_verdict(&cmp(BinOp::Eq, "optInTimePeriod"), true), None);
+    }
+
+    #[test]
     fn an_unmodelled_statement_leaves_the_walk_where_it_was() {
         let f = apo_body("int a;\na = 3;");
-        let mut w = ComposedWalk::new(&f, &crate::streaming::FuncsLookup(&[]));
+        let mut w = ComposedWalk::new(&f, &crate::streaming::FuncsLookup(&[]), None);
         assert!(w.exec(&f.body).is_ok());
         assert!(w.exec(&[Statement::Break]).is_err());
         assert!(w.reachable());

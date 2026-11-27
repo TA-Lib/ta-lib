@@ -58,6 +58,7 @@ public partial class Core
     *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
     *                period of 2. The fixpoint test waits for a seeded
     *                average.
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Wavetrend</c> consumes before it can
@@ -263,89 +264,140 @@ public partial class Core
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-       * completes the signal window, so it leaves the first output in the state.
+      /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+       * each later stage on its feeder's value where the default seeds it, and
+       * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
        */
-      while( today <= startIdx ) {
-         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         /* Stage 1: the exponential average of the typical price. */
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.Abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         /* Stage 2: the exponential average of the absolute distance, over what
-          * stage 1 publishes. The counter is compared before it is subtracted,
-          * never after: the Rust backend renders these as usize.
+      } else {
+         today = startIdx - lookbackTotal;
+         /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+          * completes the signal window, so it leaves the first output in the state.
           */
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            /* GUARD 1, the fixpoint test. With a constant input the exponential
-             * step stops moving once k*|ap - esa| falls under half an ulp, and
-             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-             * frozen residue is a real non-zero distance, so the naive form
-             * divides it by its own exponential average and walks to
-             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-             * but rounding. When the pair has not moved, the average has reached
-             * its fixpoint and the distance is exactly that residue, so the
-             * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period.
-             *
-             * Only once prevEsa is an average: on the bar that seeds esa it is
-             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-             */
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.Abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            /* Stage 1: the exponential average of the typical price. */
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-            /* Stage 3: the oscillator, then its own smoothing. */
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                * not the deviation: 0.015*d underflows to zero while d is still
-                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                * average distance -- so the oscillator reads its neutral 0.0
-                * (#112), as tsi.c does.
+            /* Stage 2: the exponential average of the absolute distance, over what
+             * stage 1 publishes. The counter is compared before it is subtracted,
+             * never after: the Rust backend renders these as usize.
+             */
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               /* GUARD 1, the fixpoint test. With a constant input the exponential
+                * step stops moving once k*|ap - esa| falls under half an ulp, and
+                * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                * frozen residue is a real non-zero distance, so the naive form
+                * divides it by its own exponential average and walks to
+                * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                * but rounding. When the pair has not moved, the average has reached
+                * its fixpoint and the distance is exactly that residue, so the
+                * numerator is taken as zero. The test is exact, so it is
+                * independent of scale and period.
+                *
+                * Only once prevEsa is an average: on the bar that seeds esa it is
+                * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 */
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.Abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               /* Stage 3: the oscillator, then its own smoothing. */
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                   * not the deviation: 0.015*d underflows to zero while d is still
+                   * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                   * average distance -- so the oscillator reads its neutral 0.0
+                   * (#112), as tsi.c does.
+                   */
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       /* The first output. The warm-up's last pass stored this bar's WT1 into the
        * ring and added it to the running sum, so the average is ready here.
@@ -500,60 +552,107 @@ public partial class Core
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      while( today <= startIdx ) {
-         ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.Abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.Abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+      } else {
+         today = startIdx - lookbackTotal;
+         while( today <= startIdx ) {
+            ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.Abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       outWT1[0] = wt1;
       outWT2[0] = sumSignal / (double)optInSignalPeriod;
@@ -1190,89 +1289,140 @@ public partial class Core
       nAp = 0;
       prevAp = 0.0;
       prevEsa = 0.0;
-      today = startIdx - lookbackTotal;
-      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
-       * completes the signal window, so it leaves the first output in the state.
+      /* The first-bar seed does not move with startIdx: esa starts on bar 0,
+       * each later stage on its feeder's value where the default seeds it, and
+       * from bar 1 on prevEsa is an average, so the fixpoint test needs no count.
        */
-      while( today <= startIdx ) {
-         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         /* Stage 1: the exponential average of the typical price. */
-         if( nAp < optInChannelPeriod ) {
-            sumEsa = sumEsa + ap;
-            if( nAp == optInChannelPeriod - 1 ) {
-               esa = sumEsa / optInChannelPeriod;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         today = 0;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            if( nAp == 0 ) {
+               esa = ap;
+            } else {
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-         } else {
-            esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
+            if( nAp >= startIdx - lookbackTotal + lookbackChannel ) {
+               num = ap - esa;
+               if( ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
+               }
+               dev = Math.Abs(num);
+               if( nAp == startIdx - lookbackTotal + lookbackChannel ) {
+                  d = dev;
+               } else {
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               }
+               if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nAp == startIdx - lookbackTotal + lookbackChannel + lookbackChannel ) {
+                     wt1 = ci;
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nAp >= startIdx - lookbackTotal + lookbackChannel + lookbackChannel + lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
+               }
+            }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         /* Stage 2: the exponential average of the absolute distance, over what
-          * stage 1 publishes. The counter is compared before it is subtracted,
-          * never after: the Rust backend renders these as usize.
+      } else {
+         today = startIdx - lookbackTotal;
+         /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+          * completes the signal window, so it leaves the first output in the state.
           */
-         if( nAp >= lookbackChannel ) {
-            nDev = nAp - lookbackChannel;
-            /* GUARD 1, the fixpoint test. With a constant input the exponential
-             * step stops moving once k*|ap - esa| falls under half an ulp, and
-             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
-             * frozen residue is a real non-zero distance, so the naive form
-             * divides it by its own exponential average and walks to
-             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
-             * but rounding. When the pair has not moved, the average has reached
-             * its fixpoint and the distance is exactly that residue, so the
-             * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period.
-             *
-             * Only once prevEsa is an average: on the bar that seeds esa it is
-             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
-             */
-            num = ap - esa;
-            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
-               num = 0.0;
-            }
-            dev = Math.Abs(num);
-            if( nDev < optInChannelPeriod ) {
-               sumD = sumD + dev;
-               if( nDev == optInChannelPeriod - 1 ) {
-                  d = sumD / optInChannelPeriod;
+         while( today <= startIdx ) {
+            ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+            /* Stage 1: the exponential average of the typical price. */
+            if( nAp < optInChannelPeriod ) {
+               sumEsa = sumEsa + ap;
+               if( nAp == optInChannelPeriod - 1 ) {
+                  esa = sumEsa / optInChannelPeriod;
                }
             } else {
-               d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
+               esa = Math.FusedMultiplyAdd(beta1, esa, k1 * ap);
             }
-            /* Stage 3: the oscillator, then its own smoothing. */
-            if( nDev >= lookbackChannel ) {
-               nCi = nDev - lookbackChannel;
-               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
-                * not the deviation: 0.015*d underflows to zero while d is still
-                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
-                * average distance -- so the oscillator reads its neutral 0.0
-                * (#112), as tsi.c does.
+            /* Stage 2: the exponential average of the absolute distance, over what
+             * stage 1 publishes. The counter is compared before it is subtracted,
+             * never after: the Rust backend renders these as usize.
+             */
+            if( nAp >= lookbackChannel ) {
+               nDev = nAp - lookbackChannel;
+               /* GUARD 1, the fixpoint test. With a constant input the exponential
+                * step stops moving once k*|ap - esa| falls under half an ulp, and
+                * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                * frozen residue is a real non-zero distance, so the naive form
+                * divides it by its own exponential average and walks to
+                * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                * but rounding. When the pair has not moved, the average has reached
+                * its fixpoint and the distance is exactly that residue, so the
+                * numerator is taken as zero. The test is exact, so it is
+                * independent of scale and period.
+                *
+                * Only once prevEsa is an average: on the bar that seeds esa it is
+                * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 */
-               scaledDev = 0.015 * d;
-               if( scaledDev > 0.0 ) {
-                  ci = num / scaledDev;
-               } else {
-                  ci = 0.0;
+               num = ap - esa;
+               if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+                  num = 0.0;
                }
-               if( nCi < optInAveragePeriod ) {
-                  sumCi = sumCi + ci;
-                  if( nCi == optInAveragePeriod - 1 ) {
-                     wt1 = sumCi / optInAveragePeriod;
+               dev = Math.Abs(num);
+               if( nDev < optInChannelPeriod ) {
+                  sumD = sumD + dev;
+                  if( nDev == optInChannelPeriod - 1 ) {
+                     d = sumD / optInChannelPeriod;
                   }
                } else {
-                  wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
                }
-               if( nCi >= lookbackAverage ) {
-                  wtBuffer[wtBuffer_Idx] = wt1;
-                  sumSignal = sumSignal + wt1;
-                  wtBuffer_Idx++;
-                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               /* Stage 3: the oscillator, then its own smoothing. */
+               if( nDev >= lookbackChannel ) {
+                  nCi = nDev - lookbackChannel;
+                  /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                   * not the deviation: 0.015*d underflows to zero while d is still
+                   * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                   * average distance -- so the oscillator reads its neutral 0.0
+                   * (#112), as tsi.c does.
+                   */
+                  scaledDev = 0.015 * d;
+                  if( scaledDev > 0.0 ) {
+                     ci = num / scaledDev;
+                  } else {
+                     ci = 0.0;
+                  }
+                  if( nCi < optInAveragePeriod ) {
+                     sumCi = sumCi + ci;
+                     if( nCi == optInAveragePeriod - 1 ) {
+                        wt1 = sumCi / optInAveragePeriod;
+                     }
+                  } else {
+                     wt1 = Math.FusedMultiplyAdd(beta2, wt1, k2 * ci);
+                  }
+                  if( nCi >= lookbackAverage ) {
+                     wtBuffer[wtBuffer_Idx] = wt1;
+                     sumSignal = sumSignal + wt1;
+                     wtBuffer_Idx++;
+                     if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                  }
                }
             }
+            prevAp = ap;
+            prevEsa = esa;
+            nAp = nAp + 1;
+            today = today + 1;
          }
-         prevAp = ap;
-         prevEsa = esa;
-         nAp = nAp + 1;
-         today = today + 1;
       }
       /* The first output. The warm-up's last pass stored this bar's WT1 into the
        * ring and added it to the running sum, so the average is ready here.

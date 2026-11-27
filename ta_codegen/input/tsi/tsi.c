@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (#360).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int tsi_lookback(int optInFirstPeriod, int optInSecondPeriod)
@@ -87,70 +88,116 @@ TA_RetCode tsi(int startIdx, int endIdx,
    sumSecondNum = 0.0;
    sumSecondDen = 0.0;
 
-   /* The first bar carrying a close-to-close change. */
-   today     = startIdx - lookbackTotal + 1;
-   prevClose = inReal[today-1];
-   nBar      = 0;
-
-   /* Warm-up. Runs through startIdx inclusive: the last pass here completes
-    * the second stage's seed, so it produces the first output.
+   /* The first-bar seed does not move with startIdx: stage 1 starts on the
+    * first change, stage 2 on stage 1's value where the default seeds it.
     */
-   while( today <= startIdx )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      mom = inReal[today] - prevClose;
-      prevClose = inReal[today];
-      absMom = fabs( mom );
-
-      /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
-      if( nBar < optInFirstPeriod )
+      prevClose = inReal[0];
+      today     = 1;
+      nBar      = 0;
+      while( today <= startIdx )
       {
-         sumFirstNum = sumFirstNum + mom;
-         sumFirstDen = sumFirstDen + absMom;
-         if( nBar == optInFirstPeriod - 1 )
+         mom = inReal[today] - prevClose;
+         prevClose = inReal[today];
+         absMom = fabs( mom );
+
+         if( nBar == 0 )
          {
-            emaFirstNum = sumFirstNum / optInFirstPeriod;
-            emaFirstDen = sumFirstDen / optInFirstPeriod;
+            emaFirstNum = mom;
+            emaFirstDen = absMom;
          }
-      }
-      else
-      {
-         emaFirstNum = kFirst * mom + betaFirst * emaFirstNum;
-         emaFirstDen = kFirst * absMom + betaFirst * emaFirstDen;
-      }
-
-      /* Stage 2: the second EMA, over what stage 1 publishes.
-       *
-       * The stage counter is compared BEFORE it is subtracted, never after.
-       * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
-       * is correct in C, where the counters are signed, and broken everywhere
-       * else: the Rust backend renders them as usize, so the subtraction
-       * underflows for the first lookbackFirst bars -- a panic in a debug
-       * build and a wrap in release. It would also be invisible to the
-       * cross-language gate, which runs release servers at unstable period 0,
-       * where the branch the wrap wrongly takes happens to be a no-op because
-       * both accumulators are still 0.0. smi.c states the same rule. */
-      if( nBar >= lookbackFirst )
-      {
-         nSecond = nBar - lookbackFirst;
-         if( nSecond < optInSecondPeriod )
+         else
          {
-            sumSecondNum = sumSecondNum + emaFirstNum;
-            sumSecondDen = sumSecondDen + emaFirstDen;
-            if( nSecond == optInSecondPeriod - 1 )
+            emaFirstNum = kFirst * mom + betaFirst * emaFirstNum;
+            emaFirstDen = kFirst * absMom + betaFirst * emaFirstDen;
+         }
+
+         if( nBar >= startIdx - lookbackTotal + lookbackFirst )
+         {
+            if( nBar == startIdx - lookbackTotal + lookbackFirst )
             {
-               emaSecondNum = sumSecondNum / optInSecondPeriod;
-               emaSecondDen = sumSecondDen / optInSecondPeriod;
+               emaSecondNum = emaFirstNum;
+               emaSecondDen = emaFirstDen;
+            }
+            else
+            {
+               emaSecondNum = kSecond * emaFirstNum + betaSecond * emaSecondNum;
+               emaSecondDen = kSecond * emaFirstDen + betaSecond * emaSecondDen;
+            }
+         }
+
+         nBar = nBar + 1;
+         today = today + 1;
+      }
+   }
+   else
+   {
+      /* The first bar carrying a close-to-close change. */
+      today     = startIdx - lookbackTotal + 1;
+      prevClose = inReal[today-1];
+      nBar      = 0;
+
+      /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+       * the second stage's seed, so it produces the first output.
+       */
+      while( today <= startIdx )
+      {
+         mom = inReal[today] - prevClose;
+         prevClose = inReal[today];
+         absMom = fabs( mom );
+
+         /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+         if( nBar < optInFirstPeriod )
+         {
+            sumFirstNum = sumFirstNum + mom;
+            sumFirstDen = sumFirstDen + absMom;
+            if( nBar == optInFirstPeriod - 1 )
+            {
+               emaFirstNum = sumFirstNum / optInFirstPeriod;
+               emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          }
          else
          {
-            emaSecondNum = kSecond * emaFirstNum + betaSecond * emaSecondNum;
-            emaSecondDen = kSecond * emaFirstDen + betaSecond * emaSecondDen;
+            emaFirstNum = kFirst * mom + betaFirst * emaFirstNum;
+            emaFirstDen = kFirst * absMom + betaFirst * emaFirstDen;
          }
-      }
 
-      nBar = nBar + 1;
-      today = today + 1;
+         /* Stage 2: the second EMA, over what stage 1 publishes.
+          *
+          * The stage counter is compared BEFORE it is subtracted, never after.
+          * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+          * is correct in C, where the counters are signed, and broken everywhere
+          * else: the Rust backend renders them as usize, so the subtraction
+          * underflows for the first lookbackFirst bars -- a panic in a debug
+          * build and a wrap in release. It would also be invisible to the
+          * cross-language gate, which runs release servers at unstable period 0,
+          * where the branch the wrap wrongly takes happens to be a no-op because
+          * both accumulators are still 0.0. smi.c states the same rule. */
+         if( nBar >= lookbackFirst )
+         {
+            nSecond = nBar - lookbackFirst;
+            if( nSecond < optInSecondPeriod )
+            {
+               sumSecondNum = sumSecondNum + emaFirstNum;
+               sumSecondDen = sumSecondDen + emaFirstDen;
+               if( nSecond == optInSecondPeriod - 1 )
+               {
+                  emaSecondNum = sumSecondNum / optInSecondPeriod;
+                  emaSecondDen = sumSecondDen / optInSecondPeriod;
+               }
+            }
+            else
+            {
+               emaSecondNum = kSecond * emaFirstNum + betaSecond * emaSecondNum;
+               emaSecondDen = kSecond * emaFirstDen + betaSecond * emaSecondDen;
+            }
+         }
+
+         nBar = nBar + 1;
+         today = today + 1;
+      }
    }
 
    /* The denominator is an EMA of an EMA of |momentum|: every term is

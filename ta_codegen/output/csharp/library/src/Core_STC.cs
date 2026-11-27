@@ -60,6 +60,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  092926 MF,CC  Initial version (#478).
     *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Stc</c> consumes before it can produce its
@@ -289,23 +290,32 @@ public partial class Core
        */
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inReal[0]. The chain still starts at lineStart.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inReal[0];
+         prevFast = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
@@ -657,23 +667,29 @@ public partial class Core
       lastIdx = optInCyclePeriod - 1;
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = (double)inReal[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = (double)inReal[0];
+         prevFast = (double)inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = (double)inReal[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
@@ -1630,23 +1646,32 @@ public partial class Core
        */
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lineStart = startIdx - (lookbackTotal - lookbackSlow);
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+      /* The first-bar seed does not move with startIdx: both EMA start on
+       * inReal[0]. The chain still starts at lineStart.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevSlow = inReal[0];
+         prevFast = inReal[0];
+         today = 1;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - EmaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
+         }
       }
       while( today <= lineStart ) {
          tempReal = inReal[today++];

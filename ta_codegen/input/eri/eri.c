@@ -9,6 +9,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #361).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int eri_lookback(int optInTimePeriod)
@@ -93,13 +94,21 @@ TA_RetCode eri(int startIdx, int endIdx,
    k = 1.0 - beta;
    if( beta < 0.5 ) beta = 1.0 - k;
 
-   /* Seed: ema.c's DEFAULT arm, op for op. */
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
-      tempReal += inClose[today++];
-   prevMA = tempReal / optInTimePeriod;
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      prevMA = inClose[0];
+      today = 1;
+   }
+   else
+   {
+      /* Seed: ema.c's DEFAULT arm, op for op. */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+         tempReal += inClose[today++];
+      prevMA = tempReal / optInTimePeriod;
+   }
 
    /* The warm-up also consumes the EMA unstable period. */
    while( today <= startIdx )

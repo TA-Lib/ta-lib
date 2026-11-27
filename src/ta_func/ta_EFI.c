@@ -53,6 +53,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  081226 KL   Initial version (#206).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_EFI_Lookback( int optInTimePeriod )
@@ -189,22 +190,32 @@ TA_LIB_API TA_RetCode TA_EFI( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   /* The first EMA value is a simple average of the first 'period' force
-    * values; it then seeds the recursion. This is ema.c's seeding applied
-    * to the force series rather than to the input array.
-    */
-   today = startIdx - lookbackTotal + 1;
-   prevClose = inClose[today - 1];
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      force = (inClose[today] - prevClose) * inVolume[today];
-      prevClose = inClose[today];
-      tempReal += force;
-      today = today + 1;
+      prevClose = inClose[0];
+      force = (inClose[1] - prevClose) * inVolume[1];
+      prevClose = inClose[1];
+      prevMA = force;
+      today = 2;
+   } else 
+   {
+      /* The first EMA value is a simple average of the first 'period' force
+       * values; it then seeds the recursion. This is ema.c's seeding applied
+       * to the force series rather than to the input array.
+       */
+      today = startIdx - lookbackTotal + 1;
+      prevClose = inClose[today - 1];
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         force = (inClose[today] - prevClose) * inVolume[today];
+         prevClose = inClose[today];
+         tempReal += force;
+         today = today + 1;
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       force = (inClose[today] - prevClose) * inVolume[today];
@@ -301,18 +312,28 @@ TA_RetCode TA_S_EFI( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   today = startIdx - lookbackTotal + 1;
-   prevClose = (double)inClose[today - 1];
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
-      prevClose = (double)inClose[today];
-      tempReal += force;
-      today = today + 1;
+      prevClose = (double)inClose[0];
+      force = ((double)inClose[1] - prevClose) * (double)inVolume[1];
+      prevClose = (double)inClose[1];
+      prevMA = force;
+      today = 2;
+   } else 
+   {
+      today = startIdx - lookbackTotal + 1;
+      prevClose = (double)inClose[today - 1];
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+         prevClose = (double)inClose[today];
+         tempReal += force;
+         today = today + 1;
+      }
+      prevMA = tempReal / optInTimePeriod;
    }
-   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
@@ -567,22 +588,32 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **str
        * not keep the sign of a -0.0 force: a down bar on zero volume.
        */
       *outBegIdx= startIdx;
-      /* The first EMA value is a simple average of the first 'period' force
-       * values; it then seeds the recursion. This is ema.c's seeding applied
-       * to the force series rather than to the input array.
-       */
-      today = startIdx - lookbackTotal + 1;
-      prevClose = inClose[today - 1];
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         force = (inClose[today] - prevClose) * inVolume[today];
-         prevClose = inClose[today];
-         tempReal += force;
-         today = today + 1;
+         prevClose = inClose[0];
+         force = (inClose[1] - prevClose) * inVolume[1];
+         prevClose = inClose[1];
+         prevMA = force;
+         today = 2;
+      } else 
+      {
+         /* The first EMA value is a simple average of the first 'period' force
+          * values; it then seeds the recursion. This is ema.c's seeding applied
+          * to the force series rather than to the input array.
+          */
+         today = startIdx - lookbackTotal + 1;
+         prevClose = inClose[today - 1];
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            force = (inClose[today] - prevClose) * inVolume[today];
+            prevClose = inClose[today];
+            tempReal += force;
+            today = today + 1;
+         }
+         prevMA = tempReal / optInTimePeriod;
       }
-      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx )
       {
          force = (inClose[today] - prevClose) * inVolume[today];
