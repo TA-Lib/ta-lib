@@ -70,6 +70,8 @@
  *        the setting does not touch (ATR, RSI, STDDEV, non-EMA MA types) come
  *        from the library at the window the function hands them. Routed
  *        through server_verify under the setting.
+ *     6. Hardcoded rows at start 0 under the setting for the functions added
+ *        since 0.6.4; see evHand.
  *
  *   The frozen-release oracle (0.6.4 under TA_COMPATIBILITY_METASTOCK) is the
  *   --ref leg; the hand-written MetaStock rows are in test_ma.c, test_macd.c,
@@ -131,7 +133,7 @@ static EvRun  g_evA, g_evB, g_evC;
 static int  g_evInlineSeen[EV_NB_INLINE], g_evInlineMoved[EV_NB_INLINE];
 static int  g_evByTypeSeen[EV_NB_BYTYPE], g_evByTypeMoved[EV_NB_BYTYPE];
 static long g_evScopeCells, g_evScopeStill, g_evShapeCalls, g_evOffDefault;
-static long g_evIndepCmp, g_evIndepDefaultMoved, g_evChainMoved, g_evIdentCmp, g_evGoldCmp;
+static long g_evIndepCmp, g_evIndepDefaultMoved, g_evChainMoved, g_evIdentCmp, g_evGoldCmp, g_evHandCmp;
 static int  g_evFuncs;
 
 static int ev_find( const char *const *list, int n, const char *name )
@@ -1176,10 +1178,31 @@ static ErrorNumber ev_server_verify( const TA_FuncInfo *fi, const double *opt, i
                          inputs, opt, (int)fi->nbOptInput, outReal, nI ? outInt : NULL );
 }
 
+/* The function and its option vector for one EvGold case; 0 when unknown. */
+static const TA_FuncInfo *ev_gold_opts( const EvGold *k, double *opt )
+{
+   const TA_FuncHandle *h;
+   const TA_FuncInfo *fi;
+   unsigned int i;
+   int nInt = 0, nReal = 0;
+
+   if( TA_GetFuncHandle( k->name, &h ) != TA_SUCCESS || TA_GetFuncInfo( h, &fi ) != TA_SUCCESS
+       || fi->nbOptInput > EV_MAXOPT )
+      return NULL;
+   for( i = 0; i < fi->nbOptInput; i++ )
+   {
+      const TA_OptInputParameterInfo *oi;
+      TA_GetOptInputParameterInfo( fi->handle, i, &oi );
+      opt[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
+               ? (nReal++ == 1 && k->dp2 != 0.0 ? k->dp2 : k->dp) : (double)k->ip[nInt++];
+   }
+   return fi;
+}
+
 static ErrorNumber test_ema_variation_goldens( void )
 {
    static const int starts[2] = { 0, 150 };
-   unsigned int c, i;
+   unsigned int c;
    int s, o, t;
    ErrorNumber e = TA_TEST_PASS;
 
@@ -1187,20 +1210,11 @@ static ErrorNumber test_ema_variation_goldens( void )
    for( c = 0; c < sizeof(evGold)/sizeof(evGold[0]) && e == TA_TEST_PASS; c++ )
    {
       const EvGold *k = &evGold[c];
-      const TA_FuncHandle *h;
       const TA_FuncInfo *fi;
       double opt[EV_MAXOPT];
-      int nInt = 0, nReal = 0;
 
-      if( TA_GetFuncHandle( k->name, &h ) != TA_SUCCESS || TA_GetFuncInfo( h, &fi ) != TA_SUCCESS )
+      if( (fi = ev_gold_opts( k, opt )) == NULL )
       { e = TA_EMAV_GOLDEN; break; }
-      for( i = 0; i < fi->nbOptInput; i++ )
-      {
-         const TA_OptInputParameterInfo *oi;
-         TA_GetOptInputParameterInfo( fi->handle, i, &oi );
-         opt[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
-                  ? (nReal++ == 1 && k->dp2 != 0.0 ? k->dp2 : k->dp) : (double)k->ip[nInt++];
-      }
       for( s = 0; s < 2 && e == TA_TEST_PASS; s++ )
       {
          int ms;
@@ -1244,6 +1258,160 @@ static ErrorNumber test_ema_variation_goldens( void )
    return e;
 }
 
+/* ---- Leg 6: hardcoded rows ----
+ *
+ * Start 0 under FIRST_BAR_SEED, at each function's default parameters, with an
+ * EMA MA type where the default is another. Each value was produced by running
+ * the source named over this 252-bar series in double, with no TA-Lib
+ * installed. "model": no available library shares both the definition and
+ * rT14's seed, so the value is the documented formula and rT14 in plain
+ * Python. tol is relative to max(|expected|, 1): 3x the worst deviation from
+ * that source over the whole output, floored at 1e-14. STC's is the widest
+ * because its second stochastic divides rounding by a range near 1e-3 late in
+ * the series. */
+typedef struct { int out, bar; double want; } EvHandRow;
+
+typedef struct
+{
+   EvGold    call;
+   double    tol;
+   EvHandRow row[4];
+} EvHand;
+
+static const EvHand evHand[] = {
+   /* model */
+   { { "MACDV", { 12, 26, 9 }, 0, 0 }, 5e-12,
+     { { 0, 34, -32.63050598614753 }, { 1, 37, -40.82448635329611 },
+       { 2, 150, -24.386814474678175 }, { 0, 251, 25.337352757112402 } } },
+   /* ta 0.11.0 TSIIndicator */
+   { { "TSI", { 25, 13 }, 0, 0 }, 5e-14,
+     { { 0, 37, 3.4916219258645 }, { 0, 40, -0.21332469259804665 },
+       { 0, 150, -9.504508152385185 }, { 0, 251, 7.321461736528821 } } },
+   /* trading-signals 8.4.1 DerivativeOscillator */
+   { { "DOSC", { 14, 5, 3, 9 }, 0, 0 }, 2e-13,
+     { { 0, 28, -0.2706130007725278 }, { 0, 31, 2.6471032580740825 },
+       { 0, 150, -1.9051375771823942 }, { 0, 251, -1.3052378861986966 } } },
+   /* Tulip Indicators 0.8.4 cvi */
+   { { "CVI", { 10, 10 }, 0, 0 }, 2e-13,
+     { { 0, 19, 9.535933249198441 }, { 0, 22, -1.3835179362567345 },
+       { 0, 150, 20.488749338825542 }, { 0, 251, -43.71657024393183 } } },
+   /* trading-signals 8.4.1 SMI; the signal is its EMA(9) over that line */
+   { { "SMI", { 13, 2, 25, 9 }, 0, 0 }, 5e-14,
+     { { 0, 45, 5.843247368909079 }, { 1, 48, 5.179223538356554 },
+       { 0, 150, -24.65922169927452 }, { 1, 251, -4.606991738760667 } } },
+   /* ta 0.11.0 ForceIndexIndicator */
+   { { "EFI", { 13 }, 0, 0 }, 8e-14,
+     { { 0, 13, -17683819.53748726 }, { 0, 16, -12296494.353053205 },
+       { 0, 150, -1901188.4484485737 }, { 0, 251, -823984.8422506806 } } },
+   /* trading-signals 8.4.1 ElderRay */
+   { { "ERI", { 13 }, 0, 0 }, 3e-13,
+     { { 0, 12, 4.748925878520595 }, { 1, 15, -2.3272507587159055 },
+       { 0, 150, 0.28839925366057173 }, { 1, 251, -2.3405201008076517 } } },
+   /* Tulip Indicators 0.8.4 mass */
+   { { "MASSI", { 9, 25 }, 0, 0 }, 1e-14,
+     { { 0, 40, 24.44639697656672 }, { 0, 43, 24.232111456558954 },
+       { 0, 150, 25.498595052147543 }, { 0, 251, 24.170501466329654 } } },
+   /* trading-signals 8.4.1 STC */
+   { { "STC", { 23, 50, 10 }, 0, 0 }, 9e-11,
+     { { 0, 67, 100.0 }, { 0, 70, 95.44079227757388 },
+       { 0, 150, 0.001525876383211898 }, { 0, 251, 45.31202348957079 } } },
+   /* model */
+   { { "WAVETREND", { 10, 21, 4 }, 0, 0 }, 5e-12,
+     { { 0, 41, -28.93823259809212 }, { 1, 44, -11.965599101468753 },
+       { 0, 150, -26.218408385150205 }, { 1, 251, 9.758018575473193 } } },
+   /* trading-signals 8.4.1 PremierStochastic */
+   { { "PSO", { 8, 5 }, 0, 0 }, 1e-14,
+     { { 0, 15, 0.13943413445549122 }, { 0, 18, -0.4924367989089211 },
+       { 0, 150, -0.7375522195024949 }, { 0, 251, -0.04558691435212132 } } },
+   /* pandas-ta-classic 0.6.52 zlma, sma=False */
+   { { "ZLEMA", { 30 }, 0, 0 }, 1e-14,
+     { { 0, 43, 85.37378690224266 }, { 0, 46, 87.32434455905464 },
+       { 0, 150, 122.63334469666492 }, { 0, 251, 109.59533787718271 } } },
+   /* model */
+   { { "KC", { 20, 10 }, 2.0, 0 }, 1e-14,
+     { { 0, 19, 99.8411860386017 }, { 1, 22, 90.88028517857347 },
+       { 2, 150, 117.00628819829778 }, { 0, 251, 114.6336720244965 } } },
+   /* ta 0.11.0 PercentageVolumeOscillator */
+   { { "PVO", { 12, 26, TA_MAType_EMA }, 0, 0 }, 2e-13,
+     { { 0, 25, 3.673104502786997 }, { 0, 28, 1.108291617087346 },
+       { 0, 150, -3.3080284808353384 }, { 0, 251, -28.68370546886939 } } },
+   /* model */
+   { { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_EMA, TA_MAType_EMA }, 0, 0 }, 4e-14,
+     { { 0, 52, 5.539140242837408 }, { 1, 55, -2.170274690264252 },
+       { 0, 150, -22.773242859529724 }, { 1, 251, 84.03459027278504 } } },
+   /* pandas-ta-classic 0.6.52 bbands BBB, mamode ema, sma=False */
+   { { "BBW", { 20, TA_MAType_EMA }, 2.0, 0 }, 4e-13,
+     { { 0, 19, 11.253818609001872 }, { 0, 22, 14.640375768064539 },
+       { 0, 150, 18.88495441303805 }, { 0, 251, 11.112481976702512 } } },
+   /* pandas-ta-classic 0.6.52 bbands BBP, mamode ema, sma=False */
+   { { "PERCENTB", { 20, TA_MAType_EMA }, 2.0, 0 }, 1e-13,
+     { { 0, 19, 0.28531145554083764 }, { 0, 22, 0.052277280590296994 },
+       { 0, 150, 0.3754370041265426 }, { 0, 251, 0.44556700815343847 } } },
+   /* model */
+   { { "MAENV", { 20, TA_MAType_EMA }, 10.0, 0 }, 1e-14,
+     { { 0, 19, 101.31022175837434 }, { 1, 22, 90.7269995426264 },
+       { 2, 150, 112.62024081561357 }, { 0, 251, 119.3791070768625 } } },
+   /* model */
+   { { "STOCHRSI", { 14, 5, 3, TA_MAType_EMA }, 0, 0 }, 8e-14,
+     { { 1, 20, 24.28281842446913 }, { 1, 23, 3.0353523030586413 },
+       { 1, 150, 76.72254051437301 }, { 1, 251, 13.958756704020319 } } },
+   /* model */
+   { { "KDJ", { 9, 3, TA_MAType_EMA, 3, TA_MAType_EMA }, 0, 0 }, 1e-14,
+     { { 0, 12, 79.21619425983403 }, { 1, 15, 45.789023217908145 },
+       { 2, 150, 51.72568872378342 }, { 0, 251, 39.24143274404716 } } },
+};
+
+#define EV_NB_HAND ((int)(sizeof(evHand)/sizeof(evHand[0])))
+
+static ErrorNumber test_ema_variation_hand( void )
+{
+   int c, r;
+   ErrorNumber e = TA_TEST_PASS;
+
+   TA_SetEMAVariation( TA_EMAVariation_FIRST_BAR_SEED );
+   for( c = 0; c < EV_NB_HAND && e == TA_TEST_PASS; c++ )
+   {
+      const EvHand *k = &evHand[c];
+      const TA_FuncInfo *fi;
+      double opt[EV_MAXOPT];
+
+      if( (fi = ev_gold_opts( &k->call, opt )) == NULL )
+      {
+         printf( "\nEMA VARIATION HAND: no function %s\n", k->call.name );
+         e = TA_EMAV_GOLDEN;
+         break;
+      }
+      ev_call( fi, opt, 0, &g_evA );
+      for( r = 0; r < 4 && e == TA_TEST_PASS; r++ )
+      {
+         const EvHandRow *w = &k->row[r];
+         int j = w->bar - g_evA.beg;
+         double got;
+         if( g_evA.rc != TA_SUCCESS || w->out >= (int)g_evA.nbOut || g_evA.isInt[w->out]
+             || j < 0 || j >= g_evA.nb )
+         {
+            printf( "\nEMA VARIATION HAND [TA_%s]: rc=%d (%d,%d), no output %d at bar %d\n",
+                    fi->name, (int)g_evA.rc, g_evA.beg, g_evA.nb, w->out, w->bar );
+            e = TA_EMAV_GOLDEN;
+            break;
+         }
+         got = g_evA.real[w->out][j];
+         if( !(fabs( got - w->want ) <= k->tol * fmax( fabs( w->want ), 1.0 )) )
+         {
+            printf( "\nEMA VARIATION HAND [TA_%s] out %d bar %d: %.17g, expected %.17g (tol %.0e)\n",
+                    fi->name, w->out, w->bar, got, w->want, k->tol );
+            e = TA_EMAV_GOLDEN;
+            break;
+         }
+         g_evHandCmp++;
+      }
+      if( e == TA_TEST_PASS && server_verify_active() )
+         e = ev_server_verify( fi, opt, 0, &g_evA );
+   }
+   TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
+   return e;
+}
+
 ErrorNumber test_func_ema_variation( TA_History *history )
 {
    ErrorNumber e;
@@ -1257,6 +1425,7 @@ ErrorNumber test_func_ema_variation( TA_History *history )
    g_evFuncs = 0;
    g_evScopeCells = g_evScopeStill = g_evShapeCalls = g_evOffDefault = 0;
    g_evIndepCmp = g_evIndepDefaultMoved = g_evChainMoved = g_evIdentCmp = g_evGoldCmp = 0;
+   g_evHandCmp = 0;
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
@@ -1265,14 +1434,17 @@ ErrorNumber test_func_ema_variation( TA_History *history )
    if( e == TA_TEST_PASS ) e = test_ema_variation_independence();
    if( e == TA_TEST_PASS ) e = test_ema_variation_macd_identity( history );
    if( e == TA_TEST_PASS ) e = test_ema_variation_goldens();
+   if( e == TA_TEST_PASS ) e = test_ema_variation_hand();
    TA_SetEMAVariation( TA_EMAVariation_SMA_SEED );
    if( e != TA_TEST_PASS )
       return e;
 
-   if( g_evIndepCmp == 0 || g_evChainMoved == 0 || g_evIdentCmp == 0 || g_evGoldCmp == 0 )
+   if( g_evIndepCmp == 0 || g_evChainMoved == 0 || g_evIdentCmp == 0 || g_evGoldCmp == 0
+       || g_evHandCmp != 4 * EV_NB_HAND )
    {
       printf( "\nEMA VARIATION VACUOUS: %ld independence, %ld chained, %ld identity, "
-              "%ld golden comparison(s)\n", g_evIndepCmp, g_evChainMoved, g_evIdentCmp, g_evGoldCmp );
+              "%ld golden, %ld of %d hand comparison(s)\n", g_evIndepCmp, g_evChainMoved,
+              g_evIdentCmp, g_evGoldCmp, g_evHandCmp, 4 * EV_NB_HAND );
       return TA_EMAV_VACUOUS;
    }
    return TA_TEST_PASS;
