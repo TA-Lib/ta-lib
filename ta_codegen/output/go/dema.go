@@ -113,59 +113,72 @@ func (c *Core) demaImpl(startIdx, endIdx int32, inReal []float64, optInTimePerio
 	if emaBeta < 0.5 {
 		emaBeta = 1.0 - optInK_1
 	}
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C9 := i > 0
-		i--
-		if !_C9 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevEMA1 = inReal[0]
+		today = 1
+		if _n9 := int(startIdx-lookbackEMA) - int(today) + 1; _n9 > 0 {
+			_r11 := inReal[today:][:_n9]
+			for _k10 := range _r11 {
+				prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r11[_k10]))
+			}
+			today += int32(_n9)
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevEMA1 = tempReal / float64(optInTimePeriod)
-	if _n10 := int(startIdx-lookbackEMA) - int(today) + 1; _n10 > 0 {
-		_r12 := inReal[today:][:_n10]
-		for _k11 := range _r12 {
-			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r12[_k11]))
+		prevEMA2 = prevEMA1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C12 := i > 0
+			i--
+			if !_C12 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		today += int32(_n10)
-	}
-	tempReal = 0.0
-	tempReal += prevEMA1
-	i = optInTimePeriod - 1
-	for {
-		_C13 := i > 0
-		i--
-		if !_C13 {
-			break
+		prevEMA1 = tempReal / float64(optInTimePeriod)
+		if _n13 := int(startIdx-lookbackEMA) - int(today) + 1; _n13 > 0 {
+			_r15 := inReal[today:][:_n13]
+			for _k14 := range _r15 {
+				prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r15[_k14]))
+			}
+			today += int32(_n13)
 		}
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
+		tempReal = 0.0
 		tempReal += prevEMA1
-	}
-	prevEMA2 = tempReal / float64(optInTimePeriod)
-	if _n14 := int(startIdx) - int(today) + 1; _n14 > 0 {
-		_r16 := inReal[today:][:_n14]
-		for _k15 := range _r16 {
-			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r16[_k15]))
-			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+		i = optInTimePeriod - 1
+		for {
+			_C16 := i > 0
+			i--
+			if !_C16 {
+				break
+			}
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
+			today++
+			tempReal += prevEMA1
 		}
-		today += int32(_n14)
+		prevEMA2 = tempReal / float64(optInTimePeriod)
 	}
-	outReal[0] = float64(2.0*prevEMA1) - prevEMA2
-	outIdx = 1
-	if _n17 := int(endIdx) - int(today) + 1; _n17 > 0 {
+	if _n17 := int(startIdx) - int(today) + 1; _n17 > 0 {
 		_r19 := inReal[today:][:_n17]
-		_r20 := outReal[outIdx:][:_n17]
 		for _k18 := range _r19 {
 			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r19[_k18]))
 			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
-			_r20[_k18] = float64(2.0*prevEMA1) - prevEMA2
 		}
-		outIdx += int32(_n17)
+		today += int32(_n17)
+	}
+	outReal[0] = float64(2.0*prevEMA1) - prevEMA2
+	outIdx = 1
+	if _n20 := int(endIdx) - int(today) + 1; _n20 > 0 {
+		_r22 := inReal[today:][:_n20]
+		_r23 := outReal[outIdx:][:_n20]
+		for _k21 := range _r22 {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*_r22[_k21]))
+			prevEMA2 = math.FMA(emaBeta, prevEMA2, float64(optInK_1*prevEMA1))
+			_r23[_k21] = float64(2.0*prevEMA1) - prevEMA2
+		}
+		outIdx += int32(_n20)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx
@@ -432,37 +445,47 @@ func (c *Core) demaOpenImpl(sp *DEMAStream, inReal []float64, startIdx, optInTim
 	if emaBeta < 0.5 {
 		emaBeta = 1.0 - optInK_1
 	}
-	today = startIdx - lookbackTotal
-	i = optInTimePeriod
-	tempReal = 0.0
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevEMA1 = inReal[0]
+		today = 1
+		for today <= startIdx-lookbackEMA {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
+			today++
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevEMA1 = tempReal / float64(optInTimePeriod)
-	for today <= startIdx-lookbackEMA {
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
-	}
-	tempReal = 0.0
-	tempReal += prevEMA1
-	i = optInTimePeriod - 1
-	for {
-		_C1 := i > 0
-		i--
-		if !_C1 {
-			break
+		prevEMA2 = prevEMA1
+	} else {
+		today = startIdx - lookbackTotal
+		i = optInTimePeriod
+		tempReal = 0.0
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
 		}
-		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
-		today++
+		prevEMA1 = tempReal / float64(optInTimePeriod)
+		for today <= startIdx-lookbackEMA {
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
+			today++
+		}
+		tempReal = 0.0
 		tempReal += prevEMA1
+		i = optInTimePeriod - 1
+		for {
+			_C1 := i > 0
+			i--
+			if !_C1 {
+				break
+			}
+			prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
+			today++
+			tempReal += prevEMA1
+		}
+		prevEMA2 = tempReal / float64(optInTimePeriod)
 	}
-	prevEMA2 = tempReal / float64(optInTimePeriod)
 	for today <= startIdx {
 		prevEMA1 = math.FMA(emaBeta, prevEMA1, float64(optInK_1*inReal[today]))
 		today++

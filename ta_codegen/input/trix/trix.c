@@ -16,6 +16,7 @@
  *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
  *                for startIdx <= lookback). Fix #98: partial-range
  *                output was mislabeled by up to one EMA lookback.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int trix_lookback(int optInTimePeriod)
@@ -65,34 +66,48 @@ TA_RetCode trix(int startIdx, int endIdx,
    optInK_1 = 1.0 - emaBeta;
    if( emaBeta < 0.5 ) emaBeta = 1.0 - optInK_1;
 
-   /* Seed EMA1 with a simple average of the first
-    * 'period' price bars.
+   /* The first-bar seed does not move with startIdx: EMA1 starts on
+    * inReal[0], each later EMA on the first value of the one feeding it.
     */
-   today = startIdx-lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
-      tempReal += inReal[today++];
-   prevEMA1 = tempReal / optInTimePeriod;
-
-   /* Advance EMA1 alone through its unstable period, up to
-    * the bar where EMA2 seeding begins.
-    */
-   while( today <= startIdx-((lookbackEMA*2)+1) )
-      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
-
-   /* Seed EMA2 with a simple average of the first 'period'
-    * EMA1 values, accumulated as EMA1 produces them.
-    */
-   tempReal = 0.0;
-   tempReal += prevEMA1;
-   i = optInTimePeriod-1;
-   while( i-- > 0 )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
-      tempReal += prevEMA1;
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx-((lookbackEMA*2)+1) )
+         prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = prevEMA1;
    }
-   prevEMA2 = tempReal / optInTimePeriod;
+   else
+   {
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx-lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+         tempReal += inReal[today++];
+      prevEMA1 = tempReal / optInTimePeriod;
+
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx-((lookbackEMA*2)+1) )
+         prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod-1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+   }
 
    /* Advance EMA1 and EMA2 in lockstep through the unstable
     * period of EMA2, up to the bar where EMA3 seeding begins.
@@ -103,19 +118,26 @@ TA_RetCode trix(int startIdx, int endIdx,
       prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
    }
 
-   /* Seed EMA3 with a simple average of the first 'period'
-    * EMA2 values, accumulated as EMA2 produces them.
-    */
-   tempReal = 0.0;
-   tempReal += prevEMA2;
-   i = optInTimePeriod-1;
-   while( i-- > 0 )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
-      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
-      tempReal += prevEMA2;
+      prevEMA3 = prevEMA2;
    }
-   prevEMA3 = tempReal / optInTimePeriod;
+   else
+   {
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod-1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+         prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+   }
 
    /* Advance all three EMA in lockstep through the unstable
     * period of EMA3, up to the bar before the first output.

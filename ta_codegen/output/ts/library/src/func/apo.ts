@@ -55,9 +55,10 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { MAType, MATypes } from '../enums.ts';
+import { EMAVariation, MAType, MATypes } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -295,48 +296,90 @@ export function apoImpl(
       _eSlowStart = startIdx;
     }
     _eSlowToday = _eSlowStart - emaLookbackPositional(optInSlowPeriod, core);
-    _eFast = 0.0;
-    for (_eN = 0; _eN < optInFastPeriod; _eN += 1) {
-      _eFast += inReal[_eFastToday++];
-    }
-    _eFast = _eFast / optInFastPeriod;
-    while (_eFastToday <= _eSlowStart) {
-      {
-        const _a: number = _eFastBeta, _b: number = _eFast, _c: number = _eFastK * inReal[_eFastToday++];
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        _eFast = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    /* The first-bar seed: both EMA start on inReal[0], as each does in
+     * the general path, so the two stay bit-identical.
+     */
+    if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+      _eFast = inReal[0];
+      _eSlow = inReal[0];
+      _eToday = 1;
+      while (_eToday <= _eSlowStart) {
+        _eX = inReal[_eToday++];
+        {
+          const _a: number = _eFastBeta, _b: number = _eFast, _c: number = _eFastK * _eX;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          _eFast = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+        {
+          const _a: number = _eSlowBeta, _b: number = _eSlow, _c: number = _eSlowK * _eX;
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          _eSlow = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
-    }
-    _eSlow = 0.0;
-    for (_eN = 0; _eN < optInSlowPeriod; _eN += 1) {
-      _eSlow += inReal[_eSlowToday++];
-    }
-    _eSlow = _eSlow / optInSlowPeriod;
-    while (_eSlowToday <= _eSlowStart) {
-      {
-        const _a: number = _eSlowBeta, _b: number = _eSlow, _c: number = _eSlowK * inReal[_eSlowToday++];
-        const _p = _a * _b;
-        let _t = 134217729 * _a;
-        const _ah = _t - (_t - _a), _al = _a - _ah;
-        _t = 134217729 * _b;
-        const _bh = _t - (_t - _b), _bl = _b - _bh;
-        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-        const _v = _tl + _pl, _v2 = _v + _v;
-        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-        _eSlow = _w && (_pl === 0 || _v === 0) ? _th
-          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    } else {
+      _eFast = 0.0;
+      for (_eN = 0; _eN < optInFastPeriod; _eN += 1) {
+        _eFast += inReal[_eFastToday++];
+      }
+      _eFast = _eFast / optInFastPeriod;
+      while (_eFastToday <= _eSlowStart) {
+        {
+          const _a: number = _eFastBeta, _b: number = _eFast, _c: number = _eFastK * inReal[_eFastToday++];
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          _eFast = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
+      }
+      _eSlow = 0.0;
+      for (_eN = 0; _eN < optInSlowPeriod; _eN += 1) {
+        _eSlow += inReal[_eSlowToday++];
+      }
+      _eSlow = _eSlow / optInSlowPeriod;
+      while (_eSlowToday <= _eSlowStart) {
+        {
+          const _a: number = _eSlowBeta, _b: number = _eSlow, _c: number = _eSlowK * inReal[_eSlowToday++];
+          const _p = _a * _b;
+          let _t = 134217729 * _a;
+          const _ah = _t - (_t - _a), _al = _a - _ah;
+          _t = 134217729 * _b;
+          const _bh = _t - (_t - _b), _bl = _b - _bh;
+          const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+          const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+          const _v = _tl + _pl, _v2 = _v + _v;
+          const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+          _eSlow = _w && (_pl === 0 || _v === 0) ? _th
+            : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+            : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+        }
       }
     }
     _eOutIdx = 0;
@@ -394,13 +437,13 @@ export function apoImpl(
     optInFastPeriod = tempInteger;
   }
   /* Calculate the fast MA into the tempBuffer. */
-  const _xr4 = maPositional(startIdx, endIdx, inReal, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
-  fastBeg.value = _xr4.begIdx;
-  fastNb.value = _xr4.count;
+  const _xr6 = maPositional(startIdx, endIdx, inReal, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
+  fastBeg.value = _xr6.begIdx;
+  fastNb.value = _xr6.count;
   /* Calculate the slow MA into the output. */
-  const _xr5 = maPositional(startIdx, endIdx, inReal, optInSlowPeriod, (optInMAType as MAType), outReal, core);
-  outBegIdx.value = _xr5.begIdx;
-  outNBElement.value = _xr5.count;
+  const _xr7 = maPositional(startIdx, endIdx, inReal, optInSlowPeriod, (optInMAType as MAType), outReal, core);
+  outBegIdx.value = _xr7.begIdx;
+  outNBElement.value = _xr7.count;
   /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
    * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
    * outReal[i], with a non-negative index. An empty slow MA skips the loop.

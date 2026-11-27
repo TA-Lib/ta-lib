@@ -21,6 +21,7 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 int ppo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
@@ -215,19 +216,37 @@ TA_RetCode ppo(int startIdx, int endIdx,
          _eSlowStart = startIdx;
       _eSlowToday = _eSlowStart - ema_lookback( optInSlowPeriod );
 
-      _eFast = 0.0;
-      for( _eN = 0; _eN < optInFastPeriod; _eN++ )
-         _eFast += inReal[_eFastToday++];
-      _eFast = _eFast / optInFastPeriod;
-      while( _eFastToday <= _eSlowStart )
-         _eFast = _eFastK * inReal[_eFastToday++] + _eFastBeta * _eFast;
+      /* The first-bar seed: both EMA start on inReal[0], as each does in
+       * the general path, so the two stay bit-identical.
+       */
+      if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
+      {
+         _eFast = inReal[0];
+         _eSlow = inReal[0];
+         _eToday = 1;
+         while( _eToday <= _eSlowStart )
+         {
+            _eX = inReal[_eToday++];
+            _eFast = _eFastK * _eX + _eFastBeta * _eFast;
+            _eSlow = _eSlowK * _eX + _eSlowBeta * _eSlow;
+         }
+      }
+      else
+      {
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN++ )
+            _eFast += inReal[_eFastToday++];
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart )
+            _eFast = _eFastK * inReal[_eFastToday++] + _eFastBeta * _eFast;
 
-      _eSlow = 0.0;
-      for( _eN = 0; _eN < optInSlowPeriod; _eN++ )
-         _eSlow += inReal[_eSlowToday++];
-      _eSlow = _eSlow / optInSlowPeriod;
-      while( _eSlowToday <= _eSlowStart )
-         _eSlow = _eSlowK * inReal[_eSlowToday++] + _eSlowBeta * _eSlow;
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN++ )
+            _eSlow += inReal[_eSlowToday++];
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart )
+            _eSlow = _eSlowK * inReal[_eSlowToday++] + _eSlowBeta * _eSlow;
+      }
 
       _eOutIdx = 0;
       if( !TA_IS_ZERO(_eSlow) )

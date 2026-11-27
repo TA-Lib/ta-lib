@@ -1291,13 +1291,13 @@ fn emit_clone_method(o: &mut String, func: &FuncDef) {
 ///
 /// `single_precision` is always false — the stream tier is double-only. The
 /// double-address-of and float-input sets are empty (transitions carry no
-/// out-params), and `matype_map` is empty: a transition dispatches MA-type
-/// structurally. The Open region sets it, since the batch region it
-/// transcribes may compare `== TA_MAType_*`.
+/// out-params). `matype_map` holds every `enums.yaml` constant: open code
+/// transcribes the batch prefix, which may compare a setting or an MA type.
 fn stream_ctx<'a>(
     empty: &'a HashSet<String>,
     counter: &'a Cell<usize>,
     fma_sets: &'a FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
 ) -> CsRenderCtx<'a> {
     CsRenderCtx {
         single_precision: false,
@@ -1305,7 +1305,7 @@ fn stream_ctx<'a>(
         float_input_params: empty,
         inline_counter: counter,
         fma: Some(fma_sets),
-        matype_map: HashMap::new(),
+        matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
@@ -1634,7 +1634,7 @@ fn peek_frame_arm_named(
     }
     let empty = HashSet::new();
     let peek_fma = stream_fma.for_peek();
-    let ctx = stream_ctx(&empty, counter, &peek_fma);
+    let ctx = stream_ctx(&empty, counter, &peek_fma, enums);
     for s in &body_ir {
         out.push_str(&render_statement_ctx(s, indent, &ctx, enums, registry, helpers));
     }
@@ -1713,7 +1713,7 @@ fn emit_step_body(
     let transition = streaming::build_transition(model, names)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     for s in &transition {
         o.push_str(&render_statement_ctx(s, indent, &ctx, enums, registry, helpers));
     }
@@ -1944,13 +1944,13 @@ fn emit_open_body(
     emit_out_meta_seed(o);
     let open_body = cleanup_open_body(&build_open_body_cs(model, body, true), registry);
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
-    emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
+    emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter, enums);
     emit_open_region(
         o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
         &mut |o: &mut String| {
             emit_capture(
                 o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
-                Some(CurSource::Out(Stride::Param)), "",
+                Some(CurSource::Out(Stride::Param)), "", enums,
             );
         },
     );
@@ -2000,13 +2000,13 @@ fn emit_sink_frame(
     emit_open_head(o, func, &model.outputs);
     emit_open_validation(o, func, OutMode::Core, enums);
     emit_anchor_guard(o);
-    emit_extras_and_candle(o, func, sink, registry, helpers, counter, stream_fma);
+    emit_extras_and_candle(o, func, sink, registry, helpers, counter, stream_fma, enums);
     emit_open_region(
         o, func, sink, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
         &mut |o: &mut String| {
             emit_capture(
                 o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
-                Some(CurSource::Out(Stride::Zero)), "",
+                Some(CurSource::Out(Stride::Zero)), "", enums,
             );
         },
     );
@@ -2107,7 +2107,7 @@ fn emit_open_prologue(
     emit_open_head(o, func, &model.outputs);
     emit_open_validation(o, func, OutMode::Core, enums);
     emit_anchor_guard(o);
-    emit_extras_and_candle(o, func, open_body, registry, helpers, counter, stream_fma);
+    emit_extras_and_candle(o, func, open_body, registry, helpers, counter, stream_fma, enums);
 }
 
 /// The anchor has to land inside the history — see `c_stream::emit_anchor_guard`
@@ -2229,9 +2229,10 @@ fn emit_extras_and_candle(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     for (name, c_type) in &func.private_extra_params {
         let init = func
             .private_param_init
@@ -2381,11 +2382,12 @@ fn emit_identity_fast_path(
     helpers: &HelperRegistry,
     stream_fma: &FmaVarSets,
     counter: &Cell<usize>,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let Some(idp) = &model.identity else { return };
     let base = pascal_words(&base_name(func));
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     let cond = render_expr(&idp.condition, &ctx, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let lb_call = format!("{base}Lookback({})", lb_args.join(", "));
@@ -2462,11 +2464,12 @@ fn emit_served_recheck(
     stream_fma: &FmaVarSets,
     registry: &Registry,
     helpers: &HelperRegistry,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let v = &ring.var;
     for win in &ring.served {
         let empty = HashSet::new();
-        let ctx = stream_ctx(&empty, counter, stream_fma);
+        let ctx = stream_ctx(&empty, counter, stream_fma, enums);
         let cap = render_expr(&win.cap, &ctx, registry, helpers);
         let _ = writeln!(o, "      if( cap_{v} < (int)({cap}) ) {{");
         let _ = writeln!(o, "         return RetCode.InternalError;");
@@ -2491,6 +2494,7 @@ fn emit_capture(
     counter: &Cell<usize>,
     cur_source: Option<CurSource>,
     extra_capture: &str,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let _ = writeln!(o, "      /* Capture the live batch state into the handle. */");
 
@@ -2508,7 +2512,7 @@ fn emit_capture(
             );
             let _ = writeln!(o, "         return RetCode.InternalError;");
             let _ = writeln!(o, "      }}");
-            emit_served_recheck(o, ring, counter, stream_fma, registry, helpers);
+            emit_served_recheck(o, ring, counter, stream_fma, registry, helpers, enums);
         } else {
             let _ = writeln!(o, "      int cap_{v} = {c} - {v};");
             let _ = writeln!(
@@ -2526,7 +2530,7 @@ fn emit_capture(
             // arithmetic must not -- see the note in `rust_stream.rs` (#229).
             let fill_rhs = ring.derived.as_ref().map(|dr| {
                 let empty_fill = HashSet::new();
-                let fill_ctx = stream_ctx(&empty_fill, counter, stream_fma);
+                let fill_ctx = stream_ctx(&empty_fill, counter, stream_fma, enums);
                 derived_fill_expr_cs(dr, "fillJ", &fill_ctx, registry, helpers)
             });
             if back > 0 {
@@ -2561,7 +2565,7 @@ fn emit_capture(
     for win in model.windows() {
         let v = &win.var;
         let empty = HashSet::new();
-        let ctx = stream_ctx(&empty, counter, stream_fma);
+        let ctx = stream_ctx(&empty, counter, stream_fma, enums);
         let cap = render_expr(&win.cap, &ctx, registry, helpers);
         let _ = writeln!(o, "      int cap_{v} = (int)({cap});");
         let _ = writeln!(o, "      if( cap_{v} < 1 || cap_{v} > historyLen ) {{");
@@ -3336,7 +3340,7 @@ fn emit_dual_mode(
     // name never share one.
     let dual_frame = {
         let no_locals = HashSet::new();
-        let fctx = stream_ctx(&no_locals, counter, stream_fma);
+        let fctx = stream_ctx(&no_locals, counter, stream_fma, enums);
         // The outputs are declared by the frame, above the identity branch that
         // writes them and above both arms.
         let outs: BTreeSet<String> =
@@ -3376,7 +3380,7 @@ fn emit_dual_mode(
     // --- step: one method, the mode re-derived from the stored param --------
     emit_step_sig(o, func);
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in the opens: it is a property of the function, not of a
     // mode.
@@ -3419,7 +3423,7 @@ fn emit_dual_mode(
         // general arm touches. What keeps that arm from running is the step's
         // own guard, hoisted ABOVE the mode predicate, so which arm the predicate
         // would pick is moot.
-        emit_identity_fast_path(o, func, ma, &fields, registry, helpers, stream_fma, counter);
+        emit_identity_fast_path(o, func, ma, &fields, registry, helpers, stream_fma, counter, enums);
         let pred = render_predicate(&dmp.predicate, &ctx, registry, helpers);
         let _ = writeln!(o, "      if( {pred} ) {{");
         for (k, arm) in [ma, mb].into_iter().enumerate() {
@@ -3438,7 +3442,7 @@ fn emit_dual_mode(
             let open_body = cleanup_open_body(&build_open_body_cs(arm, &body, true), registry);
             let mut s = String::new();
             emit_body_decls(&mut s, func, &open_body);
-            emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
+            emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma, enums);
             let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
             let complement = dual_complement_capture(own, other);
             emit_open_region(
@@ -3447,7 +3451,7 @@ fn emit_dual_mode(
                 &mut |s: &mut String| {
                     emit_capture(
                         s, func, arm, &union_scalars, &step_settings, registry, helpers, stream_fma,
-                        counter, Some(CurSource::Out(Stride::Param)), &complement,
+                        counter, Some(CurSource::Out(Stride::Param)), &complement, enums,
                     );
                 },
             );
@@ -3574,12 +3578,7 @@ fn emit_dispatch(
     let bar_args = inputs.join(", ");
     let base = pascal_words(&base_name(func));
     let empty = HashSet::new();
-    let mut ctx = stream_ctx(&empty, counter, stream_fma);
-    // The dispatch identity guard can compare `optInMAType == TA_MAType_*`
-    // (TA_MAType_DISABLED, #93); resolve those to their qualified member like
-    // batch. This is the ONE tier that populates the map — every other stream
-    // body dispatches structurally.
-    ctx.matype_map = build_matype_map(enums);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let lb_call = format!("{base}Lookback({})", lb_args.join(", "));
 
@@ -3892,7 +3891,7 @@ fn emit_tape_entries(
         None => state_fields(func, models[0], &step_settings),
     };
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     let pred = dual.map(|dmp| {
         render_predicate(&params_on_state(func, &dmp.predicate), &ctx, registry, helpers)
     });
@@ -3991,8 +3990,7 @@ fn emit_dispatch_tape(
     let (sig_bars, bar_args) = bar_params(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let empty = HashSet::new();
-    let mut ctx = stream_ctx(&empty, counter, stream_fma);
-    ctx.matype_map = build_matype_map(enums);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
     let arms: Vec<&streaming::DispatchArm> =
         dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
     let identity = dp.identity.as_ref().map(|idp| {
@@ -4602,7 +4600,7 @@ fn emit_composed_step(
     }
 
     let empty = HashSet::new();
-    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let ctx = stream_ctx(&empty, counter, stream_fma, enums);
 
     if let Some(model) = &cp.producer {
         let names = CsComposedNames {
@@ -4812,7 +4810,7 @@ fn emit_composed_open(
         let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
         let _ = writeln!(o, "      }}");
     }
-    emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma);
+    emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma, enums);
     // At stride 1 the caller's array is already the destination the transcribed
     // tail writes, so the scratch aliases it instead of being allocated and
     // copied back (issue #205). Only the scalar sink still needs its own buffer.
@@ -4851,7 +4849,7 @@ fn emit_composed_open(
         float_input_params: &empty,
         inline_counter: counter,
         fma: Some(stream_fma),
-        matype_map: HashMap::new(),
+        matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
@@ -5040,7 +5038,7 @@ fn emit_composed_open(
         // seeding is suppressed; the real outputs seed from `sc_` below.
         emit_capture(
             o, func, model, &model.state, step_settings, registry, helpers, stream_fma,
-            counter, None, &extra,
+            counter, None, &extra, enums,
         );
     } else {
         for p in &func.optional_inputs {

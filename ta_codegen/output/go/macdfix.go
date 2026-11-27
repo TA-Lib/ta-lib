@@ -103,83 +103,78 @@ func (c *Core) macdfixImpl(startIdx, endIdx int32, inReal []float64, optInSignal
 		*outNBElement = 0
 		return Success
 	}
-	today = startIdx - lookbackTotal
-	tempReal = 0.0
-	i = optInSlowPeriod - optInFastPeriod
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevFast = inReal[0]
+		prevSlow = inReal[0]
+		today = 1
+		if _n0 := int(startIdx-lookbackSignal) - int(today) + 1; _n0 > 0 {
+			_r2 := inReal[today:][:_n0]
+			for _k1 := range _r2 {
+				tempReal = _r2[_k1]
+				prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+				prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			}
+			today += int32(_n0)
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevFast = 0.0
-	i = optInFastPeriod
-	for {
-		_C1 := i > 0
-		i--
-		if !_C1 {
-			break
-		}
-		prevFast += inReal[today]
-		tempReal += inReal[today]
-		today++
-	}
-	prevSlow = tempReal / float64(optInSlowPeriod)
-	prevFast = prevFast / float64(optInFastPeriod)
-	if _n2 := int(startIdx-lookbackSignal) - int(today) + 1; _n2 > 0 {
-		_r4 := inReal[today:][:_n2]
-		for _k3 := range _r4 {
-			tempReal = _r4[_k3]
-			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-		}
-		today += int32(_n2)
-	}
-	macdValue = prevFast - prevSlow
-	prevSignal = 0.0
-	prevSignal += macdValue
-	i = optInSignalPeriod - 1
-	for {
-		_C5 := i > 0
-		i--
-		if !_C5 {
-			break
-		}
-		tempReal = inReal[today]
-		today++
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
 		macdValue = prevFast - prevSlow
+		prevSignal = macdValue
+	} else {
+		today = startIdx - lookbackTotal
+		tempReal = 0.0
+		i = optInSlowPeriod - optInFastPeriod
+		for {
+			_C3 := i > 0
+			i--
+			if !_C3 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
+		}
+		prevFast = 0.0
+		i = optInFastPeriod
+		for {
+			_C4 := i > 0
+			i--
+			if !_C4 {
+				break
+			}
+			prevFast += inReal[today]
+			tempReal += inReal[today]
+			today++
+		}
+		prevSlow = tempReal / float64(optInSlowPeriod)
+		prevFast = prevFast / float64(optInFastPeriod)
+		if _n5 := int(startIdx-lookbackSignal) - int(today) + 1; _n5 > 0 {
+			_r7 := inReal[today:][:_n5]
+			for _k6 := range _r7 {
+				tempReal = _r7[_k6]
+				prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+				prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			}
+			today += int32(_n5)
+		}
+		macdValue = prevFast - prevSlow
+		prevSignal = 0.0
 		prevSignal += macdValue
-	}
-	prevSignal = prevSignal / float64(optInSignalPeriod)
-	if _n6 := int(startIdx) - int(today) + 1; _n6 > 0 {
-		_r8 := inReal[today:][:_n6]
-		for _k7 := range _r8 {
-			tempReal = _r8[_k7]
+		i = optInSignalPeriod - 1
+		for {
+			_C8 := i > 0
+			i--
+			if !_C8 {
+				break
+			}
+			tempReal = inReal[today]
+			today++
 			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
 			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
 			macdValue = prevFast - prevSlow
-			if optInSignalPeriod == 1 {
-				prevSignal = macdValue
-			} else {
-				prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*macdValue))
-			}
+			prevSignal += macdValue
 		}
-		today += int32(_n6)
+		prevSignal = prevSignal / float64(optInSignalPeriod)
 	}
-	outMACD[0] = macdValue
-	outMACDSignal[0] = prevSignal
-	outMACDHist[0] = macdValue - prevSignal
-	outIdx = 1
-	if _n9 := int(endIdx) - int(today) + 1; _n9 > 0 {
+	if _n9 := int(startIdx) - int(today) + 1; _n9 > 0 {
 		_r11 := inReal[today:][:_n9]
-		_r12 := outMACD[outIdx:][:_n9]
-		_r13 := outMACDSignal[outIdx:][:_n9]
-		_r14 := outMACDHist[outIdx:][:_n9]
 		for _k10 := range _r11 {
 			tempReal = _r11[_k10]
 			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
@@ -190,11 +185,33 @@ func (c *Core) macdfixImpl(startIdx, endIdx int32, inReal []float64, optInSignal
 			} else {
 				prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*macdValue))
 			}
-			_r12[_k10] = macdValue
-			_r13[_k10] = prevSignal
-			_r14[_k10] = macdValue - prevSignal
 		}
-		outIdx += int32(_n9)
+		today += int32(_n9)
+	}
+	outMACD[0] = macdValue
+	outMACDSignal[0] = prevSignal
+	outMACDHist[0] = macdValue - prevSignal
+	outIdx = 1
+	if _n12 := int(endIdx) - int(today) + 1; _n12 > 0 {
+		_r14 := inReal[today:][:_n12]
+		_r15 := outMACD[outIdx:][:_n12]
+		_r16 := outMACDSignal[outIdx:][:_n12]
+		_r17 := outMACDHist[outIdx:][:_n12]
+		for _k13 := range _r14 {
+			tempReal = _r14[_k13]
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			macdValue = prevFast - prevSlow
+			if optInSignalPeriod == 1 {
+				prevSignal = macdValue
+			} else {
+				prevSignal = math.FMA(signalBeta, prevSignal, float64(signalK*macdValue))
+			}
+			_r15[_k13] = macdValue
+			_r16[_k13] = prevSignal
+			_r17[_k13] = macdValue - prevSignal
+		}
+		outIdx += int32(_n12)
 	}
 	*outBegIdx = startIdx
 	*outNBElement = outIdx
@@ -479,56 +496,70 @@ func (c *Core) macdfixOpenImpl(sp *MACDFIXStream, inReal []float64, startIdx, op
 		*outNBElement = 0
 		return InsufficientHistory
 	}
-	today = startIdx - lookbackTotal
-	tempReal = 0.0
-	i = optInSlowPeriod - optInFastPeriod
-	for {
-		_C0 := i > 0
-		i--
-		if !_C0 {
-			break
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		prevFast = inReal[0]
+		prevSlow = inReal[0]
+		today = 1
+		for today <= startIdx-lookbackSignal {
+			tempReal = inReal[today]
+			today++
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
 		}
-		tempReal += inReal[today]
-		today++
-	}
-	prevFast = 0.0
-	i = optInFastPeriod
-	for {
-		_C1 := i > 0
-		i--
-		if !_C1 {
-			break
-		}
-		prevFast += inReal[today]
-		tempReal += inReal[today]
-		today++
-	}
-	prevSlow = tempReal / float64(optInSlowPeriod)
-	prevFast = prevFast / float64(optInFastPeriod)
-	for today <= startIdx-lookbackSignal {
-		tempReal = inReal[today]
-		today++
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
-	}
-	macdValue = prevFast - prevSlow
-	prevSignal = 0.0
-	prevSignal += macdValue
-	i = optInSignalPeriod - 1
-	for {
-		_C2 := i > 0
-		i--
-		if !_C2 {
-			break
-		}
-		tempReal = inReal[today]
-		today++
-		prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
-		prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
 		macdValue = prevFast - prevSlow
+		prevSignal = macdValue
+	} else {
+		today = startIdx - lookbackTotal
+		tempReal = 0.0
+		i = optInSlowPeriod - optInFastPeriod
+		for {
+			_C0 := i > 0
+			i--
+			if !_C0 {
+				break
+			}
+			tempReal += inReal[today]
+			today++
+		}
+		prevFast = 0.0
+		i = optInFastPeriod
+		for {
+			_C1 := i > 0
+			i--
+			if !_C1 {
+				break
+			}
+			prevFast += inReal[today]
+			tempReal += inReal[today]
+			today++
+		}
+		prevSlow = tempReal / float64(optInSlowPeriod)
+		prevFast = prevFast / float64(optInFastPeriod)
+		for today <= startIdx-lookbackSignal {
+			tempReal = inReal[today]
+			today++
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+		}
+		macdValue = prevFast - prevSlow
+		prevSignal = 0.0
 		prevSignal += macdValue
+		i = optInSignalPeriod - 1
+		for {
+			_C2 := i > 0
+			i--
+			if !_C2 {
+				break
+			}
+			tempReal = inReal[today]
+			today++
+			prevFast = math.FMA(fastBeta, prevFast, float64(fastK*tempReal))
+			prevSlow = math.FMA(slowBeta, prevSlow, float64(slowK*tempReal))
+			macdValue = prevFast - prevSlow
+			prevSignal += macdValue
+		}
+		prevSignal = prevSignal / float64(optInSignalPeriod)
 	}
-	prevSignal = prevSignal / float64(optInSignalPeriod)
 	for today <= startIdx {
 		tempReal = inReal[today]
 		today++

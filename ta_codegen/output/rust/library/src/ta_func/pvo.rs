@@ -57,6 +57,7 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -395,27 +396,44 @@ impl Core {
                 _eSlowStart = startIdx;
             }
             _eSlowToday = _eSlowStart - self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
-            _eFast = 0.0;
-            // for( _eN = 0; _eN < ((optInFastPeriod) as usize); _eN += 1 )
-            _eN = 0;
-            while _eN < (optInFastPeriod as usize) {
-                _eFast += inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }];
-                _eN += 1;
-            }
-            _eFast = _eFast / (optInFastPeriod as f64);
-            while _eFastToday <= _eSlowStart {
-                _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
-            }
-            _eSlow = 0.0;
-            // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
-            _eN = 0;
-            while _eN < (optInSlowPeriod as usize) {
-                _eSlow += inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }];
-                _eN += 1;
-            }
-            _eSlow = _eSlow / (optInSlowPeriod as f64);
-            while _eSlowToday <= _eSlowStart {
-                _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
+            // The first-bar seed: both EMA start on inVolume[0], as each does in
+            // the general path, so the two stay bit-identical.
+            if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+                _eFast = inVolume[0];
+                _eSlow = inVolume[0];
+                _eToday = 1;
+                if _eToday <= _eSlowStart {
+                    let _wn: usize = _eSlowStart - _eToday + 1;
+                    let _w0 = &inVolume[_eToday..][.._wn];
+                    for _wk in 0.._wn {
+                        _eX = _w0[_wk];
+                        _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * _eX);
+                        _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * _eX);
+                    }
+                }
+            } else {
+                _eFast = 0.0;
+                // for( _eN = 0; _eN < ((optInFastPeriod) as usize); _eN += 1 )
+                _eN = 0;
+                while _eN < (optInFastPeriod as usize) {
+                    _eFast += inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }];
+                    _eN += 1;
+                }
+                _eFast = _eFast / (optInFastPeriod as f64);
+                while _eFastToday <= _eSlowStart {
+                    _eFast = fmadd!(_eFastBeta, _eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
+                }
+                _eSlow = 0.0;
+                // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
+                _eN = 0;
+                while _eN < (optInSlowPeriod as usize) {
+                    _eSlow += inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }];
+                    _eN += 1;
+                }
+                _eSlow = _eSlow / (optInSlowPeriod as f64);
+                while _eSlowToday <= _eSlowStart {
+                    _eSlow = fmadd!(_eSlowBeta, _eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
+                }
             }
             _eOutIdx = 0;
             if !(_eSlow.abs() < 1e-14) {

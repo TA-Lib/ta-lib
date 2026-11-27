@@ -58,6 +58,7 @@
  *  070526 MF,CC  Speed optimization: compute both EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
  *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_DEMA_Lookback( int optInTimePeriod )
@@ -196,36 +197,51 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
    {
       emaBeta = 1.0 - optInK_1;
    }
-   /* Seed EMA1 with a simple average of the first
-    * 'period' price bars.
+   /* The first-bar seed does not move with startIdx: EMA1 starts on
+    * inReal[0], EMA2 on the first EMA1 value of the call.
     */
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += inReal[today++];
-   }
-   prevEMA1 = tempReal / optInTimePeriod;
-   /* Advance EMA1 alone through its unstable period, up to
-    * the bar where EMA2 seeding begins.
-    */
-   while( today <= startIdx - lookbackEMA )
+      prevEMA1 = inReal[0];
+      today = 1;
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      }
+      prevEMA2 = prevEMA1;
+   } else 
    {
-      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-   }
-   /* Seed EMA2 with a simple average of the first 'period'
-    * EMA1 values, accumulated as EMA1 produces them.
-    */
-   tempReal = 0.0;
-   tempReal += prevEMA1;
-   i = optInTimePeriod - 1;
-   while( i-- > 0 )
-   {
-      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
       tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
    }
-   prevEMA2 = tempReal / optInTimePeriod;
    /* Advance both EMA in lockstep through the unstable period
     * of EMA2, up to the first output bar.
     */
@@ -319,27 +335,39 @@ TA_RetCode TA_S_DEMA( int    startIdx,
    {
       emaBeta = 1.0 - optInK_1;
    }
-   today = startIdx - lookbackTotal;
-   i = optInTimePeriod;
-   tempReal = 0.0;
-   while( i-- > 0 )
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      tempReal += (double)inReal[today++];
-   }
-   prevEMA1 = tempReal / optInTimePeriod;
-   while( today <= startIdx - lookbackEMA )
+      prevEMA1 = (double)inReal[0];
+      today = 1;
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      }
+      prevEMA2 = prevEMA1;
+   } else 
    {
-      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-   }
-   tempReal = 0.0;
-   tempReal += prevEMA1;
-   i = optInTimePeriod - 1;
-   while( i-- > 0 )
-   {
-      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
+      {
+         tempReal += (double)inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      }
+      tempReal = 0.0;
       tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
    }
-   prevEMA2 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
@@ -517,36 +545,51 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_DEMA_OpenImpl( struct TA_DEMA_Stream **s
       {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], EMA2 on the first EMA1 value of the call.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA )
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA )
+         {
+            prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else 
       {
-         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 )
+         {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA )
+         {
+            prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 )
+         {
+            prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */

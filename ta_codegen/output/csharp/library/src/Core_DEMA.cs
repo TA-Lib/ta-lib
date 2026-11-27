@@ -58,6 +58,7 @@ public partial class Core
     *  070526 MF,CC  Speed optimization: compute both EMA in a single
     *                lockstep pass (bit-exact, no temporary buffers).
     *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
+    *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Dema</c> consumes before it can produce
@@ -228,33 +229,45 @@ public partial class Core
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], EMA2 on the first EMA1 value of the call.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */
@@ -352,24 +365,33 @@ public partial class Core
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
@@ -813,33 +835,45 @@ public partial class Core
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], EMA2 on the first EMA1 value of the call.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */

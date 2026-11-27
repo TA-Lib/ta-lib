@@ -65,6 +65,7 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType )
@@ -330,25 +331,42 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
          _eSlowStart = startIdx;
       }
       _eSlowToday = _eSlowStart - TA_EMA_Lookback(optInSlowPeriod);
-      _eFast = 0.0;
-      for( _eN = 0; _eN < optInFastPeriod; _eN += 1 )
+      /* The first-bar seed: both EMA start on inReal[0], as each does in
+       * the general path, so the two stay bit-identical.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         _eFast += inReal[_eFastToday++];
-      }
-      _eFast = _eFast / optInFastPeriod;
-      while( _eFastToday <= _eSlowStart )
+         _eFast = inReal[0];
+         _eSlow = inReal[0];
+         _eToday = 1;
+         while( _eToday <= _eSlowStart )
+         {
+            _eX = inReal[_eToday++];
+            _eFast = fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+         }
+      } else 
       {
-         _eFast = fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
-      }
-      _eSlow = 0.0;
-      for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 )
-      {
-         _eSlow += inReal[_eSlowToday++];
-      }
-      _eSlow = _eSlow / optInSlowPeriod;
-      while( _eSlowToday <= _eSlowStart )
-      {
-         _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 )
+         {
+            _eFast += inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart )
+         {
+            _eFast = fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 )
+         {
+            _eSlow += inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart )
+         {
+            _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+         }
       }
       _eOutIdx = 0;
       if( !TA_IS_ZERO(_eSlow) )
@@ -647,25 +665,39 @@ TA_RetCode TA_S_PPO( int    startIdx,
          _eSlowStart = startIdx;
       }
       _eSlowToday = _eSlowStart - TA_EMA_Lookback(optInSlowPeriod);
-      _eFast = 0.0;
-      for( _eN = 0; _eN < optInFastPeriod; _eN += 1 )
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
       {
-         _eFast += (double)inReal[_eFastToday++];
-      }
-      _eFast = _eFast / optInFastPeriod;
-      while( _eFastToday <= _eSlowStart )
+         _eFast = (double)inReal[0];
+         _eSlow = (double)inReal[0];
+         _eToday = 1;
+         while( _eToday <= _eSlowStart )
+         {
+            _eX = (double)inReal[_eToday++];
+            _eFast = fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+         }
+      } else 
       {
-         _eFast = fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
-      }
-      _eSlow = 0.0;
-      for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 )
-      {
-         _eSlow += (double)inReal[_eSlowToday++];
-      }
-      _eSlow = _eSlow / optInSlowPeriod;
-      while( _eSlowToday <= _eSlowStart )
-      {
-         _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+         _eFast = 0.0;
+         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 )
+         {
+            _eFast += (double)inReal[_eFastToday++];
+         }
+         _eFast = _eFast / optInFastPeriod;
+         while( _eFastToday <= _eSlowStart )
+         {
+            _eFast = fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
+         }
+         _eSlow = 0.0;
+         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 )
+         {
+            _eSlow += (double)inReal[_eSlowToday++];
+         }
+         _eSlow = _eSlow / optInSlowPeriod;
+         while( _eSlowToday <= _eSlowStart )
+         {
+            _eSlow = fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+         }
       }
       _eOutIdx = 0;
       if( !TA_IS_ZERO(_eSlow) )

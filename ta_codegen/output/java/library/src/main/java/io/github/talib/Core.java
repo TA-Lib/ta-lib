@@ -11009,6 +11009,7 @@ public final class Core {
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -11261,21 +11262,35 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+         /* The first-bar seed: both EMA start on inReal[0], as each does in
+          * the general path, so the two stay bit-identical.
+          */
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = inReal[0];
+            _eSlow = inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;
@@ -11461,21 +11476,32 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += (double)inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += (double)inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = (double)inReal[0];
+            _eSlow = (double)inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = (double)inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += (double)inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += (double)inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;
@@ -103728,6 +103754,7 @@ public final class Core {
  *  070526 MF,CC  Speed optimization: compute both EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
  *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -103879,33 +103906,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], EMA2 on the first EMA1 value of the call.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */
@@ -103984,24 +104023,33 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
@@ -104409,33 +104457,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], EMA2 on the first EMA1 value of the call.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */
@@ -154249,6 +154309,7 @@ public final class Core {
  *                signal line and the histogram in a single lockstep
  *                pass (bit-exact, no temporary buffers).
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -154458,58 +154519,75 @@ public final class Core {
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      /* Seed each price EMA with a simple average of its first
-       * 'period' price bars, each window placed by that EMA's own
-       * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
-       * for bit. The slow EMA then runs alone to the end of the fast
-       * window.
-       *
-       * ema_lookback(n) - n must never decrease as n grows: a fast
-       * window ending before the slow one would skip bars of the fast
-       * EMA, and one starting before it would read below the lookback.
+      /* The first-bar seed does not move with startIdx: both price EMA
+       * start on inReal[0], the signal EMA on the first MACD-line value of
+       * the call.
        */
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Advance both EMA through their unstable period, up to the
-       * first MACD-line bar.
-       */
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      /* Seed the signal EMA with a simple average of the first
-       * 'signal period' MACD-line values, accumulated as they are
-       * produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars, each window placed by that EMA's own
+          * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+          * for bit. The slow EMA then runs alone to the end of the fast
+          * window.
+          *
+          * ema_lookback(n) - n must never decrease as n grows: a fast
+          * window ending before the slow one would skip bars of the fast
+          * EMA, and one starting before it would read below the lookback.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period
        * of the signal EMA, up to the first output bar.
        */
@@ -154647,41 +154725,54 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = (double)inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = (double)inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = (double)inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = (double)inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -155233,58 +155324,75 @@ public final class Core {
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      /* Seed each price EMA with a simple average of its first
-       * 'period' price bars, each window placed by that EMA's own
-       * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
-       * for bit. The slow EMA then runs alone to the end of the fast
-       * window.
-       *
-       * ema_lookback(n) - n must never decrease as n grows: a fast
-       * window ending before the slow one would skip bars of the fast
-       * EMA, and one starting before it would read below the lookback.
+      /* The first-bar seed does not move with startIdx: both price EMA
+       * start on inReal[0], the signal EMA on the first MACD-line value of
+       * the call.
        */
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[fastToday++];
-      }
-      prevFast = prevFast / optInFastPeriod;
-      while( today < fastToday ) {
-         tempReal = inReal[today++];
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      /* Advance both EMA through their unstable period, up to the
-       * first MACD-line bar.
-       */
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      /* Seed the signal EMA with a simple average of the first
-       * 'signal period' MACD-line values, accumulated as they are
-       * produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars, each window placed by that EMA's own
+          * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+          * for bit. The slow EMA then runs alone to the end of the fast
+          * window.
+          *
+          * ema_lookback(n) - n must never decrease as n grows: a fast
+          * window ending before the slow one would skip bars of the fast
+          * EMA, and one starting before it would read below the lookback.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[fastToday++];
+         }
+         prevFast = prevFast / optInFastPeriod;
+         while( today < fastToday ) {
+            tempReal = inReal[today++];
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period
        * of the signal EMA, up to the first output bar.
        */
@@ -156576,6 +156684,7 @@ public final class Core {
  *  071126 MF,CC  Inline the fixed-26/12 MACD lockstep pass (was a
  *                delegation to macd(...,0,0,...)); bit-exact, streamable.
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -156727,49 +156836,66 @@ public final class Core {
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      /* Seed each price EMA with a simple average of its first
-       * 'period' price bars. The fast window is the tail of the
-       * slow window: consume the leading slow-only bars first,
-       * then accumulate both over the shared bars.
+      /* The first-bar seed does not move with startIdx: both price EMA
+       * start on inReal[0], the signal EMA on the first MACD-line value of
+       * the call.
        */
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      prevFast = prevFast / optInFastPeriod;
-      /* Advance both EMA through their unstable period, up to the
-       * first MACD-line bar.
-       */
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      /* Seed the signal EMA with a simple average of the first
-       * 'signal period' MACD-line values, accumulated as they are
-       * produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars. The fast window is the tail of the
+          * slow window: consume the leading slow-only bars first,
+          * then accumulate both over the shared bars.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period
        * of the signal EMA, up to the first output bar.
        */
@@ -156877,37 +157003,50 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[today];
-         tempReal += (double)inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      prevFast = prevFast / optInFastPeriod;
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = (double)inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = (double)inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = (double)inReal[0];
+         prevSlow = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += (double)inReal[today];
+            tempReal += (double)inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = (double)inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -157411,49 +157550,66 @@ public final class Core {
        * [outIdx] are written only after inReal[startIdx+outIdx] was
        * read.
        */
-      /* Seed each price EMA with a simple average of its first
-       * 'period' price bars. The fast window is the tail of the
-       * slow window: consume the leading slow-only bars first,
-       * then accumulate both over the shared bars.
+      /* The first-bar seed does not move with startIdx: both price EMA
+       * start on inReal[0], the signal EMA on the first MACD-line value of
+       * the call.
        */
-      today = startIdx - lookbackTotal;
-      tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
-      }
-      prevSlow = tempReal / optInSlowPeriod;
-      prevFast = prevFast / optInFastPeriod;
-      /* Advance both EMA through their unstable period, up to the
-       * first MACD-line bar.
-       */
-      while( today <= startIdx - lookbackSignal ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
-      }
-      macdValue = prevFast - prevSlow;
-      /* Seed the signal EMA with a simple average of the first
-       * 'signal period' MACD-line values, accumulated as they are
-       * produced.
-       */
-      prevSignal = 0.0;
-      prevSignal += macdValue;
-      i = optInSignalPeriod - 1;
-      while( i-- > 0 ) {
-         tempReal = inReal[today++];
-         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
-         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevFast = inReal[0];
+         prevSlow = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
          macdValue = prevFast - prevSlow;
+         prevSignal = macdValue;
+      } else {
+         /* Seed each price EMA with a simple average of its first
+          * 'period' price bars. The fast window is the tail of the
+          * slow window: consume the leading slow-only bars first,
+          * then accumulate both over the shared bars.
+          */
+         today = startIdx - lookbackTotal;
+         tempReal = 0.0;
+         i = optInSlowPeriod - optInFastPeriod;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevFast = 0.0;
+         i = optInFastPeriod;
+         while( i-- > 0 ) {
+            prevFast += inReal[today];
+            tempReal += inReal[today++];
+         }
+         prevSlow = tempReal / optInSlowPeriod;
+         prevFast = prevFast / optInFastPeriod;
+         /* Advance both EMA through their unstable period, up to the
+          * first MACD-line bar.
+          */
+         while( today <= startIdx - lookbackSignal ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         }
+         macdValue = prevFast - prevSlow;
+         /* Seed the signal EMA with a simple average of the first
+          * 'signal period' MACD-line values, accumulated as they are
+          * produced.
+          */
+         prevSignal = 0.0;
          prevSignal += macdValue;
+         i = optInSignalPeriod - 1;
+         while( i-- > 0 ) {
+            tempReal = inReal[today++];
+            prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+            prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+            macdValue = prevFast - prevSlow;
+            prevSignal += macdValue;
+         }
+         prevSignal = prevSignal / optInSignalPeriod;
       }
-      prevSignal = prevSignal / optInSignalPeriod;
       /* Advance everything in lockstep through the unstable period
        * of the signal EMA, up to the first output bar.
        */
@@ -188491,6 +188647,7 @@ public final class Core {
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -188771,21 +188928,35 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+         /* The first-bar seed: both EMA start on inReal[0], as each does in
+          * the general path, so the two stay bit-identical.
+          */
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = inReal[0];
+            _eSlow = inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -189031,21 +189202,32 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += (double)inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += (double)inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = (double)inReal[0];
+            _eSlow = (double)inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = (double)inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += (double)inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += (double)inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -192048,6 +192230,7 @@ public final class Core {
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -192328,21 +192511,35 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += inVolume[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += inVolume[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
+         /* The first-bar seed: both EMA start on inVolume[0], as each does in
+          * the general path, so the two stay bit-identical.
+          */
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = inVolume[0];
+            _eSlow = inVolume[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = inVolume[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += inVolume[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += inVolume[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -192588,21 +192785,32 @@ public final class Core {
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += (double)inVolume[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += (double)inVolume[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = (double)inVolume[0];
+            _eSlow = (double)inVolume[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = (double)inVolume[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += (double)inVolume[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += (double)inVolume[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -230886,6 +231094,7 @@ public final class Core {
  *                clang leaves ~1e-14 residue), so the copy is explicit.
  *  070526 MF,CC  Speed optimization: compute the three EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -231035,33 +231244,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], each later EMA on the first value of the one feeding it.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance EMA1 and EMA2 in lockstep through the unstable
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
@@ -231069,18 +231290,22 @@ public final class Core {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       /* Advance all three EMA in lockstep through the unstable
        * period of EMA3, up to the first output bar.
        */
@@ -231161,37 +231386,50 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA ) {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
@@ -231612,33 +231850,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], each later EMA on the first value of the one feeding it.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - lookbackEMA * 2 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance EMA1 and EMA2 in lockstep through the unstable
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
@@ -231646,18 +231896,22 @@ public final class Core {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       /* Advance all three EMA in lockstep through the unstable
        * period of EMA3, up to the first output bar.
        */
@@ -233937,6 +234191,7 @@ public final class Core {
  *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
  *                for startIdx <= lookback). Fix #98: partial-range
  *                output was mislabeled by up to one EMA lookback.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -234043,33 +234298,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], each later EMA on the first value of the one feeding it.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance EMA1 and EMA2 in lockstep through the unstable
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
@@ -234077,18 +234344,22 @@ public final class Core {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       /* Advance all three EMA in lockstep through the unstable
        * period of EMA3, up to the bar before the first output.
        */
@@ -234164,37 +234435,50 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = (double)inReal[0];
+         today = 1;
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += (double)inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         }
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx - (lookbackEMA + 1) ) {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       while( today <= startIdx - 1 ) {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
@@ -234577,33 +234861,45 @@ public final class Core {
       if( emaBeta < 0.5 ) {
          emaBeta = 1.0 - optInK_1;
       }
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
+      /* The first-bar seed does not move with startIdx: EMA1 starts on
+       * inReal[0], each later EMA on the first value of the one feeding it.
        */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA1 = inReal[0];
+         today = 1;
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         prevEMA2 = prevEMA1;
+      } else {
+         /* Seed EMA1 with a simple average of the first
+          * 'period' price bars.
+          */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inReal[today++];
+         }
+         prevEMA1 = tempReal / optInTimePeriod;
+         /* Advance EMA1 alone through its unstable period, up to
+          * the bar where EMA2 seeding begins.
+          */
+         while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         }
+         /* Seed EMA2 with a simple average of the first 'period'
+          * EMA1 values, accumulated as EMA1 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA1;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            tempReal += prevEMA1;
+         }
+         prevEMA2 = tempReal / optInTimePeriod;
       }
-      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance EMA1 and EMA2 in lockstep through the unstable
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
@@ -234611,18 +234907,22 @@ public final class Core {
          prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
-         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         prevEMA3 = prevEMA2;
+      } else {
+         /* Seed EMA3 with a simple average of the first 'period'
+          * EMA2 values, accumulated as EMA2 produces them.
+          */
+         tempReal = 0.0;
          tempReal += prevEMA2;
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+            prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+            tempReal += prevEMA2;
+         }
+         prevEMA3 = tempReal / optInTimePeriod;
       }
-      prevEMA3 = tempReal / optInTimePeriod;
       /* Advance all three EMA in lockstep through the unstable
        * period of EMA3, up to the bar before the first output.
        */

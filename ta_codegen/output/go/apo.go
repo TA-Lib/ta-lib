@@ -202,52 +202,66 @@ func (c *Core) apoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 			_eSlowStart = startIdx
 		}
 		_eSlowToday = _eSlowStart - c.emaLookback(optInSlowPeriod)
-		_eFast = 0.0
-		_eN = 0
-		if _n16 := int(optInFastPeriod) - int(_eN); _n16 > 0 {
-			_r18 := inReal[_eFastToday:][:_n16]
-			for _k17 := range _r18 {
-				_eFast += _r18[_k17]
+		if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+			_eFast = inReal[0]
+			_eSlow = inReal[0]
+			_eToday = 1
+			if _n16 := int(_eSlowStart) - int(_eToday) + 1; _n16 > 0 {
+				_r18 := inReal[_eToday:][:_n16]
+				for _k17 := range _r18 {
+					_eX = _r18[_k17]
+					_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
+					_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
+				}
 			}
-			_eFastToday += int32(_n16)
-		}
-		_eFast = _eFast / float64(optInFastPeriod)
-		if _n19 := int(_eSlowStart) - int(_eFastToday) + 1; _n19 > 0 {
-			_r21 := inReal[_eFastToday:][:_n19]
-			for _k20 := range _r21 {
-				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r21[_k20]))
+		} else {
+			_eFast = 0.0
+			_eN = 0
+			if _n19 := int(optInFastPeriod) - int(_eN); _n19 > 0 {
+				_r21 := inReal[_eFastToday:][:_n19]
+				for _k20 := range _r21 {
+					_eFast += _r21[_k20]
+				}
+				_eFastToday += int32(_n19)
 			}
-		}
-		_eSlow = 0.0
-		_eN = 0
-		if _n22 := int(optInSlowPeriod) - int(_eN); _n22 > 0 {
-			_r24 := inReal[_eSlowToday:][:_n22]
-			for _k23 := range _r24 {
-				_eSlow += _r24[_k23]
+			_eFast = _eFast / float64(optInFastPeriod)
+			if _n22 := int(_eSlowStart) - int(_eFastToday) + 1; _n22 > 0 {
+				_r24 := inReal[_eFastToday:][:_n22]
+				for _k23 := range _r24 {
+					_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_r24[_k23]))
+				}
 			}
-			_eSlowToday += int32(_n22)
-		}
-		_eSlow = _eSlow / float64(optInSlowPeriod)
-		if _n25 := int(_eSlowStart) - int(_eSlowToday) + 1; _n25 > 0 {
-			_r27 := inReal[_eSlowToday:][:_n25]
-			for _k26 := range _r27 {
-				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r27[_k26]))
+			_eSlow = 0.0
+			_eN = 0
+			if _n25 := int(optInSlowPeriod) - int(_eN); _n25 > 0 {
+				_r27 := inReal[_eSlowToday:][:_n25]
+				for _k26 := range _r27 {
+					_eSlow += _r27[_k26]
+				}
+				_eSlowToday += int32(_n25)
+			}
+			_eSlow = _eSlow / float64(optInSlowPeriod)
+			if _n28 := int(_eSlowStart) - int(_eSlowToday) + 1; _n28 > 0 {
+				_r30 := inReal[_eSlowToday:][:_n28]
+				for _k29 := range _r30 {
+					_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_r30[_k29]))
+				}
 			}
 		}
 		_eOutIdx = 0
 		outReal[_eOutIdx] = _eFast - _eSlow
 		_eOutIdx += 1
 		_eToday = _eSlowStart + 1
-		if _n28 := int(endIdx) - int(_eToday) + 1; _n28 > 0 {
-			_r30 := inReal[_eToday:][:_n28]
-			_r31 := outReal[_eOutIdx:][:_n28]
-			for _k29 := range _r30 {
-				_eX = _r30[_k29]
+		if _n31 := int(endIdx) - int(_eToday) + 1; _n31 > 0 {
+			_r33 := inReal[_eToday:][:_n31]
+			_r34 := outReal[_eOutIdx:][:_n31]
+			for _k32 := range _r33 {
+				_eX = _r33[_k32]
 				_eFast = math.FMA(_eFastBeta, _eFast, float64(_eFastK*_eX))
 				_eSlow = math.FMA(_eSlowBeta, _eSlow, float64(_eSlowK*_eX))
-				_r31[_k29] = _eFast - _eSlow
+				_r34[_k32] = _eFast - _eSlow
 			}
-			_eOutIdx += int32(_n28)
+			_eOutIdx += int32(_n31)
 		}
 		*outBegIdx = _eSlowStart
 		*outNBElement = _eOutIdx
@@ -259,23 +273,23 @@ func (c *Core) apoImpl(startIdx, endIdx int32, inReal []float64, optInFastPeriod
 		optInSlowPeriod = optInFastPeriod
 		optInFastPeriod = tempInteger
 	}
-	_X32, _E32 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
-	if _E32 != nil {
-		return _E32.(RetCode)
+	_X35, _E35 := c.MA(int(startIdx), int(endIdx), inReal, int(optInFastPeriod), MAType(optInMAType), tempBuffer)
+	if _E35 != nil {
+		return _E35.(RetCode)
 	}
-	fastNb = int32(_X32.NBElement)
-	_X33, _E33 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
-	if _E33 != nil {
-		return _E33.(RetCode)
+	fastNb = int32(_X35.NBElement)
+	_X36, _E36 := c.MA(int(startIdx), int(endIdx), inReal, int(optInSlowPeriod), MAType(optInMAType), outReal)
+	if _E36 != nil {
+		return _E36.(RetCode)
 	}
-	*outBegIdx = int32(_X33.BegIdx)
-	*outNBElement = int32(_X33.NBElement)
+	*outBegIdx = int32(_X36.BegIdx)
+	*outNBElement = int32(_X36.NBElement)
 	offset = fastNb - *outNBElement
 	i = 0
-	if _n34 := int(*outNBElement) - int(i); _n34 > 0 {
-		_r36 := outReal[i:][:_n34]
-		for _k35 := range _r36 {
-			_r36[_k35] = tempBuffer[i+int32(_k35)+offset] - _r36[_k35]
+	if _n37 := int(*outNBElement) - int(i); _n37 > 0 {
+		_r39 := outReal[i:][:_n37]
+		for _k38 := range _r39 {
+			_r39[_k38] = tempBuffer[i+int32(_k38)+offset] - _r39[_k38]
 		}
 	}
 	return Success

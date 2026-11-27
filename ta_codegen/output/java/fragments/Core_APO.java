@@ -21,6 +21,7 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -273,21 +274,35 @@
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+         /* The first-bar seed: both EMA start on inReal[0], as each does in
+          * the general path, so the two stay bit-identical.
+          */
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = inReal[0];
+            _eSlow = inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;
@@ -473,21 +488,32 @@
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += (double)inReal[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += (double)inReal[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = (double)inReal[0];
+            _eSlow = (double)inReal[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = (double)inReal[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += (double)inReal[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += (double)inReal[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;

@@ -58,6 +58,7 @@
  *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
  *                for startIdx <= lookback). Fix #98: partial-range
  *                output was mislabeled by up to one EMA lookback.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -215,47 +216,62 @@ impl Core {
         if emaBeta < 0.5 {
             emaBeta = 1.0 - (optInK_1 as f64);
         }
-        // Seed EMA1 with a simple average of the first
-        // 'period' price bars.
-        today = startIdx - lookbackTotal;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevEMA1 = tempReal / (optInTimePeriod as f64);
-        // Advance EMA1 alone through its unstable period, up to
-        // the bar where EMA2 seeding begins.
-        while today <= startIdx - (lookbackEMA * 2 + 1) {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
-        }
-        // Seed EMA2 with a simple average of the first 'period'
-        // EMA1 values, accumulated as EMA1 produces them.
-        tempReal = 0.0;
-        tempReal += prevEMA1;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+        // The first-bar seed does not move with startIdx: EMA1 starts on
+        // inReal[0], each later EMA on the first value of the one feeding it.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            }
+            prevEMA2 = prevEMA1;
+        } else {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / (optInTimePeriod as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
             tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / (optInTimePeriod as f64);
         }
-        prevEMA2 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 and EMA2 in lockstep through the unstable
         // period of EMA2, up to the bar where EMA3 seeding begins.
         while today <= startIdx - (lookbackEMA + 1) {
             prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
             prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
         }
-        // Seed EMA3 with a simple average of the first 'period'
-        // EMA2 values, accumulated as EMA2 produces them.
-        tempReal = 0.0;
-        tempReal += prevEMA2;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevEMA3 = prevEMA2;
+        } else {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
             tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+                prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / (optInTimePeriod as f64);
         }
-        prevEMA3 = tempReal / (optInTimePeriod as f64);
         // Advance all three EMA in lockstep through the unstable
         // period of EMA3, up to the bar before the first output.
         while today <= startIdx - 1 {
@@ -514,47 +530,62 @@ impl Core {
         if emaBeta < 0.5 {
             emaBeta = 1.0 - (optInK_1 as f64);
         }
-        // Seed EMA1 with a simple average of the first
-        // 'period' price bars.
-        today = startIdx - lookbackTotal;
-        i = optInTimePeriod as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevEMA1 = tempReal / (optInTimePeriod as f64);
-        // Advance EMA1 alone through its unstable period, up to
-        // the bar where EMA2 seeding begins.
-        while today <= startIdx - (lookbackEMA * 2 + 1) {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
-        }
-        // Seed EMA2 with a simple average of the first 'period'
-        // EMA1 values, accumulated as EMA1 produces them.
-        tempReal = 0.0;
-        tempReal += prevEMA1;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+        // The first-bar seed does not move with startIdx: EMA1 starts on
+        // inReal[0], each later EMA on the first value of the one feeding it.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevEMA1 = inReal[0];
+            today = 1;
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            }
+            prevEMA2 = prevEMA1;
+        } else {
+            // Seed EMA1 with a simple average of the first
+            // 'period' price bars.
+            today = startIdx - lookbackTotal;
+            i = optInTimePeriod as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inReal[{ let _v = today; today += 1; _v }];
+            }
+            prevEMA1 = tempReal / (optInTimePeriod as f64);
+            // Advance EMA1 alone through its unstable period, up to
+            // the bar where EMA2 seeding begins.
+            while today <= startIdx - (lookbackEMA * 2 + 1) {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            }
+            // Seed EMA2 with a simple average of the first 'period'
+            // EMA1 values, accumulated as EMA1 produces them.
+            tempReal = 0.0;
             tempReal += prevEMA1;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+                tempReal += prevEMA1;
+            }
+            prevEMA2 = tempReal / (optInTimePeriod as f64);
         }
-        prevEMA2 = tempReal / (optInTimePeriod as f64);
         // Advance EMA1 and EMA2 in lockstep through the unstable
         // period of EMA2, up to the bar where EMA3 seeding begins.
         while today <= startIdx - (lookbackEMA + 1) {
             prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
             prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
         }
-        // Seed EMA3 with a simple average of the first 'period'
-        // EMA2 values, accumulated as EMA2 produces them.
-        tempReal = 0.0;
-        tempReal += prevEMA2;
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
-            prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            prevEMA3 = prevEMA2;
+        } else {
+            // Seed EMA3 with a simple average of the first 'period'
+            // EMA2 values, accumulated as EMA2 produces them.
+            tempReal = 0.0;
             tempReal += prevEMA2;
+            i = (optInTimePeriod - 1) as usize;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                prevEMA1 = fmadd!(emaBeta, prevEMA1, (optInK_1 as f64) * inReal[{ let _v = today; today += 1; _v }]);
+                prevEMA2 = fmadd!(emaBeta, prevEMA2, (optInK_1 as f64) * prevEMA1);
+                tempReal += prevEMA2;
+            }
+            prevEMA3 = tempReal / (optInTimePeriod as f64);
         }
-        prevEMA3 = tempReal / (optInTimePeriod as f64);
         // Advance all three EMA in lockstep through the unstable
         // period of EMA3, up to the bar before the first output.
         while today <= startIdx - 1 {

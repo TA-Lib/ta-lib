@@ -14,6 +14,7 @@
  *  071126 MF,CC  Inline the fixed-26/12 MACD lockstep pass (was a
  *                delegation to macd(...,0,0,...)); bit-exact, streamable.
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  *
  */
 
@@ -104,54 +105,75 @@ TA_RetCode macdfix(int startIdx, int endIdx,
     * read.
     */
 
-   /* Seed each price EMA with a simple average of its first
-    * 'period' price bars. The fast window is the tail of the
-    * slow window: consume the leading slow-only bars first,
-    * then accumulate both over the shared bars.
+   /* The first-bar seed does not move with startIdx: both price EMA
+    * start on inReal[0], the signal EMA on the first MACD-line value of
+    * the call.
     */
-   today = startIdx-lookbackTotal;
-   tempReal = 0.0;
-   i = optInSlowPeriod - optInFastPeriod;
-   while( i-- > 0 )
-      tempReal += inReal[today++];
-
-   prevFast = 0.0;
-   i = optInFastPeriod;
-   while( i-- > 0 )
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
    {
-      prevFast += inReal[today];
-      tempReal += inReal[today++];
-   }
-   prevSlow = tempReal / optInSlowPeriod;
-   prevFast = prevFast / optInFastPeriod;
-
-   /* Advance both EMA through their unstable period, up to the
-    * first MACD-line bar.
-    */
-   while( today <= startIdx-lookbackSignal )
-   {
-      tempReal = inReal[today++];
-      prevFast = fastK * tempReal + fastBeta * prevFast;
-      prevSlow = slowK * tempReal + slowBeta * prevSlow;
-   }
-   macdValue = prevFast - prevSlow;
-
-   /* Seed the signal EMA with a simple average of the first
-    * 'signal period' MACD-line values, accumulated as they are
-    * produced.
-    */
-   prevSignal = 0.0;
-   prevSignal += macdValue;
-   i = optInSignalPeriod-1;
-   while( i-- > 0 )
-   {
-      tempReal = inReal[today++];
-      prevFast = fastK * tempReal + fastBeta * prevFast;
-      prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      prevFast = inReal[0];
+      prevSlow = inReal[0];
+      today = 1;
+      while( today <= startIdx-lookbackSignal )
+      {
+         tempReal = inReal[today++];
+         prevFast = fastK * tempReal + fastBeta * prevFast;
+         prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      }
       macdValue = prevFast - prevSlow;
-      prevSignal += macdValue;
+      prevSignal = macdValue;
    }
-   prevSignal = prevSignal / optInSignalPeriod;
+   else
+   {
+      /* Seed each price EMA with a simple average of its first
+       * 'period' price bars. The fast window is the tail of the
+       * slow window: consume the leading slow-only bars first,
+       * then accumulate both over the shared bars.
+       */
+      today = startIdx-lookbackTotal;
+      tempReal = 0.0;
+      i = optInSlowPeriod - optInFastPeriod;
+      while( i-- > 0 )
+         tempReal += inReal[today++];
+
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 )
+      {
+         prevFast += inReal[today];
+         tempReal += inReal[today++];
+      }
+      prevSlow = tempReal / optInSlowPeriod;
+      prevFast = prevFast / optInFastPeriod;
+
+      /* Advance both EMA through their unstable period, up to the
+       * first MACD-line bar.
+       */
+      while( today <= startIdx-lookbackSignal )
+      {
+         tempReal = inReal[today++];
+         prevFast = fastK * tempReal + fastBeta * prevFast;
+         prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      }
+      macdValue = prevFast - prevSlow;
+
+      /* Seed the signal EMA with a simple average of the first
+       * 'signal period' MACD-line values, accumulated as they are
+       * produced.
+       */
+      prevSignal = 0.0;
+      prevSignal += macdValue;
+      i = optInSignalPeriod-1;
+      while( i-- > 0 )
+      {
+         tempReal = inReal[today++];
+         prevFast = fastK * tempReal + fastBeta * prevFast;
+         prevSlow = slowK * tempReal + slowBeta * prevSlow;
+         macdValue = prevFast - prevSlow;
+         prevSignal += macdValue;
+      }
+      prevSignal = prevSignal / optInSignalPeriod;
+   }
 
    /* Advance everything in lockstep through the unstable period
     * of the signal EMA, up to the first output bar.

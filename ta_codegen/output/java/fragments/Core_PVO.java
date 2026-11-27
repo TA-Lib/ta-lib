@@ -15,6 +15,7 @@
  *                two running sums, no intermediate buffer, no allocation.
  *                Bit-identical.
  *  092826 MF,CC  Fuse the fast and slow EMA into one pass (#459).
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -295,21 +296,35 @@
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += inVolume[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += inVolume[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
+         /* The first-bar seed: both EMA start on inVolume[0], as each does in
+          * the general path, so the two stay bit-identical.
+          */
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = inVolume[0];
+            _eSlow = inVolume[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = inVolume[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += inVolume[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += inVolume[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -555,21 +570,32 @@
             _eSlowStart = startIdx;
          }
          _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod);
-         _eFast = 0.0;
-         for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
-            _eFast += (double)inVolume[_eFastToday++];
-         }
-         _eFast = _eFast / optInFastPeriod;
-         while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
-         }
-         _eSlow = 0.0;
-         for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
-            _eSlow += (double)inVolume[_eSlowToday++];
-         }
-         _eSlow = _eSlow / optInSlowPeriod;
-         while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
+         if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+            _eFast = (double)inVolume[0];
+            _eSlow = (double)inVolume[0];
+            _eToday = 1;
+            while( _eToday <= _eSlowStart ) {
+               _eX = (double)inVolume[_eToday++];
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
+            }
+         } else {
+            _eFast = 0.0;
+            for( _eN = 0; _eN < optInFastPeriod; _eN += 1 ) {
+               _eFast += (double)inVolume[_eFastToday++];
+            }
+            _eFast = _eFast / optInFastPeriod;
+            while( _eFastToday <= _eSlowStart ) {
+               _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
+            }
+            _eSlow = 0.0;
+            for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
+               _eSlow += (double)inVolume[_eSlowToday++];
+            }
+            _eSlow = _eSlow / optInSlowPeriod;
+            while( _eSlowToday <= _eSlowStart ) {
+               _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
+            }
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {

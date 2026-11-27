@@ -50,8 +50,10 @@
  *  070526 MF,CC  Speed optimization: single lockstep pass (bit-exact
  *                for startIdx <= lookback). Fix #98: partial-range
  *                output was mislabeled by up to one EMA lookback.
+ *  112726 MF,CC  Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
+import { EMAVariation } from '../enums.ts';
 import { NO_OPTIONS, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -147,61 +149,87 @@ export function trixImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - optInK_1;
   }
-  /* Seed EMA1 with a simple average of the first
-   * 'period' price bars.
+  /* The first-bar seed does not move with startIdx: EMA1 starts on
+   * inReal[0], each later EMA on the first value of the one feeding it.
    */
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
-  }
-  prevEMA1 = tempReal / optInTimePeriod;
-  /* Advance EMA1 alone through its unstable period, up to
-   * the bar where EMA2 seeding begins.
-   */
-  while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA1 = inReal[0];
+    today = 1;
+    while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
-  }
-  /* Seed EMA2 with a simple average of the first 'period'
-   * EMA1 values, accumulated as EMA1 produces them.
-   */
-  tempReal = 0.0;
-  tempReal += prevEMA1;
-  i = optInTimePeriod - 1;
-  while (i-- > 0) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    prevEMA2 = prevEMA1;
+  } else {
+    /* Seed EMA1 with a simple average of the first
+     * 'period' price bars.
+     */
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
     }
+    prevEMA1 = tempReal / optInTimePeriod;
+    /* Advance EMA1 alone through its unstable period, up to
+     * the bar where EMA2 seeding begins.
+     */
+    while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+    }
+    /* Seed EMA2 with a simple average of the first 'period'
+     * EMA1 values, accumulated as EMA1 produces them.
+     */
+    tempReal = 0.0;
     tempReal += prevEMA1;
+    i = optInTimePeriod - 1;
+    while (i-- > 0) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      tempReal += prevEMA1;
+    }
+    prevEMA2 = tempReal / optInTimePeriod;
   }
-  prevEMA2 = tempReal / optInTimePeriod;
   /* Advance EMA1 and EMA2 in lockstep through the unstable
    * period of EMA2, up to the bar where EMA3 seeding begins.
    */
@@ -237,46 +265,50 @@ export function trixImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  /* Seed EMA3 with a simple average of the first 'period'
-   * EMA2 values, accumulated as EMA2 produces them.
-   */
-  tempReal = 0.0;
-  tempReal += prevEMA2;
-  i = optInTimePeriod - 1;
-  while (i-- > 0) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = emaBeta, _b: number = prevEMA2, _c: number = optInK_1 * prevEMA1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA2 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA3 = prevEMA2;
+  } else {
+    /* Seed EMA3 with a simple average of the first 'period'
+     * EMA2 values, accumulated as EMA2 produces them.
+     */
+    tempReal = 0.0;
     tempReal += prevEMA2;
+    i = optInTimePeriod - 1;
+    while (i-- > 0) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = emaBeta, _b: number = prevEMA2, _c: number = optInK_1 * prevEMA1;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA2 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      tempReal += prevEMA2;
+    }
+    prevEMA3 = tempReal / optInTimePeriod;
   }
-  prevEMA3 = tempReal / optInTimePeriod;
   /* Advance all three EMA in lockstep through the unstable
    * period of EMA3, up to the bar before the first output.
    */
@@ -896,61 +928,87 @@ function trixOpenImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - optInK_1;
   }
-  /* Seed EMA1 with a simple average of the first
-   * 'period' price bars.
+  /* The first-bar seed does not move with startIdx: EMA1 starts on
+   * inReal[0], each later EMA on the first value of the one feeding it.
    */
-  today = startIdx - lookbackTotal;
-  i = optInTimePeriod;
-  tempReal = 0.0;
-  while (i-- > 0) {
-    tempReal += inReal[today++];
-  }
-  prevEMA1 = tempReal / optInTimePeriod;
-  /* Advance EMA1 alone through its unstable period, up to
-   * the bar where EMA2 seeding begins.
-   */
-  while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA1 = inReal[0];
+    today = 1;
+    while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
     }
-  }
-  /* Seed EMA2 with a simple average of the first 'period'
-   * EMA1 values, accumulated as EMA1 produces them.
-   */
-  tempReal = 0.0;
-  tempReal += prevEMA1;
-  i = optInTimePeriod - 1;
-  while (i-- > 0) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+    prevEMA2 = prevEMA1;
+  } else {
+    /* Seed EMA1 with a simple average of the first
+     * 'period' price bars.
+     */
+    today = startIdx - lookbackTotal;
+    i = optInTimePeriod;
+    tempReal = 0.0;
+    while (i-- > 0) {
+      tempReal += inReal[today++];
     }
+    prevEMA1 = tempReal / optInTimePeriod;
+    /* Advance EMA1 alone through its unstable period, up to
+     * the bar where EMA2 seeding begins.
+     */
+    while (today <= startIdx - (((lookbackEMA * 2) | 0) + 1)) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+    }
+    /* Seed EMA2 with a simple average of the first 'period'
+     * EMA1 values, accumulated as EMA1 produces them.
+     */
+    tempReal = 0.0;
     tempReal += prevEMA1;
+    i = optInTimePeriod - 1;
+    while (i-- > 0) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      tempReal += prevEMA1;
+    }
+    prevEMA2 = tempReal / optInTimePeriod;
   }
-  prevEMA2 = tempReal / optInTimePeriod;
   /* Advance EMA1 and EMA2 in lockstep through the unstable
    * period of EMA2, up to the bar where EMA3 seeding begins.
    */
@@ -986,46 +1044,50 @@ function trixOpenImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  /* Seed EMA3 with a simple average of the first 'period'
-   * EMA2 values, accumulated as EMA2 produces them.
-   */
-  tempReal = 0.0;
-  tempReal += prevEMA2;
-  i = optInTimePeriod - 1;
-  while (i-- > 0) {
-    {
-      const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    {
-      const _a: number = emaBeta, _b: number = prevEMA2, _c: number = optInK_1 * prevEMA1;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      prevEMA2 = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    prevEMA3 = prevEMA2;
+  } else {
+    /* Seed EMA3 with a simple average of the first 'period'
+     * EMA2 values, accumulated as EMA2 produces them.
+     */
+    tempReal = 0.0;
     tempReal += prevEMA2;
+    i = optInTimePeriod - 1;
+    while (i-- > 0) {
+      {
+        const _a: number = emaBeta, _b: number = prevEMA1, _c: number = optInK_1 * inReal[today++];
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA1 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = emaBeta, _b: number = prevEMA2, _c: number = optInK_1 * prevEMA1;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        prevEMA2 = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      tempReal += prevEMA2;
+    }
+    prevEMA3 = tempReal / optInTimePeriod;
   }
-  prevEMA3 = tempReal / optInTimePeriod;
   /* Advance all three EMA in lockstep through the unstable
    * period of EMA3, up to the bar before the first output.
    */
