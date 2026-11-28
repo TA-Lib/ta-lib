@@ -25,6 +25,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  *
  */
 
@@ -69,6 +70,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    int outIdx, lowestIdx, highestIdx;
    int lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
    int trailingIdx, today, i = 0;
+   int slowKIdx;
    int bufferIsAllocated;
 
    /* With stochastic, there is a total of 4 different lines that
@@ -147,7 +149,20 @@ TA_RetCode stoch(int startIdx, int endIdx,
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
-   trailingIdx = startIdx-lookbackTotal;
+   /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+    * there; %D seeds on the first Slow-K the call uses, as by default. A type
+    * with no stage reads only its own window, so its values do not move.
+    */
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      slowKIdx    = startIdx-lookbackDSlow-lookbackK;
+   }
+   else
+   {
+      trailingIdx = startIdx-lookbackTotal;
+      slowKIdx    = 0;
+   }
    today       = trailingIdx+lookbackK;
    lowestIdx   = highestIdx = -1;
    highest = lowest = 0.0;
@@ -253,7 +268,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
     * Some documentation will refer to the smoothed version as being
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = ma( 0, outIdx-1,
+   retCode = ma( slowKIdx, outIdx-1,
       tempBuffer, optInSlowK_Period,
       optInSlowK_MAType,
       outBegIdx, outNBElement, tempBuffer );

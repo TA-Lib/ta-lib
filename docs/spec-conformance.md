@@ -545,8 +545,8 @@ and rT12 for a count and a candle setting, in TypeScript: `runtime.test.ts`.
 rT14, rT15, rT17 and rT18: `test_ema_variation.c` (tag `EMAVARIATION`) holds C to
 them: the set of functions that move under `FIRST_BAR_SEED` against its declared
 lists, lookback and range unchanged on every call, start independence of the
-input-fed stages with the chained ones, STOCH and STOCHF among them, shown to
-move, and goldens written from
+input-fed stages, STOCHF and STOCH's Slow-K among them, with the chained ones,
+STOCH's Slow-D among them, shown to move, and goldens written from
 the seed rule; the `--ref` leg holds the 0.6.4 MetaStock mode against it
 (the migration paragraph). `--codegen`, `--xlang-hash` and `stream_verify` run
 every port under the setting bitwise against C, each with a floor on calls that

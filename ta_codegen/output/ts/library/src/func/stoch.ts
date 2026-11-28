@@ -59,9 +59,10 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { MAType, MATypes } from '../enums.ts';
+import { EMAVariation, MAType, MATypes } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -175,6 +176,7 @@ export function stochImpl(
   let trailingIdx = 0;
   let today = 0;
   let i = 0;
+  let slowKIdx = 0;
   if (startIdx < 0 || startIdx > Core.INDEX_MAX) {
     return RetCode.OUT_OF_RANGE_START_INDEX;
   }
@@ -282,7 +284,17 @@ export function stochImpl(
    * requested range. (The range of k must consider all
    * the lookback involve with the smoothing).
    */
-  trailingIdx = startIdx - lookbackTotal;
+  /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+   * there; %D seeds on the first Slow-K the call uses, as by default. A type
+   * with no stage reads only its own window, so its values do not move.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    slowKIdx = startIdx - lookbackDSlow - lookbackK;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    slowKIdx = 0;
+  }
   today = trailingIdx + lookbackK;
   highestIdx = -1;
   lowestIdx = highestIdx;
@@ -361,7 +373,7 @@ export function stochImpl(
    * Some documentation will refer to the smoothed version as being
    * "K-Slow", but often this end up to be shorten to "K".
    */
-  const _xr0 = maPositional(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
+  const _xr0 = maPositional(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   retCode = RetCode.SUCCESS;
@@ -1075,6 +1087,7 @@ function stochOpenImpl(
   let trailingIdx = 0;
   let today = 0;
   let i = 0;
+  let slowKIdx = 0;
   const historyLen = inHigh.length;
   let endIdx = historyLen - 1;
   if (historyLen > Core.INDEX_MAX + 1) {
@@ -1191,7 +1204,17 @@ function stochOpenImpl(
    * requested range. (The range of k must consider all
    * the lookback involve with the smoothing).
    */
-  trailingIdx = startIdx - lookbackTotal;
+  /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+   * there; %D seeds on the first Slow-K the call uses, as by default. A type
+   * with no stage reads only its own window, so its values do not move.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    slowKIdx = startIdx - lookbackDSlow - lookbackK;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    slowKIdx = 0;
+  }
   today = trailingIdx + lookbackK;
   highestIdx = -1;
   lowestIdx = highestIdx;
@@ -1270,8 +1293,8 @@ function stochOpenImpl(
    * Some documentation will refer to the smoothed version as being
    * "K-Slow", but often this end up to be shorten to "K".
    */
-  const sub0 = maOpenInternal(core, tempBuffer.slice(0, (outIdx - 1) + 1), 0, optInSlowK_Period, (optInSlowK_MAType as MAType));
-  const _xr0 = maPositional(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
+  const sub0 = maOpenInternal(core, tempBuffer.slice(0, (outIdx - 1) + 1), slowKIdx, optInSlowK_Period, (optInSlowK_MAType as MAType));
+  const _xr0 = maPositional(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   if (outNBElement.value === 0) {

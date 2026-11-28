@@ -100,7 +100,7 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_MAVP_NARROW, W_LINREG_ANGLE, W_RSI, W_INDEX_TIE };
+enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_MAVP_NARROW, W_LINREG_ANGLE, W_RSI, W_INDEX_TIE, W_STOCH_SEED };
 static const TaRefWaiver WAIVERS[] = {
    [W_TRIX_NATR]   = { "trix_natr_98",
                        "TRIX/NATR with startIdx past the lookback, and NATR over a zero close (#98)", 0.77 },
@@ -124,6 +124,8 @@ static const TaRefWaiver WAIVERS[] = {
                        "RSI with no change from the first bar read to the first output, where 0.6.4 answers 0 for 0/0 (#480)", 0.56 },
    [W_INDEX_TIE]   = { "index_tie_503",
                        "MAXINDEX/MININDEX/MINMAXINDEX over a window that holds its extreme on several bars, where 0.6.4 names the oldest or the newest of them by where the call started (#503)", 0.71 },
+   [W_STOCH_SEED]  = { "stoch_seed_622",
+                       "STOCH/STOCHF in MetaStock mode from past the lookback with an EMA, DEMA or TEMA over Fast-K, which 0.6.4 seeds on the first Fast-K the call reads and FIRST_BAR_SEED on Fast-K's first bar (#622)", 0.54 },
 };
 
 /* 0.6.4 computes variance as E[x^2] - mean^2, losing about log10(kappa)
@@ -341,6 +343,16 @@ static int smooths_with_kama( const TaRefCase *c )
    return 0;
 }
 
+/* The two seeds of an EMA-family Fast-K smoothing coincide only from a start at the lookback. */
+static int stoch_late_seed( const TaRefCase *c )
+{
+   int stoch = strcmp( c->func, "STOCH" ) == 0;
+   int t = (int)ta_ref_opt( c, stoch ? "optInSlowK_MAType" : "optInFastD_MAType", 0 );
+   int p = (int)ta_ref_opt( c, stoch ? "optInSlowK_Period" : "optInFastD_Period", 0 );
+   return c->metastock && c->lookback >= 0 && c->startIdx > c->lookback && c->startIdx <= c->endIdx
+          && p > 1 && (t == 1 || t == 3 || t == 4);
+}
+
 /* ULTOSC's three moving totals are sliding sums of true ranges: an emptied
  * window leaves residue of arbitrary sign, and 0.6.4 divides one residue by
  * another (-92.9 on the ZEROSUM shape, for a 0..100 oscillator). A window is
@@ -473,7 +485,7 @@ static int waive( const TaRefCase *c )
    if( strcmp( f, "KAMA" ) == 0 )
       return kama_blind( c->close, n, period, e ) ? W_KAMA : -1;
    if( strcmp( f, "STOCH" ) == 0 || strcmp( f, "STOCHF" ) == 0 )
-      return smooths_with_kama( c ) ? W_KAMA : -1;
+      return smooths_with_kama( c ) ? W_KAMA : stoch_late_seed( c ) ? W_STOCH_SEED : -1;
    if( strcmp( f, "RSI" ) == 0 )
       return rsi_flat_start( c->close, n, s, e, c->lookback ) ? W_RSI : -1;
    if( strcmp( f, "MAXINDEX" ) == 0 || strcmp( f, "MININDEX" ) == 0 || strcmp( f, "MINMAXINDEX" ) == 0 )

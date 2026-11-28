@@ -553,8 +553,9 @@ static const EvIndep evIndep[] = {
    { "MASSI",     -1,               -1, 1 },
    { "SMI",       -1,               -1, 1 },
    { "MA",        TA_MAType_DEMA,   -1, 1 },
-   { "STOCH",     TA_MAType_EMA,    -1, 1 },  /* seeded on the call's first Fast-K (rT14) */
-   { "STOCHF",    TA_MAType_EMA,    -1, 1 },
+   { "STOCH",     TA_MAType_EMA,     0, 0 },  /* Slow-K: Fast-K is a windowed series (rT14) */
+   { "STOCH",     TA_MAType_EMA,     1, 1 },  /* Slow-D: fed by Slow-K */
+   { "STOCHF",    TA_MAType_EMA,    -1, 0 },
 };
 
 /* 1 when every compared bar of the late call equals the full call's. */
@@ -798,46 +799,50 @@ typedef struct
 } EvGold;
 
 static const EvGold evGold[] = {
-   { "TRIX",   { 30 }, 0 },
-   { "TRIX",   { 9 }, 0 },
-   { "ERI",    { 13 }, 0 },
-   { "ERI",    { 3 }, 0 },
-   { "PVO",    { 12, 26, TA_MAType_EMA }, 0 },
-   { "PVO",    { 26, 5, TA_MAType_EMA }, 0 },
-   { "EFI",    { 13 }, 0 },
-   { "EFI",    { 2 }, 0 },
-   { "CVI",    { 10, 10 }, 0 },
-   { "CVI",    { 14, 5 }, 0 },
-   { "TSI",    { 25, 13 }, 0 },
-   { "TSI",    { 5, 14 }, 0 },
-   { "MASSI",  { 9, 25 }, 0 },
-   { "MASSI",  { 14, 5 }, 0 },
-   { "SMI",    { 13, 2, 25, 9 }, 0 },
-   { "SMI",    { 5, 14, 3, 5 }, 0 },
-   { "MACDV",  { 12, 26, 9 }, 0 },
-   { "MACDV",  { 26, 5, 2 }, 0 },
-   { "ZLEMA",  { 30 }, 0 },
-   { "ZLEMA",  { 3 }, 0 },
-   { "KC",     { 20, 10 }, 2.0 },
-   { "KC",     { 14, 30 }, 1.5 },
-   { "PSO",    { 8, 5 }, 0 },
-   { "PSO",    { 14, 2 }, 0 },
-   { "WAVETREND", { 10, 21, 4 }, 0 },
-   { "DOSC",   { 14, 5, 3, 9 }, 0 },
-   { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_EMA, TA_MAType_SMA }, 0 },
-   { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_EMA }, 0 },
-   { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_DEMA, TA_MAType_ZLEMA }, 0 },
-   { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_TEMA, TA_MAType_TEMA }, 0 },
-   { "BBW",      { 20, TA_MAType_EMA }, 2.0 },
+   { "TRIX",   { 30 }, 0, 0 },
+   { "TRIX",   { 9 }, 0, 0 },
+   { "ERI",    { 13 }, 0, 0 },
+   { "ERI",    { 3 }, 0, 0 },
+   { "PVO",    { 12, 26, TA_MAType_EMA }, 0, 0 },
+   { "PVO",    { 26, 5, TA_MAType_EMA }, 0, 0 },
+   { "EFI",    { 13 }, 0, 0 },
+   { "EFI",    { 2 }, 0, 0 },
+   { "CVI",    { 10, 10 }, 0, 0 },
+   { "CVI",    { 14, 5 }, 0, 0 },
+   { "TSI",    { 25, 13 }, 0, 0 },
+   { "TSI",    { 5, 14 }, 0, 0 },
+   { "MASSI",  { 9, 25 }, 0, 0 },
+   { "MASSI",  { 14, 5 }, 0, 0 },
+   { "SMI",    { 13, 2, 25, 9 }, 0, 0 },
+   { "SMI",    { 5, 14, 3, 5 }, 0, 0 },
+   { "MACDV",  { 12, 26, 9 }, 0, 0 },
+   { "MACDV",  { 26, 5, 2 }, 0, 0 },
+   { "ZLEMA",  { 30 }, 0, 0 },
+   { "ZLEMA",  { 3 }, 0, 0 },
+   { "KC",     { 20, 10 }, 2.0, 0 },
+   { "KC",     { 14, 30 }, 1.5, 0 },
+   { "PSO",    { 8, 5 }, 0, 0 },
+   { "PSO",    { 14, 2 }, 0, 0 },
+   { "WAVETREND", { 10, 21, 4 }, 0, 0 },
+   { "DOSC",   { 14, 5, 3, 9 }, 0, 0 },
+   { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_EMA, TA_MAType_SMA }, 0, 0 },
+   { "KSTEXT", { 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_EMA }, 0, 0 },
+   { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_DEMA, TA_MAType_ZLEMA }, 0, 0 },
+   { "KSTEXT", { 5, 7, 9, 11, 3, 4, 5, 6, 4, TA_MAType_TEMA, TA_MAType_TEMA }, 0, 0 },
+   { "BBW",      { 20, TA_MAType_EMA }, 2.0, 0 },
    { "BBW",      { 10, TA_MAType_DEMA }, 2.0, 1.0 },
-   { "PERCENTB", { 20, TA_MAType_EMA }, 2.0 },
+   { "PERCENTB", { 20, TA_MAType_EMA }, 2.0, 0 },
    { "PERCENTB", { 14, TA_MAType_ZLEMA }, 1.5, 2.5 },
-   { "MAENV",    { 20, TA_MAType_EMA }, 10.0 },
+   { "MAENV",    { 20, TA_MAType_EMA }, 10.0, 0 },
    { "MAENV",    { 9, TA_MAType_DEMA }, 5.0, 3.0 },
-   { "STOCHRSI", { 21, 5, 3, TA_MAType_EMA }, 0 },
-   { "STOCHRSI", { 9, 14, 5, TA_MAType_DEMA }, 0 },
-   { "KDJ",      { 9, 3, TA_MAType_EMA, 3, TA_MAType_EMA }, 0 },
-   { "KDJ",      { 14, 5, TA_MAType_DEMA, 4, TA_MAType_EMA }, 0 },
+   { "STOCHRSI", { 21, 5, 3, TA_MAType_EMA }, 0, 0 },
+   { "STOCHRSI", { 9, 14, 5, TA_MAType_DEMA }, 0, 0 },
+   { "KDJ",      { 9, 3, TA_MAType_EMA, 3, TA_MAType_EMA }, 0, 0 },
+   { "KDJ",      { 14, 5, TA_MAType_DEMA, 4, TA_MAType_EMA }, 0, 0 },
+   { "STOCH",    { 5, 3, TA_MAType_EMA, 3, TA_MAType_EMA }, 0, 0 },
+   { "STOCH",    { 14, 5, TA_MAType_ZLEMA, 4, TA_MAType_DEMA }, 0, 0 },
+   { "STOCHF",   { 5, 3, TA_MAType_EMA }, 0, 0 },
+   { "STOCHF",   { 14, 4, TA_MAType_TEMA }, 0, 0 },
 };
 
 #define EV_IS(x) (strcmp( k->name, x ) == 0)
@@ -1099,9 +1104,9 @@ static int ev_model( const EvGold *k, int s0, int L )
       }
       return s;
    }
-   if( EV_IS("STOCHRSI") || EV_IS("KDJ") )
+   if( EV_IS("STOCHRSI") || EV_IS("STOCHF") || EV_IS("STOCH") || EV_IS("KDJ") )
    {
-      int rsi = EV_IS("STOCHRSI"), K = p[rsi ? 1 : 0], f0, b1, b2, n1;
+      int rsi = EV_IS("STOCHRSI"), fast = rsi || EV_IS("STOCHF"), K = p[rsi], f0, b1, b2, n1;
       const double *hi = h, *lo = l, *cl = c;
       if( rsi )
       {
@@ -1112,21 +1117,22 @@ static int ev_model( const EvGold *k, int s0, int L )
          f0 = r0 + K - 1;
       }
       else
-         f0 = s - L + K - 1;
+         f0 = K - 1;
       for( t = f0; t < EV_N; t++ )
       {
          double hh = hi[t - K + 1], ll = lo[t - K + 1];
          for( i = t - K + 2; i <= t; i++ ) { if( hi[i] > hh ) hh = hi[i]; if( lo[i] < ll ) ll = lo[i]; }
          x[t] = !ev_zs( hh - ll, fabs( hh ) + fabs( ll ) ) ? (cl[t] - ll) / (hh - ll) * 100.0 : 0.0;
       }
-      if( rsi )
+      if( fast )
       {
-         nb = ev_ma_model( p[3], p[2], x + f0, EV_N - f0, 0, tmp2, &beg );
+         nb = ev_ma_model( p[rsi + 2], p[rsi + 1], x + f0, EV_N - f0, s - f0, tmp2, &beg );
          if( nb <= 0 || f0 + beg != s ) return -3;
          for( t = s; t < EV_N; t++ ) { g_evO[0][t - s] = x[t]; g_evO[1][t - s] = tmp2[t - s]; }
          return s;
       }
-      n1 = ev_ma_model( p[2], p[1], x + f0, EV_N - f0, 0, tmp, &b1 );
+      n1 = ev_ma_model( p[2], p[1], x + f0, EV_N - f0,
+                        s - TA_MA_Lookback( p[3], (TA_MAType)p[4] ) - f0, tmp, &b1 );
       if( n1 <= 0 ) return -3;
       nb = ev_ma_model( p[4], p[3], tmp, n1, 0, tmp2, &b2 );
       if( nb <= 0 || f0 + b1 + b2 != s ) return -3;

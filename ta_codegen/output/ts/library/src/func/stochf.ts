@@ -61,9 +61,10 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
-import { MAType, MATypes } from '../enums.ts';
+import { EMAVariation, MAType, MATypes } from '../enums.ts';
 import { NO_OPTIONS, badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, isPlainOptions, nonFiniteBar, notPlainOptions, openFillCount, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure, unknownOption } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
@@ -153,6 +154,7 @@ export function stochfImpl(
   let trailingIdx = 0;
   let today = 0;
   let i = 0;
+  let fastDIdx = 0;
   if (startIdx < 0 || startIdx > Core.INDEX_MAX) {
     return RetCode.OUT_OF_RANGE_START_INDEX;
   }
@@ -246,7 +248,17 @@ export function stochfImpl(
    * requested range. (The range of k must consider all
    * the lookback involve with the smoothing).
    */
-  trailingIdx = startIdx - lookbackTotal;
+  /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+   * there. A type with no stage reads only its own window, so its values do
+   * not move. fastDIdx is startIdx's slot in tempBuffer.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    fastDIdx = startIdx - lookbackK;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    fastDIdx = lookbackFastD;
+  }
   today = trailingIdx + lookbackK;
   highestIdx = -1;
   lowestIdx = highestIdx;
@@ -323,7 +335,7 @@ export function stochfImpl(
   /* Fast-K calculation completed. This K calculation is returned
    * to the caller. It is smoothed to become Fast-D.
    */
-  const _xr0 = maPositional(0, outIdx - 1, tempBuffer, optInFastD_Period, (optInFastD_MAType as MAType), outFastD, core);
+  const _xr0 = maPositional(fastDIdx, outIdx - 1, tempBuffer, optInFastD_Period, (optInFastD_MAType as MAType), outFastD, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   retCode = RetCode.SUCCESS;
@@ -341,7 +353,7 @@ export function stochfImpl(
   /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
    * reused as scratch, so source and destination overlap (issue #94).
    */
-  outFastK.set(tempBuffer.subarray(lookbackFastD, lookbackFastD + outNBElement.value), 0);
+  outFastK.set(tempBuffer.subarray(fastDIdx, fastDIdx + outNBElement.value), 0);
   /* Note: Keep the outBegIdx relative to the
    *       caller input before returning.
    */
@@ -992,6 +1004,7 @@ function stochfOpenImpl(
   let trailingIdx = 0;
   let today = 0;
   let i = 0;
+  let fastDIdx = 0;
   const historyLen = inHigh.length;
   let endIdx = historyLen - 1;
   if (historyLen > Core.INDEX_MAX + 1) {
@@ -1094,7 +1107,17 @@ function stochfOpenImpl(
    * requested range. (The range of k must consider all
    * the lookback involve with the smoothing).
    */
-  trailingIdx = startIdx - lookbackTotal;
+  /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+   * there. A type with no stage reads only its own window, so its values do
+   * not move. fastDIdx is startIdx's slot in tempBuffer.
+   */
+  if (core.emaVariationSetting === EMAVariation.FIRST_BAR_SEED) {
+    trailingIdx = 0;
+    fastDIdx = startIdx - lookbackK;
+  } else {
+    trailingIdx = startIdx - lookbackTotal;
+    fastDIdx = lookbackFastD;
+  }
   today = trailingIdx + lookbackK;
   highestIdx = -1;
   lowestIdx = highestIdx;
@@ -1171,7 +1194,7 @@ function stochfOpenImpl(
   /* Fast-K calculation completed. This K calculation is returned
    * to the caller. It is smoothed to become Fast-D.
    */
-  const sub0 = maOpenAndFillInternal(core, tempBuffer.slice(0, (outIdx - 1) + 1), 0, optInFastD_Period, (optInFastD_MAType as MAType), outBegIdx, outNBElement, sc_outFastD);
+  const sub0 = maOpenAndFillInternal(core, tempBuffer.slice(0, (outIdx - 1) + 1), fastDIdx, optInFastD_Period, (optInFastD_MAType as MAType), outBegIdx, outNBElement, sc_outFastD);
   if (outNBElement.value === 0) {
     /* Something wrong happen? No further data? */
     outBegIdx.value = 0;
@@ -1186,7 +1209,7 @@ function stochfOpenImpl(
   /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
    * reused as scratch, so source and destination overlap (issue #94).
    */
-  sc_outFastK.set(tempBuffer.subarray(lookbackFastD, lookbackFastD + outNBElement.value), 0);
+  sc_outFastK.set(tempBuffer.subarray(fastDIdx, fastDIdx + outNBElement.value), 0);
   /* Note: Keep the outBegIdx relative to the
    *       caller input before returning.
    */

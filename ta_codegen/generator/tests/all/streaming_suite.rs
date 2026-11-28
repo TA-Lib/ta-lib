@@ -4085,7 +4085,7 @@ fn composed_extrema_read_bound_rewritten_by_the_tail_is_refused() {
             ("   int bufferIsAllocated;\n", "   int bufferIsAllocated;\n   int k, j;\n"),
             ("   while( today <= endIdx )", "   k = 0;\n   while( today <= endIdx )"),
             ("      trailingIdx++;\n      today++;\n   }", "      j = trailingIdx + k;\n      tmp = inClose[j];\n      trailingIdx++;\n      today++;\n   }"),
-            ("   retCode = ma( 0, outIdx-1,", &format!("{tail}   retCode = ma( 0, outIdx-1,")),
+            ("   retCode = ma( slowKIdx, outIdx-1,", &format!("{tail}   retCode = ma( slowKIdx, outIdx-1,")),
         ] {
             assert_eq!(src.matches(from).count(), 1, "{from}");
             src = src.replace(from, to);

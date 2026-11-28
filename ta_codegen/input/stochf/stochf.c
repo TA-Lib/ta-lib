@@ -27,6 +27,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  *
  */
 
@@ -64,6 +65,7 @@ TA_RetCode stochf(int startIdx, int endIdx,
    int outIdx, lowestIdx, highestIdx;
    int lookbackTotal, lookbackK, lookbackFastD;
    int trailingIdx, today, i = 0;
+   int fastDIdx;
 
    int bufferIsAllocated;
 
@@ -140,7 +142,20 @@ TA_RetCode stochf(int startIdx, int endIdx,
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
-   trailingIdx = startIdx-lookbackTotal;
+   /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+    * there. A type with no stage reads only its own window, so its values do
+    * not move. fastDIdx is startIdx's slot in tempBuffer.
+    */
+   if( TA_GetEMAVariation() == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      fastDIdx    = startIdx-lookbackK;
+   }
+   else
+   {
+      trailingIdx = startIdx-lookbackTotal;
+      fastDIdx    = lookbackFastD;
+   }
    today       = trailingIdx+lookbackK;
    lowestIdx   = highestIdx = -1;
    highest = lowest = 0.0;
@@ -244,7 +259,7 @@ TA_RetCode stochf(int startIdx, int endIdx,
    /* Fast-K calculation completed. This K calculation is returned
     * to the caller. It is smoothed to become Fast-D.
     */
-   retCode = ma( 0, outIdx-1,
+   retCode = ma( fastDIdx, outIdx-1,
       tempBuffer, optInFastD_Period,
       optInFastD_MAType,
       outBegIdx, outNBElement, outFastD );
@@ -265,7 +280,7 @@ TA_RetCode stochf(int startIdx, int endIdx,
     */
    /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
     * reused as scratch, so source and destination overlap (issue #94). */
-   memmove(outFastK, &tempBuffer[lookbackFastD], ((int)*outNBElement) * sizeof(double));
+   memmove(outFastK, &tempBuffer[fastDIdx], ((int)*outNBElement) * sizeof(double));
 
    if (bufferIsAllocated) { free(tempBuffer); }
 

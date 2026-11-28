@@ -67,6 +67,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -248,6 +249,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut slowKIdx: usize = 0_usize;
         i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -313,7 +315,16 @@ impl Core {
         // Calculate just enough K for ending up with the caller
         // requested range. (The range of k must consider all
         // the lookback involve with the smoothing).
-        trailingIdx = startIdx - lookbackTotal;
+        // The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+        // there; %D seeds on the first Slow-K the call uses, as by default. A type
+        // with no stage reads only its own window, so its values do not move.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            slowKIdx = startIdx - lookbackDSlow - lookbackK;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            slowKIdx = 0;
+        }
         today = trailingIdx + lookbackK;
         highestIdx = -1;
         lowestIdx = highestIdx;
@@ -391,7 +402,7 @@ impl Core {
         // to the caller. It is always smoothed and then return.
         // Some documentation will refer to the smoothed version as being
         // "K-Slow", but often this end up to be shorten to "K".
-        let _xr0 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(slowKIdx, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
         *outBegIdx = _xr0.beg_idx;
         *outNBElement = _xr0.count;
         retCode = RetCode::Success;
@@ -746,6 +757,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut slowKIdx: usize = 0_usize;
         i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -808,7 +820,16 @@ impl Core {
         // Calculate just enough K for ending up with the caller
         // requested range. (The range of k must consider all
         // the lookback involve with the smoothing).
-        trailingIdx = startIdx - lookbackTotal;
+        // The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+        // there; %D seeds on the first Slow-K the call uses, as by default. A type
+        // with no stage reads only its own window, so its values do not move.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            slowKIdx = startIdx - lookbackDSlow - lookbackK;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            slowKIdx = 0;
+        }
         today = trailingIdx + lookbackK;
         highestIdx = -1;
         lowestIdx = highestIdx;
@@ -888,8 +909,8 @@ impl Core {
         // "K-Slow", but often this end up to be shorten to "K".
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], 0 as usize, optInSlowK_Period, optInSlowK_MAType)?;
-        let _xr0 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], slowKIdx as usize, optInSlowK_Period, optInSlowK_MAType)?;
+        let _xr0 = match ({ let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(slowKIdx, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         *outBegIdx = _xr0.beg_idx;
         *outNBElement = _xr0.count;
         if (*outNBElement as usize) == 0 {

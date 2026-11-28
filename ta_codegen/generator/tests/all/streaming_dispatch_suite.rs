@@ -1886,7 +1886,7 @@ fn test_c_stoch_composed_stream_section() {
     //   both warms the handle and fills sc_outSlowD, instead of a warm pass
     //   plus a batch call recomputing the same numbers.
     let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open (must stay unfused: in-place)");
-    let ma1 = stream.find("retCode = TA_MA(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
+    let ma1 = stream.find("retCode = TA_MA(slowKIdx,outIdx - 1,tempBuffer").expect("in-place smoothing");
     let sub1 = stream.find("subRc = TA_MA_OpenAndFillInternal( &sub1, tempBuffer").expect("sub1 open (must be fused)");
     assert!(sub0 < ma1 && ma1 < sub1, "sub-open ordering");
     // The fused sub1 replaced the %D batch call outright: nothing recomputes it.

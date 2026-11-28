@@ -220024,6 +220024,7 @@ class Core {
      *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
      *               range that the guard still called "not flat".
      *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+     *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
      */
 
        /**
@@ -220168,6 +220169,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int slowKIdx = 0;
           int bufferIsAllocated = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -220272,7 +220274,17 @@ class Core {
            * requested range. (The range of k must consider all
            * the lookback involve with the smoothing).
            */
-          trailingIdx = startIdx - lookbackTotal;
+          /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+           * there; %D seeds on the first Slow-K the call uses, as by default. A type
+           * with no stage reads only its own window, so its values do not move.
+           */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             slowKIdx = startIdx - lookbackDSlow - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             slowKIdx = 0;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -220353,7 +220365,7 @@ class Core {
            * Some documentation will refer to the smoothed version as being
            * "K-Slow", but often this end up to be shorten to "K".
            */
-          OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+          OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
           outBegIdx.value = _xr0.begIdx();
           outNBElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -220415,6 +220427,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int slowKIdx = 0;
           int bufferIsAllocated = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -220466,7 +220479,13 @@ class Core {
              return RetCode.SUCCESS ;
           }
           outIdx = 0;
-          trailingIdx = startIdx - lookbackTotal;
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             slowKIdx = startIdx - lookbackDSlow - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             slowKIdx = 0;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -220520,7 +220539,7 @@ class Core {
              trailingIdx += 1;
              today += 1;
           }
-          OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+          OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
           outBegIdx.value = _xr0.begIdx();
           outNBElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -221084,6 +221103,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int slowKIdx = 0;
           int bufferIsAllocated = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
@@ -221197,7 +221217,17 @@ class Core {
            * requested range. (The range of k must consider all
            * the lookback involve with the smoothing).
            */
-          trailingIdx = startIdx - lookbackTotal;
+          /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+           * there; %D seeds on the first Slow-K the call uses, as by default. A type
+           * with no stage reads only its own window, so its values do not move.
+           */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             slowKIdx = startIdx - lookbackDSlow - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             slowKIdx = 0;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -221280,8 +221310,8 @@ class Core {
            */
           /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          MaStream sub0 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-          OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+          MaStream sub0 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), slowKIdx, optInSlowK_Period, optInSlowK_MAType);
+          OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
           outBegIdx.value = _xr0.begIdx();
           outNBElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -221471,6 +221501,7 @@ class Core {
      *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
      *               range that the guard still called "not flat".
      *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+     *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
      */
 
        /**
@@ -221580,6 +221611,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int fastDIdx = 0;
           int bufferIsAllocated = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -221672,7 +221704,17 @@ class Core {
            * requested range. (The range of k must consider all
            * the lookback involve with the smoothing).
            */
-          trailingIdx = startIdx - lookbackTotal;
+          /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+           * there. A type with no stage reads only its own window, so its values do
+           * not move. fastDIdx is startIdx's slot in tempBuffer.
+           */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             fastDIdx = startIdx - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             fastDIdx = lookbackFastD;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -221751,7 +221793,7 @@ class Core {
           /* Fast-K calculation completed. This K calculation is returned
            * to the caller. It is smoothed to become Fast-D.
            */
-          OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+          OutRange _xr0 = ma(fastDIdx, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
           outBegIdx.value = _xr0.begIdx();
           outNBElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -221769,7 +221811,7 @@ class Core {
           /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
            * reused as scratch, so source and destination overlap (issue #94).
            */
-          System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
+          System.arraycopy(tempBuffer, fastDIdx, outFastK, 0, (int)outNBElement.value * 1);
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */
@@ -221803,6 +221845,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int fastDIdx = 0;
           int bufferIsAllocated = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -221842,7 +221885,13 @@ class Core {
              return RetCode.SUCCESS ;
           }
           outIdx = 0;
-          trailingIdx = startIdx - lookbackTotal;
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             fastDIdx = startIdx - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             fastDIdx = lookbackFastD;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -221896,7 +221945,7 @@ class Core {
              trailingIdx += 1;
              today += 1;
           }
-          OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+          OutRange _xr0 = ma(fastDIdx, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
           outBegIdx.value = _xr0.begIdx();
           outNBElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -221905,7 +221954,7 @@ class Core {
              outNBElement.value = 0;
              return retCode ;
           }
-          System.arraycopy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement.value * 1);
+          System.arraycopy(tempBuffer, fastDIdx, outFastK, 0, (int)outNBElement.value * 1);
           outBegIdx.value = startIdx;
           return RetCode.SUCCESS ;
        }
@@ -222425,6 +222474,7 @@ class Core {
           int trailingIdx = 0;
           int today = 0;
           int i = 0;
+          int fastDIdx = 0;
           int bufferIsAllocated = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
@@ -222526,7 +222576,17 @@ class Core {
            * requested range. (The range of k must consider all
            * the lookback involve with the smoothing).
            */
-          trailingIdx = startIdx - lookbackTotal;
+          /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+           * there. A type with no stage reads only its own window, so its values do
+           * not move. fastDIdx is startIdx's slot in tempBuffer.
+           */
+          if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+             trailingIdx = 0;
+             fastDIdx = startIdx - lookbackK;
+          } else {
+             trailingIdx = startIdx - lookbackTotal;
+             fastDIdx = lookbackFastD;
+          }
           today = trailingIdx + lookbackK;
           highestIdx = -1;
           lowestIdx = highestIdx;
@@ -222607,7 +222667,7 @@ class Core {
            */
           /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          MaStream sub0 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
+          MaStream sub0 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), fastDIdx, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
           retCode = RetCode.SUCCESS;
           if( (int)outNBElement.value == 0 ) {
              /* Something wrong happen? No further data? */
@@ -222623,7 +222683,7 @@ class Core {
           /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
            * reused as scratch, so source and destination overlap (issue #94).
            */
-          System.arraycopy(tempBuffer, lookbackFastD, sc_outFastK, 0, (int)outNBElement.value * 1);
+          System.arraycopy(tempBuffer, fastDIdx, sc_outFastK, 0, (int)outNBElement.value * 1);
           /* Note: Keep the outBegIdx relative to the
            *       caller input before returning.
            */
@@ -253636,7 +253696,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "032b3a541e2bf5f0";
+    static final String SPLICED_GENCODE_DIGEST = "17dbb2c5cb4f3304";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

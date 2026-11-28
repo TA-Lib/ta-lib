@@ -94,6 +94,7 @@ func (c *Core) stochImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 	var lookbackDSlow int32
 	var trailingIdx int32
 	var today int32
+	var slowKIdx int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -147,7 +148,13 @@ func (c *Core) stochImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		return Success
 	}
 	outIdx = 0
-	trailingIdx = startIdx - lookbackTotal
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		slowKIdx = startIdx - lookbackDSlow - lookbackK
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		slowKIdx = 0
+	}
 	today = trailingIdx + lookbackK
 	highestIdx = -1
 	lowestIdx = highestIdx
@@ -220,7 +227,7 @@ func (c *Core) stochImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float6
 		}
 		outIdx = int32(_i7)
 	}
-	_X11, _E11 := c.MA(0, int(outIdx-1), tempBuffer, int(optInSlowK_Period), MAType(optInSlowK_MAType), tempBuffer)
+	_X11, _E11 := c.MA(int(slowKIdx), int(outIdx-1), tempBuffer, int(optInSlowK_Period), MAType(optInSlowK_MAType), tempBuffer)
 	if _E11 != nil {
 		return _E11.(RetCode)
 	}
@@ -708,6 +715,7 @@ func (c *Core) stochOpenImpl(sp *STOCHStream, inHigh, inLow, inClose []float64, 
 	var trailingIdx int32
 	var today int32
 	var i int32
+	var slowKIdx int32
 	if len(inHigh) > IndexMax+1 {
 		return OutOfRangeEndIndex
 	}
@@ -781,7 +789,13 @@ func (c *Core) stochOpenImpl(sp *STOCHStream, inHigh, inLow, inClose []float64, 
 		return InsufficientHistory
 	}
 	outIdx = 0
-	trailingIdx = startIdx - lookbackTotal
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		slowKIdx = startIdx - lookbackDSlow - lookbackK
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		slowKIdx = 0
+	}
 	today = trailingIdx + lookbackK
 	highestIdx = -1
 	lowestIdx = highestIdx
@@ -847,11 +861,11 @@ func (c *Core) stochOpenImpl(sp *STOCHStream, inHigh, inLow, inClose []float64, 
 		trailingIdx += 1
 		today += 1
 	}
-	sub0, _E7 := c.maOpenInternal(tempBuffer[:outIdx-1+1], 0, optInSlowK_Period, optInSlowK_MAType)
+	sub0, _E7 := c.maOpenInternal(tempBuffer[:outIdx-1+1], slowKIdx, optInSlowK_Period, optInSlowK_MAType)
 	if _E7 != nil {
 		return _E7.(RetCode)
 	}
-	_X9, _E9 := c.MA(0, int(outIdx-1), tempBuffer, int(optInSlowK_Period), MAType(optInSlowK_MAType), tempBuffer)
+	_X9, _E9 := c.MA(int(slowKIdx), int(outIdx-1), tempBuffer, int(optInSlowK_Period), MAType(optInSlowK_MAType), tempBuffer)
 	if _E9 != nil {
 		return _E9.(RetCode)
 	}

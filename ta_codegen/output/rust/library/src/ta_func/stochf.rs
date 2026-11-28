@@ -69,6 +69,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 // Import types from parent module
@@ -215,6 +216,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut fastDIdx: usize = 0_usize;
         i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -279,7 +281,16 @@ impl Core {
         // Calculate just enough K for ending up with the caller
         // requested range. (The range of k must consider all
         // the lookback involve with the smoothing).
-        trailingIdx = startIdx - lookbackTotal;
+        // The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+        // there. A type with no stage reads only its own window, so its values do
+        // not move. fastDIdx is startIdx's slot in tempBuffer.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            fastDIdx = startIdx - lookbackK;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            fastDIdx = lookbackFastD;
+        }
         today = trailingIdx + lookbackK;
         highestIdx = -1;
         lowestIdx = highestIdx;
@@ -355,7 +366,7 @@ impl Core {
         }
         // Fast-K calculation completed. This K calculation is returned
         // to the caller. It is smoothed to become Fast-D.
-        let _xr0 = match self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.ma(fastDIdx, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
         *outBegIdx = _xr0.beg_idx;
         *outNBElement = _xr0.count;
         retCode = RetCode::Success;
@@ -374,7 +385,7 @@ impl Core {
         {
             let _n = (((*outNBElement as usize) as usize) * 1) as usize;
             let _di = 0 as usize;
-            let _si = lookbackFastD as usize;
+            let _si = fastDIdx as usize;
             outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
         };
         // Note: Keep the outBegIdx relative to the
@@ -682,6 +693,7 @@ impl Core {
         let mut trailingIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut fastDIdx: usize = 0_usize;
         i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -743,7 +755,16 @@ impl Core {
         // Calculate just enough K for ending up with the caller
         // requested range. (The range of k must consider all
         // the lookback involve with the smoothing).
-        trailingIdx = startIdx - lookbackTotal;
+        // The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+        // there. A type with no stage reads only its own window, so its values do
+        // not move. fastDIdx is startIdx's slot in tempBuffer.
+        if self.ema_variation == EMAVariation::FIRST_BAR_SEED {
+            trailingIdx = 0;
+            fastDIdx = startIdx - lookbackK;
+        } else {
+            trailingIdx = startIdx - lookbackTotal;
+            fastDIdx = lookbackFastD;
+        }
         today = trailingIdx + lookbackK;
         highestIdx = -1;
         lowestIdx = highestIdx;
@@ -821,7 +842,7 @@ impl Core {
         // to the caller. It is smoothed to become Fast-D.
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.ma_open_and_fill_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], 0 as usize, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
+        let sub0 = self.ma_open_and_fill_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], fastDIdx as usize, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..])?;
         if (*outNBElement as usize) == 0 {
             // Something wrong happen? No further data?
             *outBegIdx = 0;
@@ -837,7 +858,7 @@ impl Core {
         {
             let _n = (((*outNBElement as usize) as usize) * 1) as usize;
             let _di = 0 as usize;
-            let _si = lookbackFastD as usize;
+            let _si = fastDIdx as usize;
             sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
         };
         // Note: Keep the outBegIdx relative to the

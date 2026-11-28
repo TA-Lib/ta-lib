@@ -71,6 +71,7 @@ public partial class Core
     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
     *               range that the guard still called "not flat".
     *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+    *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Stochf</c> consumes before it can produce
@@ -181,6 +182,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int fastDIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -279,7 +281,17 @@ public partial class Core
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+       * there. A type with no stage reads only its own window, so its values do
+       * not move. fastDIdx is startIdx's slot in tempBuffer.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         fastDIdx = startIdx - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         fastDIdx = lookbackFastD;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -361,7 +373,7 @@ public partial class Core
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      OutRange _xr2 = Ma(fastDIdx, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
       outBegIdx = _xr2.BegIdx;
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
@@ -382,7 +394,7 @@ public partial class Core
       /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
+      tempBuffer.Slice(fastDIdx, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
       if( (bufferIsAllocated) != 0 ) {
          ReturnScratch(ref _rent_tempBuffer);
       }
@@ -421,6 +433,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int fastDIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -466,7 +479,13 @@ public partial class Core
          return RetCode.Success ;
       }
       outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         fastDIdx = startIdx - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         fastDIdx = lookbackFastD;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -519,7 +538,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      OutRange _xr2 = Ma(fastDIdx, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
       outBegIdx = _xr2.BegIdx;
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
@@ -531,7 +550,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
+      tempBuffer.Slice(fastDIdx, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
       if( (bufferIsAllocated) != 0 ) {
          ReturnScratch(ref _rent_tempBuffer);
       }
@@ -1084,6 +1103,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int fastDIdx = 0;
       int bufferIsAllocated = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
@@ -1187,7 +1207,17 @@ public partial class Core
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+       * there. A type with no stage reads only its own window, so its values do
+       * not move. fastDIdx is startIdx's slot in tempBuffer.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         fastDIdx = startIdx - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         fastDIdx = lookbackFastD;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -1271,7 +1301,7 @@ public partial class Core
       int subLen0 = (outIdx - 1) + 1;
       double[] subSrc0_0 = new double[subLen0];
       tempBuffer.Slice(0, subLen0).CopyTo(subSrc0_0);
-      MaStream sub0 = MaOpenAndFillInternal(subSrc0_0, 0, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, sc_outFastD);
+      MaStream sub0 = MaOpenAndFillInternal(subSrc0_0, fastDIdx, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, sc_outFastD);
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          /* Something wrong happen? No further data? */
@@ -1287,7 +1317,7 @@ public partial class Core
       /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(sc_outFastK.Slice(0));
+      tempBuffer.Slice(fastDIdx, (int)outNBElement * 1).CopyTo(sc_outFastK.Slice(0));
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */

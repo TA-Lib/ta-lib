@@ -69,6 +69,7 @@ public partial class Core
     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
     *               range that the guard still called "not flat".
     *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+    *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
     */
    /// <summary>
    /// Number of leading input bars <c>Stoch</c> consumes before it can produce
@@ -211,6 +212,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -323,7 +325,17 @@ public partial class Core
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+       * there; %D seeds on the first Slow-K the call uses, as by default. A type
+       * with no stage reads only its own window, so its values do not move.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -407,7 +419,7 @@ public partial class Core
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      OutRange _xr2 = Ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx = _xr2.BegIdx;
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
@@ -477,6 +489,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -536,7 +549,13 @@ public partial class Core
          return RetCode.Success ;
       }
       outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -589,7 +608,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      OutRange _xr2 = Ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx = _xr2.BegIdx;
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
@@ -1185,6 +1204,7 @@ public partial class Core
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
@@ -1302,7 +1322,17 @@ public partial class Core
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+       * there; %D seeds on the first Slow-K the call uses, as by default. A type
+       * with no stage reads only its own window, so its values do not move.
+       */
+      if( this._emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -1388,8 +1418,8 @@ public partial class Core
       int subLen0 = (outIdx - 1) + 1;
       double[] subSrc0_0 = new double[subLen0];
       tempBuffer.Slice(0, subLen0).CopyTo(subSrc0_0);
-      MaStream sub0 = MaOpenInternal(subSrc0_0, 0, optInSlowK_Period, optInSlowK_MAType);
-      OutRange _xr0 = Ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      MaStream sub0 = MaOpenInternal(subSrc0_0, slowKIdx, optInSlowK_Period, optInSlowK_MAType);
+      OutRange _xr0 = Ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;

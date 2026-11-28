@@ -40,6 +40,7 @@ typedef struct
    const char   *func;
    const double *open, *high, *low, *close, *volume;
    int           n, startIdx, endIdx, lookback;
+   int           metastock;  /* 1: the release runs in its MetaStock mode */
    int           nbOpt;
    const char *const *optName;
    const double *optValue;

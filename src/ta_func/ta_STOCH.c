@@ -69,6 +69,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -154,6 +155,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    int trailingIdx;
    int today;
    int i;
+   int slowKIdx;
    int bufferIsAllocated;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -273,7 +275,19 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
-   trailingIdx = startIdx - lookbackTotal;
+   /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+    * there; %D seeds on the first Slow-K the call uses, as by default. A type
+    * with no stage reads only its own window, so its values do not move.
+    */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      slowKIdx = startIdx - lookbackDSlow - lookbackK;
+   } else 
+   {
+      trailingIdx = startIdx - lookbackTotal;
+      slowKIdx = 0;
+   }
    today = trailingIdx + lookbackK;
    highestIdx = -1;
    lowestIdx = highestIdx;
@@ -373,7 +387,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * Some documentation will refer to the smoothed version as being
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(slowKIdx,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -450,6 +464,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    int trailingIdx;
    int today;
    int i;
+   int slowKIdx;
    int bufferIsAllocated;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -516,7 +531,15 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       return TA_SUCCESS;
    }
    outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      slowKIdx = startIdx - lookbackDSlow - lookbackK;
+   } else 
+   {
+      trailingIdx = startIdx - lookbackTotal;
+      slowKIdx = 0;
+   }
    today = trailingIdx + lookbackK;
    highestIdx = -1;
    lowestIdx = highestIdx;
@@ -589,7 +612,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(slowKIdx,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -796,6 +819,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
       int trailingIdx;
       int today;
       int i = 0;
+      int slowKIdx;
       int bufferIsAllocated;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -877,7 +901,19 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+       * there; %D seeds on the first Slow-K the call uses, as by default. A type
+       * with no stage reads only its own window, so its values do not move.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+      {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else 
+      {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -979,7 +1015,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInSlowK_Period, optInSlowK_MAType, &subOpenDummy );
+         subRc = TA_MA_OpenInternal( &sub0, tempBuffer, (slowKIdx), (outIdx - 1) + 1, optInSlowK_Period, optInSlowK_MAType, &subOpenDummy );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             if( bufferIsAllocated )
@@ -990,7 +1026,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
             return subRc;
          }
       }
-      retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      retCode = TA_MA(slowKIdx,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          if( bufferIsAllocated )

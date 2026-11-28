@@ -71,6 +71,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
 TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType )
@@ -139,6 +140,7 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
    int trailingIdx;
    int today;
    int i;
+   int fastDIdx;
    int bufferIsAllocated;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -245,7 +247,19 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
     * requested range. (The range of k must consider all
     * the lookback involve with the smoothing).
     */
-   trailingIdx = startIdx - lookbackTotal;
+   /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+    * there. A type with no stage reads only its own window, so its values do
+    * not move. fastDIdx is startIdx's slot in tempBuffer.
+    */
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      fastDIdx = startIdx - lookbackK;
+   } else 
+   {
+      trailingIdx = startIdx - lookbackTotal;
+      fastDIdx = lookbackFastD;
+   }
    today = trailingIdx + lookbackK;
    highestIdx = -1;
    lowestIdx = highestIdx;
@@ -343,7 +357,7 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
    /* Fast-K calculation completed. This K calculation is returned
     * to the caller. It is smoothed to become Fast-D.
     */
-   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInFastD_Period,optInFastD_MAType,outBegIdx,outNBElement,outFastD);
+   retCode = TA_MA(fastDIdx,outIdx - 1,tempBuffer,optInFastD_Period,optInFastD_MAType,outBegIdx,outNBElement,outFastD);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -363,7 +377,7 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
    /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
     * reused as scratch, so source and destination overlap (issue #94).
     */
-   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   memmove(outFastK,&tempBuffer[fastDIdx],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -402,6 +416,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
    int trailingIdx;
    int today;
    int i;
+   int fastDIdx;
    int bufferIsAllocated;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -455,7 +470,15 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       return TA_SUCCESS;
    }
    outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
+   if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+   {
+      trailingIdx = 0;
+      fastDIdx = startIdx - lookbackK;
+   } else 
+   {
+      trailingIdx = startIdx - lookbackTotal;
+      fastDIdx = lookbackFastD;
+   }
    today = trailingIdx + lookbackK;
    highestIdx = -1;
    lowestIdx = highestIdx;
@@ -528,7 +551,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInFastD_Period,optInFastD_MAType,outBegIdx,outNBElement,outFastD);
+   retCode = TA_MA(fastDIdx,outIdx - 1,tempBuffer,optInFastD_Period,optInFastD_MAType,outBegIdx,outNBElement,outFastD);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -539,7 +562,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   memmove(outFastK,&tempBuffer[lookbackFastD],(int)*outNBElement * sizeof(double));
+   memmove(outFastK,&tempBuffer[fastDIdx],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
       free(tempBuffer);
@@ -712,6 +735,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
       int trailingIdx;
       int today;
       int i = 0;
+      int fastDIdx;
       int bufferIsAllocated;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -787,7 +811,19 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Fast-D seeds
+       * there. A type with no stage reads only its own window, so its values do
+       * not move. fastDIdx is startIdx's slot in tempBuffer.
+       */
+      if( TA_GLOBALS_EMA_VARIATION == TA_EMAVariation_FIRST_BAR_SEED )
+      {
+         trailingIdx = 0;
+         fastDIdx = startIdx - lookbackK;
+      } else 
+      {
+         trailingIdx = startIdx - lookbackTotal;
+         fastDIdx = lookbackFastD;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -887,7 +923,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenAndFillInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, sc_outFastD );
+         subRc = TA_MA_OpenAndFillInternal( &sub0, tempBuffer, (fastDIdx), (outIdx - 1) + 1, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, sc_outFastD );
          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             if( bufferIsAllocated )
@@ -919,7 +955,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
       /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      memmove(sc_outFastK,&tempBuffer[lookbackFastD],(int)dummyNBElement * sizeof(double));
+      memmove(sc_outFastK,&tempBuffer[fastDIdx],(int)dummyNBElement * sizeof(double));
       if( bufferIsAllocated )
       {
          free(tempBuffer);

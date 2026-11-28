@@ -78,6 +78,7 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 	var lookbackFastD int32
 	var trailingIdx int32
 	var today int32
+	var fastDIdx int32
 	if startIdx < 0 || startIdx > IndexMax {
 		return OutOfRangeStartIndex
 	}
@@ -117,7 +118,13 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		return Success
 	}
 	outIdx = 0
-	trailingIdx = startIdx - lookbackTotal
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		fastDIdx = startIdx - lookbackK
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		fastDIdx = lookbackFastD
+	}
 	today = trailingIdx + lookbackK
 	highestIdx = -1
 	lowestIdx = highestIdx
@@ -190,7 +197,7 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		}
 		outIdx = int32(_i7)
 	}
-	_X11, _E11 := c.MA(0, int(outIdx-1), tempBuffer, int(optInFastD_Period), MAType(optInFastD_MAType), outFastD)
+	_X11, _E11 := c.MA(int(fastDIdx), int(outIdx-1), tempBuffer, int(optInFastD_Period), MAType(optInFastD_MAType), outFastD)
 	if _E11 != nil {
 		return _E11.(RetCode)
 	}
@@ -202,7 +209,7 @@ func (c *Core) stochfImpl(startIdx, endIdx int32, inHigh, inLow, inClose []float
 		*outNBElement = 0
 		return retCode
 	}
-	copy(outFastK, tempBuffer[lookbackFastD:lookbackFastD+*outNBElement])
+	copy(outFastK, tempBuffer[fastDIdx:fastDIdx+*outNBElement])
 	*outBegIdx = startIdx
 	return Success
 }
@@ -648,6 +655,7 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 	var trailingIdx int32
 	var today int32
 	var i int32
+	var fastDIdx int32
 	if len(inHigh) > IndexMax+1 {
 		return OutOfRangeEndIndex
 	}
@@ -707,7 +715,13 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 		return InsufficientHistory
 	}
 	outIdx = 0
-	trailingIdx = startIdx - lookbackTotal
+	if int32(c.emaVariation) == int32(EMAVariationFIRST_BAR_SEED) {
+		trailingIdx = 0
+		fastDIdx = startIdx - lookbackK
+	} else {
+		trailingIdx = startIdx - lookbackTotal
+		fastDIdx = lookbackFastD
+	}
 	today = trailingIdx + lookbackK
 	highestIdx = -1
 	lowestIdx = highestIdx
@@ -773,7 +787,7 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 		trailingIdx += 1
 		today += 1
 	}
-	sub0, _E7 := c.maOpenAndFillInternal(tempBuffer[:outIdx-1+1], 0, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD)
+	sub0, _E7 := c.maOpenAndFillInternal(tempBuffer[:outIdx-1+1], fastDIdx, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD)
 	if _E7 != nil {
 		return _E7.(RetCode)
 	}
@@ -782,7 +796,7 @@ func (c *Core) stochfOpenImpl(sp *STOCHFStream, inHigh, inLow, inClose []float64
 		*outNBElement = 0
 		return InsufficientHistory
 	}
-	copy(sc_outFastK, tempBuffer[lookbackFastD:lookbackFastD+*outNBElement])
+	copy(sc_outFastK, tempBuffer[fastDIdx:fastDIdx+*outNBElement])
 	*outBegIdx = startIdx
 	if *outNBElement < 1 {
 		return InsufficientHistory

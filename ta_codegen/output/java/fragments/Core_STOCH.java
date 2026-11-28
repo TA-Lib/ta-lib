@@ -25,6 +25,7 @@
  *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
  *               range that the guard still called "not flat".
  *  112426 MF,CC A callee lookback that rejected its MA type is refused (#609).
+ *  112726 MF,CC Seed on the first bar under TA_EMAVariation_FIRST_BAR_SEED (#622).
  */
 
    /**
@@ -169,6 +170,7 @@
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -273,7 +275,17 @@
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+       * there; %D seeds on the first Slow-K the call uses, as by default. A type
+       * with no stage reads only its own window, so its values do not move.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -354,7 +366,7 @@
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -416,6 +428,7 @@
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -467,7 +480,13 @@
          return RetCode.SUCCESS ;
       }
       outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -521,7 +540,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -1085,6 +1104,7 @@
       int trailingIdx = 0;
       int today = 0;
       int i = 0;
+      int slowKIdx = 0;
       int bufferIsAllocated = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1198,7 +1218,17 @@
        * requested range. (The range of k must consider all
        * the lookback involve with the smoothing).
        */
-      trailingIdx = startIdx - lookbackTotal;
+      /* The first-bar seed: Fast-K starts on its first bar, so Slow-K seeds
+       * there; %D seeds on the first Slow-K the call uses, as by default. A type
+       * with no stage reads only its own window, so its values do not move.
+       */
+      if( this.emaVariation == EMAVariation.FIRST_BAR_SEED ) {
+         trailingIdx = 0;
+         slowKIdx = startIdx - lookbackDSlow - lookbackK;
+      } else {
+         trailingIdx = startIdx - lookbackTotal;
+         slowKIdx = 0;
+      }
       today = trailingIdx + lookbackK;
       highestIdx = -1;
       lowestIdx = highestIdx;
@@ -1281,8 +1311,8 @@
        */
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub0 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
+      MaStream sub0 = maOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), slowKIdx, optInSlowK_Period, optInSlowK_MAType);
+      OutRange _xr0 = ma(slowKIdx, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, tempBuffer);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;

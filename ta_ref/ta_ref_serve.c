@@ -294,6 +294,7 @@ static int ta_ref_waived( const char *json, const TA_FuncHandle *handle, const T
    c.startIdx = startIdx;
    c.endIdx   = endIdx;
    c.lookback = (TA_GetLookback( params, &lookback ) == TA_SUCCESS) ? (int)lookback : -1;
+   c.metastock = g_refMetastock;
    c.nbOpt    = (int)i;
    c.optName  = names;
    c.optValue = values;
