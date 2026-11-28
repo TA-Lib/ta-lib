@@ -19,7 +19,7 @@ BUILD_SHELL_FILES = src/tools/post-build-bin.sh
 
 # What the CMake build reads from the source tree. Omitting one is invisible
 # until vcpkg builds the release tarball.
-CMAKE_FILES = CMakeLists.txt cmake/warn-stale-installs.cmake.in include/ta_config.h.cmake
+CMAKE_FILES = CMakeLists.txt cmake/warn-stale-installs.cmake.in
 
 # Add more files to EXTRA_DIST to be included on "make dist"
 # This is only for files that are not auto-discovered by autotools.

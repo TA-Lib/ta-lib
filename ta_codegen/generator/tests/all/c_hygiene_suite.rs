@@ -76,10 +76,8 @@ fn no_committed_c_file_casts_away_a_name_its_block_reads() {
 /// shipped library. `abi.py`'s export gate catches the same omission from
 /// the built artifact; this catches it without a build, on the PR gate.
 ///
-/// Over the INSTALL set, read from CMake's `LIB_HEADERS`, not a glob of
-/// `include/*.h`: `ta_config.h` is generated and untracked, so a glob sweeps a
-/// build artifact in a configured tree and not in a fresh checkout. #57 was in
-/// a hand-written header, and the streaming tier spells the attribute in nine
+/// Over the INSTALL set, read from CMake's `LIB_HEADERS`. #57 was in a
+/// hand-written header, and the streaming tier spells the attribute in nine
 /// separate emitter literals, so neither half is structurally safe alone.
 ///
 /// One shape it cannot see: a function RETURNING a function pointer

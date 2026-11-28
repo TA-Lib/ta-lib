@@ -6,8 +6,7 @@ AC_COPYRIGHT([(c) Mario Fortier 1999-2026])
 AC_INIT([ta-lib], m4_esyscmd([cat VERSION | tr -d '\n']), [https://github.com/TA-Lib/ta-lib/issues], [ta-lib], [https://github.com/TA-Lib/ta-lib])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([src/ta_func/ta_AD.c])
-AC_CONFIG_HEADERS([include/ta_config.h])
-AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign subdir-objects no-define -Wall -Werror])
 
 # -O3 (issue #515) — the level CMake's Release build uses and every gate runs
 # against. Only when CFLAGS is unset, so a caller's flags are never touched, and
@@ -101,27 +100,6 @@ AC_MSG_CHECKING([whether $CC accepts -Wall -Wextra])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
-
-# Autoupdate added the next two lines to ensure that your configure
-# script's behavior did not change.  They are probably safe to remove.
-AC_CHECK_INCLUDES_DEFAULT
-AC_PROG_EGREP
-
-AC_CHECK_HEADERS([float.h inttypes.h limits.h locale.h stddef.h stdint.h stdlib.h string.h unistd.h wchar.h wctype.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_TYPE_SIZE_T
-AC_STRUCT_TM
-AC_C_VOLATILE
-AC_CHECK_TYPES([ptrdiff_t])
-
-# Checks for library functions.
-AC_FUNC_STRCOLL
-AC_FUNC_STRFTIME
-AC_FUNC_STRTOD
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([floor isascii localeconv mblen memmove memset modf pow sqrt strcasecmp strchr strerror strncasecmp strrchr strstr strtol strtoul])
 
 # Checks for libm
 LT_LIB_M

@@ -78,10 +78,6 @@ def do_cmake_reconfigure(root_dir: str, options: str, sudo_pwd: str = "") ->str:
         print(f"Error: {cmake_lists} not found. Your working directory must be within a cloned TA-Lib repos")
         sys.exit(1)
 
-    # Delete ta_config.h to force regeneration.
-    ta_config_h = path_join(root_dir, 'include', 'ta_config.h')
-    force_delete(ta_config_h, sudo_pwd)
-
     # Run CMake configuration.
     original_dir = os.getcwd()
     try:
@@ -217,10 +213,6 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sourc
         shutil.copy('ta-lib.lib', temp_lib_dir)
         shutil.copy('ta-lib-static.lib', temp_lib_dir)
         for header_filepath in glob.glob(path_join(include_rootdir, '*.h')):
-            if "ta_config.h" in header_filepath:
-                # At this point, this build artifact header is no longuer needed.
-                force_delete(header_filepath)
-                continue
             shutil.copy(header_filepath, temp_include_dir)
 
         # Create the VERSION.txt file

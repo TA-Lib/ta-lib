@@ -846,7 +846,6 @@ def sources_digest_files(root_dir: str) -> list:
         "include/ta_defs.h",
         "include/ta_func.h",
         "include/ta_libc.h",
-        "include/ta_config.h.cmake",
         "src/**/*.c",
         "src/**/*.h",
         "src/**/*.am",
