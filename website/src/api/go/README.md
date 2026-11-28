@@ -43,7 +43,7 @@ Every indicator is a method on `Core`: it reads `float64` slices you pass in and
 The **Core API** provides:
 
 - The [`Core`](#direct_call) type, made by `NewCore` or used as a zero value: both hold the default settings.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/spec/settings-threads/#ema-variation). Several `Core` values can co-exist, say for different settings.
+- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/api/ema-variant-settings/). Several `Core` values can co-exist, say for different settings.
 - Every TA function, each processing a whole slice of data at once.
 
 To process a live feed one bar at a time instead, see the companion [Go Streaming API](/api/go/stream/).

@@ -279,6 +279,129 @@ is §7's combination, rule N on chained stages (§11): the first-value seed, wit
 the output held until bar `p-1`. The functions it moves are on that page, which
 supersedes the census of §8.
 
+## 13. The spread of the single-EMA error
+
+§5 measures rms, on real prices only. `seed_quantiles.py` repeats its measurement
+and reports the distribution: the absolute error of the first published value (bar
+`t0+p-1`) against the EMA run from bar 0, as a percentage of the series'
+population sd, at every start offset from max(400, the bar where the bar-0 run's
+weight on its own first sample falls below 1e-9). At p <= 30 that is §5's offset
+range, and the rms reproduces §5's `e_S first out` and `e_T @common` to every
+printed digit at p = 5, 26 and 30, on both corpora. Each synthetic kind pools 10
+seeded series of 10000 bars, each normalised by its own sd: a geometric random
+walk (start 100, daily log-return sd 1%), an AR(1) with φ = 0.9 around 100
+(innovation sd 1, stationary start), and white noise. Full output in
+`quantiles.txt`.
+
+Median [10th, 90th percentile] of |error|, % of sd. S is `SMA_SEED`; N is
+`FIRST_BAR_SEED`, which for a single EMA is rule T read at the common bar.
+
+| p | seed | gData | IBM | random walk | AR(1) φ=0.9 | white noise |
+|---|---|---|---|---|---|---|
+| 5 | S | 0.32 [0.058, 1.18] | 0.64 [0.12, 2.13] | 0.51 [0.069, 1.53] | 8.86 [1.67, 21.6] | 15.5 [2.87, 37.8] |
+|  | N | 0.20 [0.035, 0.71] | 0.38 [0.064, 1.22] | 0.31 [0.042, 0.93] | 4.92 [0.91, 12.0] | 9.74 [1.83, 23.6] |
+| 10 | S | 0.46 [0.080, 1.67] | 0.90 [0.15, 2.91] | 0.69 [0.096, 2.05] | 11.5 [2.14, 28.2] | 11.1 [2.08, 27.2] |
+|  | N | 0.27 [0.048, 0.93] | 0.51 [0.086, 1.63] | 0.40 [0.056, 1.22] | 5.90 [1.12, 14.4] | 9.53 [1.77, 23.1] |
+| 14 | S | 0.55 [0.10, 1.97] | 1.12 [0.20, 3.44] | 0.82 [0.11, 2.41] | 12.8 [2.38, 31.3] | 9.38 [1.73, 23.0] |
+|  | N | 0.31 [0.054, 1.09] | 0.60 [0.11, 1.91] | 0.47 [0.064, 1.41] | 6.38 [1.19, 15.6] | 9.42 [1.75, 22.9] |
+| 20 | S | 0.68 [0.12, 2.38] | 1.41 [0.25, 4.11] | 0.97 [0.13, 2.91] | 13.9 [2.63, 33.9] | 7.88 [1.49, 19.2] |
+|  | N | 0.37 [0.064, 1.31] | 0.72 [0.13, 2.21] | 0.55 [0.076, 1.66] | 6.88 [1.29, 16.8] | 9.34 [1.73, 22.7] |
+| 26 | S | 0.80 [0.16, 2.83] | 1.64 [0.29, 4.71] | 1.10 [0.15, 3.34] | 14.4 [2.68, 35.6] | 6.89 [1.29, 16.9] |
+|  | N | 0.42 [0.073, 1.51] | 0.83 [0.15, 2.46] | 0.62 [0.085, 1.86] | 7.21 [1.37, 17.7] | 9.29 [1.72, 22.6] |
+| 30 | S | 0.87 [0.16, 3.01] | 1.77 [0.32, 5.04] | 1.18 [0.16, 3.60] | 14.6 [2.68, 36.2] | 6.45 [1.22, 15.7] |
+|  | N | 0.45 [0.076, 1.64] | 0.90 [0.16, 2.63] | 0.67 [0.090, 1.98] | 7.40 [1.41, 18.1] | 9.27 [1.71, 22.6] |
+| 50 | S | 1.14 [0.20, 4.29] | 2.18 [0.43, 6.55] | 1.53 [0.21, 4.66] | 14.7 [2.74, 35.9] | 4.94 [0.92, 12.1] |
+|  | N | 0.60 [0.11, 2.11] | 1.15 [0.22, 3.27] | 0.84 [0.12, 2.50] | 8.01 [1.50, 19.4] | 9.22 [1.71, 22.5] |
+| 100 | S | 1.70 [0.34, 6.39] | 3.22 [0.55, 8.68] | 2.15 [0.28, 6.50] | 12.4 [2.29, 30.6] | 3.48 [0.64, 8.59] |
+|  | N | 0.89 [0.15, 3.02] | 1.66 [0.28, 4.32] | 1.19 [0.16, 3.43] | 8.50 [1.56, 20.5] | 9.18 [1.71, 22.3] |
+| 200 | S | 2.65 [0.39, 11.9] | 4.24 [0.85, 11.0] | 2.88 [0.36, 8.90] | 9.26 [1.72, 22.9] | 2.51 [0.47, 6.22] |
+|  | N | 1.32 [0.24, 4.59] | 2.32 [0.45, 6.20] | 1.64 [0.22, 4.72] | 8.82 [1.65, 21.3] | 9.16 [1.70, 22.3] |
+
+* On both corpora and the random walk, N's median is lower at every period, by
+  1.6-2.0x, and so are its 10th and 90th percentiles. The ratio of medians is
+  within 0.2 of the ratio of rms.
+* The two seeds' 10th-90th ranges overlap at every period of every kind. N's
+  lower error is a shift of the distribution, not a win at every start offset.
+* On AR(1) φ = 0.9, N's lead peaks near p = 20 (2.0x) and shrinks above it, to
+  1.05x at p = 200, where the two ranges nearly coincide.
+* On white noise the medians cross: N is lower at p = 5 and 10, the two are even
+  at p = 14, and S is lower from p = 20 on, by 3.7x at p = 200. §4's
+  white-noise row predicts it: `common` 0.691 at p = 30, measured 0.70.
+* On gData the rms lies above the 90th percentile for both seeds at p <= 50: a few
+  start offsets dominate §5's rms, and the median is 3.5-4.3x below it.
+
+## 14. The spread of the chained-function error
+
+`seed_quantiles.py` repeats §13's measurement for DEMA, TEMA and TRIX at §13's
+periods and for MACD(12,26,9), on gData, IBM and the random walk: the error at the
+function's first published bar against the function with every stage run from bar
+0. S seeds each stage with the mean of its first `p` inputs. N seeds the first
+stage, and both MACD legs, with the first element of the call's array, and a later
+stage, MACD's signal included, with its feeder's value on the bar where S starts
+the window it averages
+([rT14](https://ta-lib.org/spec/settings-threads/#rt14)). Offsets run from
+max(400, the bar from which every stage's weight on its bar-0 seed stays below
+1e-9) to `n - lookback - 4`; no period is dropped, the fewest offsets being 3473,
+for TRIX(200) on IBM. Normalised as in §11: DEMA, TEMA and TRIX by the converged
+output's population sd, MACD by its line's, over the bars from the first offset.
+At §11's offsets and normalisation the same code reproduces §11's DEMA, TEMA, TRIX
+and MACD rows to every printed digit, on both corpora.
+
+Median [10th, 90th percentile] of |error|, % of that sd.
+
+| function | p | seed | gData | IBM | random walk |
+|---|---|---|---|---|---|
+| DEMA | 5 | S | 0.19 [0.032, 0.69] | 0.37 [0.064, 1.23] | 0.30 [0.042, 0.90] |
+|  |  | N | 0.15 [0.026, 0.54] | 0.29 [0.052, 0.93] | 0.23 [0.032, 0.70] |
+|  | 14 | S | 0.34 [0.064, 1.19] | 0.71 [0.13, 1.99] | 0.49 [0.068, 1.47] |
+|  |  | N | 0.25 [0.045, 0.88] | 0.49 [0.097, 1.45] | 0.36 [0.050, 1.09] |
+|  | 30 | S | 0.51 [0.093, 1.90] | 0.95 [0.18, 3.03] | 0.71 [0.099, 2.16] |
+|  |  | N | 0.36 [0.063, 1.29] | 0.72 [0.13, 1.92] | 0.51 [0.073, 1.53] |
+|  | 100 | S | 1.05 [0.21, 4.57] | 1.93 [0.39, 4.50] | 1.28 [0.18, 3.94] |
+|  |  | N | 0.66 [0.15, 2.52] | 1.22 [0.21, 3.19] | 0.95 [0.13, 2.78] |
+|  | 200 | S | 1.43 [0.28, 6.71] | 2.34 [0.42, 5.93] | 1.75 [0.25, 5.44] |
+|  |  | N | 1.01 [0.13, 3.35] | 1.82 [0.34, 5.32] | 1.35 [0.20, 4.12] |
+| TEMA | 5 | S | 0.12 [0.021, 0.45] | 0.24 [0.044, 0.81] | 0.19 [0.027, 0.58] |
+|  |  | N | 0.11 [0.019, 0.38] | 0.21 [0.035, 0.65] | 0.16 [0.023, 0.49] |
+|  | 14 | S | 0.23 [0.044, 0.81] | 0.48 [0.084, 1.31] | 0.33 [0.045, 0.99] |
+|  |  | N | 0.19 [0.035, 0.68] | 0.37 [0.074, 1.08] | 0.27 [0.039, 0.82] |
+|  | 30 | S | 0.34 [0.067, 1.32] | 0.67 [0.13, 2.06] | 0.48 [0.065, 1.46] |
+|  |  | N | 0.28 [0.045, 1.01] | 0.57 [0.090, 1.46] | 0.39 [0.056, 1.15] |
+|  | 100 | S | 0.71 [0.13, 3.06] | 1.24 [0.22, 2.93] | 0.84 [0.11, 2.68] |
+|  |  | N | 0.50 [0.11, 2.01] | 1.02 [0.13, 2.52] | 0.75 [0.099, 2.13] |
+|  | 200 | S | 0.94 [0.15, 4.87] | 1.80 [0.29, 4.36] | 1.20 [0.18, 3.81] |
+|  |  | N | 0.86 [0.098, 2.75] | 1.19 [0.20, 4.37] | 1.04 [0.16, 3.33] |
+| TRIX | 5 | S | 6.56 [1.13, 17.4] | 9.54 [1.73, 27.8] | 12.5 [2.32, 30.3] |
+|  |  | N | 6.74 [1.23, 18.7] | 9.75 [1.74, 27.8] | 12.8 [2.37, 31.2] |
+|  | 14 | S | 7.33 [1.40, 21.2] | 11.1 [2.33, 31.6] | 12.6 [2.37, 31.3] |
+|  |  | N | 7.16 [1.28, 20.6] | 10.7 [2.29, 28.7] | 12.4 [2.31, 30.2] |
+|  | 30 | S | 7.95 [1.39, 23.0] | 13.1 [2.44, 34.2] | 13.0 [2.44, 31.7] |
+|  |  | N | 7.88 [1.43, 21.7] | 11.8 [1.80, 27.6] | 12.2 [2.37, 30.0] |
+|  | 100 | S | 10.3 [2.01, 27.2] | 12.9 [2.82, 32.4] | 12.2 [2.32, 31.7] |
+|  |  | N | 7.78 [1.44, 22.3] | 13.3 [2.54, 29.7] | 12.5 [2.34, 29.9] |
+|  | 200 | S | 8.86 [1.64, 32.1] | 9.64 [1.51, 30.0] | 12.7 [2.32, 31.9] |
+|  |  | N | 8.49 [1.62, 26.8] | 9.25 [1.61, 27.4] | 13.5 [2.33, 31.3] |
+| MACD(12,26,9) | line | S | 8.29 [1.50, 29.3] | 16.2 [2.98, 45.8] | 17.3 [2.75, 50.2] |
+|  |  | N | 4.32 [0.75, 15.5] | 7.93 [1.44, 23.3] | 9.37 [1.52, 26.8] |
+|  | signal | S | 13.0 [2.18, 46.1] | 25.4 [4.45, 71.1] | 27.2 [4.35, 78.7] |
+|  |  | N | 6.27 [1.10, 23.0] | 11.6 [2.08, 34.1] | 13.4 [2.18, 38.8] |
+|  | histogram | S | 5.06 [0.84, 17.8] | 9.58 [1.65, 27.9] | 10.5 [1.67, 30.2] |
+|  |  | N | 2.22 [0.35, 8.10] | 4.20 [0.76, 12.4] | 4.63 [0.75, 13.4] |
+
+* DEMA and TEMA: N's median is lower at every period on all three kinds, by
+  1.26-1.58x for DEMA and 1.09-1.51x for TEMA, narrower than a single EMA's
+  1.6-2.0x. Two exceptions in the tails, both on IBM: at TEMA(200) the 90th
+  percentiles are even and S has the smaller rms, and at TEMA(20) S has the
+  lower 10th percentile.
+* MACD: N cuts the error of all three outputs by 1.85-2.28x at the median and
+  by 1.82-2.39x at the 10th and 90th percentiles.
+* TRIX: on IBM and the random walk the ratio of medians runs 0.95 to 1.10, and N's
+  median is the higher one at p = 5 on all three kinds, at p = 100 on IBM and at
+  p = 100 and 200 on the random walk. §11's larger TRIX ratio on gData comes from
+  S's tail: at p <= 30 S's rms lies above its 90th percentile, N's below.
+* TRIX's first value is far off under either seed: a median of 6.6% to 13.5% of
+  its own sd.
+
 ## Reproduce
 
 ```bash
@@ -286,6 +409,7 @@ cd docs/studies/ema-seeding
 python3 seed_study.py            # writes results.txt (checked in), Parts 0-F
 python3 seed_study.py --chain    # Part F alone, into chain_results.txt
 python3 compensator_sim.py       # §10, synthetic, prints its tables
+python3 seed_quantiles.py        # §13 and §14, writes quantiles.txt (checked in)
 
 # optional: pin rule S against the shipped library
 cc -I ../../../include -o /tmp/ema_probe ema_probe.c \
@@ -293,9 +417,10 @@ cc -I ../../../include -o /tmp/ema_probe ema_probe.c \
 /tmp/ema_probe
 ```
 
-Corpora are real daily OHLC only, no synthetic data: **gData** (10000 bars,
-in-tree) and **IBM** (6741 bars, 1999-11-01..2026-08-20, checked in). numpy is
-the only dependency; no network.
+The real corpora are daily OHLC: **gData** (10000 bars, in-tree) and **IBM**
+(6741 bars, 1999-11-01..2026-08-20, checked in); §10, §13 and §14 add seeded
+synthetic series. numpy is `seed_study.py`'s only dependency; the other scripts need none.
+No network.
 
 ## Sources
 

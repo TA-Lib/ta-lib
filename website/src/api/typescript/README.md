@@ -45,7 +45,7 @@ The TypeScript library is a native port of TA-Lib: TypeScript compiled to standa
 The **Core API** provides:
 
 - The [`Core`](#candle_settings) type and the `CoreBuilder` that configures it.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/spec/settings-threads/#ema-variation). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
+- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/api/ema-variant-settings/). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
 - Every TA function, each processing a whole array of data at once.
 - An optional [Abstract API](#abstract) for calling those functions dynamically.
 

@@ -38,7 +38,7 @@ The .NET library is a native port of TA-Lib in the `TALib` namespace: no P/Invok
 The **Core API** provides:
 
 - The [`Core`](#direct_call) type and the builder that configures it.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/spec/settings-threads/#ema-variation). Multiple `Core` instances can safely co-exist (say for different settings).
+- The settings each `Core` carries: [unstable period](/api/unstable-period/), [candlestick settings](/api/candle-settings/) and [EMA variation](/api/ema-variant-settings/). Multiple `Core` instances can safely co-exist (say for different settings).
 - Every TA function, each processing a whole array of data at once.
 - An optional [Abstract API](#abstract) for calling those functions dynamically.
 

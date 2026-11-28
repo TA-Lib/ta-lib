@@ -281,9 +281,10 @@ html[data-theme="dark"] {
   .ta-arg-out   { background-color: #5a4f12; color: #fdf6d6; }
 }
 
-// Unstable-period figure (`api/unstable-period/`): an inline SVG, so the series
-// colours can follow the theme toggle the way `<img>` cannot. Neutrals come from
-// the theme's own `--vp-c-*`; only the three categorical hues are restated for dark.
+// Settings-page figures (`api/unstable-period/`, `api/ema-variant-settings/`):
+// inline SVGs, so the series colours can follow the theme toggle the way `<img>`
+// cannot. Neutrals come from the theme's own `--vp-c-*`; only the three
+// categorical hues are restated for dark.
 // SVG text does not reflow, so the figure scrolls rather than shrinking below the
 // width where its labels stop being readable.
 .uf-fig {
@@ -318,6 +319,15 @@ html[data-theme="dark"] {
 .uf-dot1      { fill: var(--uf-1); }
 .uf-dot2      { fill: var(--uf-2); }
 .uf-dot3      { fill: var(--uf-3); }
+.uf-med       { fill: none; stroke-width: 1.5; stroke-linejoin: round; }
+.uf-med1      { stroke: var(--uf-1); }
+.uf-med2      { stroke: var(--uf-2); }
+.uf-whk       { fill: none; stroke-width: 1.2; }
+.uf-whk0      { stroke: var(--vp-c-text-mute); }
+.uf-whk1      { stroke: var(--uf-1); }
+.uf-whk2      { stroke: var(--uf-2); }
+.uf-key0      { fill: var(--vp-c-text-mute); }
+.uf-hit       { fill: transparent; }
 .uf-legend-bg { fill: var(--vp-c-bg); opacity: 0.92; }
 .uf-legend    { fill: var(--vp-c-text-mute); font-size: 13px; }
 .uf-arrow     { stroke: var(--vp-c-text-mute); stroke-width: 1.5; }

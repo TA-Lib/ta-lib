@@ -15,7 +15,7 @@ The rules use C's spelling, and this page maps it onto the other languages. Ever
 
 - The native APIs (C, Rust, Java, C#, TypeScript, Go).
 - A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
-- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) and [Go](/api/go/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
+- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), [EMA Variant Settings](/api/ema-variant-settings/) (the seeds compared), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/), [TypeScript](/api/typescript/stream/) and [Go](/api/go/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
 - The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
@@ -73,7 +73,7 @@ In Rust, Java, C# and Go, a function's calls are methods of a `Core`. In TypeScr
 | settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` | `Core.DEFAULT`, `Core.builder()` | `NewCore()`, then its setters |
 | output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange{BegIdx, NBElement}` |
 
-Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/), [EMA variation](/spec/settings-threads/#ema-variation). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
+Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/), [EMA variation](/api/ema-variant-settings/). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
 
 Enum types drop C's `TA_`. Members:
 

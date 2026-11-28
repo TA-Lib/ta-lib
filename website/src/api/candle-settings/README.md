@@ -151,4 +151,5 @@ restore call.
 
 - Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/), [Go](/api/go/)
 - [Unstable Period](/api/unstable-period/)
+- [EMA Variant Settings](/api/ema-variant-settings/)
 - The candlestick pattern functions in the [function reference](/functions/) (the `Pattern Recognition` group).

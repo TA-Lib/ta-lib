@@ -60,7 +60,7 @@ Some indicators have "memory". Each output depends on the previous one, seeded f
 <figcaption id="uf-cap">Three 20-bar EMAs of the same prices, each fed from a different starting bar. From bar 65 on they differ by less than a thousandth of the price, too little to see at this scale. Auto-Stabilization waits longer: it discards 100 bars for this EMA at <code>PREC_4</code>.</figcaption>
 </figure>
 
-This is inherent to the algorithms, not something specific to TA-Lib: every implementation has to seed the recursion somewhere. How the EMA family seeds it is a setting of its own: [EMA variation](/spec/settings-threads/#ema-variation).
+This is inherent to the algorithms, not something specific to TA-Lib: every implementation has to seed the recursion somewhere. How the EMA family seeds it is a setting of its own: [EMA variation](/api/ema-variant-settings/).
 
 ## What to do
 
@@ -339,3 +339,4 @@ call a `Core`'s setters only while no other goroutine uses it and no stream open
 - [Specification](/spec/auto-stabilization/): the count behind each function, and the known exceptions
 - Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/), [Go](/api/go/)
 - [Candlestick Settings](/api/candle-settings/)
+- [EMA Variant Settings](/api/ema-variant-settings/)

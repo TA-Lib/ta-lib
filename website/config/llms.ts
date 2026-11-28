@@ -63,6 +63,7 @@ const PAGE_ORDER = [
   "/api/abstract/",
   "/api/unstable-period/",
   "/functions/stability.html",
+  "/api/ema-variant-settings/",
   "/api/candle-settings/",
   "/api/candlestick-outputs/",
 ];

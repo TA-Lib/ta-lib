@@ -5,7 +5,7 @@ description: "Settings in an immutable Core (Rust, Java, C#, TypeScript), shared
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods, candle settings and the EMA variation) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults), [EMA variation](/spec/settings-threads/#ema-variation). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods, candle settings and the EMA variation) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). Go keeps them in a `Core` that its setters change, shared by goroutines once configured ([Go settings](/spec/settings-threads/#go-settings)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults), [EMA variation](/api/ema-variant-settings/). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -47,35 +47,18 @@ The rows hold for every setter and getter in every language, except where a note
 
 ## EMA variation {#ema-variation}
 
-The EMA variation selects how the EMA family seeds its recursion: `SMA_SEED`, the default, or `FIRST_BAR_SEED`.
+The EMA variation selects the seed of the EMA family: `SMA_SEED`, the default, or `FIRST_BAR_SEED`. The setters per language, the functions it moves and the measured difference: [EMA Variant Settings](/api/ema-variant-settings/).
 
-| Language | Select `FIRST_BAR_SEED` | Read |
-|---|---|---|
-| C | `TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED)` | `TA_GetEMAVariation()` |
-| Rust | `Core::builder().ema_variation(EMAVariation::FIRST_BAR_SEED)` | `core.ema_variation()` |
-| Java | `Core.builder().emaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.emaVariation()` |
-| C# | `Core.Builder().EmaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.EmaVariation()` |
-| TypeScript | `Core.builder().emaVariation(EMAVariation.FIRST_BAR_SEED)` | `core.emaVariation()` |
-| Go | `core.SetEMAVariation(talib.EMAVariationFIRST_BAR_SEED)` | `core.EMAVariation()` |
+<a id="rt13"></a>**rT13** The setting changes only the value an EMA starts from. The EMA formula is unchanged, and so are T3, Wilder smoothing (RSI, ATR, ADX) and the adaptive averages.
 
-<a id="rt13"></a>**rT13** A stage is an exponential average with factor `2 / (period + 1)` that `SMA_SEED` seeds with the simple average of its first `period` inputs, other than T3's, or one of MACDFIX's two fixed-factor legs. It counts whether the function computes it itself or reaches it through a call or an MA type. `FIRST_BAR_SEED` changes the seed of every stage and nothing else: each step is the one `SMA_SEED` takes.
+<a id="rt14"></a>**rT14** Under `FIRST_BAR_SEED`, an EMA of the input, or of a series computed from the input bar by bar, starts from the first value of that series in the input array, whatever `startIdx` is. An EMA computed on the output of another EMA (the second EMA of DEMA, MACD's signal) or of RSI starts from the first value that output has in the call.
 
-<a id="rt14"></a>**rT14** Under `FIRST_BAR_SEED`, a stage is seeded with one value:
+<a id="rt15"></a>**rT15** No lookback changes ([rL5](/spec/lookback/#rl5)): the first output bar and the output count are the same under both ([rW1](/spec/inputs-outputs/#rw1)).
 
-- A stage fed by the function's input, or by a per-bar transform of it (EFI's force, CVI's high-low spread, ZLEMA's de-lagged price, the windowed series PSO, SMI and KSTEXT smooth, the Fast-K that STOCH, STOCHF and KDJ smooth through an MA type), takes the first value of that series in the caller's array: bar 0, or the first bar where the transform exists. It runs from there to the requested start, whatever `startIdx` is. Stages of different periods fed by the same series start on that same bar.
-- A stage fed by anything else, such as another stage, DOSC's RSI, or STOCHRSI's Fast-K of RSI, takes the first value of its feeder that the call uses: the one on the bar where `SMA_SEED` starts the window it averages.
+<a id="rt16"></a>**rT16** Under `FIRST_BAR_SEED`, a call reads the input from its first element up to `startIdx`, not only the lookback bars before `startIdx` ([rL1](/spec/lookback/#rl1)). Its cost grows with `startIdx`.
 
-<a id="rt15"></a>**rT15** The EMA variation changes no lookback ([rL5](/spec/lookback/#rl5)), so no first output bar and no count ([rW1](/spec/inputs-outputs/#rw1)).
+<a id="rt17"></a>**rT17** Under `FIRST_BAR_SEED`, a function whose EMAs all read the input (EMA, MACD's line) gives the same value for a bar whatever `startIdx` is, up to rounding. A function that chains EMAs (DEMA, TEMA, TRIX, MACD's signal) does not: compare its values only between calls with the same `startIdx`.
 
-<a id="rt16"></a>**rT16** Under `FIRST_BAR_SEED`, a stage fed by the input is stepped from its seed bar to the requested start, so a call reads bars before `max(startIdx, lookback) - lookback`, which [rL1](/spec/lookback/#rl1) otherwise excludes, and its cost grows with `startIdx`. STOCH, STOCHF and KDJ compute Fast-K from its first bar under every MA type, so theirs grows with `startIdx` too. A stream's `Open` steps through the whole history it is given.
+<a id="rt18"></a>**rT18** The setting affects exactly the [functions listed](/api/ema-variant-settings/#which-functions-follow-the-setting).
 
-<a id="rt17"></a>**rT17** Under `FIRST_BAR_SEED`, the value a stage fed by the input takes at a bar does not depend on `startIdx`, up to rounding, so a function built from such stages alone, such as EMA, MACD's line, or STOCHF's Fast-D and STOCH's Slow-K with an `EMA` MA type, writes the same values for every `startIdx`. The seed bar of a stage fed by anything else moves with `startIdx`: a call to DEMA, TEMA, TRIX, MACD's signal and histogram, STOCH's Slow-D with an `EMA` MA type, and the like, starting past the lookback writes different values from a call starting at 0.
-
-<a id="rt18"></a>**rT18** The EMA variation moves exactly the functions with a stage ([rT13](/spec/settings-threads/#rt13)):
-
-- `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `MACDFIX`, `MACDV`, `TSI`, `DOSC`, `CVI`, `SMI`, `EFI`, `ERI`, `MASSI`, `STC` (its MACD line), `WAVETREND`, `PSO`, `ZLEMA`, `KC` (its centre line);
-- with an `EMA`, `DEMA`, `TEMA` or `ZLEMA` MA type: `APO`, `PPO` and `PVO` (whose default is `EMA`), `MA`, `MAVP`, `MACDEXT`, `BBANDS`, `BBW`, `PERCENTB`, `MAENV`, `KSTEXT`, `STOCH`, `STOCHF`, `STOCHRSI`, `KDJ`.
-
-It does not move `T3` (also as an MA type), `ADOSC` and `KVO` (whose averages start on their first value under both), Wilder smoothing (`RSI`, `ATR`, the `ADX` family, `RMA`), the adaptive averages, STC's two 0.5 smoothers, or any other function.
-
-<a id="metastock"></a>**From TA-Lib 0.7.1 and earlier.** For `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `MACDFIX`, and the `EMA`, `DEMA` and `TEMA` MA types inside `MA`, `MAVP`, `MACDEXT`, `APO`, `PPO`, `BBANDS`, `STOCH` and `STOCHF`, a call with `startIdx` 0 under `FIRST_BAR_SEED` writes, within rounding, what `TA_SetCompatibility(TA_COMPATIBILITY_METASTOCK)` wrote. That mode also changed `RSI` and `CMO`, which no setting reproduces. `TA_SetCompatibility` and `TA_GetCompatibility` select nothing.
+<a id="metastock"></a>**From TA-Lib 0.7.1 and earlier.** For the EMA family, a call with `startIdx` 0 under `FIRST_BAR_SEED` writes, within rounding, what the MetaStock compatibility mode wrote. That mode's `RSI` and `CMO` variant is not reproduced.
