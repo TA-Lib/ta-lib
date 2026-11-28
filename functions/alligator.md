@@ -200,9 +200,9 @@ const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
   lipsShift: 3,
 });
 console.log(outJaw.length + ' values from bar ' + begIdx + ':');
-console.log('outJaw = [' + outJaw[0].toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1].toFixed(4) + ']');
-console.log('outTeeth = [' + outTeeth[0].toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1].toFixed(4) + ']');
-console.log('outLips = [' + outLips[0].toFixed(4) + ', ..., ' + outLips[outLips.length - 1].toFixed(4) + ']');
+console.log('outJaw = [' + outJaw[0]?.toFixed(4) + ', ..., ' + outJaw[outJaw.length - 1]?.toFixed(4) + ']');
+console.log('outTeeth = [' + outTeeth[0]?.toFixed(4) + ', ..., ' + outTeeth[outTeeth.length - 1]?.toFixed(4) + ']');
+console.log('outLips = [' + outLips[0]?.toFixed(4) + ', ..., ' + outLips[outLips.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

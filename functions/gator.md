@@ -190,8 +190,8 @@ const { begIdx, outUpper, outLower } = gator({ high, low }, {
   lipsShift: 3,
 });
 console.log(outUpper.length + ' values from bar ' + begIdx + ':');
-console.log('outUpper = [' + outUpper[0].toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1].toFixed(4) + ']');
-console.log('outLower = [' + outLower[0].toFixed(4) + ', ..., ' + outLower[outLower.length - 1].toFixed(4) + ']');
+console.log('outUpper = [' + outUpper[0]?.toFixed(4) + ', ..., ' + outUpper[outUpper.length - 1]?.toFixed(4) + ']');
+console.log('outLower = [' + outLower[0]?.toFixed(4) + ', ..., ' + outLower[outLower.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

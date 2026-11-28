@@ -160,8 +160,8 @@ const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
 console.log(outInPhase.length + ' values from bar ' + begIdx + ':');
-console.log('outInPhase = [' + outInPhase[0].toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1].toFixed(4) + ']');
-console.log('outQuadrature = [' + outQuadrature[0].toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1].toFixed(4) + ']');
+console.log('outInPhase = [' + outInPhase[0]?.toFixed(4) + ', ..., ' + outInPhase[outInPhase.length - 1]?.toFixed(4) + ']');
+console.log('outQuadrature = [' + outQuadrature[0]?.toFixed(4) + ', ..., ' + outQuadrature[outQuadrature.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

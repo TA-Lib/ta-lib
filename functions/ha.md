@@ -215,10 +215,10 @@ const {
   outHaClose,
 } = ha({ open, high, low, close });
 console.log(outHaOpen.length + ' values from bar ' + begIdx + ':');
-console.log('outHaOpen = [' + outHaOpen[0].toFixed(4) + ', ..., ' + outHaOpen[outHaOpen.length - 1].toFixed(4) + ']');
-console.log('outHaHigh = [' + outHaHigh[0].toFixed(4) + ', ..., ' + outHaHigh[outHaHigh.length - 1].toFixed(4) + ']');
-console.log('outHaLow = [' + outHaLow[0].toFixed(4) + ', ..., ' + outHaLow[outHaLow.length - 1].toFixed(4) + ']');
-console.log('outHaClose = [' + outHaClose[0].toFixed(4) + ', ..., ' + outHaClose[outHaClose.length - 1].toFixed(4) + ']');
+console.log('outHaOpen = [' + outHaOpen[0]?.toFixed(4) + ', ..., ' + outHaOpen[outHaOpen.length - 1]?.toFixed(4) + ']');
+console.log('outHaHigh = [' + outHaHigh[0]?.toFixed(4) + ', ..., ' + outHaHigh[outHaHigh.length - 1]?.toFixed(4) + ']');
+console.log('outHaLow = [' + outHaLow[0]?.toFixed(4) + ', ..., ' + outHaLow[outHaLow.length - 1]?.toFixed(4) + ']');
+console.log('outHaClose = [' + outHaClose[0]?.toFixed(4) + ', ..., ' + outHaClose[outHaClose.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

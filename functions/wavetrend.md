@@ -197,8 +197,8 @@ const { begIdx, outWt1, outWt2 } = wavetrend({ high, low, close }, {
   signalPeriod: 4,
 });
 console.log(outWt1.length + ' values from bar ' + begIdx + ':');
-console.log('outWt1 = [' + outWt1[0].toFixed(4) + ', ..., ' + outWt1[outWt1.length - 1].toFixed(4) + ']');
-console.log('outWt2 = [' + outWt2[0].toFixed(4) + ', ..., ' + outWt2[outWt2.length - 1].toFixed(4) + ']');
+console.log('outWt1 = [' + outWt1[0]?.toFixed(4) + ', ..., ' + outWt1[outWt1.length - 1]?.toFixed(4) + ']');
+console.log('outWt2 = [' + outWt2[0]?.toFixed(4) + ', ..., ' + outWt2[outWt2.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

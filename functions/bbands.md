@@ -207,9 +207,9 @@ const {
   maType: MAType.SMA,
 });
 console.log(outUpperBand.length + ' values from bar ' + begIdx + ':');
-console.log('outUpperBand = [' + outUpperBand[0].toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1].toFixed(4) + ']');
-console.log('outMiddleBand = [' + outMiddleBand[0].toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1].toFixed(4) + ']');
-console.log('outLowerBand = [' + outLowerBand[0].toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1].toFixed(4) + ']');
+console.log('outUpperBand = [' + outUpperBand[0]?.toFixed(4) + ', ..., ' + outUpperBand[outUpperBand.length - 1]?.toFixed(4) + ']');
+console.log('outMiddleBand = [' + outMiddleBand[0]?.toFixed(4) + ', ..., ' + outMiddleBand[outMiddleBand.length - 1]?.toFixed(4) + ']');
+console.log('outLowerBand = [' + outLowerBand[0]?.toFixed(4) + ', ..., ' + outLowerBand[outLowerBand.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

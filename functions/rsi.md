@@ -168,7 +168,7 @@ import { rsi } from 'ta-lib';
 const series = new Float64Array(252); // your data, oldest first
 
 const { begIdx, values } = rsi(series, { timePeriod: 14 });
-console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0].toFixed(4) + ', ..., ' + values[values.length - 1].toFixed(4) + ']');
+console.log(values.length + ' values from bar ' + begIdx + ': [' + values[0]?.toFixed(4) + ', ..., ' + values[values.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

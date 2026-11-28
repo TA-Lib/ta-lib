@@ -168,8 +168,8 @@ const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
   timePeriod: 14,
 });
 console.log(outAroonDown.length + ' values from bar ' + begIdx + ':');
-console.log('outAroonDown = [' + outAroonDown[0].toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1].toFixed(4) + ']');
-console.log('outAroonUp = [' + outAroonUp[0].toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1].toFixed(4) + ']');
+console.log('outAroonDown = [' + outAroonDown[0]?.toFixed(4) + ', ..., ' + outAroonDown[outAroonDown.length - 1]?.toFixed(4) + ']');
+console.log('outAroonUp = [' + outAroonUp[0]?.toFixed(4) + ', ..., ' + outAroonUp[outAroonUp.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

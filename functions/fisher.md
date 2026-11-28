@@ -184,8 +184,8 @@ const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
   timePeriod: 10,
 });
 console.log(outFisher.length + ' values from bar ' + begIdx + ':');
-console.log('outFisher = [' + outFisher[0].toFixed(4) + ', ..., ' + outFisher[outFisher.length - 1].toFixed(4) + ']');
-console.log('outTrigger = [' + outTrigger[0].toFixed(4) + ', ..., ' + outTrigger[outTrigger.length - 1].toFixed(4) + ']');
+console.log('outFisher = [' + outFisher[0]?.toFixed(4) + ', ..., ' + outFisher[outFisher.length - 1]?.toFixed(4) + ']');
+console.log('outTrigger = [' + outTrigger[0]?.toFixed(4) + ', ..., ' + outTrigger[outTrigger.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

@@ -193,8 +193,8 @@ const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
   signalPeriod: 9,
 });
 console.log(outSmi.length + ' values from bar ' + begIdx + ':');
-console.log('outSmi = [' + outSmi[0].toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1].toFixed(4) + ']');
-console.log('outSmiSignal = [' + outSmiSignal[0].toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1].toFixed(4) + ']');
+console.log('outSmi = [' + outSmi[0]?.toFixed(4) + ', ..., ' + outSmi[outSmi.length - 1]?.toFixed(4) + ']');
+console.log('outSmiSignal = [' + outSmiSignal[0]?.toFixed(4) + ', ..., ' + outSmiSignal[outSmiSignal.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go

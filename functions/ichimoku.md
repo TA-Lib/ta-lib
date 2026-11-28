@@ -216,10 +216,10 @@ const {
   senkouBPeriod: 52,
 });
 console.log(outTenkanSen.length + ' values from bar ' + begIdx + ':');
-console.log('outTenkanSen = [' + outTenkanSen[0].toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1].toFixed(4) + ']');
-console.log('outKijunSen = [' + outKijunSen[0].toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1].toFixed(4) + ']');
-console.log('outSenkouSpanA = [' + outSenkouSpanA[0].toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1].toFixed(4) + ']');
-console.log('outSenkouSpanB = [' + outSenkouSpanB[0].toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1].toFixed(4) + ']');
+console.log('outTenkanSen = [' + outTenkanSen[0]?.toFixed(4) + ', ..., ' + outTenkanSen[outTenkanSen.length - 1]?.toFixed(4) + ']');
+console.log('outKijunSen = [' + outKijunSen[0]?.toFixed(4) + ', ..., ' + outKijunSen[outKijunSen.length - 1]?.toFixed(4) + ']');
+console.log('outSenkouSpanA = [' + outSenkouSpanA[0]?.toFixed(4) + ', ..., ' + outSenkouSpanA[outSenkouSpanA.length - 1]?.toFixed(4) + ']');
+console.log('outSenkouSpanB = [' + outSenkouSpanB[0]?.toFixed(4) + ', ..., ' + outSenkouSpanB[outSenkouSpanB.length - 1]?.toFixed(4) + ']');
 ```
 
 @tab Go
