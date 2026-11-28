@@ -140,6 +140,47 @@ jobs:
           done
           exit $rc
 
+      # arm64 11.0 and x86_64 10.9 are the lowest deployment targets
+      # ta-lib-python builds its macOS wheels at. Under
+      # -Werror=unguarded-availability a call to an API the SDK headers declare
+      # newer than the target is an error; without it clang at most warns, and
+      # the call fails on the older system.
+      - name: Compile the library at the macOS wheel floors
+        shell: bash
+        run: |
+          set -euo pipefail
+          flag=-Werror=unguarded-availability
+          for row in arm64:11.0 x86_64:10.9; do
+            arch=${row%%:*}
+            floor=${row##*:}
+            dir=cmake-build-floor-$arch
+            cmake -S . -B "$dir" -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_OSX_ARCHITECTURES="$arch" \
+              -DCMAKE_OSX_DEPLOYMENT_TARGET="$floor" \
+              -DCMAKE_C_FLAGS="$flag" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            cmake --build "$dir" --target ta-lib-static -j 3
+
+            got=$(otool -l "$dir/libta-lib.a" | awk '
+              $1 == "cmd" { cmd = $2 }
+              cmd == "LC_VERSION_MIN_MACOSX" && $1 == "version" { print $2 }
+              cmd == "LC_BUILD_VERSION" && $1 == "minos" { print $2 }' | sort -u | paste -sd' ' -)
+            if [ "$got" != "$floor" ]; then
+              echo "::error::$arch objects target macOS '$got', not $floor -- the deployment target did not apply, so nothing was checked at the floor."
+              exit 1
+            fi
+
+            n_all=$(grep -c '"file":' "$dir/compile_commands.json" || true)
+            n_flag=$(grep -c -e "$flag" "$dir/compile_commands.json" || true)
+            n_all=${n_all:-0}
+            n_flag=${n_flag:-0}
+            echo "$arch at $floor: $n_flag of $n_all compile commands carry $flag"
+            if [ "$n_all" -lt 100 ] || [ "$n_flag" -ne "$n_all" ]; then
+              echo "::error::$flag is on $n_flag of $n_all compile commands for $arch -- without it clang accepts a call to an API newer than $floor."
+              exit 1
+            fi
+          done
+
   # Every other run of the Rust, Java and C# servers against the C library is on
   # Linux. Here the C side is AppleClang with libSystem's math, and the JVM and
   # the .NET JIT are the macOS arm64 ones. The three jobs below run in parallel,
