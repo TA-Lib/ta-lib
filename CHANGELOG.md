@@ -10,6 +10,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Added
 - TypeScript: the `ta-lib` package is on npm (`npm install ta-lib`). WebAssembly-accelerated,
   with automatic TypeScript fallback. (#574)
+- EMA variant setting: `TA_SetEMAVariation(TA_EMAVariation_FIRST_BAR_SEED)` starts EMA, DEMA,
+  TEMA, TRIX, MACD and the other EMA-based functions from the first element of the input array
+  instead of an SMA. Lookbacks are unchanged, and the default (`TA_EMAVariation_SMA_SEED`)
+  changes no value. See https://ta-lib.org/api/ema-variant-settings/ (#622)
 - New TA Functions:
   - ALLIGATOR: Williams Alligator, three smoothed moving averages of the median price (#584)
   - CE: Chandelier Exit, the highest high and lowest low offset by a multiple of the ATR (#568)
